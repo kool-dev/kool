@@ -20,8 +20,14 @@ var infoCmd = &cobra.Command{
 }
 
 func runInfo(cmf *cobra.Command, args []string) {
+	var filter string = "FWD_"
+
+	if len(args) > 0 {
+		filter = args[0]
+	}
+
 	for _, envVar := range os.Environ() {
-		if strings.Contains(envVar, "FWD_") {
+		if strings.Contains(envVar, filter) {
 			fmt.Println(envVar)
 		}
 	}
