@@ -17,6 +17,7 @@ var infoCmd = &cobra.Command{
 	Short: "Prints out information about fwd setup (like environment variables)",
 	Long:  `Prints out information about fwd setup (like environment variables)`,
 	Run:   runInfo,
+	Args:  cobra.MaximumNArgs(1),
 }
 
 func runInfo(cmf *cobra.Command, args []string) {
