@@ -9,8 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(startCmd)
+// StartFlags holds the flags for the start command
+type StartFlags struct {
+	All      bool
+	Services string
 }
 
 var startCmd = &cobra.Command{
@@ -19,30 +21,26 @@ var startCmd = &cobra.Command{
 	Run:   runStart,
 }
 
-// StartFlags holds the flags for the start command
-type StartFlags struct {
-	All      bool
-	Services string
-}
-
 var startFlags = &StartFlags{false, ""}
 
 func init() {
+	rootCmd.AddCommand(startCmd)
+
 	startCmd.Flags().BoolVarP(&startFlags.All, "all", "a", false, "Start all services")
 	startCmd.Flags().StringVarP(&startFlags.Services, "services", "", "", "Specific services to be started")
 }
 
-func runStart(cmf *cobra.Command, args []string) {
+func runStart(cmd *cobra.Command, args []string) {
 	if startFlags.Services == "" {
 		// we should default to the environment variable
 		startFlags.Services = os.Getenv("FWD_START_DEFAULT_SERVICES")
 	}
 
-	startGlobalNetwork()
+	handleGlobalNetwork()
 	startContainers()
 }
 
-func startGlobalNetwork() {
+func handleGlobalNetwork() {
 	networkID, err := shellExec("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=%s", os.Getenv("FWD_NETWORK")))
 
 	if err != nil {
@@ -80,8 +78,7 @@ func startContainers() {
 	out, err = shellExec("docker-compose", args...)
 
 	if err != nil {
-		log.Println("ERROR: ", err)
-		log.Println("Output:")
-		fmt.Println(out)
+		execError(out, err)
+		os.Exit(1)
 	}
 }
