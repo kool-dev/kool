@@ -16,7 +16,9 @@ func shellExec(exe string, args ...string) (outStr string, err error) {
 
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
+	cmd.Stdin = os.Stdin
 	out, err = cmd.CombinedOutput()
+
 	outStr = strings.TrimSpace(string(out))
 	return
 }
