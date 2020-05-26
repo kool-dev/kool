@@ -18,7 +18,6 @@ func initEnvironmentVariables() {
 		err              error
 	)
 
-	// TODO: we need to read fwd distributed envs as well
 	files = []string{
 		".env",
 		".fwd",
@@ -53,6 +52,21 @@ func initEnvironmentVariables() {
 		err = godotenv.Load(file)
 		if err != nil {
 			log.Fatal("Failure loading environment file ", file, " ERROR: '", err, "'")
+		}
+	}
+
+	// After loading all files, we should complemente the non-overwritten
+	// default variables to their expected fwd distribution values
+	allEnv := os.Environ()
+	currentEnv := map[string]bool{}
+	for _, env := range allEnv {
+		currentEnv[strings.Split(env, "=")[0]] = true
+	}
+	allEnv = nil
+	defaultEnv, _ := godotenv.Unmarshal(DefaultEnv)
+	for k, v := range defaultEnv {
+		if _, exists := currentEnv[k]; !exists {
+			os.Setenv(k, v)
 		}
 	}
 
