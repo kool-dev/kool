@@ -50,29 +50,45 @@ func statusDisplayServices() {
 		return
 	}
 
-	status := make([]*statusService, len(services))
+	chStatus := make(chan *statusService, len(services))
 
-	for i, service := range services {
-		status[i] = &statusService{service: service}
-		out, err = shellExec("docker-compose", "ps", "-q", service)
+	for _, service := range services {
+		go func(service string, ch chan *statusService) {
+			ss := &statusService{service: service}
 
-		if err != nil {
-			execError(out, err)
-			os.Exit(1)
-		}
+			out, err = shellExec("docker-compose", "ps", "-q", service)
 
-		if out != "" {
-			status[i].running = true
-			// it is running
-			out, err = shellExec("docker", "ps", "-a", "--filter", "ID="+out, "--format", "{{.Status}}|{{.Ports}}")
-
-			containerInfo := strings.Split(out, "|")
-			status[i].state = containerInfo[0]
-			if len(containerInfo) > 1 {
-				status[i].ports = containerInfo[1]
+			if err != nil {
+				execError(out, err)
+				os.Exit(1)
 			}
-			containerInfo = nil
+
+			if out != "" {
+				ss.running = true
+				// it is running
+				out, err = shellExec("docker", "ps", "-a", "--filter", "ID="+out, "--format", "{{.Status}}|{{.Ports}}")
+
+				containerInfo := strings.Split(out, "|")
+				ss.state = containerInfo[0]
+				if len(containerInfo) > 1 {
+					ss.ports = containerInfo[1]
+				}
+				containerInfo = nil
+			}
+
+			ch <- ss
+		}(service, chStatus)
+	}
+
+	var i, l int = 0, len(services)
+	status := make([]*statusService, l)
+	for ss := range chStatus {
+		status[i] = ss
+		if i == l-1 {
+			close(chStatus)
+			break
 		}
+		i++
 	}
 
 	t := table.NewWriter()
