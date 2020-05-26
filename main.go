@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	fwd "./cmd"
+	"fireworkweb/fwd/cmd"
 )
 
 func main() {
@@ -12,7 +12,7 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	initEnvironmentVariables()
 
-	if err := fwd.Execute(); err != nil {
+	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
