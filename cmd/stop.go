@@ -26,10 +26,10 @@ func init() {
 }
 
 func runStop(cmd *cobra.Command, args []string) {
-	stopContainers()
+	stopContainers(stopFlags.Purge)
 }
 
-func stopContainers() {
+func stopContainers(purge bool) {
 	var (
 		args []string
 		err  error
@@ -38,7 +38,7 @@ func stopContainers() {
 
 	args = []string{"down"}
 
-	if stopFlags.Purge {
+	if purge {
 		args = append(args, "--volumes", "--remove-orphans")
 	}
 

@@ -31,13 +31,8 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) {
-	if startFlags.Services == "" {
-		// we should default to the environment variable
-		startFlags.Services = os.Getenv("FWD_START_DEFAULT_SERVICES")
-	}
-
 	handleGlobalNetwork()
-	startContainers()
+	startContainers(startFlags.All, startFlags.Services)
 }
 
 func handleGlobalNetwork() {
@@ -58,7 +53,7 @@ func handleGlobalNetwork() {
 	}
 }
 
-func startContainers() {
+func startContainers(all bool, services string) {
 	var (
 		args []string
 		err  error
@@ -67,12 +62,12 @@ func startContainers() {
 
 	args = []string{"up", "-d", "--force-recreate"}
 
-	if !startFlags.All {
-		if startFlags.Services == "" {
-			startFlags.Services = os.Getenv("FWD_START_DEFAULT_SERVICES")
+	if !all {
+		if services == "" {
+			services = os.Getenv("FWD_START_DEFAULT_SERVICES")
 		}
 
-		args = append(args, strings.Split(startFlags.Services, " ")...)
+		args = append(args, strings.Split(services, " ")...)
 	}
 
 	out, err = shellExec("docker-compose", args...)
