@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// StopFlags holds the flags for the start command
+// StopFlags holds the flags for the stop command
 type StopFlags struct {
 	Purge bool
 }
