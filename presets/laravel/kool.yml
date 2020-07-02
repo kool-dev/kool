@@ -1,0 +1,16 @@
+scripts:
+  # php
+  app: kool exec app
+  artisan: kool run app php artisan
+  composer: kool run app composer
+
+  # node
+  node: kool docker $KOOL_NODE_IMAGE
+  yarn: kool run node yarn
+
+
+  reset:
+    - kool run composer install
+    - kool exec app artisan migrate:fresh --seed
+    - kool docker $KOOL_NODE_IMAGE install
+    - kool docker $KOOL_NODE_IMAGE yarn dev
