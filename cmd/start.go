@@ -17,7 +17,7 @@ type StartFlags struct {
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start fwd environment containers",
+	Short: "Start Kool environment containers",
 	Run:   runStart,
 }
 
