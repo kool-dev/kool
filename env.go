@@ -20,7 +20,7 @@ func initEnvironmentVariables() {
 
 	files = []string{
 		".env",
-		".fwd",
+		".fwd", // TODO: BC only - remove soon
 	}
 
 	homeDir, err = homedir.Dir()
