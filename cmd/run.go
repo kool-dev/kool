@@ -137,8 +137,8 @@ func parseCustomCommand(line string) (parsed []string) {
 
 	for i := range parsed {
 		for _, env := range os.Environ() {
-			envPieces := strings.Split(env, "=")
-			parsed[i] = strings.ReplaceAll(parsed[i], "$"+envPieces[0], strings.Join(envPieces[1:], ""))
+			envPair := strings.SplitN(env, "=", 2)
+			parsed[i] = strings.ReplaceAll(parsed[i], "$"+envPair[0], envPair[1])
 		}
 	}
 
