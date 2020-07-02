@@ -32,8 +32,6 @@ func shellInteractive(exe string, args ...string) (err error) {
 		cmd *exec.Cmd
 	)
 
-	fmt.Println(exe)
-	fmt.Println(args)
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
 	cmd.Stdin = os.Stdin
@@ -72,7 +70,7 @@ func shellInteractive(exe string, args ...string) (err error) {
 			if err := cmd.Process.Signal(sig); err != nil {
 				// Not clear how we can hit this, but probably not
 				// worth terminating the child.
-				fmt.Println("error sending signal", sig, err)
+				// fmt.Println("error sending signal", sig, err)
 			}
 		}
 	}

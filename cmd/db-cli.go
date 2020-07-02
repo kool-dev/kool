@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -11,9 +12,10 @@ type DbCliFlags struct {
 }
 
 var dbCliCmd = &cobra.Command{
-	Use:   "cli",
-	Short: "Opens a CLI default client session within the main database service in use, if one exists",
-	Run:   runDbCli,
+	Use:              "cli",
+	Short:            "Opens a CLI default client session within the main database service in use, if one exists",
+	Run:              runDbCli,
+	TraverseChildren: true,
 }
 
 var dbCliFlags = &DbCliFlags{}
@@ -34,7 +36,8 @@ func dbCliOpen(extraArgs ...string) {
 		err  error
 	)
 
-	args = []string{"exec", "-e", "MYSQL_PWD=" + os.Getenv("DB_PASSWORD"), "database", "mysql", "-u", os.Getenv("DB_USERNAME")}
+	fmt.Println("dbFlags.ServiceName", dbFlags.ServiceName)
+	args = []string{"exec", "-e", "MYSQL_PWD=" + os.Getenv("DB_PASSWORD"), dbFlags.ServiceName, "mysql", "-u", os.Getenv("DB_USERNAME")}
 	args = append(args, os.Getenv("DB_DATABASE"))
 	args = append(args, extraArgs...)
 
