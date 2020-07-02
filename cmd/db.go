@@ -12,12 +12,13 @@ type DbFlags struct {
 var dbFlags = &DbFlags{""}
 
 var dbCmd = &cobra.Command{
-	Use:   "db",
-	Short: "Useful database service related actions",
+	Use:              "db",
+	Short:            "Useful database service related actions",
+	TraverseChildren: true,
 }
 
 func init() {
-	rootCmd.AddCommand(dbCmd)
+	// rootCmd.AddCommand(dbCmd)
 
-	dbCmd.Flags().StringVarP(&dbFlags.ServiceName, "service", "s", "database", "The service name for the database container.")
+	dbCmd.PersistentFlags().StringVarP(&dbFlags.ServiceName, "service", "s", "database", "The service name for the database container.")
 }

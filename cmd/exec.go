@@ -1,85 +1,50 @@
 package cmd
 
-// https://blog.kowalczyk.info/article/wOYk/advanced-command-execution-in-go-with-osexec.html
-
 import (
-	"fmt"
-	"log"
 	"os"
-	"os/exec"
-	"os/signal"
-	"strings"
-	"syscall"
+
+	"github.com/spf13/cobra"
 )
 
-func shellExec(exe string, args ...string) (outStr string, err error) {
-	var (
-		cmd *exec.Cmd
-		out []byte
-	)
-
-	cmd = exec.Command(exe, args...)
-	cmd.Env = os.Environ()
-	cmd.Stdin = os.Stdin
-	out, err = cmd.CombinedOutput()
-
-	outStr = strings.TrimSpace(string(out))
-	return
+// ExecFlags holds the flags for the start command
+type ExecFlags struct {
 }
 
-func shellInteractive(exe string, args ...string) (err error) {
+var execCmd = &cobra.Command{
+	Use:   "exec [service] [command]",
+	Short: "Execute a command within a running service container",
+	Args:  cobra.MinimumNArgs(2),
+	Run:   runExec,
+}
+
+var execFlags = &ExecFlags{}
+
+func init() {
+	rootCmd.AddCommand(execCmd)
+}
+
+func runExec(cmd *cobra.Command, args []string) {
+	var service string = args[0]
+	dockerComposeExec(service, args[1:]...)
+}
+
+func dockerComposeExec(service string, command ...string) {
 	var (
-		cmd *exec.Cmd
+		err  error
+		args []string
 	)
 
-	fmt.Println(exe)
-	fmt.Println(args)
-	cmd = exec.Command(exe, args...)
-	cmd.Env = os.Environ()
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	args = []string{"exec"}
+	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); disableTty == "1" || disableTty == "true" {
+		args = append(args, "-T")
+	}
+	args = append(args, service)
+	args = append(args, command...)
 
-	err = cmd.Start()
+	err = shellInteractive("docker-compose", args...)
 
 	if err != nil {
-		return
+		execError("", err)
+		os.Exit(1)
 	}
-
-	waitCh := make(chan error, 1)
-	go func() {
-		waitCh <- cmd.Wait()
-		close(waitCh)
-	}()
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan)
-
-	// You need a for loop to handle multiple signals
-	for {
-		select {
-		case err = <-waitCh:
-			// Subprocess exited. Get the return code, if we can
-			var waitStatus syscall.WaitStatus
-			if exitError, ok := err.(*exec.ExitError); ok {
-				waitStatus = exitError.Sys().(syscall.WaitStatus)
-				os.Exit(waitStatus.ExitStatus())
-			}
-			if err != nil {
-				log.Fatal(err)
-			}
-			return
-		case sig := <-sigChan:
-			if err := cmd.Process.Signal(sig); err != nil {
-				// Not clear how we can hit this, but probably not
-				// worth terminating the child.
-				fmt.Println("error sending signal", sig, err)
-			}
-		}
-	}
-}
-
-func execError(out string, err error) {
-	log.Println("ERROR: ", err)
-	log.Println("Output:")
-	fmt.Println(out)
 }
