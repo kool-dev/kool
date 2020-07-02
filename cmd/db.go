@@ -18,7 +18,7 @@ var dbCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(dbCmd)
+	// rootCmd.AddCommand(dbCmd)
 
 	dbCmd.PersistentFlags().StringVarP(&dbFlags.ServiceName, "service", "s", "database", "The service name for the database container.")
 }
