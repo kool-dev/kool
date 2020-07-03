@@ -32,6 +32,10 @@ func shellInteractive(exe string, args ...string) (err error) {
 		cmd *exec.Cmd
 	)
 
+	if os.Getenv("KOOL_VERBOSE") == "1" {
+		fmt.Println("Going to execute:", exe, strings.Join(args, " "))
+	}
+
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
 	cmd.Stdin = os.Stdin
