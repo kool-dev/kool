@@ -13,6 +13,7 @@ import (
 
 // RunFlags holds the flags for the start command
 type RunFlags struct {
+	Docker, Tty bool
 }
 
 // KoolYaml holds the structure for parsing the custom commands file
@@ -27,10 +28,13 @@ var runCmd = &cobra.Command{
 	Run:   runRun,
 }
 
-var runFlags = &RunFlags{}
+var runFlags = &RunFlags{false, false}
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	runCmd.Flags().BoolVarP(&runFlags.Docker, "docker", "d", false, "Docker image name to run arbitraty command")
+	runCmd.Flags().BoolVarP(&runFlags.Tty, "tty", "t", false, "Enables TTY (only in case of using --docker)")
 }
 
 func runRun(cmd *cobra.Command, args []string) {
@@ -38,6 +42,11 @@ func runRun(cmd *cobra.Command, args []string) {
 		err    error
 		script string = args[0]
 	)
+
+	if runFlags.Docker {
+		dockerRun(script, args[1:])
+		return
+	}
 
 	commands := parseCustomCommandsScript(script)
 
@@ -143,4 +152,30 @@ func parseCustomCommand(line string) (parsed []string) {
 	}
 
 	return
+}
+
+func dockerRun(image string, command []string) {
+	var (
+		args    []string
+		err     error
+		workDir string
+	)
+
+	workDir, err = os.Getwd()
+	args = append(args, "run", "--init", "--rm", "-w", "/app")
+	if runFlags.Tty {
+		args = append(args, "-ti")
+	}
+	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "fireworkweb") || strings.HasPrefix(image, "kool")) {
+		args = append(args, "--env", "ASUSER="+os.Getenv("KOOL_ASUSER"))
+	}
+	args = append(args, "--volume", workDir+".:/app", image)
+	args = append(args, command...)
+
+	err = shellInteractive("docker", args...)
+
+	if err != nil {
+		execError("", err)
+		os.Exit(1)
+	}
 }
