@@ -77,8 +77,8 @@ func initEnvironmentVariables() {
 		os.Setenv("FWD_NAME", pieces[len(pieces)-1])
 	}
 
-	if os.Getenv("FWD_NETWORK") == "" {
-		os.Setenv("FWD_NETWORK", "fwd_global")
+	if os.Getenv("KOOL_GLOBAL_NETWORK") == "" {
+		os.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
 	}
 	if os.Getenv("FWD_ASUSER") == "" {
 		os.Setenv("FWD_ASUSER", fmt.Sprintf("%d", os.Getuid()))
