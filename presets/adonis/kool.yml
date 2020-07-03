@@ -1,11 +1,9 @@
 scripts:
-  # node
   node: kool exec app node
-  npm: kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+  npm: kool exec app npm # can change to: yarn,pnpm
   adonis: kool exec app adonis
 
-  # examples
   install:
     - cp .env.example .env
-    - kool run npm install
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start

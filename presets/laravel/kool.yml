@@ -1,13 +1,10 @@
 scripts:
-  # php
   php: kool exec app php
   composer: kool exec app composer
 
-  # node
   node: kool run --docker fireworkweb/node:14 node
   npm: kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
 
-  # examples
   install:
     - kool start
     - cp .env.example .env
