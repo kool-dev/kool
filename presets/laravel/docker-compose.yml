@@ -5,7 +5,8 @@ services:
     ports:
      - "80:80"
     environment:
-      ASUSER: ${KOOL_ASUSER:-${UID:-1000}}
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
     volumes:
      - .:/app:cached
      - ${HOME:-/dev/null}:/home/fwd/.ssh:cached

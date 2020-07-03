@@ -1,16 +1,19 @@
 scripts:
   # php
-  app: kool exec app
-  artisan: kool run app php artisan
-  composer: kool run app composer
+  php: kool exec app php
+  composer: kool exec app composer
 
   # node
-  node: kool docker $KOOL_NODE_IMAGE
-  yarn: kool run node yarn
+  node: kool docker fireworkweb/node:14
 
+  # examples
+  install:
+    - cp .env.example .env
+    - kool run composer install
+    - kool run php artisan key:generate
 
   reset:
     - kool run composer install
-    - kool exec app artisan migrate:fresh --seed
-    - kool docker $KOOL_NODE_IMAGE install
-    - kool docker $KOOL_NODE_IMAGE yarn dev
+    - kool run php artisan migrate:fresh --seed
+    - kool run node yarn install # you can choose between: yarn,npm,pnpm
+    - kool run node yarn dev # you can choose between: yarn,npm,pnpm
