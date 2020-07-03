@@ -11,12 +11,3 @@ services:
     volumes:
      - .:/app:cached
      - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
-    networks:
-     - kool_local
-     - kool_global
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"

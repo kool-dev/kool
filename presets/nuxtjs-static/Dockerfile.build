@@ -1,0 +1,11 @@
+FROM fireworkweb/node:14 as node
+
+COPY . /app
+
+RUN npm install && npm run build && npm run export
+
+FROM fireworkweb/http:static
+
+ENV ROOT=/app/dist
+
+COPY --from=node /app/dist /app/dist
