@@ -39,6 +39,9 @@ func dockerComposeExec(service string, command ...string) {
 	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); disableTty == "1" || disableTty == "true" {
 		args = append(args, "-T")
 	}
+	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" {
+		args = append(args, "--user", asuser)
+	}
 	args = append(args, service)
 	args = append(args, command...)
 
