@@ -187,7 +187,7 @@ func dockerRun(image string, command []string) {
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "fireworkweb") || strings.HasPrefix(image, "kool")) {
 		args = append(args, "--env", "ASUSER="+os.Getenv("KOOL_ASUSER"))
 	}
-	args = append(args, "--volume", workDir+".:/app", image)
+	args = append(args, "--volume", workDir+":/app", image)
 	args = append(args, command...)
 
 	err = shellInteractive("docker", args...)
