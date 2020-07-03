@@ -11,6 +11,9 @@ services:
     volumes:
      - .:/app:cached
      - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
   nextjs:
     image: fireworkweb/node:14
     command: ["npm", "run", "nextjs:dev"]
@@ -22,6 +25,10 @@ services:
     volumes:
      - .:/app:cached
      - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
+
 ##########################################################################
 # optionally you can enable mysql, redis or other services to your stack #
 ##########################################################################
@@ -41,6 +48,15 @@ services:
 #     image: redis:alpine
 #     volumes:
 #      - cache:/data:cached
+#     networks:
+#      - kool_local
+#
 # volumes:
 #   db:
 #   cache:
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK}"

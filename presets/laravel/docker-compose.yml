@@ -10,6 +10,9 @@ services:
     volumes:
      - .:/app:cached
      - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
   database:
     image: mysql:8.0 # can change to: mysql:5.7
     command: --default-authentication-plugin=mysql_native_password # remove this line if you change to: mysql:5.7
@@ -23,10 +26,20 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
      - db:/var/lib/mysql:cached
+    networks:
+     - kool_local
+     - kool_global
   cache:
     image: redis:alpine
     volumes:
      - cache:/data:cached
+
 volumes:
   db:
   cache:
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK}"
