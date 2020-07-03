@@ -20,11 +20,22 @@ To help learning how to use kool we've built presets with good starting point fo
 - [NuxtJS](docs/presets/nuxtjs.md)
 - [NuxtJS Static](docs/presets/nuxtjs-static.md)
 
-### Commands
+## Commands
+
+### kool start
 
 ```bash
-kool start
+$ kool start [flags]
 ```
+#### Description
+
+Start services (containers) defined on docker-compose.yml
+
+#### Flags
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| --services | string | Specific services to be started |
 
 ```bash
 kool status
