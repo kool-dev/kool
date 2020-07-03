@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  app:
+    image: fireworkweb/node:14-adonis
+    command: ["adonis", "serve", "--dev"]
+    ports:
+     - "${PORT:-3333}:3333"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:cached
+     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+##########################################################################
+# optionally you can enable mysql, redis or other services to your stack #
+##########################################################################
+#   database:
+#     image: mysql:8.0 # possibly change to: mysql:5.7
+#     ports:
+#      - "3306:3306"
+#     environment:
+#       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+#       MYSQL_DATABASE: "${DB_DATABASE:-database}"
+#       MYSQL_USER: "${DB_USERNAME:-user}"
+#       MYSQL_PASSWORD: "${DB_PASSWORD:-}"
+#       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+#     volumes:
+#      - db:/var/lib/mysql:cached
+#   cache:
+#     image: redis:alpine
+#     volumes:
+#      - cache:/data:cached
+# volumes:
+#   db:
+#   cache:
