@@ -1,25 +1,65 @@
-# fwd2 - powered by Golang
+# kool
 
-To build:
+Description
 
-`go build -o /usr/local/bin/kool`
+## Installation
 
-Cross-compile:
+One Liner
 
-`env GOOS=linux GOARCH=amd64 go build -o main_linux_amd64 main.go`
+## Usage
 
-### Env vars
+To help learning how to use kool we've built presets with good starting point for some popular stacks, feel free to open a PR in case you miss one.
 
-- `KOOL_TTY_DISABLE`: sets to `1` or `true` will make `kool exec` disable TTY for container interaction commands.
+### Presets
 
-### Presets parsing
+- [Adonis](docs/presets/adonis.md)
+- [Adonis with NextJS](docs/presets/adonis-nextjs.md)
+- [Laravel](docs/presets/laravel.md)
+- [NextJS](docs/presets/nextjs.md)
+- [NextJS Static](docs/presets/nextjs-static.md)
+- [NuxtJS](docs/presets/nuxtjs.md)
+- [NuxtJS Static](docs/presets/nuxtjs-static.md)
 
-The preset files are managed at the presets/ folder. After any changes on those files you are required to run parse_presets.sh.
+### Commands
 
----
+```bash
+kool start
+```
 
-References:
+```bash
+kool status
+```
 
-- CLI tooling - https://github.com/spf13/cobra
-- Environment variables - https://github.com/joho/godotenv
--
+```bash
+kool info
+```
+
+```bash
+kool install [preset]
+```
+
+```bash
+kool exec [service] [args]
+```
+
+```bash
+kool run [script] [args]
+```
+
+```bash
+kool stop (--purge)
+```
+
+### Understanding kool.yml
+
+### Understanding docker-compose.yml
+
+### Understanding Dockerfile.build
+
+## Contributing
+
+[Build](docs/BUILD.md)
+
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
