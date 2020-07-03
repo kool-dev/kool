@@ -1,8 +1,7 @@
 scripts:
   # node
-  node: kool exec app node
   npm: kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
-  adonis: kool exec app adonis
+  adonis: kool exec adonis adonis
 
   # examples
   install:

@@ -5,7 +5,7 @@ scripts:
 
   # node
   node: kool run --docker fireworkweb/node:14 node
-  npm: kool run --docker fireworkweb/node:14 npm
+  npm: kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
 
   # examples
   install:
@@ -19,5 +19,5 @@ scripts:
   reset:
     - kool run composer install
     - kool run php artisan migrate:fresh --seed
-    - kool run npm install # can change to: yarn,pnpm
-    - kool run npm dev # can change to: yarn,pnpm
+    - kool run npm install
+    - kool run npm dev

@@ -1,0 +1,7 @@
+FROM fireworkweb/node:14
+
+RUN npm install && npm run build
+
+EXPOSE 3000
+
+CMD [ "npm", "nextjs:start" ]
