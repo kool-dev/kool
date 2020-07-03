@@ -9,7 +9,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global

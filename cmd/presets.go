@@ -35,7 +35,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -43,13 +43,13 @@ services:
     image: fireworkweb/node:14
     command: ["npm", "run", "nextjs:dev"]
     ports:
-     - "3000:3000"
+     - "${KOOL_NEXTJS_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -85,6 +85,10 @@ networks:
   kool_global:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+		"kool.env": `HOST=0.0.0.0
+PORT=3333
+NODE_ENV=development
+APP_URL=http://localhost:${PORT}`,
 		"kool.package.json": `{
   "name": "adonis-nextjs",
   "private": true,
@@ -121,7 +125,7 @@ networks:
 
   install:
     - cp .env.example .env
-    - kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["adonis"] = map[string]string{
@@ -146,7 +150,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -157,7 +161,7 @@ services:
 #   database:
 #     image: mysql:8.0 # possibly change to: mysql:5.7
 #     ports:
-#      - "3306:3306"
+#      - "${KOOL_DATABASE_PORT:-3306}:3306"
 #     environment:
 #       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
 #       MYSQL_DATABASE: "${DB_DATABASE:-database}"
@@ -182,6 +186,10 @@ networks:
   kool_global:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+		"kool.env": `HOST=0.0.0.0
+PORT=3333
+NODE_ENV=development
+APP_URL=http://localhost:${PORT}`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
@@ -211,13 +219,13 @@ services:
   app:
     image: fireworkweb/php:7.4-nginx
     ports:
-     - "80:80"
+     - "${KOOL_HTTP_PORT:-80}:80"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -225,7 +233,7 @@ services:
     image: mysql:8.0 # can change to: mysql:5.7
     command: --default-authentication-plugin=mysql_native_password # remove this line if you change to: mysql:5.7
     ports:
-     - "3306:3306"
+     - "${KOOL_DATABASE_PORT:-3306}:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
       MYSQL_DATABASE: "${DB_DATABASE:-database}"
@@ -290,22 +298,28 @@ services:
     image: fireworkweb/node:14
     command: ["npm", "run", "dev"]
     ports:
-     - "3000:3000"
+     - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached`,
-		"kool.yml": `start:
-  services: app
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
 
-scripts:
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nextjs"] = map[string]string{
@@ -324,13 +338,13 @@ services:
     image: fireworkweb/node:14
     command: ["npm", "run", "dev"]
     ports:
-     - "3000:3000"
+     - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -340,15 +354,12 @@ networks:
   kool_global:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
-		"kool.yml": `start:
-  services: app
-
-scripts:
+		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nuxtjs-static"] = map[string]string{
@@ -369,13 +380,13 @@ services:
     image: fireworkweb/node:14
     command: ["npm", "run", "dev"]
     ports:
-     - "3000:3000"
+     - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -390,15 +401,12 @@ networks:
     host: '0.0.0.0',
   }
 }`,
-		"kool.yml": `start:
-  services: app
-
-scripts:
+		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nuxtjs"] = map[string]string{
@@ -417,13 +425,13 @@ services:
     image: fireworkweb/node:14
     command: ["npm", "run", "dev"]
     ports:
-     - "3000:3000"
+     - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -438,15 +446,12 @@ networks:
     host: '0.0.0.0',
   }
 }`,
-		"kool.yml": `start:
-  services: app
-
-scripts:
+		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 }

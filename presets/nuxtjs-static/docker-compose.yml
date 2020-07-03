@@ -4,13 +4,13 @@ services:
     image: fireworkweb/node:14
     command: ["npm", "run", "dev"]
     ports:
-     - "3000:3000"
+     - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
