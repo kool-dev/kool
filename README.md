@@ -12,6 +12,10 @@ Cross-compile:
 
 - `KOOL_TTY_DISABLE`: sets to `1` or `true` will make `kool exec` disable TTY for container interaction commands.
 
+### Presets parsing
+
+The preset files are managed at the presets/ folder. After any changes on those files you are required to run parse_presets.sh.
+
 ---
 
 References:
