@@ -1,10 +1,7 @@
-start:
-  services: app
-
 scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start

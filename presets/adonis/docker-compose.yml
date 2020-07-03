@@ -21,7 +21,7 @@ services:
 #   database:
 #     image: mysql:8.0 # possibly change to: mysql:5.7
 #     ports:
-#      - "3306:3306"
+#      - "${KOOL_DATABASE_PORT:-3306}:3306"
 #     environment:
 #       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
 #       MYSQL_DATABASE: "${DB_DATABASE:-database}"
