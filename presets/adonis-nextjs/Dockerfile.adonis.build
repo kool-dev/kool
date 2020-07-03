@@ -1,5 +1,7 @@
 FROM fireworkweb/node:14-adonis
 
+COPY . /app
+
 RUN npm install
 
 EXPOSE 3333
