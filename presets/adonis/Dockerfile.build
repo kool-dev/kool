@@ -1,0 +1,7 @@
+FROM fireworkweb/node:14-adonis
+
+RUN npm install
+
+EXPOSE 3333
+
+CMD [ "npm", "start" ]
