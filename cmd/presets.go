@@ -35,7 +35,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -49,7 +49,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -150,7 +150,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -225,7 +225,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -304,7 +304,16 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached`,
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
@@ -335,7 +344,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -377,7 +386,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -422,7 +431,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-     - ${HOME:-/dev/null}:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/fwd/.ssh:cached
     networks:
      - kool_local
      - kool_global
