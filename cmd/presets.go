@@ -272,13 +272,13 @@ networks:
     - kool run composer install
     - kool run php artisan key:generate
     - kool run npm install
-    - kool run npm dev
+    - kool run npm run dev
 
   reset:
     - kool run composer install
     - kool run php artisan migrate:fresh --seed
     - kool run npm install
-    - kool run npm dev`,
+    - kool run npm run dev`,
 	}
 	presets["nextjs-static"] = map[string]string{
 		"Dockerfile.build": `FROM fireworkweb/node:14 as node

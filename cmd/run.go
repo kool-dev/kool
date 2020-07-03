@@ -13,7 +13,7 @@ import (
 
 // RunFlags holds the flags for the start command
 type RunFlags struct {
-	Docker, Tty bool
+	Docker, DisableTty bool
 }
 
 // KoolYaml holds the structure for parsing the custom commands file
@@ -35,7 +35,7 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 
 	runCmd.Flags().BoolVarP(&runFlags.Docker, "docker", "d", false, "Docker image name to run arbitraty command")
-	runCmd.Flags().BoolVarP(&runFlags.Tty, "tty", "t", false, "Enables TTY (only in case of using --docker)")
+	runCmd.Flags().BoolVarP(&runFlags.DisableTty, "disable-tty", "T", false, "Disables TTY (only in case of using --docker)")
 }
 
 func runRun(cmd *cobra.Command, originalArgs []string) {
@@ -46,8 +46,8 @@ func runRun(cmd *cobra.Command, originalArgs []string) {
 	)
 
 	for _, arg := range originalArgs {
-		if arg == "--tty" {
-			runFlags.Tty = true
+		if arg == "--disable-tty" {
+			runFlags.DisableTty = true
 			continue
 		}
 
@@ -79,6 +79,8 @@ func runRun(cmd *cobra.Command, originalArgs []string) {
 			// single command - forward extra args
 			execArgs = append(execArgs, args[1:]...)
 		}
+
+		fmt.Println("$", exec[0], strings.Join(execArgs, " "))
 		err = shellInteractive(exec[0], execArgs...)
 
 		if err != nil {
@@ -181,7 +183,7 @@ func dockerRun(image string, command []string) {
 
 	workDir, err = os.Getwd()
 	args = append(args, "run", "--init", "--rm", "-w", "/app")
-	if runFlags.Tty {
+	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); !runFlags.DisableTty && !(disableTty == "1" || disableTty == "true") {
 		args = append(args, "-ti")
 	}
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "fireworkweb") || strings.HasPrefix(image, "kool")) {
