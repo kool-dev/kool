@@ -72,15 +72,15 @@ func initEnvironmentVariables() {
 
 	// Now that we loaded up the files, we will check for
 	// missing variables that we need to fix
-	if os.Getenv("FWD_NAME") == "" {
+	if os.Getenv("KOOL_NAME") == "" {
 		pieces := strings.Split(os.Getenv("PWD"), string(os.PathSeparator))
-		os.Setenv("FWD_NAME", pieces[len(pieces)-1])
+		os.Setenv("KOOL_NAME", pieces[len(pieces)-1])
 	}
 
 	if os.Getenv("KOOL_GLOBAL_NETWORK") == "" {
 		os.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
 	}
-	if os.Getenv("FWD_ASUSER") == "" {
-		os.Setenv("FWD_ASUSER", fmt.Sprintf("%d", os.Getuid()))
+	if os.Getenv("KOOL_ASUSER") == "" {
+		os.Setenv("KOOL_ASUSER", fmt.Sprintf("%d", os.Getuid()))
 	}
 }
