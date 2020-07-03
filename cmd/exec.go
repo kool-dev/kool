@@ -11,10 +11,11 @@ type ExecFlags struct {
 }
 
 var execCmd = &cobra.Command{
-	Use:   "exec [service] [command]",
-	Short: "Execute a command within a running service container",
-	Args:  cobra.MinimumNArgs(2),
-	Run:   runExec,
+	Use:                "exec [service] [command]",
+	Short:              "Execute a command within a running service container",
+	Args:               cobra.MinimumNArgs(2),
+	Run:                runExec,
+	DisableFlagParsing: true,
 }
 
 var execFlags = &ExecFlags{}

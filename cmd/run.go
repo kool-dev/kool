@@ -22,10 +22,11 @@ type KoolYaml struct {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run [script]",
-	Short: "Runs a custom command defined at kool.yaml",
-	Args:  cobra.MinimumNArgs(1),
-	Run:   runRun,
+	Use:                "run [script]",
+	Short:              "Runs a custom command defined at kool.yaml",
+	Args:               cobra.MinimumNArgs(1),
+	Run:                runRun,
+	DisableFlagParsing: true,
 }
 
 var runFlags = &RunFlags{false, false}
@@ -37,11 +38,28 @@ func init() {
 	runCmd.Flags().BoolVarP(&runFlags.Tty, "tty", "t", false, "Enables TTY (only in case of using --docker)")
 }
 
-func runRun(cmd *cobra.Command, args []string) {
+func runRun(cmd *cobra.Command, originalArgs []string) {
 	var (
 		err    error
-		script string = args[0]
+		script string
+		args   []string
 	)
+
+	for _, arg := range originalArgs {
+		if arg == "--tty" {
+			runFlags.Tty = true
+			continue
+		}
+
+		if arg == "--docker" {
+			runFlags.Docker = true
+			continue
+		}
+
+		args = append(args, arg)
+	}
+
+	script = args[0]
 
 	if runFlags.Docker {
 		dockerRun(script, args[1:])
