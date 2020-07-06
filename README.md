@@ -1,6 +1,8 @@
 # kool
 
-Description
+Dev environment made easy, a standarized way for running applications no matter the stack on your local machine and deploying it to a development environment.
+
+Have the same feeling working on multiple projects with different stacks.
 
 ## Installation
 
@@ -104,13 +106,19 @@ Stop containers.
 
 ### Understanding kool.yml
 
+This is where most of the magic happens, a way to make your life easy, orchestrating scripts for you to use on your local environment or CI/CDs. Look at presets to see examples.
+
 ### Understanding docker-compose.yml
+
+This is where you control your local environment.
 
 ### Understanding Dockerfile.build
 
+This file gives you a way for building Docker images for production. More docs to come.
+
 ## Contributing
 
-[Build](docs/BUILD.md)
+[Build](docs/build.md)
 
 ## License
 
