@@ -27,39 +27,80 @@ To help learning how to use kool we've built presets with good starting point fo
 ```bash
 $ kool start [flags]
 ```
-#### Description
 
 Start services (containers) defined on docker-compose.yml
 
-#### Flags
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `--services=` | `string` | Specific services to be started |
+
+### kool status
+
+```bash
+$ kool status
+```
+
+Shows the status for containers
+
+### kool info
+
+```bash
+$ kool info
+```
+
+Prints out information about kool setup (like environment variables)
+
+### kool install
+
+```bash
+$ kool install [preset] [flags]
+```
+
+Enable Kool preset configuration in the current working directory
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| --services | string | Specific services to be started |
+| `preset` | `string` | The preset [(Presets)](#presets) |
+| `--override` | `none` | Force replace local existing files with the default preset files |
+
+### kool exec
 
 ```bash
-kool status
+$ kool exec [service] [command]
 ```
 
-```bash
-kool info
-```
+Execute command in running container.
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `service` | `string` | The service from `docker-compose.yml`, i.e: `app`,`database`,`adonis` |
+| `command` | `string` | The command to run, i.e: `php artisan migrate`, `adonis run:migration`, `npm build` |
+
+### kool run
 
 ```bash
-kool install [preset]
+$ kool run [script/image] [command]
 ```
 
-```bash
-kool exec [service] [args]
-```
+Execute script or a docker image.
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `script/image` | `string` | Script to run within your `kool.yaml` file.|
+| `command` | `string` | The command to run, i.e: `composer install`, `yarn install` |
+| `--docker` | `none` | If enabled, `script` param will become `image` and you will run a docker image |
+
+### kool stop
 
 ```bash
-kool run [script] [args]
+$ kool stop [flags]
 ```
 
-```bash
-kool stop (--purge)
-```
+Stop containers.
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `--purge` | `none` | If enabled, docker volume will be deleted. |
 
 ### Understanding kool.yml
 
