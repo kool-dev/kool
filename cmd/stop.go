@@ -13,7 +13,7 @@ type StopFlags struct {
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop fwd environment containers",
+	Short: "Stop kool environment containers",
 	Run:   runStop,
 }
 

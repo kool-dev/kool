@@ -1,4 +1,4 @@
-module fireworkweb/fwd
+module kool-dev/kool
 
 go 1.14
 

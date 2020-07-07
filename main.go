@@ -4,11 +4,10 @@ import (
 	"log"
 	"os"
 
-	"fireworkweb/fwd/cmd"
+	"kool-dev/kool/cmd"
 )
 
 func main() {
-	// log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Llongfile)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	initEnvironmentVariables()
 

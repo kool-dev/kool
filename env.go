@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/fireworkweb/godotenv"
@@ -13,15 +12,9 @@ import (
 
 func initEnvironmentVariables() {
 	var (
-		files            []string
 		homeDir, workDir string
 		err              error
 	)
-
-	files = []string{
-		".env",
-		".fwd", // TODO: BC only - remove soon
-	}
 
 	homeDir, err = homedir.Dir()
 	if err != nil {
@@ -42,13 +35,8 @@ func initEnvironmentVariables() {
 		os.Setenv("PWD", workDir)
 	}
 
-	files = append(files, fmt.Sprintf("%s%s.fwd", homeDir, string(filepath.Separator)))
-
-	for _, file := range files {
-		if _, err = os.Stat(file); os.IsNotExist(err) {
-			continue
-		}
-
+	var file string = ".env"
+	if _, err = os.Stat(file); !os.IsNotExist(err) {
 		err = godotenv.Load(file)
 		if err != nil {
 			log.Fatal("Failure loading environment file ", file, " ERROR: '", err, "'")
@@ -56,7 +44,7 @@ func initEnvironmentVariables() {
 	}
 
 	// After loading all files, we should complemente the non-overwritten
-	// default variables to their expected fwd distribution values
+	// default variables to their expected distribution values
 	allEnv := os.Environ()
 	currentEnv := map[string]bool{}
 	for _, env := range allEnv {

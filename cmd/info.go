@@ -14,7 +14,7 @@ func init() {
 
 var infoCmd = &cobra.Command{
 	Use:   "info",
-	Short: "Prints out information about fwd setup (like environment variables)",
+	Short: "Prints out information about kool setup (like environment variables)",
 	Run:   runInfo,
 	Args:  cobra.MaximumNArgs(1),
 }
