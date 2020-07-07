@@ -13,7 +13,6 @@ import (
 
 // RunFlags holds the flags for the start command
 type RunFlags struct {
-	Docker, DisableTty bool
 }
 
 // KoolYaml holds the structure for parsing the custom commands file
@@ -29,42 +28,19 @@ var runCmd = &cobra.Command{
 	DisableFlagParsing: true,
 }
 
-var runFlags = &RunFlags{false, false}
+var runFlags = &RunFlags{}
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-
-	runCmd.Flags().BoolVarP(&runFlags.Docker, "docker", "d", false, "Docker image name to run arbitraty command")
-	runCmd.Flags().BoolVarP(&runFlags.DisableTty, "disable-tty", "T", false, "Disables TTY (only in case of using --docker)")
 }
 
-func runRun(cmd *cobra.Command, originalArgs []string) {
+func runRun(cmd *cobra.Command, args []string) {
 	var (
 		err    error
 		script string
-		args   []string
 	)
 
-	for _, arg := range originalArgs {
-		if arg == "--disable-tty" {
-			runFlags.DisableTty = true
-			continue
-		}
-
-		if arg == "--docker" {
-			runFlags.Docker = true
-			continue
-		}
-
-		args = append(args, arg)
-	}
-
 	script = args[0]
-
-	if runFlags.Docker {
-		dockerRun(script, args[1:])
-		return
-	}
 
 	commands := parseCustomCommandsScript(script)
 
@@ -172,30 +148,4 @@ func parseCustomCommand(line string) (parsed []string) {
 	}
 
 	return
-}
-
-func dockerRun(image string, command []string) {
-	var (
-		args    []string
-		err     error
-		workDir string
-	)
-
-	workDir, err = os.Getwd()
-	args = append(args, "run", "--init", "--rm", "-w", "/app")
-	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); !runFlags.DisableTty && !(disableTty == "1" || disableTty == "true") {
-		args = append(args, "-ti")
-	}
-	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "fireworkweb") || strings.HasPrefix(image, "kool")) {
-		args = append(args, "--env", "ASUSER="+os.Getenv("KOOL_ASUSER"))
-	}
-	args = append(args, "--volume", workDir+":/app", image)
-	args = append(args, command...)
-
-	err = shellInteractive("docker", args...)
-
-	if err != nil {
-		execError("", err)
-		os.Exit(1)
-	}
 }
