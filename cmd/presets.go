@@ -125,7 +125,7 @@ APP_URL=http://localhost:${PORT}`,
 
   install:
     - cp .env.example .env
-    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["adonis"] = map[string]string{
@@ -197,7 +197,7 @@ APP_URL=http://localhost:${PORT}`,
 
   install:
     - cp .env.example .env
-    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["laravel"] = map[string]string{
@@ -263,8 +263,8 @@ networks:
   php: kool exec app php
   composer: kool exec app composer
 
-  node: kool run --docker fireworkweb/node:14 node
-  npm: kool run --docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+  node: kool docker fireworkweb/node:14 node
+  npm: kool docker fireworkweb/node:14 npm # can change to: yarn,pnpm
 
   install:
     - kool start
@@ -319,7 +319,7 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nextjs"] = map[string]string{
@@ -359,7 +359,7 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nuxtjs-static"] = map[string]string{
@@ -406,7 +406,7 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nuxtjs"] = map[string]string{
@@ -451,7 +451,7 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool run --docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 }

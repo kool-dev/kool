@@ -25,7 +25,7 @@ var dockerFlags = &DockerFlags{false}
 func init() {
 	rootCmd.AddCommand(dockerCmd)
 
-	dockerCmd.Flags().BoolVarP(&dockerFlags.DisableTty, "disable-tty", "T", false, "Disables TTY (only in case of using --docker)")
+	dockerCmd.Flags().BoolVarP(&dockerFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
 }
 
 func runDocker(cmd *cobra.Command, originalArgs []string) {
