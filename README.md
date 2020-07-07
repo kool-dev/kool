@@ -81,16 +81,29 @@ Execute command in running container.
 ### kool run
 
 ```bash
-$ kool run [script/image] [command]
+$ kool run [script] [command]
 ```
 
 Execute script or a docker image.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `script/image` | `string` | Script to run within your `kool.yaml` file.|
+| `script` | `string` | Script to run within your `kool.yaml` file. |
 | `command` | `string` | The command to run, i.e: `composer install`, `yarn install` |
-| `--docker` | `none` | If enabled, `script` param will become `image` and you will run a docker image |
+
+### kool docker
+
+```bash
+$ kool docker [image] [command]
+```
+
+Execute script or a docker image.
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `image` | `string` | Docker image to run, i.e: `fireworkweb/node:14` |
+| `command` | `string` | The command to run, i.e: `composer install`, `yarn install` |
+| `--disable-tty|-T` | `none` | Force disable tty, good for CI/CI/Automation |
 
 ### kool stop
 
