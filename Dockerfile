@@ -1,11 +1,11 @@
 FROM docker/compose:alpine-1.26.2 AS docker-compose
-FROM golang:alpine3.12 AS build
+FROM golang:1.14 AS build
 
 WORKDIR /app
 
 COPY . /app
 
-RUN go build -o kool
+RUN go build -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o kool
 
 FROM alpine:3.12
 
