@@ -3,7 +3,7 @@
 Start working with Laravel.
 
 ```bash
-$ kool install laravel
+$ kool init laravel
 ```
 
 By default laravel preset comes with `mysql` and `redis` configured, you can review how is configured at `docker-compose.yml`.

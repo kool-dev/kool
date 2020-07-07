@@ -52,10 +52,10 @@ $ kool info
 
 Prints out information about kool setup (like environment variables)
 
-### kool install
+### kool init
 
 ```bash
-$ kool install [preset] [flags]
+$ kool init [preset] [flags]
 ```
 
 Enable Kool preset configuration in the current working directory
