@@ -76,6 +76,8 @@ services:
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
 #      - db:/var/lib/mysql:cached
+#     networks:
+#      - kool_local
 #   cache:
 #     image: redis:alpine
 #     volumes:
@@ -255,11 +257,12 @@ services:
      - db:/var/lib/mysql:cached
     networks:
      - kool_local
-     - kool_global
   cache:
     image: redis:alpine
     volumes:
      - cache:/data:cached
+    networks:
+     - kool_local
 
 volumes:
   db:

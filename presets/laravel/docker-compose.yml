@@ -28,11 +28,12 @@ services:
      - db:/var/lib/mysql:cached
     networks:
      - kool_local
-     - kool_global
   cache:
     image: redis:alpine
     volumes:
      - cache:/data:cached
+    networks:
+     - kool_local
 
 volumes:
   db:
