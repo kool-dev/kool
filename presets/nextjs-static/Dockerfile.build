@@ -1,10 +1,10 @@
-FROM fireworkweb/node:14 as node
+FROM kooldev/node:14 AS node
 
 COPY . /app
 
 RUN npm install && npm run build && npm run export
 
-FROM fireworkweb/http:static
+FROM kooldev/http:static
 
 ENV ROOT=/app/out
 

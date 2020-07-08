@@ -101,9 +101,9 @@ Execute script or a docker image.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| `image` | `string` | Docker image to run, i.e: `fireworkweb/node:14` |
+| `image` | `string` | Docker image to run, i.e: `kooldev/node:14` |
 | `command` | `string` | The command to run, i.e: `composer install`, `yarn install` |
-| `--disable-tty|-T` | `none` | Force disable tty, good for CI/CI/Automation |
+| `--disable-tty / -T` | `none` | Force disable tty, good for CI/CI/Automation |
 
 ### kool stop
 

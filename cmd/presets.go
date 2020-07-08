@@ -5,20 +5,27 @@ package cmd
 var presets = make(map[string]map[string]string)
 func init() {
 	presets["adonis-nextjs"] = map[string]string{
-		"Dockerfile.adonis.build": `FROM fireworkweb/node:14-adonis
-
+		"Dockerfile.adonis.build": `FROM kooldev/node:14-adonis AS build
 COPY . /app
 
 RUN npm install
 
+FROM kooldev/node:14-adonis
+
+COPY --from=build --chown=kool:kool /app /app
+
 EXPOSE 3333
 
 CMD [ "npm", "adonis:start" ]`,
-		"Dockerfile.nextjs.build": `FROM fireworkweb/node:14
+		"Dockerfile.nextjs.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
 
 RUN npm install && npm run build
+
+FROM kooldev/node:14
+
+COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3000
 
@@ -26,7 +33,7 @@ CMD [ "npm", "nextjs:start" ]`,
 		"docker-compose.yml": `version: "3.8"
 services:
   adonis:
-    image: fireworkweb/node:14-adonis
+    image: kooldev/node:14-adonis
     command: ["adonis", "serve", "--dev"]
     ports:
      - "${PORT:-3333}:3333"
@@ -35,12 +42,12 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
   nextjs:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "nextjs:dev"]
     ports:
      - "${KOOL_NEXTJS_PORT:-3000}:3000"
@@ -49,7 +56,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -125,15 +132,19 @@ APP_URL=http://localhost:${PORT}`,
 
   install:
     - cp .env.example .env
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["adonis"] = map[string]string{
-		"Dockerfile.build": `FROM fireworkweb/node:14-adonis
+		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
 COPY . /app
 
 RUN npm install
+
+FROM kooldev/node:14-adonis
+
+COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3333
 
@@ -141,7 +152,7 @@ CMD [ "npm", "start" ]`,
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: fireworkweb/node:14-adonis
+    image: kooldev/node:14-adonis
     command: ["adonis", "serve", "--dev"]
     ports:
      - "${PORT:-3333}:3333"
@@ -150,7 +161,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -197,27 +208,27 @@ APP_URL=http://localhost:${PORT}`,
 
   install:
     - cp .env.example .env
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["laravel"] = map[string]string{
-		"Dockerfile.build": `FROM fireworkweb/php:7.4 as composer
+		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --quiet
 
-FROM fireworkweb/node:14 as node
+FROM kooldev/node:14 AS node
 
 COPY --from=composer /app /app
 RUN yarn install && yarn prod
 
-FROM fireworkweb/php:7.4-nginx
+FROM kooldev/php:7.4-nginx
 
-COPY --chown=fwd:fwd --from=node /app /app`,
+COPY --from=node --chown=kool:kool /app /app`,
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: fireworkweb/php:7.4-nginx
+    image: kooldev/php:7.4-nginx
     ports:
      - "${KOOL_HTTP_PORT:-80}:80"
     environment:
@@ -225,7 +236,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -263,8 +274,8 @@ networks:
   php: kool exec app php
   composer: kool exec app composer
 
-  node: kool docker fireworkweb/node:14 node
-  npm: kool docker fireworkweb/node:14 npm # can change to: yarn,pnpm
+  node: kool docker kooldev/node:14 node
+  npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
   install:
     - kool start
@@ -281,13 +292,13 @@ networks:
     - kool run npm run dev`,
 	}
 	presets["nextjs-static"] = map[string]string{
-		"Dockerfile.build": `FROM fireworkweb/node:14 as node
+		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
 
 RUN npm install && npm run build && npm run export
 
-FROM fireworkweb/http:static
+FROM kooldev/http:static
 
 ENV ROOT=/app/out
 
@@ -295,7 +306,7 @@ COPY --from=node /app/out /app/out`,
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "dev"]
     ports:
      - "${KOOL_APP_PORT:-3000}:3000"
@@ -304,7 +315,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -319,15 +330,19 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nextjs"] = map[string]string{
-		"Dockerfile.build": `FROM fireworkweb/node:14
+		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
 
 RUN npm install && npm run build
+
+FROM kooldev/node:14
+
+COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3000
 
@@ -335,7 +350,7 @@ CMD [ "npm", "start" ]`,
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "dev"]
     ports:
      - "${KOOL_APP_PORT:-3000}:3000"
@@ -344,7 +359,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -359,17 +374,17 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nuxtjs-static"] = map[string]string{
-		"Dockerfile.build": `FROM fireworkweb/node:14 as node
+		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
 
 RUN npm install && npm run build && npm run export
 
-FROM fireworkweb/http:static
+FROM kooldev/http:static
 
 ENV ROOT=/app/dist
 
@@ -377,7 +392,7 @@ COPY --from=node /app/dist /app/dist`,
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "dev"]
     ports:
      - "${KOOL_APP_PORT:-3000}:3000"
@@ -386,7 +401,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -406,15 +421,19 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 	presets["nuxtjs"] = map[string]string{
-		"Dockerfile.build": `FROM fireworkweb/node:14
+		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
 
 RUN npm install && npm run build
+
+FROM kooldev/node:14
+
+COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3000
 
@@ -422,7 +441,7 @@ CMD [ "npm", "start" ]`,
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "dev"]
     ports:
      - "${KOOL_APP_PORT:-3000}:3000"
@@ -431,7 +450,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
@@ -451,7 +470,7 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
 
   install:
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
 }

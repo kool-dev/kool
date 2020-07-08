@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   app:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "dev"]
     ports:
      - "${KOOL_APP_PORT:-3000}:3000"
@@ -10,7 +10,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global

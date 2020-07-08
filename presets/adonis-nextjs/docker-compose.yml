@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   adonis:
-    image: fireworkweb/node:14-adonis
+    image: kooldev/node:14-adonis
     command: ["adonis", "serve", "--dev"]
     ports:
      - "${PORT:-3333}:3333"
@@ -10,12 +10,12 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
   nextjs:
-    image: fireworkweb/node:14
+    image: kooldev/node:14
     command: ["npm", "run", "nextjs:dev"]
     ports:
      - "${KOOL_NEXTJS_PORT:-3000}:3000"
@@ -24,7 +24,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global

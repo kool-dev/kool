@@ -5,5 +5,5 @@ scripts:
 
   install:
     - cp .env.example .env
-    - kool docker fireworkweb/node:14 npm install # can change to: yarn,pnpm
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start

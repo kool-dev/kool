@@ -58,7 +58,7 @@ func execDockerRun(image string, command []string) {
 	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); !dockerFlags.DisableTty && !(disableTty == "1" || disableTty == "true") {
 		args = append(args, "-ti")
 	}
-	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "fireworkweb") || strings.HasPrefix(image, "kool")) {
+	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "kooldev") || strings.HasPrefix(image, "fireworkweb")) {
 		args = append(args, "--env", "ASUSER="+os.Getenv("KOOL_ASUSER"))
 	}
 	args = append(args, "--volume", workDir+":/app", image)

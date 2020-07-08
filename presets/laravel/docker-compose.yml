@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   app:
-    image: fireworkweb/php:7.4-nginx
+    image: kooldev/php:7.4-nginx
     ports:
      - "${KOOL_HTTP_PORT:-80}:80"
     environment:
@@ -9,7 +9,7 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:cached
-    #  - $HOME/.ssh:/home/fwd/.ssh:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
     networks:
      - kool_local
      - kool_global
