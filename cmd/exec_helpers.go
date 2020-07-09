@@ -41,14 +41,29 @@ func shellInteractive(exe string, args ...string) (err error) {
 	}
 
 	if verbose := os.Getenv("KOOL_VERBOSE"); verbose == "1" || verbose == "true" {
-		fmt.Println("Going to execute:", exe, strings.Join(args, " "))
+		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
-	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	if numArgs := len(args); numArgs >= 2 && args[numArgs-2] == "<" {
+		var (
+			file *os.File
+			path string
+		)
+
+		// we have an input redirection attempt!
+		path = args[numArgs-1]
+		args = args[:numArgs-2]
+
+		file, err = os.OpenFile(path, os.O_RDONLY, os.ModePerm)
+		cmd.Stdin = file
+		defer file.Close()
+	}
 
 	err = cmd.Start()
 
