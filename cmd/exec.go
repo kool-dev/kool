@@ -8,24 +8,40 @@ import (
 
 // ExecFlags holds the flags for the start command
 type ExecFlags struct {
+	DisableTty bool
 }
 
 var execCmd = &cobra.Command{
-	Use:                "exec [service] [command]",
+	Use:                "exec [options] [service] [command]",
 	Short:              "Execute a command within a running service container",
 	Args:               cobra.MinimumNArgs(2),
 	Run:                runExec,
 	DisableFlagParsing: true,
 }
 
-var execFlags = &ExecFlags{}
+var execFlags = &ExecFlags{false}
 
 func init() {
 	rootCmd.AddCommand(execCmd)
+
+	rootCmd.Flags().BoolVarP(&execFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
 }
 
-func runExec(cmd *cobra.Command, args []string) {
-	var service string = args[0]
+func runExec(cmd *cobra.Command, originalArgs []string) {
+	var (
+		service string
+		args    []string
+	)
+
+	if originalArgs[0] == "--disable-tty" || originalArgs[0] == "-T" {
+		execFlags.DisableTty = true
+		args = originalArgs[1:]
+	} else {
+		args = originalArgs
+	}
+
+	service = args[0]
+
 	dockerComposeExec(service, args[1:]...)
 }
 
@@ -36,7 +52,7 @@ func dockerComposeExec(service string, command ...string) {
 	)
 
 	args = []string{"exec"}
-	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); disableTty == "1" || disableTty == "true" {
+	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); execFlags.DisableTty || disableTty == "1" || disableTty == "true" {
 		args = append(args, "-T")
 	}
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" {
