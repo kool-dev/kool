@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -33,7 +34,8 @@ func shellExec(exe string, args ...string) (outStr string, err error) {
 
 func shellInteractive(exe string, args ...string) (err error) {
 	var (
-		cmd *exec.Cmd
+		cmd      *exec.Cmd
+		cmdStdin io.Reader = os.Stdin
 	)
 
 	if exe == "docker-compose" {
@@ -44,13 +46,7 @@ func shellInteractive(exe string, args ...string) (err error) {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
-	cmd = exec.Command(exe, args...)
-	cmd.Env = os.Environ()
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
-
-	if numArgs := len(args); numArgs >= 2 && args[numArgs-2] == "<" {
+	if numArgs := len(args); exe != "kool" && numArgs >= 2 && args[numArgs-2] == "<" {
 		var (
 			file *os.File
 			path string
@@ -61,9 +57,16 @@ func shellInteractive(exe string, args ...string) (err error) {
 		args = args[:numArgs-2]
 
 		file, err = os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-		cmd.Stdin = file
+		cmdStdin = file
+
 		defer file.Close()
 	}
+
+	cmd = exec.Command(exe, args...)
+	cmd.Env = os.Environ()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = cmdStdin
 
 	err = cmd.Start()
 
