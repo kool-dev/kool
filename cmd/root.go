@@ -6,11 +6,11 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "kool",
-	Short: "kool - kool - Fucking aWesome Development",
+	Short: "kool - Kool stuff",
 	Long: `An easy and robust software development environment
 tool helping you from project creation until deployment.
 Complete documentation is available at https://kool.dev`,
-	Version: "1.0.x",
+	Version: "1.0.7",
 }
 
 // Execute proxies the call to cobra root command
