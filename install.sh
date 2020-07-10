@@ -10,7 +10,7 @@ if [ -z "$DOWNLOAD_URL" ]; then
 fi
 
 DEFAULT_BIN="/usr/local/bin/kool"
-if [ -z "$DOWNLOAD_URL" ]; then
+if [ -z "$BIN_PATH" ]; then
 	BIN_PATH=$DEFAULT_BIN
 fi
 
@@ -43,7 +43,8 @@ do_install () {
 	# 	PLAT="wsl"
 	fi
 
-	wget -O $BIN_PATH "$DOWNLOAD_URL/kool-$PLAT-$ARCH"
+	# wget -O $BIN_PATH "$DOWNLOAD_URL/kool-$PLAT-$ARCH"
+	curl -fsSL "$DOWNLOAD_URL/kool-$PLAT-$ARCH" -o $BIN_PATH
 	chmod +x $BIN_PATH
 }
 

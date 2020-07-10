@@ -6,7 +6,9 @@ Have the same feeling working on multiple projects with different stacks.
 
 ## Installation
 
-One Liner
+```bash
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh)"
+```
 
 ## Usage
 
