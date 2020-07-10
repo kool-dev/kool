@@ -44,7 +44,7 @@ func handleGlobalNetwork() {
 		return
 	}
 
-	_, err = shellExec("docker", "network", "create", "--attachable", os.Getenv("KOOL_GLOBAL_NETWORK"))
+	err = shellInteractive("docker", "network", "create", "--attachable", os.Getenv("KOOL_GLOBAL_NETWORK"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -55,7 +55,6 @@ func startContainers(services string) {
 	var (
 		args []string
 		err  error
-		out  string
 	)
 
 	args = []string{"up", "-d", "--force-recreate"}
@@ -64,10 +63,10 @@ func startContainers(services string) {
 		args = append(args, strings.Split(services, " ")...)
 	}
 
-	out, err = shellExec("docker-compose", args...)
+	err = shellInteractive("docker-compose", args...)
 
 	if err != nil {
-		execError(out, err)
+		execError("", err)
 		os.Exit(1)
 	}
 }

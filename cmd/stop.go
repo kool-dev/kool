@@ -33,7 +33,6 @@ func stopContainers(purge bool) {
 	var (
 		args []string
 		err  error
-		out  string
 	)
 
 	args = []string{"down"}
@@ -42,10 +41,10 @@ func stopContainers(purge bool) {
 		args = append(args, "--volumes", "--remove-orphans")
 	}
 
-	out, err = shellExec("docker-compose", args...)
+	err = shellInteractive("docker-compose", args...)
 
 	if err != nil {
-		execError(out, err)
+		execError("", err)
 		os.Exit(1)
 	}
 }
