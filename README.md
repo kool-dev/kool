@@ -7,7 +7,12 @@ Have the same feeling working on multiple projects with different stacks.
 ## Installation
 
 ```bash
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh)"
+curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | bash
+```
+In case you need sudo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
 ```
 
 ## Usage
