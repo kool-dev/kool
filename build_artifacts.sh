@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm -rf dist
 mkdir -p dist
 
 echo "Building to GOOS=darwin GOARCH=amd64"

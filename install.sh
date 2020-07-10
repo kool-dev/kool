@@ -18,14 +18,6 @@ command_exists() {
 	command -v "$@" > /dev/null 2>&1
 }
 
-# is_wsl() {
-# 	case "$(uname -r)" in
-# 	*microsoft* ) true ;; # WSL 2
-# 	*Microsoft* ) true ;; # WSL 1
-# 	* ) false;;
-# 	esac
-# }
-
 is_darwin() {
 	case "$(uname -s)" in
 	*darwin* ) true ;;
@@ -37,10 +29,9 @@ is_darwin() {
 do_install () {
 	ARCH=$(uname -m)
 	PLAT="linux"
-	if [ is_darwin ]; then
+
+	if is_darwin; then
 		PLAT="darwin"
-	# elif [ is_wsl ]; then
-	# 	PLAT="wsl"
 	fi
 
 	# wget -O $BIN_PATH "$DOWNLOAD_URL/kool-$PLAT-$ARCH"
