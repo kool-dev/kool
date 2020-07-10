@@ -13,6 +13,10 @@ import (
 	"syscall"
 )
 
+var (
+	lookedUp map[string]bool
+)
+
 func shellExec(exe string, args ...string) (outStr string, err error) {
 	var (
 		cmd *exec.Cmd
@@ -37,6 +41,10 @@ func shellInteractive(exe string, args ...string) (err error) {
 		cmd      *exec.Cmd
 		cmdStdin io.Reader = os.Stdin
 	)
+
+	if lookedUp == nil {
+		lookedUp = make(map[string]bool)
+	}
 
 	if exe == "docker-compose" {
 		args = append(dockerComposeDefaultArgs(), args...)
@@ -67,6 +75,18 @@ func shellInteractive(exe string, args ...string) (err error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = cmdStdin
+
+	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
+		// non-kool and non-absolute/relative path... let's look it up
+		_, err = exec.LookPath(exe)
+
+		if err != nil {
+			execError("Failed to run "+cmd.String(), err)
+			os.Exit(2)
+		}
+
+		lookedUp[exe] = true
+	}
 
 	err = cmd.Start()
 
