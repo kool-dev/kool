@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/api"
 	"kool-dev/kool/tgz"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -29,9 +30,9 @@ func init() {
 
 func runDeploy(cmd *cobra.Command, args []string) {
 	var (
-		filename, deployID string
-		deploy             *api.Deploy
-		err                error
+		filename string
+		deploy   *api.Deploy
+		err      error
 	)
 
 	if url := os.Getenv("KOOL_API_URL"); url != "" {
@@ -46,20 +47,56 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	}
 
 	defer func(file string) {
-		if err := os.Remove(file); err != nil {
+		var err error
+		if err = os.Remove(file); err != nil {
 			fmt.Println("error trying to remove temporary tarball:", err)
 		}
 	}(filename)
 
 	deploy = api.NewDeploy(filename)
 
-	deployID, err = deploy.SendFile()
+	err = deploy.SendFile()
 
 	if err != nil {
 		execError("", err)
 		os.Exit(1)
 	}
-	// api.Deploy()
+
+	var finishes chan bool = make(chan bool)
+
+	go func(deploy *api.Deploy, finishes chan bool) {
+		for {
+			err = deploy.GetStatus()
+
+			if err != nil {
+				finishes <- false
+				execError("", err)
+			}
+
+			if deploy.IsSuccessful() {
+				finishes <- true
+			}
+
+			time.Sleep(time.Second * 3)
+		}
+	}(deploy, finishes)
+
+	var success bool
+	for {
+		select {
+		case success = <-finishes:
+			{
+				if success {
+					fmt.Println("Deploy finished:", deploy.GetURL())
+				}
+			}
+
+		case <-time.After(time.Minute * 5):
+			{
+				fmt.Println("timeout waiting deploy to finish")
+			}
+		}
+	}
 }
 
 func createReleaseFile() (filename string, err error) {
@@ -75,15 +112,19 @@ func createReleaseFile() (filename string, err error) {
 	}
 
 	// ignoring .gitignore
-	if _, err := os.Stat(".gitignore"); err != os.ErrNotExist {
+	if _, err = os.Stat(".gitignore"); err != os.ErrNotExist {
 		var (
 			file       *os.File
 			ignoreBlob []byte
 			gitIgnore  [][]byte
 		)
 
-		file, err = os.Open(".gitignore")
-		ignoreBlob, err = ioutil.ReadAll(file)
+		if file, err = os.Open(".gitignore"); err != nil {
+			return
+		}
+		if ignoreBlob, err = ioutil.ReadAll(file); err != nil {
+			return
+		}
 		gitIgnore = bytes.Split(ignoreBlob, []byte("\n"))
 		gitIgnore = append(gitIgnore, []byte("/.git")) // ignoring .git itself
 		tarball.SetIgnoreList(gitIgnore)
