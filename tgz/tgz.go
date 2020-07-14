@@ -19,7 +19,7 @@ type TarGz struct {
 	file      *os.File
 
 	ignorePatterns []*regexp.Regexp
-	ignoreSuffixes []string
+	ignoreFiles    []string
 	ignorePrefixes []string
 
 	g *gzip.Writer
@@ -76,14 +76,19 @@ func (tgz *TarGz) add(file string, fi os.FileInfo, err error) error {
 
 	relPath = strings.TrimPrefix(file, tgz.sourceDir)
 
+	if relPath == "" || relPath == "/" {
+		return nil
+	}
+
 	if tgz.shouldIgnore(relPath) {
 		return nil
 	}
 
-	header, err = tar.FileInfoHeader(fi, relPath)
+	header, err = tar.FileInfoHeader(fi, file)
 	if err != nil {
 		return err
 	}
+	header.Name = strings.TrimPrefix(relPath, "/")
 	if err = tgz.t.WriteHeader(header); err != nil {
 		return err
 	}
@@ -125,7 +130,7 @@ func (tgz *TarGz) SetIgnoreList(ignore [][]byte) {
 		} else if bytes.HasPrefix(ignore[i], []byte("/")) {
 			tgz.ignorePrefixes = append(tgz.ignorePrefixes, string(ignore[i]))
 		} else {
-			tgz.ignoreSuffixes = append(tgz.ignoreSuffixes, string(ignore[i]))
+			tgz.ignoreFiles = append(tgz.ignoreFiles, "/"+string(ignore[i]))
 		}
 	}
 }
@@ -142,7 +147,7 @@ func (tgz *TarGz) shouldIgnore(relPath string) bool {
 			return true
 		}
 	}
-	for _, suffix = range tgz.ignoreSuffixes {
+	for _, suffix = range tgz.ignoreFiles {
 		if strings.HasSuffix(relPath, suffix) {
 			// skip adding into the tarball
 			return true

@@ -71,10 +71,12 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			if err != nil {
 				finishes <- false
 				execError("", err)
+				break
 			}
 
 			if deploy.IsSuccessful() {
 				finishes <- true
+				break
 			}
 
 			time.Sleep(time.Second * 3)
@@ -82,19 +84,21 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	}(deploy, finishes)
 
 	var success bool
-	for {
-		select {
-		case success = <-finishes:
-			{
-				if success {
-					fmt.Println("Deploy finished:", deploy.GetURL())
-				}
+	select {
+	case success = <-finishes:
+		{
+			if success {
+				fmt.Println("Deploy finished:", deploy.GetURL())
+			} else {
+				fmt.Println("Deploy failed.")
 			}
+			break
+		}
 
-		case <-time.After(time.Minute * 5):
-			{
-				fmt.Println("timeout waiting deploy to finish")
-			}
+	case <-time.After(time.Minute * 10):
+		{
+			fmt.Println("timeout waiting deploy to finish")
+			break
 		}
 	}
 }

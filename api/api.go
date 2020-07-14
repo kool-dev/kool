@@ -27,5 +27,6 @@ func doRequest(request *http.Request) (resp *http.Response, err error) {
 	request.Header.Add("Authorization", "Bearer "+apiToken)
 
 	resp, err = http.DefaultClient.Do(request)
+
 	return
 }
