@@ -47,7 +47,7 @@ services:
 #     networks:
 #      - kool_local
 #   cache:
-#     image: redis:alpine
+#     image: redis:6-alpine
 #     volumes:
 #      - cache:/data:cached
 #     networks:
