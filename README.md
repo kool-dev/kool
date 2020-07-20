@@ -8,7 +8,7 @@ Have the same feeling working on multiple projects with different stacks.
 
 ## Demo
 
-<a href="https://www.youtube.com/watch?v=14KNzJI8Oh0" target="_blank" title="Click to see full demo">
+<a href="https://www.youtube.com/watch?v=c4LonyQkFEI" target="_blank" title="Click to see full demo">
     <img src="https://user-images.githubusercontent.com/347400/87970968-fad10c80-ca9a-11ea-9bef-a88400b01f2c.png" alt="kool - demo" style="max-width:100%;">
 </a>
 
