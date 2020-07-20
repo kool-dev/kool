@@ -2,6 +2,8 @@
 
 Dev environment made easy, a standarized way for running applications no matter the stack on your local machine and deploying it to a development environment.
 
+Run any stack / tool with any version, powered by Docker and Docker Compose in a simple way avoiding you to install lots of stuff on your machine.
+
 Have the same feeling working on multiple projects with different stacks.
 
 ## Demo
@@ -11,6 +13,8 @@ Have the same feeling working on multiple projects with different stacks.
 </a>
 
 ## Installation
+
+Kool is powered by [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/), you need to have it installed on your machine.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | bash
