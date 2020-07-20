@@ -11,7 +11,7 @@ By default laravel preset comes with `mysql` and `redis` configured, you can rev
 Also comes with some scripts to bring you up to speed at `kool.yaml`, take a look at the defaults.
 
 ```bash
-$ kool run install
+$ kool run setup
 ```
 
 Now you can see your site at `http://localhost`, you can add more commands to your `kool.yml` or run away:

@@ -6,7 +6,7 @@ Have the same feeling working on multiple projects with different stacks.
 
 ## Demo
 
-<a href="https://www.youtube.com/watch?v=14KNzJI8Oh0" target="_blank" title="kool - demo">![kool - demo](https://user-images.githubusercontent.com/347400/87970968-fad10c80-ca9a-11ea-9bef-a88400b01f2c.png)</a>
+<a href="https://www.youtube.com/watch?v=14KNzJI8Oh0" target="_blank" title="Click to see full demo">![kool - demo](https://user-images.githubusercontent.com/347400/87970968-fad10c80-ca9a-11ea-9bef-a88400b01f2c.png)</a>
 
 ## Installation
 
