@@ -37,6 +37,3 @@ $ kool start
 ```bash
 $ kool stop
 ```
-
-
-

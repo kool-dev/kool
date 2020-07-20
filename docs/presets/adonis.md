@@ -19,7 +19,7 @@ Make these changes to you `.env.example` file or run the commands from `setup` s
 $ kool run setup
 ```
 
-Now you can see your site at `http://localhost`, you can add more commands to your `kool.yml` or run away:
+Now you can see your site at `http://localhost:3333`, you can add more commands to your `kool.yml` or run away:
 
 ```bash
 $ kool run npm install [package]
@@ -42,6 +42,3 @@ $ kool start
 ```bash
 $ kool stop
 ```
-
-
-

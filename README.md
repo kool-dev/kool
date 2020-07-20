@@ -22,12 +22,9 @@ To help learning how to use kool we've built presets with good starting point fo
 ### Presets
 
 - [Adonis](docs/presets/adonis.md)
-- [Adonis with NextJS](docs/presets/adonis-nextjs.md)
 - [Laravel](docs/presets/laravel.md)
 - [NextJS](docs/presets/nextjs.md)
-- [NextJS Static](docs/presets/nextjs-static.md)
 - [NuxtJS](docs/presets/nuxtjs.md)
-- [NuxtJS Static](docs/presets/nuxtjs-static.md)
 
 ### Examples
 
