@@ -9,7 +9,7 @@ on:
       - .github/workflows/docker-description.yml
 
 jobs:
-  dockerHubDescription:
+  docker-description:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
