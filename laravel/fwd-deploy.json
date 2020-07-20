@@ -1,0 +1,60 @@
+{
+    "type": "laravel",
+
+    "services": {
+        "database": {
+            "enabled": true,
+            "persist": true,
+            "image": {
+                "tag": "8.0",
+                "args": "--default-authentication-plugin=mysql_native_password"
+            }
+        },
+        "cache": {
+            "enabled": true,
+            "persist": true
+        }
+    },
+
+    "images": [
+        {
+            "name": "http",
+            "dockerfile": "Dockerfile",
+            "path": "."
+        }
+    ],
+
+    "migrate": {
+        "enabled": true,
+        "command": ["php", "artisan", "migrate:fresh", "--seed", "--force", "--step"]
+    },
+
+    "worker": {
+        "enabled": false,
+        "command": ["php", "artisan", "horizon"]
+    },
+
+    "scheduler": {
+        "enabled": false,
+        "command": ["php", "artisan", "schedule:run"]
+    },
+
+    "env": {
+        "APP_NAME": "{{FWD_TOOLS_SLUG}}",
+        "APP_ENV": "develop",
+        "APP_KEY": "{{FWD_TOOLS_APP_KEY}}",
+        "APP_DEBUG": "true",
+        "APP_URL": "{{FWD_TOOLS_URL}}",
+        "LOG_CHANNEL": "stderr",
+        "DB_HOST": "{{FWD_TOOLS_DATABASE_HOST}}",
+        "DB_PORT": "{{FWD_TOOLS_DATABASE_PORT}}",
+        "DB_DATABASE": "{{FWD_TOOLS_DATABASE_DATABASE}}",
+        "DB_USERNAME": "{{FWD_TOOLS_DATABASE_USERNAME}}",
+        "DB_PASSWORD": "{{FWD_TOOLS_DATABASE_PASSWORD}}",
+        "CACHE_DRIVER": "redis",
+        "QUEUE_CONNECTION": "redis",
+        "SESSION_DRIVER": "redis",
+        "REDIS_HOST": "{{FWD_TOOLS_CACHE_HOST}}",
+        "REDIS_PORT": "{{FWD_TOOLS_CACHE_PORT}}"
+    }
+}

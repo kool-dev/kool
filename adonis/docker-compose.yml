@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  app:
+    image: kooldev/node:14-adonis
+    command: ["adonis", "serve", "--dev"]
+    ports:
+     - "${PORT:-3333}:3333"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
+
+##########################################################################
+# optionally you can enable mysql, redis or other services to your stack #
+##########################################################################
+#   database:
+#     image: mysql:8.0 # possibly change to: mysql:5.7
+#     ports:
+#      - "${KOOL_DATABASE_PORT:-3306}:3306"
+#     environment:
+#       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+#       MYSQL_DATABASE: "${DB_DATABASE:-database}"
+#       MYSQL_USER: "${DB_USERNAME:-user}"
+#       MYSQL_PASSWORD: "${DB_PASSWORD:-}"
+#       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+#     volumes:
+#      - db:/var/lib/mysql:cached
+#     networks:
+#      - kool_local
+#   cache:
+#     image: redis:alpine
+#     volumes:
+#      - cache:/data:cached
+#
+# volumes:
+#   db:
+#   cache:
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"

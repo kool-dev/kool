@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  app:
+    image: kooldev/node:14
+    command: ["npm", "run", "dev"]
+    ports:
+     - "${KOOL_APP_PORT:-3000}:3000"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:cached
+    #  - $HOME/.ssh:/home/kool/.ssh:cached
+    networks:
+     - kool_local
+     - kool_global
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"

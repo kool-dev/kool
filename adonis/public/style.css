@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:300');
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 300;
+  background-image: url("/splash.png");
+  background-color: #220052;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+section {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  max-width: 536px;
+  margin: auto;
+  position: relative;
+}
+
+section:before {
+  content: "";
+  position: absolute;
+  background: url("/pyramid.png") no-repeat;
+  background-size: 100%;
+  width: 100%;
+  height: 402px;
+  z-index: -1;
+}
+
+.logo {
+  background: url("/logo.svg") no-repeat;
+  width: 36px;
+  height: 33px;
+  background-size: 100%;
+  margin-bottom: 35px;
+  opacity: 0;
+  animation: slideUp 1s cubic-bezier(0.19, 1, 0.30, 1) 1.3s forwards;
+}
+
+.title {
+  background: url("/title.svg") no-repeat;
+  width: 219px;
+  height: 36px;
+  background-size: 100%;
+  opacity: 0;
+  animation: slideUp 1s cubic-bezier(0.19, 1, 0.30, 1) 0.2s forwards;
+}
+
+.subtitle {
+  margin-top: 25px;
+  color: #BDB3CB;
+  font-size: 17px;
+  text-align: center;
+  letter-spacing: 0.5;
+  opacity: 0;
+  animation: slideUp 1s cubic-bezier(0.19, 1, 0.30, 1) 0.5s forwards;
+}
+
+
+a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+p {
+  margin: 0.83rem 0;
+}
+
+@keyframes slideUp {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.2%;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}

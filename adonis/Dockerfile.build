@@ -1,0 +1,13 @@
+FROM kooldev/node:14-adonis AS build
+
+COPY . /app
+
+RUN npm install
+
+FROM kooldev/node:14-adonis
+
+COPY --from=build --chown=kool:kool /app /app
+
+EXPOSE 3333
+
+CMD [ "npm", "start" ]
