@@ -5,7 +5,7 @@ scripts:
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
-  install:
+  setup:
     - kool start
     - cp .env.example .env
     - kool run composer install

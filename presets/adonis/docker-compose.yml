@@ -14,10 +14,6 @@ services:
     networks:
      - kool_local
      - kool_global
-
-##########################################################################
-# optionally you can enable mysql, redis or other services to your stack #
-##########################################################################
 #   database:
 #     image: mysql:8.0 # possibly change to: mysql:5.7
 #     ports:

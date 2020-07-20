@@ -29,6 +29,10 @@ To help learning how to use kool we've built presets with good starting point fo
 - [NuxtJS](docs/presets/nuxtjs.md)
 - [NuxtJS Static](docs/presets/nuxtjs-static.md)
 
+### Examples
+
+You can see projects using it here: https://github.com/kool-dev/examples
+
 ## Commands
 
 ### kool start
