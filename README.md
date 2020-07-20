@@ -16,6 +16,8 @@ Have the same feeling working on multiple projects with different stacks.
 
 Kool is powered by [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/), you need to have it installed on your machine.
 
+The run the follow script to install `kool` bin in your machine.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | bash
 ```
