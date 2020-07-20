@@ -79,7 +79,7 @@ services:
 #     networks:
 #      - kool_local
 #   cache:
-#     image: redis:alpine
+#     image: redis:6-alpine
 #     volumes:
 #      - cache:/data:cached
 #     networks:
@@ -132,7 +132,7 @@ APP_URL=http://localhost:${PORT}`,
   npm: kool exec app npm # can change to: yarn,pnpm
   adonis: kool exec adonis adonis
 
-  install:
+  setup:
     - cp .env.example .env
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
@@ -167,10 +167,6 @@ services:
     networks:
      - kool_local
      - kool_global
-
-##########################################################################
-# optionally you can enable mysql, redis or other services to your stack #
-##########################################################################
 #   database:
 #     image: mysql:8.0 # possibly change to: mysql:5.7
 #     ports:
@@ -186,7 +182,7 @@ services:
 #     networks:
 #      - kool_local
 #   cache:
-#     image: redis:alpine
+#     image: redis:6-alpine
 #     volumes:
 #      - cache:/data:cached
 #
@@ -208,7 +204,7 @@ APP_URL=http://localhost:${PORT}`,
   npm: kool exec app npm # can change to: yarn,pnpm
   adonis: kool exec app adonis
 
-  install:
+  setup:
     - cp .env.example .env
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
@@ -258,7 +254,7 @@ services:
     networks:
      - kool_local
   cache:
-    image: redis:alpine
+    image: redis:6-alpine
     volumes:
      - cache:/data:cached
     networks:
@@ -280,7 +276,7 @@ networks:
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
-  install:
+  setup:
     - kool start
     - cp .env.example .env
     - kool run composer install
@@ -332,7 +328,7 @@ networks:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
-  install:
+  setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
@@ -376,7 +372,7 @@ networks:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
-  install:
+  setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
@@ -423,7 +419,7 @@ networks:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
-  install:
+  setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
@@ -472,7 +468,7 @@ networks:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
-  install:
+  setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
