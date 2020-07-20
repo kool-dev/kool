@@ -19,4 +19,4 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-          DOCKERHUB_REPOSITORY: kool-dev/kool
+          DOCKERHUB_REPOSITORY: kooldev/kool
