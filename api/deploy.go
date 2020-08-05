@@ -34,12 +34,12 @@ func (d *Deploy) GetID() string {
 // SendFile calls deploy/create in the Kool Dev API
 func (d *Deploy) SendFile() (err error) {
 	var (
-		buff bytes.Buffer
-		file *os.File
-		fw   io.Writer
-		slug string
-		resp *http.Response
-		raw  []byte
+		buff   bytes.Buffer
+		file   *os.File
+		fw     io.Writer
+		domain string
+		resp   *http.Response
+		raw    []byte
 	)
 
 	w := multipart.NewWriter(&buff)
@@ -58,8 +58,8 @@ func (d *Deploy) SendFile() (err error) {
 	}
 
 	defer file.Close()
-	if slug = os.Getenv("KOOL_DEPLOY_SLUG"); slug != "" {
-		w.WriteField("slug", slug)
+	if domain = os.Getenv("KOOL_DEPLOY_DOMAIN"); domain != "" {
+		w.WriteField("domain", domain)
 	}
 	w.Close()
 
@@ -82,6 +82,7 @@ func (d *Deploy) SendFile() (err error) {
 		fmt.Println(string(raw))
 	} else if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		err = ErrBadResponseStatus
+		fmt.Println(string(raw))
 	}
 
 	if err != nil {
