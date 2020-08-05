@@ -33,10 +33,10 @@ To help learning how to use kool we've built presets with good starting point fo
 
 ### Presets
 
-- [Adonis](docs/presets/adonis.md)
-- [Laravel](docs/presets/laravel.md)
-- [NextJS](docs/presets/nextjs.md)
-- [NuxtJS](docs/presets/nuxtjs.md)
+- [Adonis](docs/3-Presets/2-Adonis.md)
+- [Laravel](docs/3-Presets/3-Laravel.md)
+- [NextJS](docs/3-Presets/4-NextJS.md)
+- [NuxtJS](docs/3-Presets/5-NuxtJS.md)
 
 ### Examples
 
