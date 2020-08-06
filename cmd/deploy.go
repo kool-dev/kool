@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"kool-dev/kool/api"
 	"kool-dev/kool/tgz"
 	"os"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -39,6 +39,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		api.SetBaseURL(url)
 	}
 
+	fmt.Println("Create release file...")
 	filename, err = createReleaseFile()
 
 	if err != nil {
@@ -55,12 +56,15 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 	deploy = api.NewDeploy(filename)
 
+	fmt.Println("Upload release file...")
 	err = deploy.SendFile()
 
 	if err != nil {
 		execError("", err)
 		os.Exit(1)
 	}
+
+	fmt.Println("Wait for deploy to finish...")
 
 	var finishes chan bool = make(chan bool)
 
@@ -115,28 +119,44 @@ func createReleaseFile() (filename string, err error) {
 		return
 	}
 
-	// ignoring .gitignore
-	if _, err = os.Stat(".gitignore"); err != os.ErrNotExist {
-		var (
-			file       *os.File
-			ignoreBlob []byte
-			gitIgnore  [][]byte
-		)
-
-		if file, err = os.Open(".gitignore"); err != nil {
-			return
-		}
-		if ignoreBlob, err = ioutil.ReadAll(file); err != nil {
-			return
-		}
-		gitIgnore = bytes.Split(ignoreBlob, []byte("\n"))
-		gitIgnore = append(gitIgnore, []byte("/.git")) // ignoring .git itself
-		tarball.SetIgnoreList(gitIgnore)
-		gitIgnore = nil
+	var hasGit bool = true
+	if _, err = exec.LookPath("git"); err != nil {
+		hasGit = false
 	}
 
-	cwd, _ = os.Getwd()
-	filename, err = tarball.Compress(cwd)
+	if _, err = os.Stat(".git"); hasGit && !os.IsNotExist(err) {
+		// we are in a Git environment
+		var (
+			output []byte
+			files  []string
+		)
+		// Exclude list
+		// git ls-files -d // delete files
+		output, err = exec.Command("git", "ls-files", "-d").CombinedOutput()
+		if err != nil {
+			panic(fmt.Errorf("Failed listing deleted "))
+		}
+		tarball.SetIgnoreList(strings.Split(string(output), "\n"))
+
+		// Include list
+		// git ls-files -c
+		output, err = exec.Command("git", "ls-files", "-c").CombinedOutput()
+		if err != nil {
+			panic(fmt.Errorf("Failed list Git cached files"))
+		}
+		files = append(files, strings.Split(string(output), "\n")...)
+		// git ls-files -o --exclude-standard
+		output, err = exec.Command("git", "ls-files", "-o", "--exclude-standard").CombinedOutput()
+		if err != nil {
+			panic(fmt.Errorf("Failed list Git untracked non-ignored files"))
+		}
+		files = append(files, strings.Split(string(output), "\n")...)
+
+		filename, err = tarball.CompressFiles(files)
+	} else {
+		cwd, _ = os.Getwd()
+		filename, err = tarball.CompressFolder(cwd)
+	}
 
 	return
 }
