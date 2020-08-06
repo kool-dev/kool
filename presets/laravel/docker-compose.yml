@@ -8,8 +8,8 @@ services:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
-     - .:/app:cached
-    #  - $HOME/.ssh:/home/kool/.ssh:cached
+     - .:/app:delegated
+    #  - $HOME/.ssh:/home/kool/.ssh:delegated
     networks:
      - kool_local
      - kool_global
@@ -25,13 +25,13 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:cached
+     - db:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
     image: redis:6-alpine
     volumes:
-     - cache:/data:cached
+     - cache:/data:delegated
     networks:
      - kool_local
 

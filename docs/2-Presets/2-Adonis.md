@@ -24,6 +24,8 @@ Also comes with some scripts to bring you up to speed at **kool.yaml**, take a l
 
 By default we always add a script called **setup** to help you setup a project for first time, but adonis also requires some environment changes in order to work with **docker**, for that we added a file **kool.env** to show what changes you have to do yo our **.env** file.
 
+The host you will use in your application config for any service using docker like mysql, redis or mongo will be the service name in the **docker-compose.yml**, so **mysql** will be referenced as **database**, feel free to change the name.
+
 We recommend making these changes to you **.env.example** file to avoid steps on future installations.
 
 ```bash

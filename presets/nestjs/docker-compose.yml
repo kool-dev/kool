@@ -1,10 +1,10 @@
 version: "3.8"
 services:
   app:
-    image: kooldev/node:14-adonis
-    command: ["adonis", "serve", "--dev"]
+    image: kooldev/node:14-nest
+    command: ["npm", "run", "start:dev"]
     ports:
-     - "${PORT:-3333}:3333"
+     - "${PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
@@ -15,7 +15,7 @@ services:
      - kool_local
      - kool_global
 #   database:
-#     image: mysql:8.0 # possibly change to: mysql:5.7
+#     image: mysql:8.0
 #     ports:
 #      - "${KOOL_DATABASE_PORT:-3306}:3306"
 #     environment:
@@ -32,10 +32,23 @@ services:
 #     image: redis:6-alpine
 #     volumes:
 #      - cache:/data:delegated
+#   mongo:
+#     image: mongo:4
+#     ports:
+#      - "${KOOL_MONGO_PORT:-27017}:27017"
+#     environment:
+#       MONGO_INITDB_ROOT_USERNAME: "${MONGO_USERNAME:-root}"
+#       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD:-rootpass}"
+#       MONGO_INITDB_DATABASE: "${MONGO_DATABASE:-database}"
+#     volumes:
+#      - mongo:/data/db:delegated
+#     networks:
+#      - kool_local
 #
 # volumes:
 #   db:
 #   cache:
+#   mongo:
 
 networks:
   kool_local:

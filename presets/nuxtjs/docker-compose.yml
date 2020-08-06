@@ -9,8 +9,8 @@ services:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
-     - .:/app:cached
-    #  - $HOME/.ssh:/home/kool/.ssh:cached
+     - .:/app:delegated
+    #  - $HOME/.ssh:/home/kool/.ssh:delegated
     networks:
      - kool_local
      - kool_global
