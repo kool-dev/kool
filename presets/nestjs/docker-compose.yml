@@ -1,10 +1,10 @@
-version: "3.8"
+version: "3.7"
 services:
   app:
     image: kooldev/node:14-nest
     command: ["npm", "run", "start:dev"]
     ports:
-     - "${PORT:-3000}:3000"
+     - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
