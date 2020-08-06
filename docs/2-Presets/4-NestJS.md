@@ -13,7 +13,7 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool init nestks
+$ kool init nestjs
 ```
 
 **kool init** basically creates a few configuration files in order to enable you to configure / extend it.
@@ -27,10 +27,9 @@ Also comes with some scripts to bring you up to speed at **kool.yaml**, take a l
 By default we always add a script called **setup** to help you setup a project for first time.
 
 ```bash
-# CAUTION, this script will reset your `.env` file with `.env.example`
 $ kool run setup
 ```
 
-Now you can see your site at **http://localhost:3333**.
+Now you can see your site at **http://localhost:3000**.
 
 Check your **kool.yml** to see what scripts you can run and add more.
