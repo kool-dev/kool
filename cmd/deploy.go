@@ -64,13 +64,19 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Println("Wait for deploy to finish...")
+	fmt.Println("Going to deploy...")
 
 	var finishes chan bool = make(chan bool)
 
 	go func(deploy *api.Deploy, finishes chan bool) {
+		var lastStatus string
 		for {
 			err = deploy.GetStatus()
+
+			if lastStatus != deploy.Status {
+				lastStatus = deploy.Status
+				fmt.Println("  > deploy:", lastStatus)
+			}
 
 			if err != nil {
 				finishes <- false
