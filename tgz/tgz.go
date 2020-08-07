@@ -2,14 +2,11 @@ package tgz
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -18,9 +15,7 @@ type TarGz struct {
 	sourceDir string
 	file      *os.File
 
-	ignorePatterns []*regexp.Regexp
-	ignoreFiles    []string
-	ignorePrefixes []string
+	ignoreFilesMap map[string]bool
 
 	g *gzip.Writer
 	t *tar.Writer
@@ -40,14 +35,35 @@ func NewTemp() (tgz *TarGz, err error) {
 	return
 }
 
-// Compress adds the given folder to the tarball archive
-func (tgz *TarGz) Compress(dir string) (tmpfile string, err error) {
+// CompressFiles creates the tarball with the given files list
+func (tgz *TarGz) CompressFiles(files []string) (tmpfile string, err error) {
+	var (
+		file string
+		fi   os.FileInfo
+	)
+
+	for _, file = range files {
+		fi, err = os.Stat(file)
+		tgz.add(file, fi, err)
+	}
+
+	tmpfile, err = tgz.finishCompress()
+	return
+}
+
+// CompressFolder adds the given folder to the tarball archive
+func (tgz *TarGz) CompressFolder(dir string) (tmpfile string, err error) {
 	tgz.sourceDir = dir
 
 	if err = filepath.Walk(tgz.sourceDir, tgz.add); err != nil {
 		return
 	}
 
+	tmpfile, err = tgz.finishCompress()
+	return
+}
+
+func (tgz *TarGz) finishCompress() (tmpfile string, err error) {
 	if err = tgz.t.Close(); err != nil {
 		return
 	}
@@ -108,57 +124,15 @@ func (tgz *TarGz) add(file string, fi os.FileInfo, err error) error {
 
 // SetIgnoreList defines the list of file patterns
 // that must be ignored from the tarball created.
-func (tgz *TarGz) SetIgnoreList(ignore [][]byte) {
-	var (
-		i, l int
-		p    string
-	)
-	l = len(ignore)
-	for i = 0; i < l; i++ {
-		if len(ignore[i]) == 0 {
-			continue
-		}
-
-		if bytes.Contains(ignore[i], []byte("*")) {
-			p = strings.ReplaceAll(regexp.QuoteMeta(strings.ReplaceAll(string(ignore[i]), "*", "__ANYTHING__")), "__ANYTHING__", ".*")
-			rx, err := regexp.Compile(p)
-			if err != nil {
-				fmt.Println("ERROR: could not parse ignore pattern: ", string(ignore[i]), err)
-			} else {
-				tgz.ignorePatterns = append(tgz.ignorePatterns, rx)
-			}
-		} else if bytes.HasPrefix(ignore[i], []byte("/")) {
-			tgz.ignorePrefixes = append(tgz.ignorePrefixes, string(ignore[i]))
-		} else {
-			tgz.ignoreFiles = append(tgz.ignoreFiles, "/"+string(ignore[i]))
-		}
+func (tgz *TarGz) SetIgnoreList(ignoreList []string) {
+	var file string
+	tgz.ignoreFilesMap = make(map[string]bool, len(ignoreList))
+	for _, file = range ignoreList {
+		tgz.ignoreFilesMap[strings.Trim(file, string(os.PathSeparator))] = true
 	}
 }
 
-func (tgz *TarGz) shouldIgnore(relPath string) bool {
-	var (
-		suffix, prefix string
-		pattern        *regexp.Regexp
-	)
-
-	for _, pattern = range tgz.ignorePatterns {
-		if pattern.MatchString(relPath) {
-			// skip adding into the tarball
-			return true
-		}
-	}
-	for _, suffix = range tgz.ignoreFiles {
-		if strings.HasSuffix(relPath, suffix) {
-			// skip adding into the tarball
-			return true
-		}
-	}
-	for _, prefix = range tgz.ignorePrefixes {
-		if strings.HasPrefix(relPath, prefix) {
-			// skip adding into the tarball
-			return true
-		}
-	}
-
-	return false
+func (tgz *TarGz) shouldIgnore(relPath string) (ignores bool) {
+	_, ignores = tgz.ignoreFilesMap[strings.Trim(relPath, string(os.PathSeparator))]
+	return
 }
