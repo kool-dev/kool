@@ -10,7 +10,7 @@ var rootCmd = &cobra.Command{
 	Long: `An easy and robust software development environment
 tool helping you from project creation until deployment.
 Complete documentation is available at https://kool.dev`,
-	Version: "1.0.10",
+	Version: "1.0.11",
 }
 
 // Execute proxies the call to cobra root command

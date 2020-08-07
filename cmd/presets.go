@@ -62,17 +62,12 @@ networks:
   kool_global:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
-		"kool.env": `HOST=0.0.0.0
-PORT=3333
-NODE_ENV=development
-APP_URL=http://localhost:${PORT}`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
   adonis: kool exec app adonis
 
   setup:
-    - cp .env.example .env
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
 	}
@@ -502,15 +497,6 @@ networks:
   setup:
     - kool start
     - cp .env.example .env
-    - kool run composer install
-    - kool run php artisan key:generate
-    - kool run npm install
-    - kool run npm run dev
-
-  reset:
-    - kool run composer install
-    - kool run php artisan migrate:fresh --seed
-    - kool run npm install
-    - kool run npm run dev`,
+    - kool run composer install`,
 	}
 }
