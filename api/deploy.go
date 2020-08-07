@@ -15,7 +15,7 @@ import (
 // Deploy represents a deployment process, from
 // request to finish and retrieving the public URL.
 type Deploy struct {
-	tarballPath, id, status, url string
+	tarballPath, id, Status, url string
 }
 
 // NewDeploy creates a new handler for using the
@@ -139,17 +139,17 @@ func (d *Deploy) GetStatus() (err error) {
 	}
 	raw = nil
 
-	if d.status, ok = data["status"].(string); !ok {
+	if d.Status, ok = data["status"].(string); !ok {
 		err = ErrUnexpectedResponse
 		return
 	}
 
-	if d.status == "failed" {
+	if d.Status == "failed" {
 		err = ErrDeployFailed
 		return
 	}
 
-	if d.status == "success" {
+	if d.Status == "success" {
 		if d.url, ok = data["url"].(string); !ok {
 			err = ErrUnexpectedResponse
 			return
@@ -162,7 +162,7 @@ func (d *Deploy) GetStatus() (err error) {
 // IsSuccessful tells whether the deployment
 // process finished successfully.
 func (d *Deploy) IsSuccessful() bool {
-	return d.status == "success"
+	return d.Status == "success"
 }
 
 // GetURL returns the generated URL for the deployment
