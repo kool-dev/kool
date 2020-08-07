@@ -1,23 +1,24 @@
 scripts:
-  artisan: kool exec app php artisan
+  console: kool exec app php ./bin/console
+  phpunit: kool exec app php ./bin/phpunit
   composer: kool exec app composer
 
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD
+  mysql: kool exec database mysql -uroot -prootpass
+  mysql-no-tty: kool exec --disable-tty database mysql -uroot -prootpass
 
   setup:
     - kool start
     - cp .env.example .env
     - kool run composer install
-    - kool run artisan key:generate
+    - kool run php artisan key:generate
     - kool run npm install
     - kool run npm run dev
 
   reset:
     - kool run composer install
-    - kool run artisan migrate:fresh --seed
+    - kool run php artisan migrate:fresh --seed
     - kool run npm install
     - kool run npm run dev
