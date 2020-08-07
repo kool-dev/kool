@@ -45,7 +45,6 @@ The host you will use in your application config for any service using docker li
 We recommend making these changes to you **.env.example** file to avoid steps on future installations.
 
 ```bash
-# CAUTION, this script will reset your `.env` file with `.env.example`
 $ kool run setup
 ```
 

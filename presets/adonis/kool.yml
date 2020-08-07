@@ -4,6 +4,5 @@ scripts:
   adonis: kool exec app adonis
 
   setup:
-    - cp .env.example .env
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start

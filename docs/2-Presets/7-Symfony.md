@@ -1,9 +1,9 @@
-### Create Laravel Project from Scratch
+### Create Symfony Project from Scratch
 
 To make things easier we will use **kool** to install it for you.
 
 ```bash
-kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel my-project
+kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton my-project
 
 cd my-project
 ```
@@ -13,12 +13,12 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool init laravel
+$ kool init symfony
 ```
 
 **kool init** basically creates a few configuration files in order to enable you to configure / extend it.
 
-By default laravel preset comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
+By default symfony preset comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
 
 Also comes with some scripts to bring you up to speed at **kool.yaml**, take a look at the defaults.
 
@@ -39,6 +39,7 @@ The host you will use in your application config for any service using docker li
 We recommend making these changes to you **.env.example** file to avoid steps on future installations.
 
 ```bash
+# CAUTION, this script will reset your `.env` file with `.env.example`
 $ kool run setup
 ```
 
