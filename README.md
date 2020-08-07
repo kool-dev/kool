@@ -1,10 +1,18 @@
 # kool
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/kool-dev/kool)](https://goreportcard.com/report/github.com/kool-dev/kool)
+![docker](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
+### Development workspaces made easy
+
 Dev environment made easy, a standarized way for running applications no matter the stack on your local machine and deploying it to a development environment.
 
 Run any stack / tool with any version, powered by Docker and Docker Compose in a simple way avoiding you to install lots of stuff on your machine.
 
 Have the same feeling working on multiple projects with different stacks.
+
+## Documentation
+
+Full documentation at https://kool.dev/docs
 
 ## Demo
 
