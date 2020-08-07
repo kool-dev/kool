@@ -42,7 +42,7 @@ services:
 #       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
 #       MYSQL_DATABASE: "${DB_DATABASE:-database}"
 #       MYSQL_USER: "${DB_USERNAME:-user}"
-#       MYSQL_PASSWORD: "${DB_PASSWORD:-}"
+#       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
 #      - db:/var/lib/mysql:delegated
@@ -114,7 +114,7 @@ services:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
       MYSQL_DATABASE: "${DB_DATABASE:-database}"
       MYSQL_USER: "${DB_USERNAME:-user}"
-      MYSQL_PASSWORD: "${DB_PASSWORD:-}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
      - db:/var/lib/mysql:delegated
@@ -137,7 +137,7 @@ networks:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
 		"kool.yml": `scripts:
-  php: kool exec app php
+  artisan: kool exec app php artisan
   composer: kool exec app composer
 
   node: kool docker kooldev/node:14 node
@@ -150,13 +150,13 @@ networks:
     - kool start
     - cp .env.example .env
     - kool run composer install
-    - kool run php artisan key:generate
+    - kool run artisan key:generate
     - kool run npm install
     - kool run npm run dev
 
   reset:
     - kool run composer install
-    - kool run php artisan migrate:fresh --seed
+    - kool run artisan migrate:fresh --seed
     - kool run npm install
     - kool run npm run dev`,
 	}
@@ -198,7 +198,7 @@ services:
 #       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
 #       MYSQL_DATABASE: "${DB_DATABASE:-database}"
 #       MYSQL_USER: "${DB_USERNAME:-user}"
-#       MYSQL_PASSWORD: "${DB_PASSWORD:-}"
+#       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
 #      - db:/var/lib/mysql:delegated
@@ -427,5 +427,90 @@ networks:
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
+	}
+	presets["symfony"] = map[string]string{
+		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
+
+COPY . /app
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --quiet
+
+FROM kooldev/node:14 AS node
+
+COPY --from=composer /app /app
+RUN yarn install && yarn prod
+
+FROM kooldev/php:7.4-nginx
+
+COPY --from=node --chown=kool:kool /app /app`,
+		"docker-compose.yml": `version: "3.7"
+services:
+  app:
+    image: kooldev/php:7.4-nginx
+    ports:
+     - "${KOOL_APP_PORT:-80}:80"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:delegated
+    #  - $HOME/.ssh:/home/kool/.ssh:delegated
+    networks:
+     - kool_local
+     - kool_global
+  database:
+    image: mysql:8.0 # can change to: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password # remove this line if you change to: mysql:5.7
+    ports:
+     - "${KOOL_DATABASE_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE:-database}"
+      MYSQL_USER: "${DB_USERNAME:-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+     - db:/var/lib/mysql:delegated
+    networks:
+     - kool_local
+  cache:
+    image: redis:6-alpine
+    volumes:
+     - cache:/data:delegated
+    networks:
+     - kool_local
+
+volumes:
+  db:
+  cache:
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+		"kool.yml": `scripts:
+  console: kool exec app php ./bin/console
+  phpunit: kool exec app php ./bin/phpunit
+  composer: kool exec app composer
+
+  node: kool docker kooldev/node:14 node
+  npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
+
+  mysql: kool exec database mysql -uroot -prootpass
+  mysql-no-tty: kool exec --disable-tty database mysql -uroot -prootpass
+
+  setup:
+    - kool start
+    - cp .env.example .env
+    - kool run composer install
+    - kool run php artisan key:generate
+    - kool run npm install
+    - kool run npm run dev
+
+  reset:
+    - kool run composer install
+    - kool run php artisan migrate:fresh --seed
+    - kool run npm install
+    - kool run npm run dev`,
 	}
 }
