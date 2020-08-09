@@ -101,6 +101,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				fmt.Println("Deploy finished:", deploy.GetURL())
 			} else {
 				fmt.Println("Deploy failed.")
+				os.Exit(1)
 			}
 			break
 		}
