@@ -160,6 +160,7 @@ func createReleaseFile() (filename string, err error) {
 
 		filename, err = tarball.CompressFiles(files)
 	} else {
+		fmt.Println("Fallback to tarball full current working directory...")
 		cwd, _ = os.Getwd()
 		filename, err = tarball.CompressFolder(cwd)
 	}

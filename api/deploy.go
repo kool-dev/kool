@@ -48,6 +48,9 @@ func (d *Deploy) SendFile() (err error) {
 		return
 	}
 
+	fi, _ := file.Stat()
+	fmt.Printf("Release tarball got %.2fMBs...\n", float64(fi.Size())/1024/1024)
+
 	// fw, err = w.CreateFormFile("deploy", d.tarballPath)
 	if fw, err = w.CreateFormFile("deploy", "deploy.tgz"); err != nil {
 		return
