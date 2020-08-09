@@ -90,6 +90,11 @@ func (tgz *TarGz) add(file string, fi os.FileInfo, err error) error {
 		return err
 	}
 
+	if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+		// ignore symlink
+		return nil
+	}
+
 	relPath = strings.TrimPrefix(file, tgz.sourceDir)
 
 	if relPath == "" || relPath == "/" {
