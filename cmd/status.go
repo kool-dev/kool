@@ -64,11 +64,10 @@ func statusDisplayServices() {
 			}
 
 			if out != "" {
-				ss.running = true
-				// it is running
 				out, err = shellExec("docker", "ps", "-a", "--filter", "ID="+out, "--format", "{{.Status}}|{{.Ports}}")
 
 				containerInfo := strings.Split(out, "|")
+				ss.running = strings.HasPrefix(containerInfo[0], "Up")
 				ss.state = containerInfo[0]
 				if len(containerInfo) > 1 {
 					ss.ports = containerInfo[1]
