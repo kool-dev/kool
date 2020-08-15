@@ -14,6 +14,17 @@ Have the same feeling working on multiple projects with different stacks.
 
 Full documentation at https://kool.dev/docs
 
+#### Updating commands signature documentation
+
+The Cobra library offers a simple solution for getting markdown documentation for usage of its commands. In order to generate update the generated markdown files do as follow:
+
+```bash
+cd docs
+bash make_docs.sh
+git add .
+git commit -m "Updated commands docs"
+```
+
 ## Demo
 
 <a href="https://www.youtube.com/watch?v=c4LonyQkFEI" target="_blank" title="Click to see full demo">
