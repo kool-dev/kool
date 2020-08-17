@@ -1,5 +1,5 @@
 FROM docker/compose:alpine-1.26.2 AS docker-compose
-FROM golang:1.14 AS build
+FROM golang:1.15.0 AS build
 
 WORKDIR /app
 
