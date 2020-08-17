@@ -12,18 +12,7 @@ Have the same feeling working on multiple projects with different stacks.
 
 ## Documentation
 
-Full documentation at https://kool.dev/docs
-
-#### Updating commands signature documentation
-
-The Cobra library offers a simple solution for getting markdown documentation for usage of its commands. In order to generate update the generated markdown files do as follow:
-
-```bash
-cd docs
-bash make_docs.sh
-git add .
-git commit -m "Updated commands docs"
-```
+Full documentation at **https://kool.dev/docs** or at [docs/](docs/).
 
 ## Demo
 
@@ -52,126 +41,31 @@ To help learning how to use kool we've built presets with good starting point fo
 
 ### Presets
 
-- [Adonis](docs/3-Presets/2-Adonis.md)
-- [Laravel](docs/3-Presets/3-Laravel.md)
-- [NextJS](docs/3-Presets/4-NestJS.md)
-- [NextJS](docs/3-Presets/5-NextJS.md)
-- [NuxtJS](docs/3-Presets/6-NuxtJS.md)
+- [Adonis](docs/2-resets/Adonis.md)
+- [Laravel](docs/2-Presets/Laravel.md)
+- [NextJS](docs/2-Presets/NestJS.md)
+- [NextJS](docs/2-Presets/NextJS.md)
+- [NuxtJS](docs/2-Presets/NuxtJS.md)
+- [NuxtJS](docs/2-Presets/Symfony.md)
 
 ### Examples
 
 You can see projects using it here: https://github.com/kool-dev/examples
 
-## Commands
-
-### kool start
-
-```bash
-$ kool start [flags]
-```
-
-Start services (containers) defined on docker-compose.yml
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `--services=` | `string` | Specific services to be started |
-
-### kool status
-
-```bash
-$ kool status
-```
-
-Shows the status for containers
-
-### kool info
-
-```bash
-$ kool info
-```
-
-Prints out information about kool setup (like environment variables)
-
-### kool init
-
-```bash
-$ kool init [preset] [flags]
-```
-
-Enable Kool preset configuration in the current working directory
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `preset` | `string` | The preset [(Presets)](#presets) |
-| `--override` | `none` | Force replace local existing files with the default preset files |
-
-### kool exec
-
-```bash
-$ kool exec [service] [command]
-```
-
-Execute command in running container.
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `service` | `string` | The service from `docker-compose.yml`, i.e: `app`,`database`,`adonis` |
-| `command` | `string` | The command to run, i.e: `php artisan migrate`, `adonis run:migration`, `npm build` |
-
-### kool run
-
-```bash
-$ kool run [script] [command]
-```
-
-Execute script or a docker image.
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `script` | `string` | Script to run within your `kool.yaml` file. |
-| `command` | `string` | The command to run, i.e: `composer install`, `yarn install` |
-
-### kool docker
-
-```bash
-$ kool docker [image] [command]
-```
-
-Execute script or a docker image.
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `image` | `string` | Docker image to run, i.e: `kooldev/node:14` |
-| `command` | `string` | The command to run, i.e: `composer install`, `yarn install` |
-| `--disable-tty / -T` | `none` | Force disable tty, good for CI/CI/Automation |
-
-### kool stop
-
-```bash
-$ kool stop [flags]
-```
-
-Stop containers.
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `--purge` | `none` | If enabled, docker volume will be deleted. |
-
-### Understanding kool.yml
-
-This is where most of the magic happens, a way to make your life easy, orchestrating scripts for you to use on your local environment or CI/CDs. Look at presets to see examples.
-
-### Understanding docker-compose.yml
-
-This is where you control your local environment.
-
-### Understanding Dockerfile.build
-
-This file gives you a way for building Docker images for production. More docs to come.
-
 ## Contributing
 
 [Build](docs/build.md)
+
+#### Updating commands signature documentation
+
+The Cobra library offers a simple solution for getting markdown documentation for usage of its commands. In order to generate update the generated markdown files do as follow:
+
+```bash
+cd docs
+bash make_docs.sh
+git add .
+git commit -m "Updated commands docs"
+```
 
 ## License
 
