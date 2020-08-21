@@ -17,7 +17,7 @@ Complete documentation is available at https://kool.dev
 
 ### SEE ALSO
 
-* [kool deploy](kool_deploy.md)	 - Deploys your application usin Kool Dev
+* [kool deploy](kool_deploy.md)	 - Deploys your application using Kool Dev
 * [kool docker](kool_docker.md)	 - Creates a new container and runs the command in it.
 * [kool exec](kool_exec.md)	 - Execute a command within a running service container
 * [kool info](kool_info.md)	 - Prints out information about kool setup (like environment variables)

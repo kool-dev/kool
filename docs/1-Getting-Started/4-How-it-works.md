@@ -1,6 +1,6 @@
 Kool works with Docker / Docker Compose under the hood, and comes with some cool presets to help you get started, everything is configurable / extendable.
 
-Let's use **Laravel** preset as example and exaplain how it works.
+Let's use **Laravel** preset as example and explain how it works.
 
 When you run **kool init laravel** all it does is create a few files for you:
 
