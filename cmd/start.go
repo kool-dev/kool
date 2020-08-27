@@ -29,18 +29,9 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) {
-	checkDaemon()
+	checkKoolDependencies()
 	handleGlobalNetwork()
 	startContainers(startFlags.Services)
-}
-
-func checkDaemon() {
-	_, err := shellExec("docker", "info")
-
-	if err != nil {
-		execError("Docker daemon doesn't seem to be running, run it first and retry.", err)
-		os.Exit(1)
-	}
 }
 
 func handleGlobalNetwork() {

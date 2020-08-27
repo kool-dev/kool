@@ -26,6 +26,7 @@ func init() {
 }
 
 func runStop(cmd *cobra.Command, args []string) {
+	checkKoolDependencies()
 	stopContainers(stopFlags.Purge)
 }
 

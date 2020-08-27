@@ -20,8 +20,8 @@ var statusCmd = &cobra.Command{
 }
 
 func runStatus(cmd *cobra.Command, args []string) {
+	checkKoolDependencies()
 	handleGlobalNetwork()
-
 	statusDisplayServices()
 }
 
