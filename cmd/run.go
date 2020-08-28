@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"path"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
@@ -66,54 +67,84 @@ func runRun(cmd *cobra.Command, args []string) {
 	}
 }
 
+func getKoolScriptsFilePath(rootPath string) (filePath string) {
+	var err error
+
+	if _, err = os.Stat(path.Join(rootPath, "kool.yml")); !os.IsNotExist(err) {
+		filePath = path.Join(rootPath, "kool.yml")
+	} else if _, err = os.Stat(path.Join(rootPath, "kool.yaml")); !os.IsNotExist(err) {
+		filePath = path.Join(rootPath, "kool.yaml")
+	}
+
+	return
+}
+
+func getKoolContent(filePath string) (*KoolYaml, error){
+	file, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	yml, err := ioutil.ReadAll(file)
+
+	if err != nil {
+		return nil, err
+	}
+
+	parsed := new(KoolYaml)
+
+	err = yaml.Unmarshal(yml, parsed)
+	yml = nil
+
+	return parsed, err
+}
+
 func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	var (
-		err      error
-		fileName string
-		file     *os.File
-		yml      []byte
+		err             error
+		fileName        string
+		parsed          *KoolYaml
+		foundProject    bool
+		foundGlobal     bool
+		isRunningGlobal bool
 	)
 
-	if _, err = os.Stat("kool.yml"); !os.IsNotExist(err) {
-		fileName = "kool.yml"
-	} else {
-		if _, err = os.Stat("kool.yaml"); !os.IsNotExist(err) {
-			fileName = "kool.yaml"
-		}
-	}
+	fileName = getKoolScriptsFilePath(os.Getenv("PWD"))
 
 	if fileName == "" {
 		fmt.Println("Could not find kool.yml in the current working directory.")
 		os.Exit(2)
 	}
 
-	file, err = os.OpenFile(fileName, os.O_RDONLY, os.ModePerm)
-
-	if err != nil {
-		fmt.Println("Error", err)
-		os.Exit(1)
-	}
-
-	defer file.Close()
-
-	yml, err = ioutil.ReadAll(file)
-
-	if err != nil {
-		fmt.Println("Error", err)
-		os.Exit(1)
-	}
-
-	var parsed *KoolYaml = new(KoolYaml)
-	err = yaml.Unmarshal(yml, parsed)
-	yml = nil
+	projectParsed, err := getKoolContent(fileName)
 
 	if err != nil {
 		fmt.Println("Failed to parse", fileName, ":", err)
 	}
 
-	if _, found := parsed.Scripts[script]; !found {
+	fileName = getKoolScriptsFilePath(path.Join(os.Getenv("HOME"), "kool"))
+
+	globalParsed, _ := getKoolContent(fileName)
+
+	_, foundProject = projectParsed.Scripts[script];
+
+	if (globalParsed != nil) {
+		_, foundGlobal = globalParsed.Scripts[script];
+	}
+
+	if !foundProject && !foundGlobal {
 		fmt.Println("Could not find script", script, "within", fileName)
 		os.Exit(2)
+	}
+
+	if foundProject {
+		parsed = projectParsed
+	} else {
+		parsed = globalParsed
+		isRunningGlobal = true
 	}
 
 	if singleCommand, isSingleString := parsed.Scripts[script].(string); isSingleString {
@@ -125,6 +156,13 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	} else {
 		fmt.Println("Could not parse script with key", script, ": it must be either a single command or an array of commands. Please refer to the documentation.")
 		os.Exit(2)
+	}
+
+	if (!isRunningGlobal && foundGlobal) {
+		colorYellow := "\033[33m"
+		colorReset := "\033[0m"
+		fmt.Println(string(colorYellow), "Found global script, but running the one in working directory.")
+		fmt.Println(string(colorReset), "")
 	}
 
 	return
