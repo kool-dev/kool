@@ -29,6 +29,7 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) {
+	checkKoolDependencies()
 	handleGlobalNetwork()
 	startContainers(startFlags.Services)
 }
