@@ -36,6 +36,7 @@ services:
      - kool_global
 #   database:
 #     image: mysql:8.0 # possibly change to: mysql:5.7
+#     command: --default-authentication-plugin=mysql_native_password
 #     ports:
 #      - "${KOOL_DATABASE_PORT:-3306}:3306"
 #     environment:
