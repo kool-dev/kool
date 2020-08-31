@@ -11,8 +11,7 @@ Complete documentation is available at https://kool.dev
 ### Options
 
 ```
-  -T, --disable-tty   Disables TTY
-  -h, --help          help for kool
+  -h, --help   help for kool
 ```
 
 ### SEE ALSO

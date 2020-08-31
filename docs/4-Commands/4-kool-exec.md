@@ -13,7 +13,8 @@ kool exec [options] [service] [command] [flags]
 ### Options
 
 ```
-  -h, --help   help for exec
+  -T, --disable-tty   Disables TTY
+  -h, --help          help for exec
 ```
 
 ### SEE ALSO

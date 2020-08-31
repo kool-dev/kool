@@ -24,7 +24,7 @@ var execFlags = &ExecFlags{false}
 func init() {
 	rootCmd.AddCommand(execCmd)
 
-	rootCmd.Flags().BoolVarP(&execFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	execCmd.Flags().BoolVarP(&execFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
 }
 
 func runExec(cmd *cobra.Command, originalArgs []string) {
