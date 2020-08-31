@@ -15,7 +15,7 @@ const DefaultEnv string = `
 # KOOL_ASUSER=$UID
 
 # Docker Run flags
-# KOOL_DISABLE_TTY=1
+# KOOL_TTY_DISABLE=1
 
 # Docker Composer
 # KOOL_GLOBAL_NETWORK="custom-network" # by default will be generated on the fly
