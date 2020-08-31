@@ -18,7 +18,7 @@ type DeployFlags struct {
 
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
-	Short: "Deploys your application usin Kool Dev",
+	Short: "Deploys your application using Kool Dev",
 	Run:   runDeploy,
 }
 
