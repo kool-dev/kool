@@ -25,6 +25,14 @@ echo "Building to GOOS=linux GOARCH=arm GOARM=7"
 
 docker run --rm --env GOOS=linux --env GOARCH=arm --env GOARM=7 --env CGO_ENABLED=0 -v $(pwd):/code -w /code $GO_IMAGE go build -a -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o dist/kool-linux-arm7
 
+echo "Building to GOOS=windows GOARCH=amd64"
+
+docker run --rm --env GOOS=windows --env GOARCH=amd64 --env CGO_ENABLED=0 -v $(pwd):/code -w /code $GO_IMAGE go build -a -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o dist/kool-windows-amd64
+
+echo "Building to GOOS=windows GOARCH=386"
+
+docker run --rm --env GOOS=windows --env GOARCH=386 --env CGO_ENABLED=0 -v $(pwd):/code -w /code $GO_IMAGE go build -a -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o dist/kool-windows-386
+
 echo "Going to generate CHECKSUMS"
 
 for file in dist/*; do

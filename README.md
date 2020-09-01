@@ -35,6 +35,14 @@ In case you need sudo:
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
 ```
 
+For Windows
+Execute as administrator
+
+```bash
+bitsadmin /transfer KoolDevInstallDownload /dynamic /download /priority foreground https://raw.githubusercontent.com/kool-dev/kool/master/install.bat install-kool-dev.bat
+install-kool-dev.bat
+```
+
 ## Usage
 
 To help learning how to use kool we've built presets with good starting point for some popular stacks, feel free to open a PR in case you miss one.
