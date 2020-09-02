@@ -36,7 +36,10 @@ curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | s
 ```
 
 For Windows
-Execute as administrator
+
+Download the installer [here](https://github.com/kool-dev/kool/releases)
+
+Or execute the bat with admin
 
 ```bash
 bitsadmin /transfer KoolDevInstallDownload /dynamic /download /priority foreground https://raw.githubusercontent.com/kool-dev/kool/master/install.bat install-kool-dev.bat
