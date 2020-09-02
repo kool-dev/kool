@@ -1,6 +1,7 @@
 /kool
 /dist/
 /.env
+Output/
 
 # IDE
 .vscode/

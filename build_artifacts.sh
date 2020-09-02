@@ -27,11 +27,12 @@ docker run --rm --env GOOS=linux --env GOARCH=arm --env GOARM=7 --env CGO_ENABLE
 
 echo "Building to GOOS=windows GOARCH=amd64"
 
-docker run --rm --env GOOS=windows --env GOARCH=amd64 --env CGO_ENABLED=0 -v $(pwd):/code -w /code $GO_IMAGE go build -a -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o dist/kool-windows-amd64
+docker run --rm --env GOOS=windows --env GOARCH=amd64 --env CGO_ENABLED=0 -v $(pwd):/code -w /code $GO_IMAGE go build -a -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o dist/kool.exe
 
-echo "Building to GOOS=windows GOARCH=386"
+echo "Building kool-install.exe"
 
-docker run --rm --env GOOS=windows --env GOARCH=386 --env CGO_ENABLED=0 -v $(pwd):/code -w /code $GO_IMAGE go build -a -tags 'osusergo netgo static_build' -ldflags '-extldflags "-static"' -o dist/kool-windows-386
+docker run --rm -i -v $(pwd):/work amake/innosetup /dApplicationVersion=1.0.0 inno-setup/kool.iss
+mv inno-setup/Output/mysetup.exe dist/kool-install.exe
 
 echo "Going to generate CHECKSUMS"
 
