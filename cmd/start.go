@@ -35,7 +35,7 @@ func runStart(cmd *cobra.Command, args []string) {
 }
 
 func handleGlobalNetwork() {
-	networkID, err := shellExec("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=%s", os.Getenv("KOOL_GLOBAL_NETWORK")))
+	networkID, err := shellExec("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=^%s$", os.Getenv("KOOL_GLOBAL_NETWORK")))
 
 	if err != nil {
 		log.Fatal(err)
