@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func InitAuser() {
+func InitAsuser() {
 	if os.Getenv("KOOL_ASUSER") == "" {
 		os.Setenv("KOOL_ASUSER", fmt.Sprintf("%d", os.Getuid()))
 	}

@@ -31,7 +31,7 @@ docker run --rm --env GOOS=windows --env GOARCH=amd64 --env CGO_ENABLED=0 -v $(p
 
 echo "Building kool-install.exe"
 
-docker run --rm -i -v $(pwd):/work amake/innosetup /dApplicationVersion=1.0.0 inno-setup/kool.iss
+docker run --rm -i -v $(pwd):/work amake/innosetup /dApplicationVersion=1.0.15 inno-setup/kool.iss
 mv inno-setup/Output/mysetup.exe dist/kool-install.exe
 
 echo "Going to generate CHECKSUMS"

@@ -18,6 +18,10 @@ curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | s
 
 All this script will do is download latest kool bin from https://github.com/kool-dev/kool/releases for your OS and put in your `/usr/local/bin` folder.
 
+## For Windows
+
+Download the installer [here](https://github.com/kool-dev/kool/releases)
+
 To check if everything looks good simply run **kool** and you will see something like this:
 
 ```bash

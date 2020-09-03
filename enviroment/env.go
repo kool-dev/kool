@@ -69,5 +69,5 @@ func InitEnvironmentVariables() {
 		os.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
 	}
 
-	InitAuser()
+	InitAsuser()
 }

@@ -4,6 +4,6 @@ import (
 	"os"
 )
 
-func InitAuser() {
+func InitAsuser() {
 	os.Setenv("KOOL_ASUSER", "0")
 }
