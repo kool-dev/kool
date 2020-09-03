@@ -23,7 +23,7 @@ type KoolYaml struct {
 
 var runCmd = &cobra.Command{
 	Use:                "run [script]",
-	Short:              "Runs a custom command defined at kool.yaml",
+	Short:              "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
 	Args:               cobra.MinimumNArgs(1),
 	Run:                runRun,
 	DisableFlagParsing: true,
@@ -159,10 +159,9 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	}
 
 	if (!isRunningGlobal && foundGlobal) {
-		colorYellow := "\033[33m"
-		colorReset := "\033[0m"
-		fmt.Println(string(colorYellow), "Found global script, but running the one in working directory.")
-		fmt.Println(string(colorReset), "")
+		messageStyle := "\033[43m\033[30m"
+		defaultStyle := "\033[0m"
+		fmt.Printf("%vFound a global script, but running the one in the working directory.%v\n\n", messageStyle, defaultStyle)
 	}
 
 	return
