@@ -4,7 +4,7 @@
 ![docker](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
 ### Development workspaces made easy
 
-Dev environment made easy, a standarized way for running applications no matter the stack on your local machine and deploying it to a development environment.
+Dev environment made easy, a standardized way for running applications no matter the stack on your local machine and deploying it to a development environment.
 
 Run any stack / tool with any version, powered by Docker and Docker Compose in a simple way avoiding you to install lots of stuff on your machine.
 

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"path"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ type KoolYaml struct {
 
 var runCmd = &cobra.Command{
 	Use:                "run [script]",
-	Short:              "Runs a custom command defined at kool.yaml",
+	Short:              "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
 	Args:               cobra.MinimumNArgs(1),
 	Run:                runRun,
 	DisableFlagParsing: true,
@@ -66,54 +67,87 @@ func runRun(cmd *cobra.Command, args []string) {
 	}
 }
 
-func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
-	var (
-		err      error
-		fileName string
-		file     *os.File
-		yml      []byte
-	)
+func getKoolScriptsFilePath(rootPath string) (filePath string) {
+	var err error
 
-	if _, err = os.Stat("kool.yml"); !os.IsNotExist(err) {
-		fileName = "kool.yml"
-	} else {
-		if _, err = os.Stat("kool.yaml"); !os.IsNotExist(err) {
-			fileName = "kool.yaml"
-		}
+	if _, err = os.Stat(path.Join(rootPath, "kool.yml")); !os.IsNotExist(err) {
+		filePath = path.Join(rootPath, "kool.yml")
+	} else if _, err = os.Stat(path.Join(rootPath, "kool.yaml")); !os.IsNotExist(err) {
+		filePath = path.Join(rootPath, "kool.yaml")
 	}
 
-	if fileName == "" {
-		fmt.Println("Could not find kool.yml in the current working directory.")
-		os.Exit(2)
-	}
+	return
+}
 
-	file, err = os.OpenFile(fileName, os.O_RDONLY, os.ModePerm)
+func getKoolContent(filePath string) (*KoolYaml, error){
+	file, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)
 
 	if err != nil {
-		fmt.Println("Error", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	defer file.Close()
 
-	yml, err = ioutil.ReadAll(file)
+	yml, err := ioutil.ReadAll(file)
 
 	if err != nil {
-		fmt.Println("Error", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	var parsed *KoolYaml = new(KoolYaml)
+
 	err = yaml.Unmarshal(yml, parsed)
 	yml = nil
 
-	if err != nil {
-		fmt.Println("Failed to parse", fileName, ":", err)
+	return parsed, err
+}
+
+func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
+	var (
+		err                                        error
+		projectFileName, globalFileName            string
+		parsed, projectParsed, globalParsed        *KoolYaml
+		foundProject, foundGlobal, isRunningGlobal bool
+	)
+
+	projectFileName = getKoolScriptsFilePath(os.Getenv("PWD"))
+	globalFileName = getKoolScriptsFilePath(path.Join(os.Getenv("HOME"), "kool"))
+
+	if projectFileName == "" && globalFileName == "" {
+		fmt.Println("Could not find kool.yml either in the current working directory or in the user's home directory.")
+		os.Exit(2)
 	}
 
-	if _, found := parsed.Scripts[script]; !found {
-		fmt.Println("Could not find script", script, "within", fileName)
+	projectParsed, err = getKoolContent(projectFileName)
+
+	if err != nil {
+		fmt.Println("Failed to parse", projectFileName, ":", err)
+	}
+
+	globalParsed, err = getKoolContent(globalFileName)
+
+	if err != nil {
+		fmt.Println("Failed to parse", globalFileName, ":", err)
+	}
+
+	if (projectParsed != nil) {
+		_, foundProject = projectParsed.Scripts[script];
+	}
+
+	if (globalParsed != nil) {
+		_, foundGlobal = globalParsed.Scripts[script];
+	}
+
+	if !foundProject && !foundGlobal {
+		fmt.Println("Could not find script", script, " either in the current working directory or in the user's home directory.")
 		os.Exit(2)
+	}
+
+	if foundProject {
+		parsed = projectParsed
+	} else {
+		parsed = globalParsed
+		isRunningGlobal = true
 	}
 
 	if singleCommand, isSingleString := parsed.Scripts[script].(string); isSingleString {
@@ -125,6 +159,10 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	} else {
 		fmt.Println("Could not parse script with key", script, ": it must be either a single command or an array of commands. Please refer to the documentation.")
 		os.Exit(2)
+	}
+
+	if (!isRunningGlobal && foundGlobal) {
+		fmt.Println("Found a global script, but running the one in the working directory.")
 	}
 
 	return
