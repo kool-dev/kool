@@ -1,9 +1,14 @@
 /kool
 /dist/
 /.env
+Output/
 
 # IDE
 .vscode/
+.idea
+*.iws
+*.iml
+*.ipr
 
 # Mac OS X files
 .DS_Store

@@ -35,6 +35,10 @@ In case you need sudo:
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
 ```
 
+## For Windows
+
+Download the installer [here](https://github.com/kool-dev/kool/releases)
+
 ## Usage
 
 To help learning how to use kool we've built presets with good starting point for some popular stacks, feel free to open a PR in case you miss one.

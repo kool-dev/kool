@@ -1,4 +1,4 @@
-package main
+package enviroment
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-func initEnvironmentVariables() {
+func InitEnvironmentVariables() {
 	var (
 		homeDir, workDir string
 		err              error
@@ -68,7 +68,6 @@ func initEnvironmentVariables() {
 	if os.Getenv("KOOL_GLOBAL_NETWORK") == "" {
 		os.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
 	}
-	if os.Getenv("KOOL_ASUSER") == "" {
-		os.Setenv("KOOL_ASUSER", fmt.Sprintf("%d", os.Getuid()))
-	}
+
+	InitAsuser()
 }
