@@ -21,7 +21,7 @@ Complete documentation is available at https://kool.dev
 * [kool exec](kool_exec.md)	 - Execute a command within a running service container
 * [kool info](kool_info.md)	 - Prints out information about kool setup (like environment variables)
 * [kool init](kool_init.md)	 - Initialize kool preset in the current working directory
-* [kool run](kool_run.md)	 - Runs a custom command defined at kool.yaml
+* [kool run](kool_run.md)	 - Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
 * [kool start](kool_start.md)	 - Start Kool environment containers
 * [kool status](kool_status.md)	 - Shows the status for containers
 * [kool stop](kool_stop.md)	 - Stop kool environment containers
