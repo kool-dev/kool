@@ -94,7 +94,7 @@ func getKoolContent(filePath string) (*KoolYaml, error){
 		return nil, err
 	}
 
-	parsed := new(KoolYaml)
+	var parsed *KoolYaml = new(KoolYaml)
 
 	err = yaml.Unmarshal(yml, parsed)
 	yml = nil
@@ -104,39 +104,42 @@ func getKoolContent(filePath string) (*KoolYaml, error){
 
 func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	var (
-		err             error
-		fileName        string
-		parsed          *KoolYaml
-		foundProject    bool
-		foundGlobal     bool
-		isRunningGlobal bool
+		err                                        error
+		projectFileName, globalFileName            string
+		parsed, projectParsed, globalParsed        *KoolYaml
+		foundProject, foundGlobal, isRunningGlobal bool
 	)
 
-	fileName = getKoolScriptsFilePath(os.Getenv("PWD"))
+	projectFileName = getKoolScriptsFilePath(os.Getenv("PWD"))
+	globalFileName = getKoolScriptsFilePath(path.Join(os.Getenv("HOME"), "kool"))
 
-	if fileName == "" {
-		fmt.Println("Could not find kool.yml in the current working directory.")
+	if projectFileName == "" && globalFileName == "" {
+		fmt.Println("Could not find kool.yml either in the current working directory or in the user's home directory.")
 		os.Exit(2)
 	}
 
-	projectParsed, err := getKoolContent(fileName)
+	projectParsed, err = getKoolContent(projectFileName)
 
 	if err != nil {
-		fmt.Println("Failed to parse", fileName, ":", err)
+		fmt.Println("Failed to parse", projectFileName, ":", err)
 	}
 
-	fileName = getKoolScriptsFilePath(path.Join(os.Getenv("HOME"), "kool"))
+	globalParsed, err = getKoolContent(globalFileName)
 
-	globalParsed, _ := getKoolContent(fileName)
+	if err != nil {
+		fmt.Println("Failed to parse", globalFileName, ":", err)
+	}
 
-	_, foundProject = projectParsed.Scripts[script];
+	if (projectParsed != nil) {
+		_, foundProject = projectParsed.Scripts[script];
+	}
 
 	if (globalParsed != nil) {
 		_, foundGlobal = globalParsed.Scripts[script];
 	}
 
 	if !foundProject && !foundGlobal {
-		fmt.Println("Could not find script", script, "within", fileName)
+		fmt.Println("Could not find script", script, " either in the current working directory or in the user's home directory.")
 		os.Exit(2)
 	}
 
@@ -159,9 +162,7 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	}
 
 	if (!isRunningGlobal && foundGlobal) {
-		messageStyle := "\033[43m\033[30m"
-		defaultStyle := "\033[0m"
-		fmt.Printf("%vFound a global script, but running the one in the working directory.%v\n\n", messageStyle, defaultStyle)
+		fmt.Println("Found a global script, but running the one in the working directory.")
 	}
 
 	return

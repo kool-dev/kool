@@ -27,9 +27,9 @@ You can add/change/remove services as you will.
 
 ### kool.yml
 
-This is where most of the magic happens, a way to make your life easy, orchestrating scripts for you to use on your local environment or CI/CDs.
+This is where most of the magic happens, a way to make your life easy, orchestrating scripts for you to use on your local environment or CI/CDs. It is created in your working directory when you run **kool init**, but you can also create it inside a folder named **kool** in your user's home directory.
 
-The **scripts** defined will be used by **kool run** commmand, for example:
+The **scripts** defined will be used by **kool run** command, for example:
 
 ```yaml
 scripts:
@@ -43,6 +43,6 @@ scripts:
 
 Single commands like **artisan** are kind of aliases, so anything you input will be forwarded to the actual command, so if you run: **kool run artisan key:generate** it will basically translate into: **kool exec app php artisan key:generate**.
 
-Multiple comands like **setup** will not forward your input, so **kool run setup something** will run evey script and **something** will be ignored.
+Multiple commands like **setup** will not forward your input, so **kool run setup something** will run every script and **something** will be ignored.
 
 PS: This is not only limited to kool commands, so you can add any type command the **cp** in example.
