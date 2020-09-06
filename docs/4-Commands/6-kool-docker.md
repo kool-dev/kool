@@ -4,10 +4,13 @@ Creates a new container and runs the command in it.
 
 ### Synopsis
 
-Creates a new container and runs the command in it.
+This command acts as a helper for docker run.
+You can start with options that go before the image name
+for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
+the image name and the command you want to exucute on that image.
 
 ```
-kool docker [image] [command] [flags]
+kool docker [options] [image] [command] [flags]
 ```
 
 ### Options

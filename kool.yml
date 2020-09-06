@@ -11,6 +11,6 @@ scripts:
   # Compiling kool itself. In case you are on MacOS make sure to have your .env
   # file properly setting GOOS=darwin so you will be able to use the binary.
   compile:
-    - kool docker golang:1.15.0 go build -o kool
+    - kool docker --env='GOOS=$GOOS' golang:1.15.0 go build -o kool
   install:
     - mv kool /usr/local/bin/kools
