@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"path"
+	"strings"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
@@ -79,7 +79,7 @@ func getKoolScriptsFilePath(rootPath string) (filePath string) {
 	return
 }
 
-func getKoolContent(filePath string) (*KoolYaml, error){
+func getKoolContent(filePath string) (*KoolYaml, error) {
 	file, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)
 
 	if err != nil {
@@ -118,24 +118,27 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 		os.Exit(2)
 	}
 
-	projectParsed, err = getKoolContent(projectFileName)
-
-	if err != nil {
-		fmt.Println("Failed to parse", projectFileName, ":", err)
+	if projectFileName != "" {
+		projectParsed, err = getKoolContent(projectFileName)
+		if err != nil {
+			fmt.Println("Failed to parse", projectFileName, ":", err)
+		}
 	}
 
-	globalParsed, err = getKoolContent(globalFileName)
+	if globalFileName != "" {
+		globalParsed, err = getKoolContent(globalFileName)
 
-	if err != nil {
-		fmt.Println("Failed to parse", globalFileName, ":", err)
+		if err != nil {
+			fmt.Println("Failed to parse", globalFileName, ":", err)
+		}
 	}
 
-	if (projectParsed != nil) {
-		_, foundProject = projectParsed.Scripts[script];
+	if projectParsed != nil {
+		_, foundProject = projectParsed.Scripts[script]
 	}
 
-	if (globalParsed != nil) {
-		_, foundGlobal = globalParsed.Scripts[script];
+	if globalParsed != nil {
+		_, foundGlobal = globalParsed.Scripts[script]
 	}
 
 	if !foundProject && !foundGlobal {
@@ -161,7 +164,7 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 		os.Exit(2)
 	}
 
-	if (!isRunningGlobal && foundGlobal) {
+	if !isRunningGlobal && foundGlobal {
 		fmt.Println("Found a global script, but running the one in the working directory.")
 	}
 
