@@ -30,8 +30,7 @@ func init() {
 
 func runDocker(cmd *cobra.Command, originalArgs []string) {
 	var (
-		image string
-		args  []string
+		args []string
 	)
 
 	if originalArgs[0] == "--disable-tty" || originalArgs[0] == "-T" {
@@ -41,16 +40,15 @@ func runDocker(cmd *cobra.Command, originalArgs []string) {
 		args = originalArgs
 	}
 
-	image = args[0]
-
-	execDockerRun(image, args[1:])
+	execDockerRun(args)
 }
 
-func execDockerRun(image string, command []string) {
+func execDockerRun(command []string) {
 	var (
 		args    []string
 		err     error
 		workDir string
+		image   string
 	)
 
 	workDir, err = os.Getwd()
@@ -58,6 +56,23 @@ func execDockerRun(image string, command []string) {
 	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); !dockerFlags.DisableTty && !(disableTty == "1" || disableTty == "true") {
 		args = append(args, "-ti")
 	}
+
+	for i, arg := range command {
+		if !strings.HasPrefix(arg, "-") {
+			// we found the image!
+			image = arg
+
+			// this means the expected command is only the remaining items
+			// so we override it
+			command = command[i+1:]
+			break
+		}
+
+		// didn't find the image (first non-option argument)
+		// so we assume it is a pre-image option for docker runs
+		args = append(args, arg)
+	}
+
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "kooldev") || strings.HasPrefix(image, "fireworkweb")) {
 		args = append(args, "--env", "ASUSER="+os.Getenv("KOOL_ASUSER"))
 	}
