@@ -13,11 +13,15 @@ type DockerFlags struct {
 }
 
 var dockerCmd = &cobra.Command{
-	Use:                "docker [image] [command]",
-	Short:              "Creates a new container and runs the command in it.",
+	Use:                "docker [options] [image] [command]",
 	Args:               cobra.MinimumNArgs(1),
 	Run:                runDocker,
 	DisableFlagParsing: true,
+	Short:              "Creates a new container and runs the command in it.",
+	Long: `This command acts as a helper for docker run.
+You can start with options that go before the image name
+for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
+the image name and the command you want to exucute on that image.`,
 }
 
 var dockerFlags = &DockerFlags{false}
