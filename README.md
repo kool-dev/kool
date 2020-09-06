@@ -58,7 +58,11 @@ You can see projects using it here: https://github.com/kool-dev/examples
 
 ## Contributing
 
-[Build](docs/build.md)
+Like what you see? You are most welcome to contribute! We are working in a backlog of issues, feel free to browse through and enter discussions or get to work!
+
+The flow is not written in stone, so you may go ahead and fork, code and PR with clear and direct communication on the feature/improvement or fix you developed.
+
+PS: our main pain point at this moment is the lack of testing. Might be a great starting point.
 
 #### Updating commands signature documentation
 
@@ -70,6 +74,10 @@ bash make_docs.sh
 git add .
 git commit -m "Updated commands docs"
 ```
+
+## Security
+
+If you find security issue please let us know ahead of making it public like in an issue so we can take action as soon as possible. Please email the concern to `fabricio.souza@fireworkweb.com`.
 
 ## License
 
