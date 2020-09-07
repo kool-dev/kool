@@ -6,6 +6,11 @@ fi
 
 GO_IMAGE=${GO_IMAGE:-golang:1.15.0}
 
+if [ "$KOOL_VERSION" == "" ]; then
+    echo "missing environment variable KOOL_VERSION"
+    exit 5
+fi
+
 rm -rf dist
 mkdir -p dist
 
@@ -26,7 +31,7 @@ for i in "${!BUILD[@]}"; do
         --env CGO_ENABLED=0 \
         -v $(pwd):/code -w /code $GO_IMAGE \
         go build -a -tags 'osusergo netgo static_build' \
-        -ldflags '-extldflags "-static"' \
+        -ldflags '-X kool-dev/kool/cmd.version='$KOOL_VERSION' -extldflags "-static"' \
         -o $dist
 done
 
@@ -34,7 +39,7 @@ echo "Building kool-install.exe"
 
 docker run --rm -i \
     -v $(pwd):/work \
-    amake/innosetup /dApplicationVersion=1.0.16 inno-setup/kool.iss
+    amake/innosetup /dApplicationVersion=$KOOL_VERSION inno-setup/kool.iss
 mv inno-setup/Output/mysetup.exe dist/kool-install.exe
 
 echo "Going to generate CHECKSUMS"
