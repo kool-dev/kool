@@ -4,13 +4,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var version string = "undefined"
+
 var rootCmd = &cobra.Command{
 	Use:   "kool",
 	Short: "kool - Kool stuff",
 	Long: `An easy and robust software development environment
 tool helping you from project creation until deployment.
-Complete documentation is available at https://kool.dev`,
-	Version:           "1.0.16",
+Complete documentation is available at https://kool.dev/docs`,
+	Version:           version,
 	DisableAutoGenTag: true,
 }
 
