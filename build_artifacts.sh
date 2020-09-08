@@ -49,5 +49,5 @@ mv inno-setup/Output/mysetup.exe dist/kool-install.exe
 echo "Going to generate CHECKSUMS"
 
 for file in dist/*; do
-    shasum $file | awk '{print $1}' > $file.checksum
+    shasum -a 256 $file > $file.sha256
 done
