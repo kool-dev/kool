@@ -22,9 +22,22 @@ var selfUpdateCmd = &cobra.Command{
 }
 
 func runSelfUpdate(cmf *cobra.Command, args []string) {
-	currentVersion := semver.MustParse(version)
-	latest, err := selfupdate.UpdateSelf(currentVersion, "kool-dev/kool")
-	if err != nil {
+	var (
+		currentVersion semver.Version
+		updater        *selfupdate.Updater
+		err            error
+		latest         *selfupdate.Release
+	)
+
+	currentVersion = semver.MustParse(version)
+	if updater, err = selfupdate.NewUpdater(selfupdate.Config{
+		Validator: &selfupdate.SHA2Validator{},
+	}); err != nil {
+		fmt.Println("Failed to create updater controller", err)
+		os.Exit(1)
+	}
+
+	if latest, err = updater.UpdateSelf(currentVersion, "kool-dev/kool"); err != nil {
 		fmt.Println("Kool self-update failed:", err)
 		os.Exit(1)
 	}
