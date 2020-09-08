@@ -13,3 +13,4 @@ mv 4-Commands/kool_run.md 4-Commands/5-kool-run.md
 mv 4-Commands/kool_docker.md 4-Commands/6-kool-docker.md
 mv 4-Commands/kool_status.md 4-Commands/7-kool-status.md
 mv 4-Commands/kool_info.md 4-Commands/8-kool-info.md
+mv 4-Commands/kool_self-update.md 4-Commands/9-kool-self--update.md
