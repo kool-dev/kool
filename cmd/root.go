@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version string = "undefined"
+var version string = "0.0.0-dev"
 
 var rootCmd = &cobra.Command{
 	Use:   "kool",

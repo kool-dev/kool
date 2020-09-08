@@ -14,12 +14,14 @@ fi
 rm -rf dist
 mkdir -p dist
 
-BUILD=( \
-  "dist/kool-darwin-x86_64|--env GOOS=darwin --env GOARCH=amd64" \
-  "dist/kool-linux-x86_64|--env GOOS=linux --env GOARCH=amd64" \
+# ATTENTION - binary names must match the -GOOS-GOARCH suffix
+# because self-update relies on this pattern to work.
+BUILD=(\
+  "dist/kool-darwin-amd64|--env GOOS=darwin --env GOARCH=amd64" \
+  "dist/kool-linux-amd64|--env GOOS=linux --env GOARCH=amd64" \
   "dist/kool-linux-arm6|--env GOOS=linux --env GOARCH=arm --env GOARM=6" \
   "dist/kool-linux-arm7|--env GOOS=linux --env GOARCH=arm --env GOARM=7" \
-  "dist/kool.exe|--env GOOS=windows --env GOARCH=amd64" \
+  "dist/kool-windows-amd64.exe|--env GOOS=windows --env GOARCH=amd64" \
 )
 
 for i in "${!BUILD[@]}"; do
@@ -36,6 +38,8 @@ for i in "${!BUILD[@]}"; do
 done
 
 echo "Building kool-install.exe"
+
+cp dist/kool-windows-amd64.exe dist/kool.exe
 
 docker run --rm -i \
     -v $(pwd):/work \
