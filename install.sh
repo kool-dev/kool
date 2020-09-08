@@ -34,6 +34,10 @@ do_install () {
 		PLAT="darwin"
 	fi
 
+	if [ "$ARCH" == "x86_64" ]; then
+		ARCH="amd64"
+	fi
+
 	# wget -O $BIN_PATH "$DOWNLOAD_URL/kool-$PLAT-$ARCH"
 	curl -fsSL "$DOWNLOAD_URL/kool-$PLAT-$ARCH" -o $BIN_PATH
 	chmod +x $BIN_PATH
