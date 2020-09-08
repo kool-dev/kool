@@ -18,7 +18,7 @@ var selfUpdateCmd = &cobra.Command{
 	Short: "Update kool to latest version",
 	Long:  "Checks for the latest release of Kool on Github Releases, downloads and replaces the local binary if a newer version is available.",
 	Run:   runSelfUpdate,
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.MaximumNArgs(0),
 }
 
 func runSelfUpdate(cmf *cobra.Command, args []string) {
