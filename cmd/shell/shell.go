@@ -119,9 +119,10 @@ func Interactive(exe string, args ...string) (err error) {
 			return
 		case sig := <-sigChan:
 			if err := cmd.Process.Signal(sig); err != nil {
-				// Not clear how we can hit this, but probably not
-				// worth terminating the child.
-				fmt.Println("error sending signal to child process", sig, err)
+				// check if it is something we should care about
+				if err.Error() != "os: process already finished" {
+					fmt.Println("error sending signal to child process", sig, err)
+				}
 			}
 		}
 	}
