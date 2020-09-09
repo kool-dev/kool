@@ -62,7 +62,9 @@ func (d *Deploy) SendFile() (err error) {
 
 	defer file.Close()
 	if domain = os.Getenv("KOOL_DEPLOY_DOMAIN"); domain != "" {
-		w.WriteField("domain", domain)
+		if err = w.WriteField("domain", domain); err != nil {
+			return
+		}
 	}
 	w.Close()
 
@@ -97,7 +99,6 @@ func (d *Deploy) SendFile() (err error) {
 	if err = json.Unmarshal(raw, &deploy); err != nil {
 		return
 	}
-	raw = nil
 
 	var (
 		ok  bool
@@ -140,7 +141,6 @@ func (d *Deploy) GetStatus() (err error) {
 	if err = json.Unmarshal(raw, &data); err != nil {
 		return
 	}
-	raw = nil
 
 	if d.Status, ok = data["status"].(string); !ok {
 		err = ErrUnexpectedResponse

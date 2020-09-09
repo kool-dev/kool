@@ -73,7 +73,6 @@ func statusDisplayServices() {
 				if len(containerInfo) > 1 {
 					ss.ports = containerInfo[1]
 				}
-				containerInfo = nil
 			}
 
 			ch <- ss

@@ -55,7 +55,7 @@ func execDockerRun(image string, command []string) {
 		workDir string
 	)
 
-	workDir, err = os.Getwd()
+	workDir, _ = os.Getwd()
 	args = []string{"run", "--init", "--rm", "-w", "/app"}
 	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); !dockerFlags.DisableTty && !(disableTty == "1" || disableTty == "true") {
 		args = append(args, "-ti")

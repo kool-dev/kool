@@ -50,7 +50,6 @@ func InitEnvironmentVariables() {
 	for _, env := range allEnv {
 		currentEnv[strings.Split(env, "=")[0]] = true
 	}
-	allEnv = nil
 	defaultEnv, _ := godotenv.Unmarshal(DefaultEnv)
 	for k, v := range defaultEnv {
 		if _, exists := currentEnv[k]; !exists {
