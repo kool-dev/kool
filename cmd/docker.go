@@ -72,7 +72,7 @@ func execDockerRun(image string, command []string) {
 		}
 	}
 
-	args = append(args, "--volume", workDir+":/app")
+	args = append(args, "--volume", workDir+":/app:delegated")
 
 	if len(dockerFlags.Volumes) > 0 {
 		for _, volume := range dockerFlags.Volumes {
