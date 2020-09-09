@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -42,7 +43,7 @@ func stopContainers(purge bool) {
 		args = append(args, "--volumes", "--remove-orphans")
 	}
 
-	err = shellInteractive("docker-compose", args...)
+	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
 		execError("", err)

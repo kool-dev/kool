@@ -2,7 +2,7 @@ package cmd
 
 // auto generated file
 
-var presets = make(map[string]map[string]string)
+var presets = make(map[string]map[string]string) //nolint
 func init() {
 	presets["adonis"] = map[string]string{
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
@@ -71,6 +71,24 @@ networks:
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
     - kool start`,
+	}
+	presets["golang-cli"] = map[string]string{
+		"kool.yml": `scripts:
+  # Helper for local development - compiling and installig locally
+  dev:
+    - kool run compile
+    - kool run install
+
+  # Runs go CLI with proper version for kool development
+  go: kool docker --env='GOOS=$GOOS' golang:1.15.0 go
+
+  # Compiling cli itself. In case you are on MacOS make sure to have your .env
+  # file properly setting GOOS=darwin so you will be able to use the binary.
+  compile: kool run go build -o my-cli
+  install:
+    - mv my-cli /usr/local/bin/my-cli
+  fmt: kool run go fmt
+  lint: kool docker golangci/golangci-lint:v1.31.0 golangci-lint run -v`,
 	}
 	presets["laravel"] = map[string]string{
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer

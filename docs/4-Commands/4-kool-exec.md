@@ -13,8 +13,10 @@ kool exec [options] [service] [command] [flags]
 ### Options
 
 ```
-  -T, --disable-tty   Disables TTY
-  -h, --help          help for exec
+  -d, --detach            Detached mode: Run command in the background
+  -T, --disable-tty       Disables TTY
+  -e, --env stringArray   Environment variables
+  -h, --help              help for exec
 ```
 
 ### SEE ALSO

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"log"
 	"os"
 	"strings"
@@ -35,7 +36,7 @@ func runStart(cmd *cobra.Command, args []string) {
 }
 
 func handleGlobalNetwork() {
-	networkID, err := shellExec("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=^%s$", os.Getenv("KOOL_GLOBAL_NETWORK")))
+	networkID, err := shell.Exec("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=^%s$", os.Getenv("KOOL_GLOBAL_NETWORK")))
 
 	if err != nil {
 		log.Fatal(err)
@@ -45,7 +46,7 @@ func handleGlobalNetwork() {
 		return
 	}
 
-	err = shellInteractive("docker", "network", "create", "--attachable", os.Getenv("KOOL_GLOBAL_NETWORK"))
+	err = shell.Interactive("docker", "network", "create", "--attachable", os.Getenv("KOOL_GLOBAL_NETWORK"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -64,7 +65,7 @@ func startContainers(services string) {
 		args = append(args, strings.Split(services, " ")...)
 	}
 
-	err = shellInteractive("docker-compose", args...)
+	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
 		execError("", err)

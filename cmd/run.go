@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"path"
 	"strings"
@@ -12,27 +13,23 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// RunFlags holds the flags for the start command
-type RunFlags struct {
-}
-
 // KoolYaml holds the structure for parsing the custom commands file
 type KoolYaml struct {
 	Scripts map[string]interface{} `yaml:"scripts"`
 }
 
 var runCmd = &cobra.Command{
-	Use:                "run [script]",
-	Short:              "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
-	Args:               cobra.MinimumNArgs(1),
-	Run:                runRun,
-	DisableFlagParsing: true,
+	Use:   "run [SCRIPT]",
+	Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
+	Args:  cobra.MinimumNArgs(1),
+	Run:   runRun,
 }
-
-var runFlags = &RunFlags{}
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	// after a non-flag arg, stop parsing flags
+	runCmd.Flags().SetInterspersed(false)
 }
 
 func runRun(cmd *cobra.Command, args []string) {
@@ -58,7 +55,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Println("$", exec[0], strings.Join(execArgs, " "))
-		err = shellInteractive(exec[0], execArgs...)
+		err = shell.Interactive(exec[0], execArgs...)
 
 		if err != nil {
 			execError("", err)
@@ -97,7 +94,6 @@ func getKoolContent(filePath string) (*KoolYaml, error) {
 	var parsed *KoolYaml = new(KoolYaml)
 
 	err = yaml.Unmarshal(yml, parsed)
-	yml = nil
 
 	return parsed, err
 }
