@@ -143,8 +143,8 @@ networks:
   mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD
 
   setup:
-    - kool start
     - cp .env.example .env
+    - kool start
     - kool run composer install
     - kool run artisan key:generate
     - kool run npm install
