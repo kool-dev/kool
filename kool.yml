@@ -15,3 +15,5 @@ scripts:
   compile: kool run go build -o kool
   install:
     - mv kool /usr/local/bin/kools
+  fmt: kool run go fmt
+  lint: kool docker golangci/golangci-lint:v1.31.0 golangci-lint run -v
