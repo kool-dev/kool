@@ -10,6 +10,7 @@ import (
 type ExecFlags struct {
 	DisableTty bool
 	EnvVariables []string
+	Detach bool
 }
 
 var execCmd = &cobra.Command{
@@ -19,13 +20,14 @@ var execCmd = &cobra.Command{
 	Run:                runExec,
 }
 
-var execFlags = &ExecFlags{false, []string{}}
+var execFlags = &ExecFlags{false, []string{}, false}
 
 func init() {
 	rootCmd.AddCommand(execCmd)
 
 	execCmd.Flags().BoolVarP(&execFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
 	execCmd.Flags().StringArrayVarP(&execFlags.EnvVariables, "env", "e", []string{}, "Environment variables")
+	execCmd.Flags().BoolVarP(&execFlags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
 
 	//After a non-flag arg, stop parsing flags
 	execCmd.Flags().SetInterspersed(false)
@@ -55,6 +57,10 @@ func dockerComposeExec(service string, command ...string) {
 		for _, envVar := range execFlags.EnvVariables {
 			args = append(args, "--env", envVar)
 		}
+	}
+
+	if (execFlags.Detach) {
+		args = append(args, "--detach")
 	}
 
 	args = append(args, service)
