@@ -66,7 +66,7 @@ func execDockerRun(image string, command []string) {
 		}
 	}
 
-	args = append(args, "--volume", workDir+":/app", image)
+	args = append(args, "--volume", workDir+":/app:delegated", image)
 	args = append(args, command...)
 
 	err = shellInteractive("docker", args...)
