@@ -12,8 +12,7 @@ type DockerFlags struct {
 	DisableTty bool
 	EnvVariables []string
 	Volumes []string
-	Expose string
-	Publish string
+	Publish []string
 }
 
 var dockerCmd = &cobra.Command{
@@ -27,7 +26,7 @@ for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
 the image name and the command you want to execute on that image.`,
 }
 
-var dockerFlags = &DockerFlags{false, []string{}, []string{}, "", ""}
+var dockerFlags = &DockerFlags{false, []string{}, []string{}, []string{}}
 
 func init() {
 	rootCmd.AddCommand(dockerCmd)
@@ -35,8 +34,7 @@ func init() {
 	dockerCmd.Flags().BoolVarP(&dockerFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
 	dockerCmd.Flags().StringArrayVarP(&dockerFlags.EnvVariables, "env", "e", []string{}, "Environment variables")
 	dockerCmd.Flags().StringArrayVarP(&dockerFlags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
-	dockerCmd.Flags().StringVar(&dockerFlags.Expose, "expose", "", "Expose a port or a range of ports")
-	dockerCmd.Flags().StringVarP(&dockerFlags.Publish, "publish", "p", "", "Publish a container’s port(s) to the host")
+	dockerCmd.Flags().StringArrayVarP(&dockerFlags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")
 
 	//After a non-flag arg, stop parsing flags
 	dockerCmd.Flags().SetInterspersed(false)
@@ -80,12 +78,10 @@ func execDockerRun(image string, command []string) {
 		}
 	}
 
-	if dockerFlags.Expose != "" {
-		args = append(args, "--expose", dockerFlags.Expose)
-	}
-
-	if dockerFlags.Publish != "" {
-		args = append(args, "--publish", dockerFlags.Publish)
+	if len(dockerFlags.Publish) > 0 {
+		for _, publish := range dockerFlags.Publish {
+			args = append(args, "--publish", publish)
+		}
 	}
 
 	args = append(args, image)
