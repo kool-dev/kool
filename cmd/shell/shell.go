@@ -1,6 +1,4 @@
-package cmd
-
-// https://blog.kowalczyk.info/article/wOYk/advanced-command-execution-in-go-with-osexec.html
+package shell
 
 import (
 	"fmt"
@@ -17,7 +15,9 @@ var (
 	lookedUp map[string]bool
 )
 
-func shellExec(exe string, args ...string) (outStr string, err error) {
+// Exec will execute the given command silently and return the combined
+// error/standard output, and an error if any.
+func Exec(exe string, args ...string) (outStr string, err error) {
 	var (
 		cmd *exec.Cmd
 		out []byte
@@ -31,12 +31,13 @@ func shellExec(exe string, args ...string) (outStr string, err error) {
 	cmd.Env = os.Environ()
 	cmd.Stdin = os.Stdin
 	out, err = cmd.CombinedOutput()
-
 	outStr = strings.TrimSpace(string(out))
 	return
 }
 
-func shellInteractive(exe string, args ...string) (err error) {
+// Interactive runs the given command proxying current Stdin/Stdout/Stderr
+// which makes it interactive for running even something like `bash`.
+func Interactive(exe string, args ...string) (err error) {
 	var (
 		cmd      *exec.Cmd
 		cmdStdin io.Reader = os.Stdin
@@ -81,7 +82,7 @@ func shellInteractive(exe string, args ...string) (err error) {
 		_, err = exec.LookPath(exe)
 
 		if err != nil {
-			execError("Failed to run "+cmd.String(), err)
+			fmt.Println("Failed to run ", cmd.String(), "error:", err)
 			os.Exit(2)
 		}
 
@@ -120,14 +121,12 @@ func shellInteractive(exe string, args ...string) (err error) {
 			if err := cmd.Process.Signal(sig); err != nil {
 				// Not clear how we can hit this, but probably not
 				// worth terminating the child.
-				// fmt.Println("error sending signal", sig, err)
+				fmt.Println("error sending signal to child process", sig, err)
 			}
 		}
 	}
 }
 
-func execError(out string, err error) {
-	log.Println("ERROR: ", err)
-	log.Println("Output:")
-	fmt.Println(out)
+func dockerComposeDefaultArgs() []string {
+	return []string{"-p", os.Getenv("KOOL_NAME")}
 }

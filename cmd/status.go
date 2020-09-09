@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"strings"
 
@@ -31,7 +32,7 @@ type statusService struct {
 }
 
 func statusDisplayServices() {
-	out, err := shellExec("docker-compose", "ps", "--services")
+	out, err := shell.Exec("docker-compose", "ps", "--services")
 
 	if err != nil {
 		fmt.Println("No services found.")
@@ -56,7 +57,7 @@ func statusDisplayServices() {
 		go func(service string, ch chan *statusService) {
 			ss := &statusService{service: service}
 
-			out, err = shellExec("docker-compose", "ps", "-q", service)
+			out, err = shell.Exec("docker-compose", "ps", "-q", service)
 
 			if err != nil {
 				execError(out, err)
@@ -64,7 +65,7 @@ func statusDisplayServices() {
 			}
 
 			if out != "" {
-				out, err = shellExec("docker", "ps", "-a", "--filter", "ID="+out, "--format", "{{.Status}}|{{.Ports}}")
+				out, err = shell.Exec("docker", "ps", "-a", "--filter", "ID="+out, "--format", "{{.Status}}|{{.Ports}}")
 
 				containerInfo := strings.Split(out, "|")
 				ss.running = strings.HasPrefix(containerInfo[0], "Up")

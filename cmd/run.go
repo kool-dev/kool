@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"path"
 	"strings"
@@ -58,7 +59,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Println("$", exec[0], strings.Join(execArgs, " "))
-		err = shellInteractive(exec[0], execArgs...)
+		err = shell.Interactive(exec[0], execArgs...)
 
 		if err != nil {
 			execError("", err)

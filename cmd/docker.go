@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"strings"
 
@@ -9,17 +10,17 @@ import (
 
 // DockerFlags holds the flags for the docker command
 type DockerFlags struct {
-	DisableTty bool
+	DisableTty   bool
 	EnvVariables []string
-	Volumes []string
-	Publish []string
+	Volumes      []string
+	Publish      []string
 }
 
 var dockerCmd = &cobra.Command{
-	Use:                "docker [options] [image] [command]",
-	Args:               cobra.MinimumNArgs(1),
-	Run:                runDocker,
-	Short:              "Creates a new container and runs the command in it.",
+	Use:   "docker [options] [image] [command]",
+	Args:  cobra.MinimumNArgs(1),
+	Run:   runDocker,
+	Short: "Creates a new container and runs the command in it.",
 	Long: `This command acts as a helper for docker run.
 You can start with options that go before the image name
 for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
@@ -87,7 +88,7 @@ func execDockerRun(image string, command []string) {
 	args = append(args, image)
 	args = append(args, command...)
 
-	err = shellInteractive("docker", args...)
+	err = shell.Interactive("docker", args...)
 
 	if err != nil {
 		execError("", err)

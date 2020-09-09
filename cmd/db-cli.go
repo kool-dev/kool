@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -41,7 +42,7 @@ func dbCliOpen(extraArgs ...string) {
 	args = append(args, os.Getenv("DB_DATABASE"))
 	args = append(args, extraArgs...)
 
-	err = shellInteractive("docker-compose", args...)
+	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
 		execError("", err)

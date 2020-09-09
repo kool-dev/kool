@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -8,16 +9,16 @@ import (
 
 // ExecFlags holds the flags for the start command
 type ExecFlags struct {
-	DisableTty bool
+	DisableTty   bool
 	EnvVariables []string
-	Detach bool
+	Detach       bool
 }
 
 var execCmd = &cobra.Command{
-	Use:                "exec [options] [service] [command]",
-	Short:              "Execute a command within a running service container",
-	Args:               cobra.MinimumNArgs(2),
-	Run:                runExec,
+	Use:   "exec [options] [service] [command]",
+	Short: "Execute a command within a running service container",
+	Args:  cobra.MinimumNArgs(2),
+	Run:   runExec,
 }
 
 var execFlags = &ExecFlags{false, []string{}, false}
@@ -59,14 +60,14 @@ func dockerComposeExec(service string, command ...string) {
 		}
 	}
 
-	if (execFlags.Detach) {
+	if execFlags.Detach {
 		args = append(args, "--detach")
 	}
 
 	args = append(args, service)
 	args = append(args, command...)
 
-	err = shellInteractive("docker-compose", args...)
+	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
 		execError("", err)
