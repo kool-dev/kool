@@ -1,6 +1,6 @@
 scripts:
   # Helper for local development - parsing presets onto Go,
-  # compiling and installig locally
+  # compiling and installing locally
   dev:
     - kool run parse-presets
     - kool run compile
@@ -17,3 +17,7 @@ scripts:
     - mv kool /usr/local/bin/kools
   fmt: kool run go fmt
   lint: kool docker golangci/golangci-lint:v1.31.0 golangci-lint run -v
+  # Generate documentation for kool commands
+  make-docs:
+    - rm -f docs/4-Commands/*.md
+    - kool docker golang:1.15.0 go run docs.go

@@ -79,8 +79,7 @@ kool run lint
 The Cobra library offers a simple solution for getting markdown documentation for usage of its commands. In order to generate update the generated markdown files do as follow:
 
 ```bash
-cd docs
-bash make_docs.sh
+kool run make-docs
 git add .
 git commit -m "Updated commands docs"
 ```
