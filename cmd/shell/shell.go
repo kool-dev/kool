@@ -41,8 +41,10 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 // which makes it interactive for running even something like `bash`.
 func Interactive(exe string, args ...string) (err error) {
 	var (
-		cmd      *exec.Cmd
-		cmdStdin io.Reader = os.Stdin
+		cmd       *exec.Cmd
+		cmdStdin  io.Reader = os.Stdin
+		cmdStdout io.Writer = os.Stdout
+		cmdStderr io.Writer = os.Stderr
 	)
 
 	if lookedUp == nil {
@@ -57,26 +59,25 @@ func Interactive(exe string, args ...string) (err error) {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
-	if numArgs := len(args); exe != "kool" && numArgs >= 2 && args[numArgs-2] == "<" {
-		var (
-			file *os.File
-			path string
-		)
+	if numArgs := len(args); exe != "kool" && numArgs >= 2 {
+		switch args[numArgs-2] {
+		case InputRedirect:
+			{
+				cmdStdin, err = prepareInputRedirect(args[numArgs-1])
+				if closer, canClose := cmdStdin.(io.Closer); canClose {
+					defer closer.Close()
+				}
 
-		// we have an input redirection attempt!
-		path = args[numArgs-1]
-		args = args[:numArgs-2]
-
-		file, err = os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-		cmdStdin = file
-
-		defer file.Close()
+				// fix arguments removing the redirect
+				args = args[:numArgs-2]
+			}
+		}
 	}
 
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = cmdStdout
+	cmd.Stderr = cmdStderr
 	cmd.Stdin = cmdStdin
 
 	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
