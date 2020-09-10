@@ -1,7 +1,9 @@
 # kool
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/kool-dev/kool)](https://goreportcard.com/report/github.com/kool-dev/kool)
-![docker](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
+![Docker Hub](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
+![Golang CI Lint](https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg)
+
 ### Development workspaces made easy
 
 Dev environment made easy, a standardized way for running applications no matter the stack on your local machine and deploying it to a development environment.
