@@ -15,7 +15,7 @@ kool logs [options] [service...]
 ```
   -h, --help    help for logs
   -f, --follow  Follow log output
-  -t, --tail    Number of lines to show from the end of the logs for each container
+  -t, --tail    Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown. (default 25)
 ```
 
 ### SEE ALSO
