@@ -1,3 +1,5 @@
+// +build ignore
+
 package main
 
 import (
@@ -51,7 +53,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		cmdFile, err = CreateFile(newName, "4-Commands")
+		cmdFile, err = CreateFile(newName, "docs/4-Commands")
 
 		if err != nil {
 			log.Fatal(err)
@@ -69,7 +71,7 @@ func main() {
 	re := regexp.MustCompile("(?m)[\r\n]+^.*kool_deploy.*$")
 	koolMarkdown = re.ReplaceAllString(koolMarkdown, "")
 
-	koolFile, err = CreateFile("0-kool", "4-Commands")
+	koolFile, err = CreateFile("0-kool", "docs/4-Commands")
 
 	if err != nil {
 		log.Fatal(err)
