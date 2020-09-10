@@ -41,10 +41,11 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 // which makes it interactive for running even something like `bash`.
 func Interactive(exe string, args ...string) (err error) {
 	var (
-		cmd       *exec.Cmd
-		cmdStdin  io.Reader = os.Stdin
-		cmdStdout io.Writer = os.Stdout
-		cmdStderr io.Writer = os.Stderr
+		cmd                     *exec.Cmd
+		cmdStdin                io.ReadCloser
+		cmdStdout               io.WriteCloser
+		closer                  func()
+		closeStdin, closeStdout bool
 	)
 
 	if lookedUp == nil {
@@ -59,25 +60,29 @@ func Interactive(exe string, args ...string) (err error) {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
-	if numArgs := len(args); exe != "kool" && numArgs >= 2 {
-		switch args[numArgs-2] {
-		case InputRedirect:
-			{
-				cmdStdin, err = prepareInputRedirect(args[numArgs-1])
-				if closer, canClose := cmdStdin.(io.Closer); canClose {
-					defer closer.Close()
-				}
+	// soon should refactor this onto a struct with methods
+	// so we can remove this too long list of returned values.
+	args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args)
 
-				// fix arguments removing the redirect
-				args = args[:numArgs-2]
-			}
-		}
+	if closeStdin {
+		defer cmdStdin.Close()
+	}
+	if closeStdout {
+		defer cmdStdout.Close()
+	}
+
+	if err != nil {
+		return
+	}
+
+	if closer != nil {
+		defer closer()
 	}
 
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
 	cmd.Stdout = cmdStdout
-	cmd.Stderr = cmdStderr
+	cmd.Stderr = os.Stderr
 	cmd.Stdin = cmdStdin
 
 	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
