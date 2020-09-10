@@ -41,11 +41,11 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 // which makes it interactive for running even something like `bash`.
 func Interactive(exe string, args ...string) (err error) {
 	var (
-		cmd                     *exec.Cmd
-		cmdStdin                io.ReadCloser
-		cmdStdout               io.WriteCloser
-		closer                  func()
-		closeStdin, closeStdout bool
+		cmd         *exec.Cmd
+		cmdStdin    io.ReadCloser
+		cmdStdout   io.WriteCloser
+		closeStdin  bool
+		closeStdout bool
 	)
 
 	if lookedUp == nil {
@@ -62,21 +62,15 @@ func Interactive(exe string, args ...string) (err error) {
 
 	// soon should refactor this onto a struct with methods
 	// so we can remove this too long list of returned values.
-	args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args)
+	if args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args); err != nil {
+		return
+	}
 
 	if closeStdin {
 		defer cmdStdin.Close()
 	}
 	if closeStdout {
 		defer cmdStdout.Close()
-	}
-
-	if err != nil {
-		return
-	}
-
-	if closer != nil {
-		defer closer()
 	}
 
 	cmd = exec.Command(exe, args...)
