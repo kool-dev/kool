@@ -54,7 +54,6 @@ func runRun(cmd *cobra.Command, args []string) {
 			execArgs = append(execArgs, args[1:]...)
 		}
 
-		fmt.Println("$", exec[0], strings.Join(execArgs, " "))
 		err = shell.Interactive(exec[0], execArgs...)
 
 		if err != nil {
