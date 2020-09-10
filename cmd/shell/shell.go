@@ -3,6 +3,7 @@ package shell
 import (
 	"fmt"
 	"io"
+	"kool-dev/kool/enviroment"
 	"log"
 	"os"
 	"os/exec"
@@ -30,6 +31,7 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
 	cmd.Stdin = os.Stdin
+
 	out, err = cmd.CombinedOutput()
 	outStr = strings.TrimSpace(string(out))
 	return
@@ -51,7 +53,7 @@ func Interactive(exe string, args ...string) (err error) {
 		args = append(dockerComposeDefaultArgs(), args...)
 	}
 
-	if verbose := os.Getenv("KOOL_VERBOSE"); verbose == "1" || verbose == "true" {
+	if enviroment.IsTrue("KOOL_VERBOSE") {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
