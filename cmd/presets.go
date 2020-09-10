@@ -80,7 +80,7 @@ networks:
     - kool run install
 
   # Runs go CLI with proper version for kool development
-  go: kool docker --env='GOOS=$GOOS' golang:1.15.0 go
+  go: kool docker --volume=gopath:/go --env='GOOS=$GOOS' golang:1.15.0 go
 
   # Compiling cli itself. In case you are on MacOS make sure to have your .env
   # file properly setting GOOS=darwin so you will be able to use the binary.
@@ -88,7 +88,7 @@ networks:
   install:
     - mv my-cli /usr/local/bin/my-cli
   fmt: kool run go fmt
-  lint: kool docker golangci/golangci-lint:v1.31.0 golangci-lint run -v`,
+  lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v`,
 	}
 	presets["laravel"] = map[string]string{
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
