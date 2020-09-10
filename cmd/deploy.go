@@ -12,17 +12,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DeployFlags holds the flags for the start command
-type DeployFlags struct {
-}
-
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploys your application using Kool Dev",
 	Run:   runDeploy,
 }
-
-var deployFlags = &DeployFlags{}
 
 func init() {
 	rootCmd.AddCommand(deployCmd)

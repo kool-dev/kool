@@ -1,13 +1,11 @@
 package cmd
 
 import (
+	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"os/exec"
 )
-
-func dockerComposeDefaultArgs() []string {
-	return []string{"-p", os.Getenv("KOOL_NAME")}
-}
 
 func checkKoolDependencies() {
 	var err error
@@ -22,8 +20,18 @@ func checkKoolDependencies() {
 		os.Exit(1)
 	}
 
-	if _, err = shellExec("docker", "info"); err != nil {
+	if _, err = shell.Exec("docker", "info"); err != nil {
 		execError("Docker daemon doesn't seem to be running, run it first and retry.", err)
 		os.Exit(1)
+	}
+}
+
+func execError(out string, err error) {
+	if err != nil {
+		fmt.Println("ERROR:", err)
+	}
+
+	if out != "" {
+		fmt.Println("Output:", out)
 	}
 }

@@ -15,7 +15,7 @@ type InitFlags struct {
 var initCmd = &cobra.Command{
 	Use:   "init [PRESET]",
 	Short: "Initialize kool preset in the current working directory",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 	Run:   runInit,
 }
 
@@ -38,7 +38,6 @@ func runInit(cmd *cobra.Command, args []string) {
 	)
 
 	preset = args[0]
-	args = args[1:]
 
 	if presetFiles, exists = presets[preset]; !exists {
 		fmt.Println("Unknown preset", preset)
@@ -87,11 +86,7 @@ func runInit(cmd *cobra.Command, args []string) {
 		file.Close()
 
 		fmt.Println("  Preset file", fileName, "created.")
-
-		fileContent = ""
 	}
 
 	fmt.Println("Preset ", preset, " initialized!")
-
-	presetFiles = nil
 }

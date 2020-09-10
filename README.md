@@ -64,7 +64,15 @@ The flow is not written in stone, so you may go ahead and fork, code and PR with
 
 PS: our main pain point at this moment is the lack of testing. Might be a great starting point.
 
-#### Updating commands signature documentation
+### Lint
+
+Before submitting a PR make sure to run `fmt` and linters.
+
+```bash
+kool run lint
+```
+
+### Updating commands signature documentation
 
 The Cobra library offers a simple solution for getting markdown documentation for usage of its commands. In order to generate update the generated markdown files do as follow:
 
