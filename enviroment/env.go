@@ -10,6 +10,9 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
+// InitEnvironmentVariables handles the reading of .env files and
+// setting up important environment variables necessary for kool
+// to operate as expected.
 func InitEnvironmentVariables() {
 	var (
 		homeDir, workDir string
@@ -68,5 +71,5 @@ func InitEnvironmentVariables() {
 		os.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
 	}
 
-	InitAsuser()
+	initAsuser()
 }

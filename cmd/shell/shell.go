@@ -3,6 +3,7 @@ package shell
 import (
 	"fmt"
 	"io"
+	"kool-dev/kool/enviroment"
 	"log"
 	"os"
 	"os/exec"
@@ -30,6 +31,7 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
 	cmd.Stdin = os.Stdin
+
 	out, err = cmd.CombinedOutput()
 	outStr = strings.TrimSpace(string(out))
 	return
@@ -39,8 +41,11 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 // which makes it interactive for running even something like `bash`.
 func Interactive(exe string, args ...string) (err error) {
 	var (
-		cmd      *exec.Cmd
-		cmdStdin io.Reader = os.Stdin
+		cmd         *exec.Cmd
+		cmdStdin    io.ReadCloser
+		cmdStdout   io.WriteCloser
+		closeStdin  bool
+		closeStdout bool
 	)
 
 	if lookedUp == nil {
@@ -51,29 +56,26 @@ func Interactive(exe string, args ...string) (err error) {
 		args = append(dockerComposeDefaultArgs(), args...)
 	}
 
-	if verbose := os.Getenv("KOOL_VERBOSE"); verbose == "1" || verbose == "true" {
+	if enviroment.IsTrue("KOOL_VERBOSE") {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
-	if numArgs := len(args); exe != "kool" && numArgs >= 2 && args[numArgs-2] == "<" {
-		var (
-			file *os.File
-			path string
-		)
+	// soon should refactor this onto a struct with methods
+	// so we can remove this too long list of returned values.
+	if args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args); err != nil {
+		return
+	}
 
-		// we have an input redirection attempt!
-		path = args[numArgs-1]
-		args = args[:numArgs-2]
-
-		file, err = os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-		cmdStdin = file
-
-		defer file.Close()
+	if closeStdin {
+		defer cmdStdin.Close()
+	}
+	if closeStdout {
+		defer cmdStdout.Close()
 	}
 
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = cmdStdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = cmdStdin
 

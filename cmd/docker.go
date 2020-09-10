@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/enviroment"
 	"os"
 	"strings"
 
@@ -57,12 +58,12 @@ func execDockerRun(image string, command []string) {
 
 	workDir, _ = os.Getwd()
 	args = []string{"run", "--init", "--rm", "-w", "/app"}
-	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); !dockerFlags.DisableTty && !(disableTty == "1" || disableTty == "true") {
+	if !dockerFlags.DisableTty && !enviroment.IsTrue("KOOL_TTY_DISABLE") {
 		args = append(args, "-ti")
 	}
 
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "kooldev") || strings.HasPrefix(image, "fireworkweb")) {
-		args = append(args, "--env", "ASUSER="+os.Getenv("KOOL_ASUSER"))
+		args = append(args, "--env", "ASUSER="+asuser)
 	}
 
 	if len(dockerFlags.EnvVariables) > 0 {
