@@ -9,11 +9,11 @@ scripts:
   parse-presets:
     - bash parse_presets.sh
   # Runs go CLI with proper version for kool development
-  go: kool docker --env='GOOS=$GOOS' golang:1.15.0 go
+  go: kool docker --volume=kool_gopath:/go --env='GOOS=$GOOS' golang:1.15.0 go
   # Compiling kool itself. In case you are on MacOS make sure to have your .env
   # file properly setting GOOS=darwin so you will be able to use the binary.
   compile: kool run go build -o kool
   install:
-    - mv kool /usr/local/bin/kools
+    - mv kool /usr/local/bin/kool
   fmt: kool run go fmt
-  lint: kool docker golangci/golangci-lint:v1.31.0 golangci-lint run -v
+  lint: kool docker --volume=kool_gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
