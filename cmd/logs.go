@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"strconv"
+	"kool-dev/kool/cmd/shell"
 
 	"github.com/spf13/cobra"
 )
@@ -19,19 +20,21 @@ var logsCmd = &cobra.Command{
 	Run: runLogs,
 }
 
-var logsFlags = &LogsFlags{0, false}
+var logsFlags = &LogsFlags{25, false}
 
 func init() {
 	rootCmd.AddCommand(logsCmd)
 
-	logsCmd.Flags().IntVarP(&logsFlags.Tail, "tail", "t", 0, "Number of lines to show from the end of the logs for each container")
+	logsCmd.Flags().IntVarP(&logsFlags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown.")
 	logsCmd.Flags().BoolVarP(&logsFlags.Follow, "follow", "f", false, "Follow log output.")
 }
 
 func runLogs(cmd *cobra.Command, originalArgs []string) {
 	var args []string = []string{"logs"}
 
-	if logsFlags.Tail > 0 {
+	if logsFlags.Tail == 0 {
+		args = append(args, "--tail", "all")
+	} else {
 		args = append(args, "--tail", strconv.Itoa(logsFlags.Tail))
 	}
 
@@ -39,11 +42,9 @@ func runLogs(cmd *cobra.Command, originalArgs []string) {
 		args = append(args, "--follow")
 	}
 
-	for _, service := range originalArgs {
-		args = append(args, service)
-	}
+	args = append(args, originalArgs...)
 
-	err := shellInteractive("docker-compose", args...)
+	err := shell.Interactive("docker-compose", args...)
 
 	if err != nil {
 		execError("", err)
