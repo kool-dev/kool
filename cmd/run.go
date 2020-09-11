@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"os"
@@ -43,7 +42,7 @@ func runRun(cmd *cobra.Command, args []string) {
 	commands := parseCustomCommandsScript(script)
 
 	if len(args) > 1 && len(commands) > 1 {
-		fmt.Println("Error: you cannot pass in extra arguments to multiple commands scripts.")
+		shell.Error("Error: you cannot pass in extra arguments to multiple commands scripts.")
 		os.Exit(2)
 	}
 
@@ -57,7 +56,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		err = shell.Interactive(exec[0], execArgs...)
 
 		if err != nil {
-			execError("", err)
+			shell.ExecError("", err)
 			os.Exit(1)
 		}
 	}
@@ -109,14 +108,14 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	globalFileName = getKoolScriptsFilePath(path.Join(os.Getenv("HOME"), "kool"))
 
 	if projectFileName == "" && globalFileName == "" {
-		fmt.Println("Could not find kool.yml either in the current working directory or in the user's home directory.")
+		shell.Error("Could not find kool.yml either in the current working directory or in the user's home directory.")
 		os.Exit(2)
 	}
 
 	if projectFileName != "" {
 		projectParsed, err = getKoolContent(projectFileName)
 		if err != nil {
-			fmt.Println("Failed to parse", projectFileName, ":", err)
+			shell.Warning("Failed to parse", projectFileName, ":", err)
 		}
 	}
 
@@ -124,7 +123,7 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 		globalParsed, err = getKoolContent(globalFileName)
 
 		if err != nil {
-			fmt.Println("Failed to parse", globalFileName, ":", err)
+			shell.Warning("Failed to parse", globalFileName, ":", err)
 		}
 	}
 
@@ -137,7 +136,7 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 	}
 
 	if !foundProject && !foundGlobal {
-		fmt.Println("Could not find script", script, " either in the current working directory or in the user's home directory.")
+		shell.Error("Could not find script", script, " either in the current working directory or in the user's home directory.")
 		os.Exit(2)
 	}
 
@@ -155,12 +154,12 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 			parsedCommands = append(parsedCommands, parseCustomCommand(line.(string)))
 		}
 	} else {
-		fmt.Println("Could not parse script with key", script, ": it must be either a single command or an array of commands. Please refer to the documentation.")
+		shell.Error("Could not parse script with key", script, ": it must be either a single command or an array of commands. Please refer to the documentation.")
 		os.Exit(2)
 	}
 
 	if !isRunningGlobal && foundGlobal {
-		fmt.Println("Found a global script, but running the one in the working directory.")
+		shell.Warning("Found a global script, but running the one in the working directory.")
 	}
 
 	return
@@ -172,7 +171,7 @@ func parseCustomCommand(line string) (parsed []string) {
 	parsed, err = shlex.Split(line)
 
 	if err != nil {
-		fmt.Println("Failed parsing custom command:", line, err)
+		shell.Error("Failed parsing custom command:", line, err)
 		os.Exit(1)
 	}
 

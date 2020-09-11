@@ -46,7 +46,7 @@ func stopContainers(purge bool) {
 	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		execError("", err)
+		shell.ExecError("", err)
 		os.Exit(1)
 	}
 }

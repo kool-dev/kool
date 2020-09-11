@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/blang/semver"
@@ -33,18 +33,18 @@ func runSelfUpdate(cmf *cobra.Command, args []string) {
 	if updater, err = selfupdate.NewUpdater(selfupdate.Config{
 		Validator: &selfupdate.SHA2Validator{},
 	}); err != nil {
-		fmt.Println("Failed to create updater controller", err)
+		shell.Error("Failed to create updater controller", err)
 		os.Exit(1)
 	}
 
 	if latest, err = updater.UpdateSelf(currentVersion, "kool-dev/kool"); err != nil {
-		fmt.Println("Kool self-update failed:", err)
+		shell.Error("Kool self-update failed:", err)
 		os.Exit(1)
 	}
 
 	if latest.Version.Equals(currentVersion) {
-		fmt.Println("You already have the latest version.", version)
+		shell.Warning("You already have the latest version.", version)
 	} else {
-		fmt.Println("Successfully updated to version", latest.Version)
+		shell.Success("Successfully updated to version", latest.Version)
 	}
 }

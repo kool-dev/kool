@@ -47,7 +47,7 @@ func runLogs(cmd *cobra.Command, originalArgs []string) {
 	err := shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		execError("", err)
+		shell.ExecError("", err)
 		os.Exit(1)
 	}
 }

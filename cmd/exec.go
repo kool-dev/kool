@@ -70,7 +70,7 @@ func dockerComposeExec(service string, command ...string) {
 	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		execError("", err)
+		shell.ExecError("", err)
 		os.Exit(1)
 	}
 }
