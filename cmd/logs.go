@@ -1,23 +1,23 @@
 package cmd
 
 import (
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"strconv"
-	"kool-dev/kool/cmd/shell"
 
 	"github.com/spf13/cobra"
 )
 
 // LogsFlags holds the flags for the logs command
 type LogsFlags struct {
-	Tail int
+	Tail   int
 	Follow bool
 }
 
 var logsCmd = &cobra.Command{
 	Use:   "logs [options] [service...]",
 	Short: "Displays log output from services.",
-	Run: runLogs,
+	Run:   runLogs,
 }
 
 var logsFlags = &LogsFlags{25, false}

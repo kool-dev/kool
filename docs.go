@@ -3,24 +3,24 @@
 package main
 
 import (
-	"os"
+	"bytes"
 	"fmt"
 	"kool-dev/kool/cmd"
 	"log"
-	"bytes"
-	"strings"
-	"regexp"
+	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra/doc"
 )
 
 func main() {
 	var (
-		err error
+		err        error
 		koolOutput *bytes.Buffer
-		cmdFile *os.File
-		koolFile *os.File
+		cmdFile    *os.File
+		koolFile   *os.File
 	)
 
 	fmt.Println("Going to generate cobra docs in markdown...")
@@ -42,7 +42,7 @@ func main() {
 			continue
 		}
 
-		newName := strings.Replace(childCmd.CommandPath()," ", "-", -1)
+		newName := strings.Replace(childCmd.CommandPath(), " ", "-", -1)
 		koolMarkdown = strings.Replace(koolMarkdown, cmdName, newName, -1)
 
 		cmdOutput := new(bytes.Buffer)
