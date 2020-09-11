@@ -3,6 +3,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kool-dev/kool)](https://goreportcard.com/report/github.com/kool-dev/kool)
 ![Docker Hub](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
 ![Golang CI Lint](https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield)
 
 ### Development workspaces made easy
 
@@ -91,3 +92,6 @@ If you find security issue please let us know ahead of making it public like in 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_large)
