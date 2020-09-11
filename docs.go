@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"kool-dev/kool/cmd"
+	"kool-dev/kool/cmd/shell"
 	"log"
 	"os"
 	"path/filepath"
@@ -88,7 +89,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Success!")
+	shell.Success("Success!")
 }
 
 // CreateFile Create file to write markdown content

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"kool-dev/kool/cmd/shell"
 	"os"
 	"strings"
@@ -35,7 +34,7 @@ func statusDisplayServices() {
 	out, err := shell.Exec("docker-compose", "ps", "--services")
 
 	if err != nil {
-		fmt.Println("No services found.")
+		shell.Warning("No services found.")
 		return
 	}
 
@@ -47,7 +46,7 @@ func statusDisplayServices() {
 		}
 	}
 	if len(services) == 0 {
-		fmt.Println("No services found.")
+		shell.Warning("No services found.")
 		return
 	}
 
@@ -60,7 +59,7 @@ func statusDisplayServices() {
 			out, err = shell.Exec("docker-compose", "ps", "-q", service)
 
 			if err != nil {
-				execError(out, err)
+				shell.ExecError(out, err)
 				os.Exit(1)
 			}
 
