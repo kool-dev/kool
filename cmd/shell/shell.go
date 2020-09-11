@@ -3,7 +3,7 @@ package shell
 import (
 	"fmt"
 	"io"
-	"kool-dev/kool/enviroment"
+	"kool-dev/kool/environment"
 	"log"
 	"os"
 	"os/exec"
@@ -56,7 +56,7 @@ func Interactive(exe string, args ...string) (err error) {
 		args = append(dockerComposeDefaultArgs(), args...)
 	}
 
-	if enviroment.IsTrue("KOOL_VERBOSE") {
+	if environment.IsTrue("KOOL_VERBOSE") {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 

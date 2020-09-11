@@ -5,12 +5,12 @@ import (
 	"os"
 
 	"kool-dev/kool/cmd"
-	"kool-dev/kool/enviroment"
+	"kool-dev/kool/environment"
 )
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	enviroment.InitEnvironmentVariables()
+	environment.InitEnvironmentVariables()
 
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)

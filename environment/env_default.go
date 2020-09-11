@@ -1,4 +1,4 @@
-package enviroment
+package environment
 
 // DefaultEnv is supposed to contain all default
 // .env file injected upon build time
