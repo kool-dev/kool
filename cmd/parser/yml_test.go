@@ -15,14 +15,6 @@ const KoolYmlOK = `scripts:
     - line 2
 `
 
-func TestDefaultParser(t *testing.T) {
-	var p Parser = NewParser()
-
-	if _, assert := p.(*DefaultParser); !assert {
-		t.Errorf("NewParser() did not return a *DefaultParser")
-	}
-}
-
 func TestParseKoolYaml(t *testing.T) {
 	var (
 		err     error

@@ -34,7 +34,7 @@ func (p *DefaultParser) AddLookupPath(rootPath string) (err error) {
 	}
 
 	if koolFile == "" {
-		err = errors.New("could not find any kool.yml file")
+		err = ErrKoolYmlNotFound
 	} else {
 		p.targetFiles = append(p.targetFiles, koolFile)
 	}
