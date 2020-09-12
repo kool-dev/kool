@@ -3,7 +3,7 @@ on:
     branches:
       - master
   pull_request:
-name: Testing
+name: go test
 jobs:
   test:
     strategy:
@@ -18,5 +18,12 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Caching
+      uses: actions/cache@v2
+      with:
+        path: ~/go/pkg
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
     - name: Test
       run: go test ./...
