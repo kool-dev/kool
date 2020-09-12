@@ -1,8 +1,10 @@
 package builder
 
 import (
+	"fmt"
 	"kool-dev/kool/cmd/shell"
 	"os"
+	"strings"
 
 	"github.com/google/shlex"
 )
@@ -37,4 +39,9 @@ func (c *Command) AppendArgs(args ...string) {
 func (c *Command) Interactive() (err error) {
 	err = shell.Interactive(c.command, c.args...)
 	return
+}
+
+// String returns a string representation of the command.
+func (c *Command) String() string {
+	return strings.Trim(fmt.Sprintf("%s %s", c.command, strings.Join(c.args, " ")), " ")
 }
