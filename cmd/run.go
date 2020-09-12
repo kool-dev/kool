@@ -5,7 +5,6 @@ import (
 	"kool-dev/kool/cmd/shell"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"
@@ -168,18 +167,11 @@ func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
 func parseCustomCommand(line string) (parsed []string) {
 	var err error
 
-	parsed, err = shlex.Split(line)
+	parsed, err = shlex.Split(os.ExpandEnv(line))
 
 	if err != nil {
 		shell.Error("Failed parsing custom command:", line, err)
 		os.Exit(1)
-	}
-
-	for i := range parsed {
-		for _, env := range os.Environ() {
-			envPair := strings.SplitN(env, "=", 2)
-			parsed[i] = strings.ReplaceAll(parsed[i], "$"+envPair[0], envPair[1])
-		}
 	}
 
 	return
