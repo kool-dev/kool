@@ -26,6 +26,10 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     - name: Test
+      if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+      run: go test ./...
+    - name: Test with code coverage
+      if: matrix.os == 'ubuntu-latest'
       run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
     - name: Code Coverage
       if: matrix.os == 'ubuntu-latest'
