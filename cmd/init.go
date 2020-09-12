@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"kool-dev/kool/cmd/shell"
 	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/spf13/cobra"

@@ -1,11 +1,11 @@
 package tgz
 
 import (
-	"kool-dev/kool/cmd/shell"
 	"archive/tar"
 	"compress/gzip"
 	"io"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"path/filepath"
 	"strings"
