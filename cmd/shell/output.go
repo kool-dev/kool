@@ -9,7 +9,7 @@ import (
 // ExecError error output
 func ExecError(out string, err error) {
 	if err != nil {
-		color.New(color.BgRed, color.FgWhite).Println("ERROR:", err)
+		color.New(color.BgRed, color.FgWhite).Println("error:", err)
 	}
 
 	if out != "" {
