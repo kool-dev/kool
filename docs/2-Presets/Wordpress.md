@@ -35,3 +35,14 @@ To install wordpress, it will ask database credentials, the default ones are:
 | Table Prefix  | wp_      |
 
 Check your **kool.yml** to see what scripts you can run and add more.
+
+### Publishing
+
+For publishing we recommend using [Updraft Plus](https://wordpress.org/plugins/updraftplus):
+
+* Install Plugin on your local
+* Create Backup
+* Download Backup
+* Install Plugin on the destination with a fresh Wordpress Instalation
+* Upload Backup
+* Restore it
