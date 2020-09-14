@@ -1,0 +1,5 @@
+scripts:
+  php: kool exec app php
+
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+  mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD
