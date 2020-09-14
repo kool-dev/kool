@@ -42,7 +42,7 @@ func InitEnvironmentVariables() {
 	if _, err = os.Stat(file); !os.IsNotExist(err) {
 		err = godotenv.Load(file)
 		if err != nil {
-			log.Fatal("Failure loading environment file ", file, " ERROR: '", err, "'")
+			log.Fatal("Failure loading environment file ", file, " error: '", err, "'")
 		}
 	}
 

@@ -1,20 +1,15 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"fmt"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
 	"os"
 	"path"
 
-	"github.com/google/shlex"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
-
-// KoolYaml holds the structure for parsing the custom commands file
-type KoolYaml struct {
-	Scripts map[string]interface{} `yaml:"scripts"`
-}
 
 var runCmd = &cobra.Command{
 	Use:   "run [SCRIPT]",
@@ -32,147 +27,47 @@ func init() {
 
 func runRun(cmd *cobra.Command, args []string) {
 	var (
-		err    error
-		script string
+		script   string
+		commands []*builder.Command
+		err      error
+		kool     parser.Parser
 	)
+
+	kool = parser.NewParser()
+
+	// look for kool.yml on current working directory
+	_ = kool.AddLookupPath(os.Getenv("PWD"))
+	// look for kool.yml on kool folder within user home directory
+	_ = kool.AddLookupPath(path.Join(os.Getenv("HOME"), "kool"))
 
 	script = args[0]
 
-	commands := parseCustomCommandsScript(script)
-
-	if len(args) > 1 && len(commands) > 1 {
-		shell.Error("Error: you cannot pass in extra arguments to multiple commands scripts.")
-		os.Exit(2)
-	}
-
-	for _, exec := range commands {
-		var execArgs = exec[1:]
-		if len(commands) == 1 {
-			// single command - forward extra args
-			execArgs = append(execArgs, args[1:]...)
-		}
-
-		err = shell.Interactive(exec[0], execArgs...)
-
-		if err != nil {
-			shell.ExecError("", err)
+	if commands, err = kool.Parse(script); err != nil {
+		if parser.IsMultipleDefinedScriptError(err) {
+			// we should just warn the user about multiple finds for the script
+			shell.Warning("Attention: the script was found in more than one kool.yml file")
+		} else {
+			shell.Error("failed parsing script")
+			fmt.Println("error:", err)
 			os.Exit(1)
 		}
 	}
-}
 
-func getKoolScriptsFilePath(rootPath string) (filePath string) {
-	var err error
-
-	if _, err = os.Stat(path.Join(rootPath, "kool.yml")); !os.IsNotExist(err) {
-		filePath = path.Join(rootPath, "kool.yml")
-	} else if _, err = os.Stat(path.Join(rootPath, "kool.yaml")); !os.IsNotExist(err) {
-		filePath = path.Join(rootPath, "kool.yaml")
-	}
-
-	return
-}
-
-func getKoolContent(filePath string) (*KoolYaml, error) {
-	file, err := os.OpenFile(filePath, os.O_RDONLY, os.ModePerm)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	yml, err := ioutil.ReadAll(file)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var parsed *KoolYaml = new(KoolYaml)
-
-	err = yaml.Unmarshal(yml, parsed)
-
-	return parsed, err
-}
-
-func parseCustomCommandsScript(script string) (parsedCommands [][]string) {
-	var (
-		err                                        error
-		projectFileName, globalFileName            string
-		parsed, projectParsed, globalParsed        *KoolYaml
-		foundProject, foundGlobal, isRunningGlobal bool
-	)
-
-	projectFileName = getKoolScriptsFilePath(os.Getenv("PWD"))
-	globalFileName = getKoolScriptsFilePath(path.Join(os.Getenv("HOME"), "kool"))
-
-	if projectFileName == "" && globalFileName == "" {
-		shell.Error("Could not find kool.yml either in the current working directory or in the user's home directory.")
+	if len(args) > 1 && len(commands) > 1 {
+		shell.Error("error: you cannot pass in extra arguments to multiple commands scripts")
 		os.Exit(2)
 	}
 
-	if projectFileName != "" {
-		projectParsed, err = getKoolContent(projectFileName)
-		if err != nil {
-			shell.Warning("Failed to parse", projectFileName, ":", err)
+	for _, command := range commands {
+		if len(args) > 0 {
+			command.AppendArgs(args...)
 		}
-	}
 
-	if globalFileName != "" {
-		globalParsed, err = getKoolContent(globalFileName)
+		err = command.Interactive()
 
 		if err != nil {
-			shell.Warning("Failed to parse", globalFileName, ":", err)
+			shell.Error(err)
+			os.Exit(1)
 		}
 	}
-
-	if projectParsed != nil {
-		_, foundProject = projectParsed.Scripts[script]
-	}
-
-	if globalParsed != nil {
-		_, foundGlobal = globalParsed.Scripts[script]
-	}
-
-	if !foundProject && !foundGlobal {
-		shell.Error("Could not find script", script, " either in the current working directory or in the user's home directory.")
-		os.Exit(2)
-	}
-
-	if foundProject {
-		parsed = projectParsed
-	} else {
-		parsed = globalParsed
-		isRunningGlobal = true
-	}
-
-	if singleCommand, isSingleString := parsed.Scripts[script].(string); isSingleString {
-		parsedCommands = append(parsedCommands, parseCustomCommand(singleCommand))
-	} else if commands, isList := parsed.Scripts[script].([]interface{}); isList {
-		for _, line := range commands {
-			parsedCommands = append(parsedCommands, parseCustomCommand(line.(string)))
-		}
-	} else {
-		shell.Error("Could not parse script with key", script, ": it must be either a single command or an array of commands. Please refer to the documentation.")
-		os.Exit(2)
-	}
-
-	if !isRunningGlobal && foundGlobal {
-		shell.Warning("Found a global script, but running the one in the working directory.")
-	}
-
-	return
-}
-
-func parseCustomCommand(line string) (parsed []string) {
-	var err error
-
-	parsed, err = shlex.Split(os.ExpandEnv(line))
-
-	if err != nil {
-		shell.Error("Failed parsing custom command:", line, err)
-		os.Exit(1)
-	}
-
-	return
 }
