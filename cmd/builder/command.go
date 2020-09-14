@@ -5,6 +5,7 @@ import (
 	"kool-dev/kool/cmd/shell"
 	"os"
 	"strings"
+	"os/exec"
 
 	"github.com/google/shlex"
 )
@@ -13,6 +14,15 @@ import (
 type Command struct {
 	command string
 	args    []string
+}
+
+// Executor holds available methods for command.
+type Executor interface {
+	AppendArgs(args ...string)
+	Interactive() error
+	String() string
+	Exec() (string, error)
+	LookPath() error
 }
 
 // ParseCommand transforms a command line string into separated
@@ -41,7 +51,19 @@ func (c *Command) Interactive() (err error) {
 	return
 }
 
+// Exec will send the command to shell execution.
+func (c *Command) Exec() (outStr string, err error) {
+	outStr, err = shell.Exec(c.command, c.args...)
+	return
+}
+
 // String returns a string representation of the command.
 func (c *Command) String() string {
 	return strings.Trim(fmt.Sprintf("%s %s", c.command, strings.Join(c.args, " ")), " ")
+}
+
+// LookPath returns if the command exists
+func (c *Command) LookPath() (err error) {
+	_, err = exec.LookPath(c.command)
+	return
 }

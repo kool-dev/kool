@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/cmd/checker"
 	"log"
 	"os"
 	"strings"
@@ -30,7 +31,14 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) {
-	checkKoolDependencies()
+	var dependenciesChecker = checker.NewChecker()
+	message, err := dependenciesChecker.CheckKoolDependencies()
+
+	if (err != nil) {
+		shell.ExecError(message, err)
+		os.Exit(1)
+	}
+
 	handleGlobalNetwork()
 	startContainers(startFlags.Services)
 }
