@@ -22,8 +22,8 @@ func (c *FakeCommand) Exec() (outStr string, err error) {
 	return
 }
 
-func (c *FakeCommand) String() (command string) {
-	return command
+func (c *FakeCommand) String() (strCommand string) {
+	return
 }
 
 type NotInstalledDockerCmd struct {
