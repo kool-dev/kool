@@ -1,6 +1,13 @@
 ### Start from Scratch
 
-For wordpress preset start from scratch or a existing wordpress is the same, go to the next section.
+If you want to create a project from scratch, just go to the directory you wanna have the new Wordpress install and run:
+
+```bash
+$ kool init wordpress
+$ kool start
+```
+
+Upon first start, if the current working directory is not an existing Wordpress source code, it will create it for you.
 
 ### Start with existing project
 
@@ -10,11 +17,9 @@ Go to the project folder and run:
 $ kool init wordpress
 ```
 
-**kool init** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool init** creates configuration files in order to enable you to configure and extend its behaviour.
 
-By default wordpress preset comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
-
-At **docker-compose.yml** you can also see the default environment variables for database configuration that will be used for installing wordpress later on, the default are:
+The **wordpress** preset uses **mysql** and **redis** out of the box. You can review and change that at **docker-compose.yml**.
 
 Run the following to start:
 
