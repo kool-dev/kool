@@ -566,6 +566,7 @@ networks:
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
 		"kool.yml": `scripts:
   php: kool exec app php
+  wp: kool exec app wp
 
   mysql: kool exec database mysql -uroot -p$DB_PASSWORD
   mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD`,
