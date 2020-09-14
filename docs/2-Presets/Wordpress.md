@@ -1,8 +1,8 @@
-### Create Laravel Project from Scratch
+### Start from Scratch
 
 For wordpress preset start from scratch or a existing wordpress is the same, go to the next section.
 
-### Start using kool
+### Start with existing project
 
 Go to the project folder and run:
 
