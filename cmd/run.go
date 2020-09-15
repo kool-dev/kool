@@ -28,7 +28,7 @@ func init() {
 func runRun(cmd *cobra.Command, args []string) {
 	var (
 		script   string
-		commands []*builder.Command
+		commands []*builder.DefaultCommand
 		err      error
 		kool     parser.Parser
 	)

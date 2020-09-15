@@ -20,7 +20,7 @@ func TestParseKoolYaml(t *testing.T) {
 		err     error
 		tmpPath string
 		parsed  *KoolYaml
-		cmds    []*builder.Command
+		cmds    []*builder.DefaultCommand
 	)
 
 	tmpPath = path.Join(t.TempDir(), "kool.yml")

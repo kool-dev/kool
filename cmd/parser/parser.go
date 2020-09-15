@@ -10,7 +10,7 @@ import (
 // Parser defines the functions required for handling kool.yml files.
 type Parser interface {
 	AddLookupPath(string) error
-	Parse(string) ([]*builder.Command, error)
+	Parse(string) ([]*builder.DefaultCommand, error)
 }
 
 // DefaultParser implements all default behavior for using kool.yml files.
@@ -46,7 +46,7 @@ func (p *DefaultParser) AddLookupPath(rootPath string) (err error) {
 // on the configured lookup paths. If the script exists in more than one file
 // this function will return the first occurence and an ErrMultipleDefinedScript
 // error just to let the user know and avoid confusing.
-func (p *DefaultParser) Parse(script string) (commands []*builder.Command, err error) {
+func (p *DefaultParser) Parse(script string) (commands []*builder.DefaultCommand, err error) {
 	var (
 		koolFile        string
 		parsedFile      *KoolYaml

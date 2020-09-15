@@ -1,12 +1,12 @@
 package checker
 
 import (
-	"kool-dev/kool/cmd/builder"
 	"errors"
+	"kool-dev/kool/cmd/builder"
 	"testing"
 )
 
-type FakeCommand struct {}
+type FakeCommand struct{}
 
 func (c *FakeCommand) AppendArgs(args ...string) {}
 
@@ -70,15 +70,15 @@ func TestDockerNotInstalled(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	message, err := c.CheckKoolDependencies()
+	err := c.VerifyDependencies()
 
 	if err == nil {
 		t.Error("Expected an error, got none.")
 		return
 	}
 
-	if message != "Docker doesn't seem to be installed, install it first and retry." {
-		t.Errorf("Expected the message 'Docker doesn't seem to be installed, install it first and retry.', got %s", message)
+	if !IsDockerNotFoundError(err) {
+		t.Errorf("Expected the message '%s', got '%s'", ErrDockerNotFound.Error(), err.Error())
 	}
 }
 
@@ -90,15 +90,15 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	message, err := c.CheckKoolDependencies()
+	err := c.VerifyDependencies()
 
 	if err == nil {
 		t.Error("Expected an error, got none.")
 		return
 	}
 
-	if message != "Docker-compose doesn't seem to be installed, install it first and retry." {
-		t.Errorf("Expected the message 'Docker-compose doesn't seem to be installed, install it first and retry.', got %s", message)
+	if !IsDockerComposeNotFoundError(err) {
+		t.Errorf("Expected the message '%s', got '%s'", ErrDockerComposeNotFound.Error(), err.Error())
 	}
 }
 
@@ -110,15 +110,15 @@ func TestDockerNotRunning(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	message, err := c.CheckKoolDependencies()
+	err := c.VerifyDependencies()
 
 	if err == nil {
 		t.Error("Expected an error, got none.")
 		return
 	}
 
-	if message != "Docker daemon doesn't seem to be running, run it first and retry." {
-		t.Errorf("Expected the message 'Docker daemon doesn't seem to be running, run it first and retry.', got %s", message)
+	if !IsDockerNotRunningError(err) {
+		t.Errorf("Expected the message '%s', got '%s'", ErrDockerNotRunning.Error(), err.Error())
 	}
 }
 
@@ -130,14 +130,8 @@ func TestCheckKoolDependencies(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	message, err := c.CheckKoolDependencies()
-
-	if err != nil {
+	if err := c.VerifyDependencies(); err != nil {
 		t.Errorf("Expected no errors, got %v.", err)
 		return
-	}
-
-	if message != "" {
-		t.Errorf("Expected no message, got %s", message)
 	}
 }
