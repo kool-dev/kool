@@ -25,9 +25,10 @@ func init() {
 	runCmd.Flags().SetInterspersed(false)
 }
 
-func runRun(cmd *cobra.Command, args []string) {
+func runRun(cmd *cobra.Command, originalArgs []string) {
 	var (
 		script   string
+		args     []string
 		commands []*builder.Command
 		err      error
 		kool     parser.Parser
@@ -40,7 +41,8 @@ func runRun(cmd *cobra.Command, args []string) {
 	// look for kool.yml on kool folder within user home directory
 	_ = kool.AddLookupPath(path.Join(os.Getenv("HOME"), "kool"))
 
-	script = args[0]
+	script = originalArgs[0]
+	args = originalArgs[1:]
 
 	if commands, err = kool.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
@@ -53,7 +55,7 @@ func runRun(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	if len(args) > 1 && len(commands) > 1 {
+	if len(args) > 0 && len(commands) > 1 {
 		shell.Error("error: you cannot pass in extra arguments to multiple commands scripts")
 		os.Exit(2)
 	}
