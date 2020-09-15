@@ -518,4 +518,57 @@ networks:
     - cp .env.example .env
     - kool run composer install`,
 	}
+	presets["wordpress"] = map[string]string{
+		"docker-compose.yml": `version: "3.7"
+services:
+  app:
+    image: kooldev/wordpress:7.4-nginx
+    ports:
+     - "${KOOL_APP_PORT:-80}:80"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:delegated
+    networks:
+     - kool_local
+     - kool_global
+  database:
+    image: mysql:8.0 # can change to: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password # remove this line if you change to: mysql:5.7
+    ports:
+     - "${KOOL_DATABASE_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE:-database}"
+      MYSQL_USER: "${DB_USERNAME:-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+     - db:/var/lib/mysql:delegated
+    networks:
+     - kool_local
+  cache:
+    image: redis:6-alpine
+    volumes:
+     - cache:/data:delegated
+    networks:
+     - kool_local
+
+volumes:
+  db:
+  cache:
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+		"kool.yml": `scripts:
+  php: kool exec app php
+  wp: kool exec app wp
+
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+  mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD`,
+	}
 }
