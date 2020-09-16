@@ -5,6 +5,16 @@ import (
 	"testing"
 )
 
+func TestNewCommand(t *testing.T) {
+	exe, arg := "echo", "xxx"
+
+	cmd := NewCommand(exe, arg)
+
+	if len(cmd.args) != 1 || cmd.command != "echo" || cmd.args[0] != "xxx" {
+		t.Errorf("NewCommand failed; given 'echo xxx' got %v", cmd.String())
+	}
+}
+
 func TestParseCommand(t *testing.T) {
 	line := "echo 'xxx'"
 	cmd, err := ParseCommand(line)

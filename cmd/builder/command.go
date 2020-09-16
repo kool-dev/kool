@@ -30,7 +30,7 @@ type Runner interface {
 }
 
 // NewCommand Create a new command.
-func NewCommand(command string, args []string) *DefaultCommand {
+func NewCommand(command string, args ...string) *DefaultCommand {
 	return &DefaultCommand{command, args}
 }
 
