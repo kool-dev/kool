@@ -8,8 +8,6 @@ import (
 
 type FakeCommand struct{}
 
-func (c *FakeCommand) AppendArgs(args ...string) {}
-
 func (c *FakeCommand) LookPath() (err error) {
 	return
 }
@@ -19,10 +17,6 @@ func (c *FakeCommand) Interactive() (err error) {
 }
 
 func (c *FakeCommand) Exec() (outStr string, err error) {
-	return
-}
-
-func (c *FakeCommand) String() (strCommand string) {
 	return
 }
 

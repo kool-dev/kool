@@ -9,8 +9,8 @@ type Checker interface {
 
 // DefaultChecker holds commands to be checked.
 type DefaultChecker struct {
-	DockerCmd        builder.Command
-	dockerComposeCmd builder.Command
+	DockerCmd        builder.Runner
+	dockerComposeCmd builder.Runner
 }
 
 // NewChecker initializes checker

@@ -16,11 +16,15 @@ type DefaultCommand struct {
 	args    []string
 }
 
-// Command holds available methods for command.
-type Command interface {
+// Builder holds available methods for building commands.
+type Builder interface {
 	AppendArgs(args ...string)
-	Interactive() error
 	String() string
+}
+
+// Runner holds available methods for running commands.
+type Runner interface {
+	Interactive() error
 	Exec() (string, error)
 	LookPath() error
 }
@@ -50,6 +54,17 @@ func (c *DefaultCommand) AppendArgs(args ...string) {
 	c.args = append(c.args, args...)
 }
 
+// String returns a string representation of the command.
+func (c *DefaultCommand) String() string {
+	return strings.Trim(fmt.Sprintf("%s %s", c.command, strings.Join(c.args, " ")), " ")
+}
+
+// LookPath returns if the command exists
+func (c *DefaultCommand) LookPath() (err error) {
+	_, err = exec.LookPath(c.command)
+	return
+}
+
 // Interactive will send the command to an interactive execution.
 func (c *DefaultCommand) Interactive() (err error) {
 	err = shell.Interactive(c.command, c.args...)
@@ -59,16 +74,5 @@ func (c *DefaultCommand) Interactive() (err error) {
 // Exec will send the command to shell execution.
 func (c *DefaultCommand) Exec() (outStr string, err error) {
 	outStr, err = shell.Exec(c.command, c.args...)
-	return
-}
-
-// String returns a string representation of the command.
-func (c *DefaultCommand) String() string {
-	return strings.Trim(fmt.Sprintf("%s %s", c.command, strings.Join(c.args, " ")), " ")
-}
-
-// LookPath returns if the command exists
-func (c *DefaultCommand) LookPath() (err error) {
-	_, err = exec.LookPath(c.command)
 	return
 }
