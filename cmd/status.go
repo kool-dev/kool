@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
+	"log"
 	"os"
 	"strings"
 
@@ -28,7 +30,12 @@ func runStatus(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	handleGlobalNetwork()
+	var globalNetworkHandler = network.NewHandler()
+
+	if err := globalNetworkHandler.HandleGlobalNetwork(); err != nil {
+		log.Fatal(err)
+	}
+
 	statusDisplayServices()
 }
 
