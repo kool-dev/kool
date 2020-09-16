@@ -29,7 +29,7 @@ func runRun(cmd *cobra.Command, originalArgs []string) {
 	var (
 		script   string
 		args     []string
-		commands []*builder.Command
+		commands []*builder.DefaultCommand
 		err      error
 		kool     parser.Parser
 	)

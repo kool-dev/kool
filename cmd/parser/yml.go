@@ -48,13 +48,13 @@ func (y *KoolYaml) HasScript(script string) (has bool) {
 
 // ParseCommands parsed the given script from kool.yml file onto a list
 // of commands parsed.
-func (y *KoolYaml) ParseCommands(script string) (commands []*builder.Command, err error) {
+func (y *KoolYaml) ParseCommands(script string) (commands []*builder.DefaultCommand, err error) {
 	var (
 		isSingle bool
 		isList   bool
 		line     string
 		lines    []interface{}
-		command  *builder.Command
+		command  *builder.DefaultCommand
 	)
 
 	if line, isSingle = y.Scripts[script].(string); isSingle {

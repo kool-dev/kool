@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/shell"
 	"os"
 
@@ -27,7 +28,13 @@ func init() {
 }
 
 func runStop(cmd *cobra.Command, args []string) {
-	checkKoolDependencies()
+	var dependenciesChecker = checker.NewChecker()
+
+	if err := dependenciesChecker.VerifyDependencies(); err != nil {
+		shell.ExecError("", err)
+		os.Exit(1)
+	}
+
 	stopContainers(stopFlags.Purge)
 }
 
