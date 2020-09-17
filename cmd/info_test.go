@@ -6,13 +6,14 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 	"testing"
 )
 
 const testingEnv string = `
-KOOL_TESTING=1
 KOOL_FILTER_TESTING=1
+KOOL_TESTING=1
 `
 
 func setup() {
@@ -68,6 +69,9 @@ func execCommand(cmd *cobra.Command) (output string, err error) {
 		return
 	}
 
-	output = strings.Trim(string(out), "\n")
+	envs := strings.Split(strings.Trim(string(out), "\n"), "\n")
+	sort.Strings(envs)
+
+	output = strings.Join(envs, "\n")
 	return
 }
