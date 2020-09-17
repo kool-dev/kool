@@ -61,11 +61,13 @@ func TestFilteredInfo(t *testing.T) {
 func execCommand(cmd *cobra.Command) (output string, err error) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
-	cmd.Execute()
 
-	out, err := ioutil.ReadAll(b)
+	if err = cmd.Execute(); err != nil {
+		return
+	}
 
-	if err != nil {
+	var out []byte
+	if out, err = ioutil.ReadAll(b); err != nil {
 		return
 	}
 
