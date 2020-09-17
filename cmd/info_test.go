@@ -1,13 +1,13 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
-	"os"
 	"bytes"
-	"io/ioutil"
-	"testing"
-	"strings"
 	"github.com/fireworkweb/godotenv"
+	"github.com/spf13/cobra"
+	"io/ioutil"
+	"os"
+	"strings"
+	"testing"
 )
 
 const testingEnv string = `
