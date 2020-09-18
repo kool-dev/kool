@@ -36,7 +36,7 @@ func NewStatusCommand(statusCmd StatusCmd) *cobra.Command {
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := statusCmd.CheckDependencies(); err != nil {
-				shell.ExecError("", err)
+				shell.FexecError(cmd.OutOrStdout(), "", err)
 				os.Exit(1)
 			}
 
