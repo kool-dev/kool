@@ -40,7 +40,7 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	var globalNetworkHandler = network.NewHandler()
 
-	if err := globalNetworkHandler.HandleGlobalNetwork(); err != nil {
+	if err := globalNetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		log.Fatal(err)
 	}
 

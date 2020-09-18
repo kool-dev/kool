@@ -12,97 +12,113 @@ import (
 	"testing"
 )
 
-type FakeStatusCmd struct{}
+type FakeDependenciesChecker struct{}
 
-// VerifyDependencies verify kool dependencies
-func (s *FakeStatusCmd) VerifyDependencies() (err error) {
+func (c *FakeDependenciesChecker) VerifyDependencies() (err error) {
 	return
 }
 
-// HandleGlobalNetwork handles the global network
-func (s *FakeStatusCmd) HandleGlobalNetwork() (err error) {
+type FakeFailedDependenciesChecker struct{}
+
+func (c *FakeFailedDependenciesChecker) VerifyDependencies() (err error) {
+	err = errors.New("")
 	return
 }
 
-// GetServices get docker services
-func (s *FakeStatusCmd) GetServices() (services []string, err error) {
-	services = []string{"app", "database", "cache"}
+type FakeNetworkHandler struct{}
+
+func (c *FakeNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
 	return
 }
 
-// GetServiceID get docker service ID
-func (s *FakeStatusCmd) GetServiceID(service string) (serviceID string, err error) {
-	serviceID = "100"
+type FakeFailedNetworkHandler struct{}
+
+func (c *FakeFailedNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
+	err = errors.New("")
 	return
 }
 
-// GetStatusPort get docker service port and status
-func (s *FakeStatusCmd) GetStatusPort(serviceID string) (status string, port string) {
-	status = "Up About an hour"
-	port = "0.0.0.0:80->80/tcp, 9000/tcp"
+type FakeRunner struct{}
+
+func (c *FakeRunner) LookPath() (err error) {
 	return
 }
 
-type NotRunningStatusCmd struct {
-	FakeStatusCmd
-}
-
-// GetStatusPort get docker service port and status
-func (s *NotRunningStatusCmd) GetStatusPort(serviceID string) (status string, port string) {
+func (c *FakeRunner) Interactive(args ...string) (err error) {
 	return
 }
 
-type NoServicesStatusCmd struct {
-	FakeStatusCmd
-}
-
-// GetServices get docker services
-func (s *NoServicesStatusCmd) GetServices() (services []string, err error) {
+func (c *FakeRunner) Exec(args ...string) (outStr string, err error) {
 	return
 }
 
-type FailedDependenciesStatusCmd struct {
-	FakeStatusCmd
+type FakeGetServicesRunner struct {
+	FakeRunner
 }
 
-// CheckDependencies check kool dependencies
-func (s *FailedDependenciesStatusCmd) VerifyDependencies() (err error) {
-	err = errors.New("failed dependencies")
+func (c *FakeGetServicesRunner) Exec(args ...string) (outStr string, err error) {
+	outStr = `
+app
+cache
+database
+`
 	return
 }
 
-type FailedNetworkStatusCmd struct {
-	FakeStatusCmd
+type FakeFailedGetServicesRunner struct {
+	FakeRunner
 }
 
-// CheckDependencies check kool dependencies
-func (s *FailedNetworkStatusCmd) HandleGlobalNetwork() (err error) {
-	err = errors.New("failed network")
+func (c *FakeFailedGetServicesRunner) Exec(args ...string) (outStr string, err error) {
+	err = errors.New("")
 	return
 }
 
-type FailedGetServicesStatusCmd struct {
-	FakeStatusCmd
+type FakeGetServiceIDRunner struct {
+	FakeRunner
 }
 
-// GetServices get docker services
-func (s *FailedGetServicesStatusCmd) GetServices() (services []string, err error) {
-	err = errors.New("failed get services")
+func (c *FakeGetServiceIDRunner) Exec(args ...string) (outStr string, err error) {
+	outStr = "100"
 	return
 }
 
-type FailedGetServiceIDStatusCmd struct {
-	FakeStatusCmd
+type FakeFailedGetServiceIDRunner struct {
+	FakeRunner
 }
 
-// GetServiceID get docker service ID
-func (s *FailedGetServiceIDStatusCmd) GetServiceID(service string) (serviceID string, err error) {
-	err = errors.New("failed get service id")
+func (c *FakeFailedGetServiceIDRunner) Exec(args ...string) (outStr string, err error) {
+	err = errors.New("")
+	return
+}
+
+type FakeGetServiceStatusPortRunner struct {
+	FakeRunner
+}
+
+func (c *FakeGetServiceStatusPortRunner) Exec(args ...string) (outStr string, err error) {
+	outStr = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
+	return
+}
+
+type FakeNotRunningGetServiceStatusPortRunner struct {
+	FakeRunner
+}
+
+func (c *FakeNotRunningGetServiceStatusPortRunner) Exec(args ...string) (outStr string, err error) {
+	outStr = "Exited an hour ago"
 	return
 }
 
 func TestStatusCommand(t *testing.T) {
-	cmd := NewStatusCommand(&FakeStatusCmd{})
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeGetServicesRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeGetServiceStatusPortRunner{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
 
 	if err != nil {
@@ -127,7 +143,14 @@ func TestStatusCommand(t *testing.T) {
 }
 
 func TestNotRunningStatusCommand(t *testing.T) {
-	cmd := NewStatusCommand(&NotRunningStatusCmd{})
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeGetServicesRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeNotRunningGetServiceStatusPortRunner{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
 
 	if err != nil {
@@ -135,13 +158,13 @@ func TestNotRunningStatusCommand(t *testing.T) {
 	}
 
 	expected := `
-+----------+-------------+-------+-------+
-| SERVICE  | RUNNING     | PORTS | STATE |
-+----------+-------------+-------+-------+
-| app      | Not running |       |       |
-| cache    | Not running |       |       |
-| database | Not running |       |       |
-+----------+-------------+-------+-------+
++----------+-------------+-------+--------------------+
+| SERVICE  | RUNNING     | PORTS | STATE              |
++----------+-------------+-------+--------------------+
+| app      | Not running |       | Exited an hour ago |
+| cache    | Not running |       | Exited an hour ago |
+| database | Not running |       | Exited an hour ago |
++----------+-------------+-------+--------------------+
 `
 	expected = strings.Trim(expected, "\n")
 	output = strings.Trim(output, "\n")
@@ -152,7 +175,14 @@ func TestNotRunningStatusCommand(t *testing.T) {
 }
 
 func TestNoServicesStatusCommand(t *testing.T) {
-	cmd := NewStatusCommand(&NoServicesStatusCmd{})
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeGetServiceStatusPortRunner{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
 
 	if err != nil {
@@ -168,7 +198,14 @@ func TestNoServicesStatusCommand(t *testing.T) {
 }
 
 func TestFailedGetServicesStatusCommand(t *testing.T) {
-	cmd := NewStatusCommand(&FailedGetServicesStatusCmd{})
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeFailedGetServicesRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeGetServiceStatusPortRunner{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
 
 	if err != nil {
@@ -185,7 +222,14 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 
 func TestFailedDependenciesStatusCommand(t *testing.T) {
 	if os.Getenv("FLAG") == "1" {
-		cmd := NewStatusCommand(&FailedDependenciesStatusCmd{})
+		defaultStatusCmd := &DefaultStatusCmd{
+			&FakeFailedDependenciesChecker{},
+			&FakeNetworkHandler{},
+			&FakeGetServicesRunner{},
+			&FakeGetServiceIDRunner{},
+			&FakeGetServiceStatusPortRunner{},
+		}
+		cmd := NewStatusCommand(defaultStatusCmd)
 		_, _ = execStatusCommand(cmd)
 		return
 	}
@@ -207,7 +251,14 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 
 func TestFailedNetworkStatusCommand(t *testing.T) {
 	if os.Getenv("FLAG") == "1" {
-		cmd := NewStatusCommand(&FailedNetworkStatusCmd{})
+		defaultStatusCmd := &DefaultStatusCmd{
+			&FakeDependenciesChecker{},
+			&FakeFailedNetworkHandler{},
+			&FakeGetServicesRunner{},
+			&FakeGetServiceIDRunner{},
+			&FakeGetServiceStatusPortRunner{},
+		}
+		cmd := NewStatusCommand(defaultStatusCmd)
 		_, _ = execStatusCommand(cmd)
 		return
 	}
@@ -229,7 +280,14 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	if os.Getenv("FLAG") == "1" {
-		cmd := NewStatusCommand(&FailedGetServiceIDStatusCmd{})
+		defaultStatusCmd := &DefaultStatusCmd{
+			&FakeDependenciesChecker{},
+			&FakeNetworkHandler{},
+			&FakeGetServicesRunner{},
+			&FakeFailedGetServiceIDRunner{},
+			&FakeGetServiceStatusPortRunner{},
+		}
+		cmd := NewStatusCommand(defaultStatusCmd)
 		_, _ = execStatusCommand(cmd)
 		return
 	}
