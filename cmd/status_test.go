@@ -14,8 +14,13 @@ import (
 
 type FakeStatusCmd struct{}
 
-// CheckDependencies check kool dependencies
-func (s *FakeStatusCmd) CheckDependencies() (err error) {
+// VerifyDependencies verify kool dependencies
+func (s *FakeStatusCmd) VerifyDependencies() (err error) {
+	return
+}
+
+// HandleGlobalNetwork handles the global network
+func (s *FakeStatusCmd) HandleGlobalNetwork() (err error) {
 	return
 }
 
@@ -61,8 +66,18 @@ type FailedDependenciesStatusCmd struct {
 }
 
 // CheckDependencies check kool dependencies
-func (s *FailedDependenciesStatusCmd) CheckDependencies() (err error) {
+func (s *FailedDependenciesStatusCmd) VerifyDependencies() (err error) {
 	err = errors.New("failed dependencies")
+	return
+}
+
+type FailedNetworkStatusCmd struct {
+	FakeStatusCmd
+}
+
+// CheckDependencies check kool dependencies
+func (s *FailedNetworkStatusCmd) HandleGlobalNetwork() (err error) {
+	err = errors.New("failed network")
 	return
 }
 
@@ -176,6 +191,28 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 	}
 
 	cmd := exec.Command(os.Args[0], "-test.run=TestFailedDependenciesStatusCommand")
+	cmd.Env = append(os.Environ(), "FLAG=1")
+	err := cmd.Run()
+
+	e, ok := err.(*exec.ExitError)
+
+	if !ok {
+		t.Error("Expected an exit error")
+	}
+
+	if e == nil {
+		t.Error("Expected an error, got none")
+	}
+}
+
+func TestFailedNetworkStatusCommand(t *testing.T) {
+	if os.Getenv("FLAG") == "1" {
+		cmd := NewStatusCommand(&FailedNetworkStatusCmd{})
+		_, _ = execCommand(cmd)
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestFailedNetworkStatusCommand")
 	cmd.Env = append(os.Environ(), "FLAG=1")
 	err := cmd.Run()
 
