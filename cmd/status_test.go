@@ -103,7 +103,7 @@ func (s *FailedGetServiceIDStatusCmd) GetServiceID(service string) (serviceID st
 
 func TestStatusCommand(t *testing.T) {
 	cmd := NewStatusCommand(&FakeStatusCmd{})
-	output, err := execCommand(cmd)
+	output, err := execStatusCommand(cmd)
 
 	if err != nil {
 		t.Fatal(err)
@@ -128,7 +128,7 @@ func TestStatusCommand(t *testing.T) {
 
 func TestNotRunningStatusCommand(t *testing.T) {
 	cmd := NewStatusCommand(&NotRunningStatusCmd{})
-	output, err := execCommand(cmd)
+	output, err := execStatusCommand(cmd)
 
 	if err != nil {
 		t.Fatal(err)
@@ -153,7 +153,7 @@ func TestNotRunningStatusCommand(t *testing.T) {
 
 func TestNoServicesStatusCommand(t *testing.T) {
 	cmd := NewStatusCommand(&NoServicesStatusCmd{})
-	output, err := execCommand(cmd)
+	output, err := execStatusCommand(cmd)
 
 	if err != nil {
 		t.Fatal(err)
@@ -169,7 +169,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	cmd := NewStatusCommand(&FailedGetServicesStatusCmd{})
-	output, err := execCommand(cmd)
+	output, err := execStatusCommand(cmd)
 
 	if err != nil {
 		t.Fatal(err)
@@ -186,7 +186,7 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 func TestFailedDependenciesStatusCommand(t *testing.T) {
 	if os.Getenv("FLAG") == "1" {
 		cmd := NewStatusCommand(&FailedDependenciesStatusCmd{})
-		_, _ = execCommand(cmd)
+		_, _ = execStatusCommand(cmd)
 		return
 	}
 
@@ -208,7 +208,7 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 func TestFailedNetworkStatusCommand(t *testing.T) {
 	if os.Getenv("FLAG") == "1" {
 		cmd := NewStatusCommand(&FailedNetworkStatusCmd{})
-		_, _ = execCommand(cmd)
+		_, _ = execStatusCommand(cmd)
 		return
 	}
 
@@ -230,7 +230,7 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	if os.Getenv("FLAG") == "1" {
 		cmd := NewStatusCommand(&FailedGetServiceIDStatusCmd{})
-		_, _ = execCommand(cmd)
+		_, _ = execStatusCommand(cmd)
 		return
 	}
 
@@ -249,7 +249,7 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	}
 }
 
-func execCommand(cmd *cobra.Command) (output string, err error) {
+func execStatusCommand(cmd *cobra.Command) (output string, err error) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 
