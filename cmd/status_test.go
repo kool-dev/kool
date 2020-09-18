@@ -174,6 +174,38 @@ func TestNotRunningStatusCommand(t *testing.T) {
 	}
 }
 
+func TestNoStatusPortStatusCommand(t *testing.T) {
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeGetServicesRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeRunner{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
+	output, err := execStatusCommand(cmd)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := `
++----------+-------------+-------+-------+
+| SERVICE  | RUNNING     | PORTS | STATE |
++----------+-------------+-------+-------+
+| app      | Not running |       |       |
+| cache    | Not running |       |       |
+| database | Not running |       |       |
++----------+-------------+-------+-------+
+`
+	expected = strings.Trim(expected, "\n")
+	output = strings.Trim(output, "\n")
+
+	if output != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, output)
+	}
+}
+
 func TestNoServicesStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
 		&FakeDependenciesChecker{},
