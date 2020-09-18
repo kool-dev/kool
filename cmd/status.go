@@ -33,14 +33,25 @@ func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := checkDependencies(statusCmd); err != nil {
+			if err := statusCmd.checkDependencies(); err != nil {
 				shell.FexecError(cmd.OutOrStdout(), "", err)
 				os.Exit(1)
 			}
 
-			statusDisplayServices(statusCmd, cmd)
+			statusCmd.statusDisplayServices(cmd)
 		},
 	}
+}
+
+func init() {
+	defaultStatusCmd := &DefaultStatusCmd{
+		checker.NewChecker(),
+		network.NewHandler(),
+		builder.NewCommand("docker-compose", "ps", "--services"),
+		builder.NewCommand("docker-compose", "ps", "-q"),
+		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
+	}
+	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
 }
 
 func (s *DefaultStatusCmd) getServices() (services []string, err error) {
@@ -78,31 +89,20 @@ func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port 
 	return
 }
 
-func init() {
-	defaultStatusCmd := &DefaultStatusCmd{
-		checker.NewChecker(),
-		network.NewHandler(),
-		builder.NewCommand("docker-compose", "ps", "--services"),
-		builder.NewCommand("docker-compose", "ps", "-q"),
-		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
-	}
-	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
-}
-
-func checkDependencies(statusCmd *DefaultStatusCmd) (err error) {
-	if err = statusCmd.DependenciesChecker.VerifyDependencies(); err != nil {
+func (s *DefaultStatusCmd) checkDependencies() (err error) {
+	if err = s.DependenciesChecker.VerifyDependencies(); err != nil {
 		return
 	}
 
-	if err = statusCmd.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
 	return
 }
 
-func statusDisplayServices(statusCmd *DefaultStatusCmd, cobraCmd *cobra.Command) {
-	services, err := statusCmd.getServices()
+func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
+	services, err := s.getServices()
 
 	if err != nil {
 		shell.Fwarning(cobraCmd.OutOrStdout(), "No services found.")
@@ -125,13 +125,13 @@ func statusDisplayServices(statusCmd *DefaultStatusCmd, cobraCmd *cobra.Command)
 
 			ss := &statusService{service: service}
 
-			if serviceID, err = statusCmd.GetServiceIDRunner.Exec(service); err != nil {
+			if serviceID, err = s.GetServiceIDRunner.Exec(service); err != nil {
 				shell.FexecError(cobraCmd.OutOrStdout(), serviceID, err)
 				os.Exit(1)
 			}
 
 			if serviceID != "" {
-				status, port = statusCmd.getStatusPort(serviceID)
+				status, port = s.getStatusPort(serviceID)
 
 				ss.running = strings.HasPrefix(status, "Up")
 				ss.state = status
