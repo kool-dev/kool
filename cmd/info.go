@@ -8,15 +8,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(infoCmd)
+// NewInfoCmd initializes new kool info command
+func NewInfoCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "info",
+		Short: "Prints out information about kool setup (like environment variables)",
+		Run:   runInfo,
+		Args:  cobra.MaximumNArgs(1),
+	}
 }
 
-var infoCmd = &cobra.Command{
-	Use:   "info",
-	Short: "Prints out information about kool setup (like environment variables)",
-	Run:   runInfo,
-	Args:  cobra.MaximumNArgs(1),
+func init() {
+	rootCmd.AddCommand(NewInfoCmd())
 }
 
 func runInfo(cmf *cobra.Command, args []string) {
@@ -28,7 +31,7 @@ func runInfo(cmf *cobra.Command, args []string) {
 
 	for _, envVar := range os.Environ() {
 		if strings.Contains(envVar, filter) {
-			fmt.Println(envVar)
+			fmt.Fprintf(cmf.OutOrStdout(), "%s\n", envVar)
 		}
 	}
 }
