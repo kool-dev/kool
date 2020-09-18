@@ -22,13 +22,6 @@ type DefaultStatusCmd struct {
 	GetServiceStatusPortRunner builder.Runner
 }
 
-// StatusCmd holds logic for status command
-type StatusCmd interface {
-	GetServices() ([]string, error)
-	GetServiceID(service string) (string, error)
-	GetStatusPort(serviceID string) (string, string)
-}
-
 type statusService struct {
 	service, state, ports string
 	running               bool
