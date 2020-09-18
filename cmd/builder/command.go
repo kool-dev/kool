@@ -24,8 +24,8 @@ type Builder interface {
 
 // Runner holds available methods for running commands.
 type Runner interface {
-	Interactive() error
-	Exec() (string, error)
+	Interactive(args ...string) error
+	Exec(args ...string) (string, error)
 	LookPath() error
 }
 
@@ -66,13 +66,25 @@ func (c *DefaultCommand) LookPath() (err error) {
 }
 
 // Interactive will send the command to an interactive execution.
-func (c *DefaultCommand) Interactive() (err error) {
-	err = shell.Interactive(c.command, c.args...)
+func (c *DefaultCommand) Interactive(args ...string) (err error) {
+	var finalArgs []string = c.args
+
+	if len(args) > 0 {
+		finalArgs = append(finalArgs, args...)
+	}
+
+	err = shell.Interactive(c.command, finalArgs...)
 	return
 }
 
 // Exec will send the command to shell execution.
-func (c *DefaultCommand) Exec() (outStr string, err error) {
-	outStr, err = shell.Exec(c.command, c.args...)
+func (c *DefaultCommand) Exec(args ...string) (outStr string, err error) {
+	var finalArgs []string = c.args
+
+	if len(args) > 0 {
+		finalArgs = append(finalArgs, args...)
+	}
+
+	outStr, err = shell.Exec(c.command, finalArgs...)
 	return
 }

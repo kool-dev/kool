@@ -10,12 +10,12 @@ func (c *FakeCommand) LookPath() (err error) {
 	return
 }
 
-func (c *FakeCommand) Interactive() (err error) {
+func (c *FakeCommand) Interactive(args ...string) (err error) {
 	createNetworkCalled = true
 	return
 }
 
-func (c *FakeCommand) Exec() (outStr string, err error) {
+func (c *FakeCommand) Exec(args ...string) (outStr string, err error) {
 	return
 }
 
@@ -23,7 +23,7 @@ type NetworkExistsCheckCmd struct {
 	FakeCommand
 }
 
-func (c *NetworkExistsCheckCmd) Exec() (outStr string, err error) {
+func (c *NetworkExistsCheckCmd) Exec(args ...string) (outStr string, err error) {
 	outStr = "NetworkID"
 	return
 }
@@ -46,7 +46,7 @@ func TestGlobalNetworkExists(t *testing.T) {
 
 	h = &DefaultHandler{checkNetCmd, createNetCmd}
 
-	err := h.HandleGlobalNetwork()
+	err := h.HandleGlobalNetwork("global_network")
 
 	if createNetworkCalled {
 		t.Errorf("HandleGlobalNetwork() should not try to create the global network if it already exists.")
@@ -67,7 +67,7 @@ func TestGlobalNetworkNotExists(t *testing.T) {
 
 	h = &DefaultHandler{checkNetCmd, createNetCmd}
 
-	err := h.HandleGlobalNetwork()
+	err := h.HandleGlobalNetwork("global_network")
 
 	if !createNetworkCalled {
 		t.Errorf("HandleGlobalNetwork() is not trying to create the global network when it not exists.")

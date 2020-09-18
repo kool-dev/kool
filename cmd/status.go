@@ -13,13 +13,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DefaultStatusCmd holds data for status command
-type DefaultStatusCmd struct{}
+// DefaultStatusCmd holds interfaces for status command logic
+type DefaultStatusCmd struct {
+	DependenciesChecker        checker.Checker
+	NetworkHandler             network.Handler
+	GetServicesRunner          builder.Runner
+	GetServiceIDRunner         builder.Runner
+	GetServiceStatusPortRunner builder.Runner
+}
 
 // StatusCmd holds logic for status command
 type StatusCmd interface {
-	VerifyDependencies() error
-	HandleGlobalNetwork() error
 	GetServices() ([]string, error)
 	GetServiceID(service string) (string, error)
 	GetStatusPort(serviceID string) (string, string)
@@ -31,37 +35,25 @@ type statusService struct {
 }
 
 // NewStatusCommand Initialize new kool status command
-func NewStatusCommand(statusCmd StatusCmd) *cobra.Command {
+func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
-			runStatus(cmd, statusCmd)
+			if err := checkDependencies(statusCmd); err != nil {
+				shell.FexecError(cmd.OutOrStdout(), "", err)
+				os.Exit(1)
+			}
+
+			statusDisplayServices(statusCmd, cmd)
 		},
 	}
 }
 
-// VerifyDependencies verify kool dependencies
-func (s *DefaultStatusCmd) VerifyDependencies() (err error) {
-	var dependenciesChecker *checker.DefaultChecker = checker.NewChecker()
-	err = dependenciesChecker.VerifyDependencies()
-	return
-}
-
-// HandleGlobalNetwork handles the global network
-func (s *DefaultStatusCmd) HandleGlobalNetwork() (err error) {
-	var networkHandler *network.DefaultHandler = network.NewHandler()
-	err = networkHandler.HandleGlobalNetwork()
-	return
-}
-
-// GetServices get docker services
-func (s *DefaultStatusCmd) GetServices() (services []string, err error) {
+func (s *DefaultStatusCmd) getServices() (services []string, err error) {
 	var output string
 
-	cmd := builder.NewCommand("docker-compose", "ps", "--services")
-
-	if output, err = cmd.Exec(); err != nil {
+	if output, err = s.GetServicesRunner.Exec(); err != nil {
 		return
 	}
 
@@ -75,20 +67,10 @@ func (s *DefaultStatusCmd) GetServices() (services []string, err error) {
 	return
 }
 
-// GetServiceID get docker service ID
-func (s *DefaultStatusCmd) GetServiceID(service string) (serviceID string, err error) {
-	cmd := builder.NewCommand("docker-compose", "ps", "-q", service)
-	serviceID, err = cmd.Exec()
-	return
-}
-
-// GetStatusPort get docker service port and status
-func (s *DefaultStatusCmd) GetStatusPort(serviceID string) (status string, port string) {
+func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port string) {
 	var output string
 
-	cmd := builder.NewCommand("docker", "ps", "-a", "--filter", "ID="+serviceID, "--format", "{{.Status}}|{{.Ports}}")
-
-	if output, _ = cmd.Exec(); output == "" {
+	if output, _ = s.GetServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
 		return
 	}
 
@@ -104,32 +86,30 @@ func (s *DefaultStatusCmd) GetStatusPort(serviceID string) (status string, port 
 }
 
 func init() {
-	rootCmd.AddCommand(NewStatusCommand(&DefaultStatusCmd{}))
-}
-
-func runStatus(cmd *cobra.Command, statusCmd StatusCmd) {
-	if err := checkDependencies(statusCmd); err != nil {
-		shell.FexecError(cmd.OutOrStdout(), "", err)
-		os.Exit(1)
+	defaultStatusCmd := &DefaultStatusCmd{
+		checker.NewChecker(),
+		network.NewHandler(),
+		builder.NewCommand("docker-compose", "ps", "--services"),
+		builder.NewCommand("docker-compose", "ps", "-q"),
+		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
 	}
-
-	statusDisplayServices(statusCmd, cmd)
+	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
 }
 
-func checkDependencies(statusCmd StatusCmd) (err error) {
-	if err = statusCmd.VerifyDependencies(); err != nil {
+func checkDependencies(statusCmd *DefaultStatusCmd) (err error) {
+	if err = statusCmd.DependenciesChecker.VerifyDependencies(); err != nil {
 		return
 	}
 
-	if err = statusCmd.HandleGlobalNetwork(); err != nil {
+	if err = statusCmd.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
 	return
 }
 
-func statusDisplayServices(statusCmd StatusCmd, cobraCmd *cobra.Command) {
-	services, err := statusCmd.GetServices()
+func statusDisplayServices(statusCmd *DefaultStatusCmd, cobraCmd *cobra.Command) {
+	services, err := statusCmd.getServices()
 
 	if err != nil {
 		shell.Fwarning(cobraCmd.OutOrStdout(), "No services found.")
@@ -152,13 +132,13 @@ func statusDisplayServices(statusCmd StatusCmd, cobraCmd *cobra.Command) {
 
 			ss := &statusService{service: service}
 
-			if serviceID, err = statusCmd.GetServiceID(service); err != nil {
+			if serviceID, err = statusCmd.GetServiceIDRunner.Exec(service); err != nil {
 				shell.FexecError(cobraCmd.OutOrStdout(), serviceID, err)
 				os.Exit(1)
 			}
 
 			if serviceID != "" {
-				status, port = statusCmd.GetStatusPort(serviceID)
+				status, port = statusCmd.getStatusPort(serviceID)
 
 				ss.running = strings.HasPrefix(status, "Up")
 				ss.state = status

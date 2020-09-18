@@ -3,12 +3,11 @@ package network
 import (
 	"fmt"
 	"kool-dev/kool/cmd/builder"
-	"os"
 )
 
 // Handler defines network handler
 type Handler interface {
-	HandleGlobalNetwork() error
+	HandleGlobalNetwork(networkName string) error
 }
 
 // DefaultHandler holds docker network command
@@ -21,19 +20,17 @@ type DefaultHandler struct {
 func NewHandler() *DefaultHandler {
 	var checkNetCmd, createNetCmd *builder.DefaultCommand
 
-	globalNetworkName := os.Getenv("KOOL_GLOBAL_NETWORK")
-
-	checkNetCmd = builder.NewCommand("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=^%s$", globalNetworkName))
-	createNetCmd = builder.NewCommand("docker", "network", "create", "--attachable", globalNetworkName)
+	checkNetCmd = builder.NewCommand("docker", "network", "ls", "-q", "-f")
+	createNetCmd = builder.NewCommand("docker", "network", "create", "--attachable")
 
 	return &DefaultHandler{checkNetCmd, createNetCmd}
 }
 
 // HandleGlobalNetwork handles global network
-func (h *DefaultHandler) HandleGlobalNetwork() error {
-	if networkID, err := h.CheckNetworkCmd.Exec(); err != nil || networkID != "" {
+func (h *DefaultHandler) HandleGlobalNetwork(networkName string) error {
+	if networkID, err := h.CheckNetworkCmd.Exec(fmt.Sprintf("NAME=^%s$", networkName)); err != nil || networkID != "" {
 		return err
 	}
 
-	return h.CreateNetworkCmd.Interactive()
+	return h.CreateNetworkCmd.Interactive(networkName)
 }
