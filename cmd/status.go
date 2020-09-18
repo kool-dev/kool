@@ -18,7 +18,8 @@ type DefaultStatusCmd struct{}
 
 // StatusCmd holds logic for status command
 type StatusCmd interface {
-	CheckDependencies() error
+	VerifyDependencies() error
+	HandleGlobalNetwork() error
 	GetServices() ([]string, error)
 	GetServiceID(service string) (string, error)
 	GetStatusPort(serviceID string) (string, string)
@@ -35,30 +36,22 @@ func NewStatusCommand(statusCmd StatusCmd) *cobra.Command {
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := statusCmd.CheckDependencies(); err != nil {
-				shell.FexecError(cmd.OutOrStdout(), "", err)
-				os.Exit(1)
-			}
-
-			statusDisplayServices(statusCmd, cmd)
+			runStatus(cmd, statusCmd)
 		},
 	}
 }
 
-// CheckDependencies check kool dependencies
-func (s *DefaultStatusCmd) CheckDependencies() (err error) {
-	var dependenciesChecker = checker.NewChecker()
+// VerifyDependencies verify kool dependencies
+func (s *DefaultStatusCmd) VerifyDependencies() (err error) {
+	var dependenciesChecker *checker.DefaultChecker = checker.NewChecker()
+	err = dependenciesChecker.VerifyDependencies()
+	return
+}
 
-	if err = dependenciesChecker.VerifyDependencies(); err != nil {
-		return
-	}
-
-	var globalNetworkHandler = network.NewHandler()
-
-	if err = globalNetworkHandler.HandleGlobalNetwork(); err != nil {
-		return
-	}
-
+// HandleGlobalNetwork handles the global network
+func (s *DefaultStatusCmd) HandleGlobalNetwork() (err error) {
+	var networkHandler *network.DefaultHandler = network.NewHandler()
+	err = networkHandler.HandleGlobalNetwork()
 	return
 }
 
@@ -112,6 +105,27 @@ func (s *DefaultStatusCmd) GetStatusPort(serviceID string) (status string, port 
 
 func init() {
 	rootCmd.AddCommand(NewStatusCommand(&DefaultStatusCmd{}))
+}
+
+func runStatus(cmd *cobra.Command, statusCmd StatusCmd) {
+	if err := checkDependencies(statusCmd); err != nil {
+		shell.FexecError(cmd.OutOrStdout(), "", err)
+		os.Exit(1)
+	}
+
+	statusDisplayServices(statusCmd, cmd)
+}
+
+func checkDependencies(statusCmd StatusCmd) (err error) {
+	if err = statusCmd.VerifyDependencies(); err != nil {
+		return
+	}
+
+	if err = statusCmd.HandleGlobalNetwork(); err != nil {
+		return
+	}
+
+	return
 }
 
 func statusDisplayServices(statusCmd StatusCmd, cobraCmd *cobra.Command) {
