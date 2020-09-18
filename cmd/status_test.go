@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
 	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"io/ioutil"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 )
@@ -50,6 +53,36 @@ type NoServicesStatusCmd struct {
 
 // GetServices get docker services
 func (s *NoServicesStatusCmd) GetServices() (services []string, err error) {
+	return
+}
+
+type FailedDependenciesStatusCmd struct {
+	FakeStatusCmd
+}
+
+// CheckDependencies check kool dependencies
+func (s *FailedDependenciesStatusCmd) CheckDependencies() (err error) {
+	err = errors.New("failed dependencies")
+	return
+}
+
+type FailedGetServicesStatusCmd struct {
+	FakeStatusCmd
+}
+
+// GetServices get docker services
+func (s *FailedGetServicesStatusCmd) GetServices() (services []string, err error) {
+	err = errors.New("failed get services")
+	return
+}
+
+type FailedGetServiceIDStatusCmd struct {
+	FakeStatusCmd
+}
+
+// GetServiceID get docker service ID
+func (s *FailedGetServiceIDStatusCmd) GetServiceID(service string) (serviceID string, err error) {
+	err = errors.New("failed get service id")
 	return
 }
 
@@ -116,6 +149,66 @@ func TestNoServicesStatusCommand(t *testing.T) {
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
+	}
+}
+
+func TestFailedGetServicesStatusCommand(t *testing.T) {
+	cmd := NewStatusCommand(&FailedGetServicesStatusCmd{})
+	output, err := execCommand(cmd)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := color.New(color.Yellow).Sprint("No services found.")
+	output = strings.Trim(output, "\n")
+
+	if output != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, output)
+	}
+}
+
+func TestFailedDependenciesStatusCommand(t *testing.T) {
+	if os.Getenv("FLAG") == "1" {
+		cmd := NewStatusCommand(&FailedDependenciesStatusCmd{})
+		_, _ = execCommand(cmd)
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestFailedDependenciesStatusCommand")
+	cmd.Env = append(os.Environ(), "FLAG=1")
+	err := cmd.Run()
+
+	e, ok := err.(*exec.ExitError)
+
+	if !ok {
+		t.Error("Expected an exit error")
+	}
+
+	if e == nil {
+		t.Error("Expected an error, got none")
+	}
+}
+
+func TestFailedGetServiceIDStatusCommand(t *testing.T) {
+	if os.Getenv("FLAG") == "1" {
+		cmd := NewStatusCommand(&FailedGetServiceIDStatusCmd{})
+		_, _ = execCommand(cmd)
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run=TestFailedGetServiceIDStatusCommand")
+	cmd.Env = append(os.Environ(), "FLAG=1")
+	err := cmd.Run()
+
+	e, ok := err.(*exec.ExitError)
+
+	if !ok {
+		t.Error("Expected an exit error")
+	}
+
+	if e == nil {
+		t.Error("Expected an error, got none")
 	}
 }
 
