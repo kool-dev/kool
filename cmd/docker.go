@@ -30,6 +30,8 @@ the image name and the command you want to execute on that image.`,
 
 var dockerFlags = &DockerFlags{false, []string{}, []string{}, []string{}}
 
+var dockerCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(dockerCmd)
 
@@ -45,6 +47,8 @@ func init() {
 func runDocker(docker *cobra.Command, args []string) {
 	image := args[0]
 	command := args[1:]
+
+	dockerCmdOutputWriter.SetWriter(docker.OutOrStdout())
 
 	execDockerRun(image, command)
 }
@@ -92,7 +96,7 @@ func execDockerRun(image string, command []string) {
 	err = shell.Interactive("docker", args...)
 
 	if err != nil {
-		shell.ExecError("", err)
+		dockerCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 }

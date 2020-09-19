@@ -24,6 +24,8 @@ var startCmd = &cobra.Command{
 
 var startFlags = &StartFlags{""}
 
+var startCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(startCmd)
 
@@ -31,10 +33,11 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) {
+	startCmdOutputWriter.SetWriter(cmd.OutOrStdout())
 	var dependenciesChecker = checker.NewChecker()
 
 	if err := dependenciesChecker.VerifyDependencies(); err != nil {
-		shell.ExecError("", err)
+		startCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 
@@ -62,7 +65,7 @@ func startContainers(services string) {
 	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		shell.ExecError("", err)
+		startCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 }

@@ -22,6 +22,8 @@ var initCmd = &cobra.Command{
 
 var initFlags = &InitFlags{false}
 
+var initCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(initCmd)
 
@@ -38,10 +40,11 @@ func runInit(cmd *cobra.Command, args []string) {
 		wrote                         int
 	)
 
+	initCmdOutputWriter.SetWriter(cmd.OutOrStdout())
 	preset = args[0]
 
 	if presetFiles, exists = presets[preset]; !exists {
-		shell.Error("Unknown preset", preset)
+		initCmdOutputWriter.Error("Unknown preset", preset)
 		os.Exit(2)
 	}
 
@@ -50,14 +53,14 @@ func runInit(cmd *cobra.Command, args []string) {
 	for fileName = range presetFiles {
 		if !initFlags.Override {
 			if _, err = os.Stat(fileName); !os.IsNotExist(err) {
-				shell.Warning("  Preset file", fileName, "already exists.")
+				initCmdOutputWriter.Warning("  Preset file", fileName, "already exists.")
 				hasExistingFile = true
 			}
 		}
 	}
 
 	if hasExistingFile {
-		shell.Warning("Some preset files already exist. In case you wanna override them, use --override.")
+		initCmdOutputWriter.Warning("Some preset files already exist. In case you wanna override them, use --override.")
 		os.Exit(2)
 	}
 
@@ -65,29 +68,29 @@ func runInit(cmd *cobra.Command, args []string) {
 		file, err = os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 
 		if err != nil {
-			shell.Error("  Failed to create preset file", fileName, "due to error:", err)
+			initCmdOutputWriter.Error("  Failed to create preset file", fileName, "due to error:", err)
 			os.Exit(2)
 		}
 
 		if wrote, err = file.Write([]byte(fileContent)); err != nil {
-			shell.Error("  Failed to write preset file", fileName, "due to error:", err)
+			initCmdOutputWriter.Error("  Failed to write preset file", fileName, "due to error:", err)
 			os.Exit(2)
 		}
 
 		if len([]byte(fileContent)) != wrote {
-			shell.Error("  Failed to write preset file", fileName, " - failed to write all bytes:", wrote)
+			initCmdOutputWriter.Error("  Failed to write preset file", fileName, " - failed to write all bytes:", wrote)
 			os.Exit(2)
 		}
 
 		if err = file.Sync(); err != nil {
-			shell.Error("  Failed to sync preset file", fileName, "due to error:", err)
+			initCmdOutputWriter.Error("  Failed to sync preset file", fileName, "due to error:", err)
 			os.Exit(2)
 		}
 
 		file.Close()
 
-		shell.Success("  Preset file", fileName, "created.")
+		initCmdOutputWriter.Success("  Preset file", fileName, "created.")
 	}
 
-	shell.Success("Preset ", preset, " initialized!")
+	initCmdOutputWriter.Success("Preset ", preset, " initialized!")
 }

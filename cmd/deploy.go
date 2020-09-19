@@ -19,6 +19,8 @@ var deployCmd = &cobra.Command{
 	Run:   runDeploy,
 }
 
+var deployCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(deployCmd)
 }
@@ -30,6 +32,8 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		err      error
 	)
 
+	deployCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+
 	if url := os.Getenv("KOOL_API_URL"); url != "" {
 		api.SetBaseURL(url)
 	}
@@ -38,14 +42,14 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	filename, err = createReleaseFile()
 
 	if err != nil {
-		shell.ExecError("", err)
+		deployCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 
 	defer func(file string) {
 		var err error
 		if err = os.Remove(file); err != nil {
-			shell.Error("error trying to remove temporary tarball:", err)
+			deployCmdOutputWriter.Error("error trying to remove temporary tarball:", err)
 		}
 	}(filename)
 
@@ -55,7 +59,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	err = deploy.SendFile()
 
 	if err != nil {
-		shell.ExecError("", err)
+		deployCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 
@@ -75,7 +79,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			if err != nil {
 				finishes <- false
-				shell.ExecError("", err)
+				deployCmdOutputWriter.ExecError("", err)
 				break
 			}
 
@@ -93,9 +97,9 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	case success = <-finishes:
 		{
 			if success {
-				shell.Success("Deploy finished:", deploy.GetURL())
+				deployCmdOutputWriter.Success("Deploy finished:", deploy.GetURL())
 			} else {
-				shell.Error("Deploy failed.")
+				deployCmdOutputWriter.Error("Deploy failed.")
 				os.Exit(1)
 			}
 			break
@@ -103,7 +107,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 	case <-time.After(time.Minute * 10):
 		{
-			shell.Error("timeout waiting deploy to finish")
+			deployCmdOutputWriter.Error("timeout waiting deploy to finish")
 			break
 		}
 	}

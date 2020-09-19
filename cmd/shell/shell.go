@@ -84,7 +84,7 @@ func Interactive(exe string, args ...string) (err error) {
 		_, err = exec.LookPath(exe)
 
 		if err != nil {
-			Error("Failed to run ", cmd.String(), "error:", err)
+			NewOutputWriter().Error("Failed to run ", cmd.String(), "error:", err)
 			os.Exit(2)
 		}
 
@@ -123,7 +123,7 @@ func Interactive(exe string, args ...string) (err error) {
 			if err := cmd.Process.Signal(sig); err != nil {
 				// check if it is something we should care about
 				if err.Error() != "os: process already finished" {
-					Error("error sending signal to child process", sig, err)
+					NewOutputWriter().Error("error sending signal to child process", sig, err)
 				}
 			}
 		}

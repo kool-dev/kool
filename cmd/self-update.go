@@ -21,6 +21,8 @@ var selfUpdateCmd = &cobra.Command{
 	Args:  cobra.MaximumNArgs(0),
 }
 
+var selfUpdateCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func runSelfUpdate(cmf *cobra.Command, args []string) {
 	var (
 		currentVersion semver.Version
@@ -29,22 +31,24 @@ func runSelfUpdate(cmf *cobra.Command, args []string) {
 		latest         *selfupdate.Release
 	)
 
+	selfUpdateCmdOutputWriter.SetWriter(cmf.OutOrStdout())
+
 	currentVersion = semver.MustParse(version)
 	if updater, err = selfupdate.NewUpdater(selfupdate.Config{
 		Validator: &selfupdate.SHA2Validator{},
 	}); err != nil {
-		shell.Error("Failed to create updater controller", err)
+		selfUpdateCmdOutputWriter.Error("Failed to create updater controller", err)
 		os.Exit(1)
 	}
 
 	if latest, err = updater.UpdateSelf(currentVersion, "kool-dev/kool"); err != nil {
-		shell.Error("Kool self-update failed:", err)
+		selfUpdateCmdOutputWriter.Error("Kool self-update failed:", err)
 		os.Exit(1)
 	}
 
 	if latest.Version.Equals(currentVersion) {
-		shell.Warning("You already have the latest version.", version)
+		selfUpdateCmdOutputWriter.Warning("You already have the latest version.", version)
 	} else {
-		shell.Success("Successfully updated to version", latest.Version)
+		selfUpdateCmdOutputWriter.Success("Successfully updated to version", latest.Version)
 	}
 }

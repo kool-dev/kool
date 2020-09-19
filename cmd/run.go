@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
@@ -17,6 +16,8 @@ var runCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	Run:   runRun,
 }
+
+var runsCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
 
 func init() {
 	rootCmd.AddCommand(runCmd)
@@ -34,6 +35,8 @@ func runRun(cmd *cobra.Command, originalArgs []string) {
 		kool     parser.Parser
 	)
 
+	runsCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+
 	kool = parser.NewParser()
 
 	// look for kool.yml on current working directory
@@ -47,16 +50,15 @@ func runRun(cmd *cobra.Command, originalArgs []string) {
 	if commands, err = kool.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
 			// we should just warn the user about multiple finds for the script
-			shell.Warning("Attention: the script was found in more than one kool.yml file")
+			runsCmdOutputWriter.Warning("Attention: the script was found in more than one kool.yml file")
 		} else {
-			shell.Error("failed parsing script")
-			fmt.Println("error:", err)
+			runsCmdOutputWriter.ExecError("failed parsing script", err)
 			os.Exit(1)
 		}
 	}
 
 	if len(args) > 0 && len(commands) > 1 {
-		shell.Error("error: you cannot pass in extra arguments to multiple commands scripts")
+		runsCmdOutputWriter.Error("error: you cannot pass in extra arguments to multiple commands scripts")
 		os.Exit(2)
 	}
 
@@ -68,7 +70,7 @@ func runRun(cmd *cobra.Command, originalArgs []string) {
 		err = command.Interactive()
 
 		if err != nil {
-			shell.Error(err)
+			runsCmdOutputWriter.Error(err)
 			os.Exit(1)
 		}
 	}

@@ -50,22 +50,10 @@ func (w *DefaultOutputWriter) ExecError(out string, err error) {
 	}
 }
 
-// ExecError error output
-func ExecError(out string, err error) {
-	outputwriter := NewOutputWriter()
-	outputwriter.ExecError(out, err)
-}
-
 // Error error message
 func (w *DefaultOutputWriter) Error(out ...interface{}) {
 	errorMessage := color.New(color.BgRed, color.FgWhite).Sprint(out...)
 	fmt.Fprintln(w.Writer, errorMessage)
-}
-
-// Error error message
-func Error(out ...interface{}) {
-	outputwriter := NewOutputWriter()
-	outputwriter.Error(out...)
 }
 
 // Warning warning message
@@ -74,20 +62,8 @@ func (w *DefaultOutputWriter) Warning(out ...interface{}) {
 	fmt.Fprintln(w.Writer, warningMessage)
 }
 
-// Warning warning message
-func Warning(out ...interface{}) {
-	outputwriter := NewOutputWriter()
-	outputwriter.Warning(out...)
-}
-
 // Success Success message
 func (w *DefaultOutputWriter) Success(out ...interface{}) {
 	successMessage := color.New(color.Green).Sprint(out...)
 	fmt.Fprintln(w.Writer, successMessage)
-}
-
-// Success Success message
-func Success(out ...interface{}) {
-	outputwriter := NewOutputWriter()
-	outputwriter.Success(out...)
 }

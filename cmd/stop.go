@@ -21,6 +21,8 @@ var stopCmd = &cobra.Command{
 
 var stopFlags = &StopFlags{false}
 
+var stopCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(stopCmd)
 
@@ -28,10 +30,11 @@ func init() {
 }
 
 func runStop(cmd *cobra.Command, args []string) {
+	stopCmdOutputWriter.SetWriter(cmd.OutOrStdout())
 	var dependenciesChecker = checker.NewChecker()
 
 	if err := dependenciesChecker.VerifyDependencies(); err != nil {
-		shell.ExecError("", err)
+		stopCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 
@@ -53,7 +56,7 @@ func stopContainers(purge bool) {
 	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		shell.ExecError("", err)
+		stopCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 }

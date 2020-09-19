@@ -89,7 +89,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	shell.Success("Success!")
+	shell.NewOutputWriter().Success("Success!")
 }
 
 // CreateFile Create file to write markdown content

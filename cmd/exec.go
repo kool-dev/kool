@@ -23,6 +23,8 @@ var execCmd = &cobra.Command{
 
 var execFlags = &ExecFlags{false, []string{}, false}
 
+var execCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(execCmd)
 
@@ -37,6 +39,7 @@ func init() {
 func runExec(cmd *cobra.Command, args []string) {
 	var service string = args[0]
 
+	execCmdOutputWriter.SetWriter(cmd.OutOrStdout())
 	dockerComposeExec(service, args[1:]...)
 }
 
@@ -70,7 +73,7 @@ func dockerComposeExec(service string, command ...string) {
 	err = shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		shell.ExecError("", err)
+		execCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 }

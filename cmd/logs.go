@@ -22,6 +22,8 @@ var logsCmd = &cobra.Command{
 
 var logsFlags = &LogsFlags{25, false}
 
+var logsCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 func init() {
 	rootCmd.AddCommand(logsCmd)
 
@@ -31,6 +33,8 @@ func init() {
 
 func runLogs(cmd *cobra.Command, originalArgs []string) {
 	var args []string = []string{"logs"}
+
+	logsCmdOutputWriter.SetWriter(cmd.OutOrStdout())
 
 	if logsFlags.Tail == 0 {
 		args = append(args, "--tail", "all")
@@ -47,7 +51,7 @@ func runLogs(cmd *cobra.Command, originalArgs []string) {
 	err := shell.Interactive("docker-compose", args...)
 
 	if err != nil {
-		shell.ExecError("", err)
+		logsCmdOutputWriter.ExecError("", err)
 		os.Exit(1)
 	}
 }
