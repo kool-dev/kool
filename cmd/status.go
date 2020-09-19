@@ -27,14 +27,18 @@ type statusService struct {
 	running               bool
 }
 
+var statusCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+
 // NewStatusCommand Initialize new kool status command
 func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
+			statusCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+
 			if err := statusCmd.checkDependencies(); err != nil {
-				shell.FexecError(cmd.OutOrStdout(), "", err)
+				statusCmdOutputWriter.ExecError("", err)
 				os.Exit(1)
 			}
 
@@ -105,12 +109,12 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	services, err := s.getServices()
 
 	if err != nil {
-		shell.Fwarning(cobraCmd.OutOrStdout(), "No services found.")
+		statusCmdOutputWriter.Warning(cobraCmd.OutOrStdout(), "No services found.")
 		return
 	}
 
 	if len(services) == 0 {
-		shell.Fwarning(cobraCmd.OutOrStdout(), "No services found.")
+		statusCmdOutputWriter.Warning(cobraCmd.OutOrStdout(), "No services found.")
 		return
 	}
 
@@ -126,7 +130,7 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 			ss := &statusService{service: service}
 
 			if serviceID, err = s.GetServiceIDRunner.Exec(service); err != nil {
-				shell.FexecError(cobraCmd.OutOrStdout(), serviceID, err)
+				statusCmdOutputWriter.ExecError(serviceID, err)
 				os.Exit(1)
 			}
 
