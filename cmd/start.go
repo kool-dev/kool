@@ -62,7 +62,7 @@ func startContainers(services string) {
 		args = append(args, strings.Split(services, " ")...)
 	}
 
-	err = shell.Interactive("docker-compose", args...)
+	err = shell.NewCommander().Interactive("docker-compose", args...)
 
 	if err != nil {
 		startCmdOutputWriter.ExecError("", err)

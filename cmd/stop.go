@@ -53,7 +53,7 @@ func stopContainers(purge bool) {
 		args = append(args, "--volumes", "--remove-orphans")
 	}
 
-	err = shell.Interactive("docker-compose", args...)
+	err = shell.NewCommander().Interactive("docker-compose", args...)
 
 	if err != nil {
 		stopCmdOutputWriter.ExecError("", err)

@@ -1,7 +1,11 @@
 package builder
 
 import (
+	"bytes"
+	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -56,5 +60,71 @@ func TestParseCommandWithUndefinedEnvironmentVariable(t *testing.T) {
 
 	if len(cmd.args) != 2 || cmd.args[1] != "VAR=" {
 		t.Errorf("ParseCommand failed to parse unset environment variable; given %s got %v", line, cmd.String())
+	}
+}
+
+func TestAppendArgs(t *testing.T) {
+	cmd := NewCommand("echo", "xxx")
+
+	cmd.AppendArgs("xxxx")
+
+	if len(cmd.args) != 2 {
+		t.Errorf("Expected 2 arguments, got %v", len(cmd.args))
+	}
+
+	if cmd.args[1] != "xxxx" {
+		t.Errorf("Appended 'xxxx', got %s", cmd.args[1])
+	}
+}
+
+func TestString(t *testing.T) {
+	cmd := NewCommand("echo", "xxx")
+
+	cmdStr := cmd.String()
+
+	if cmdStr != "echo xxx" {
+		t.Errorf("Expected 'echo xxx', got %s", cmdStr)
+	}
+}
+
+func TestExec(t *testing.T) {
+	cmd := NewCommand("echo", "xxx")
+
+	output, err := cmd.Exec()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if output != "xxx" {
+		t.Errorf("Expected 'xxx', got %s", output)
+	}
+}
+
+func TestInteractive(t *testing.T) {
+	commander := shell.NewCommander()
+	b := bytes.NewBufferString("")
+	commanderWriter := &shell.DefaultCommanderWriter{Writer: b}
+	commander.SetOut(commanderWriter)
+
+	cmd := &DefaultCommand{"echo", []string{"xxx"}, commander}
+
+	var (
+		err error
+		out []byte
+	)
+
+	if err = cmd.Interactive(); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, err = ioutil.ReadAll(b); err != nil {
+		t.Fatal(err)
+	}
+
+	output := strings.Trim(string(out), "\n")
+
+	if output != "xxx" {
+		t.Errorf("Expected 'xxx', got %s", output)
 	}
 }

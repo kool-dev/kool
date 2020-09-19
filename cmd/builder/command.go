@@ -12,8 +12,9 @@ import (
 
 // DefaultCommand holds data and logic for an executable command.
 type DefaultCommand struct {
-	command string
-	args    []string
+	command   string
+	args      []string
+	commander shell.Commander
 }
 
 // Builder holds available methods for building commands.
@@ -31,7 +32,7 @@ type Runner interface {
 
 // NewCommand Create a new command.
 func NewCommand(command string, args ...string) *DefaultCommand {
-	return &DefaultCommand{command, args}
+	return &DefaultCommand{command, args, shell.NewCommander()}
 }
 
 // ParseCommand transforms a command line string into separated
@@ -44,7 +45,7 @@ func ParseCommand(line string) (command *DefaultCommand, err error) {
 		return
 	}
 
-	command = &DefaultCommand{parsed[0], parsed[1:]}
+	command = NewCommand(parsed[0], parsed[1:]...)
 
 	return
 }
@@ -73,7 +74,7 @@ func (c *DefaultCommand) Interactive(args ...string) (err error) {
 		finalArgs = append(finalArgs, args...)
 	}
 
-	err = shell.Interactive(c.command, finalArgs...)
+	err = c.commander.Interactive(c.command, finalArgs...)
 	return
 }
 
@@ -85,6 +86,6 @@ func (c *DefaultCommand) Exec(args ...string) (outStr string, err error) {
 		finalArgs = append(finalArgs, args...)
 	}
 
-	outStr, err = shell.Exec(c.command, finalArgs...)
+	outStr, err = c.commander.Exec(c.command, finalArgs...)
 	return
 }

@@ -16,9 +16,41 @@ var (
 	lookedUp map[string]bool
 )
 
+// DefaultCommanderWriter holds buffer for writing content
+type DefaultCommanderWriter struct {
+	io.Writer
+}
+
+// DefaultCommander holds data for output writing
+type DefaultCommander struct {
+	Writer io.WriteCloser
+}
+
+// Commander holds commander logic
+type Commander interface {
+	SetOut(writer *DefaultCommanderWriter)
+	Exec(exe string, args ...string) (string, error)
+	Interactive(exe string, args ...string) error
+}
+
+// NewCommander creates new commander
+func NewCommander() Commander {
+	return &DefaultCommander{os.Stdout}
+}
+
+// Close closes DefaultCommanderWriter
+func (w *DefaultCommanderWriter) Close() error {
+	return nil
+}
+
+// SetOut set commander buffer
+func (c *DefaultCommander) SetOut(writer *DefaultCommanderWriter) {
+	c.Writer = writer
+}
+
 // Exec will execute the given command silently and return the combined
 // error/standard output, and an error if any.
-func Exec(exe string, args ...string) (outStr string, err error) {
+func (c *DefaultCommander) Exec(exe string, args ...string) (outStr string, err error) {
 	var (
 		cmd *exec.Cmd
 		out []byte
@@ -39,7 +71,7 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 
 // Interactive runs the given command proxying current Stdin/Stdout/Stderr
 // which makes it interactive for running even something like `bash`.
-func Interactive(exe string, args ...string) (err error) {
+func (c *DefaultCommander) Interactive(exe string, args ...string) (err error) {
 	var (
 		cmd         *exec.Cmd
 		cmdStdin    io.ReadCloser
@@ -62,7 +94,7 @@ func Interactive(exe string, args ...string) (err error) {
 
 	// soon should refactor this onto a struct with methods
 	// so we can remove this too long list of returned values.
-	if args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args); err != nil {
+	if args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args, c.Writer); err != nil {
 		return
 	}
 

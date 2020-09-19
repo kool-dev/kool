@@ -93,7 +93,7 @@ func execDockerRun(image string, command []string) {
 	args = append(args, image)
 	args = append(args, command...)
 
-	err = shell.Interactive("docker", args...)
+	err = shell.NewCommander().Interactive("docker", args...)
 
 	if err != nil {
 		dockerCmdOutputWriter.ExecError("", err)

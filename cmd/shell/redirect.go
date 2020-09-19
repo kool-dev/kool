@@ -20,7 +20,7 @@ const OutputRedirect string = ">"
 // written in append mode to the destiny pointed by the right part.
 const OutputRedirectAppend string = ">>"
 
-func parseRedirects(originalArgs []string) (
+func parseRedirects(originalArgs []string, defOut io.WriteCloser) (
 	args []string,
 	in io.ReadCloser,
 	out io.WriteCloser,
@@ -33,12 +33,12 @@ func parseRedirects(originalArgs []string) (
 
 	if numArgs = len(args); numArgs < 2 {
 		in = os.Stdin
-		out = os.Stdout
+		out = defOut
 		return
 	}
 
 	in = os.Stdin
-	out = os.Stdout
+	out = defOut
 
 	// check the before-last position of the command
 	// for some redirect key and properly handle them.
