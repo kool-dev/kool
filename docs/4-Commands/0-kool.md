@@ -22,7 +22,7 @@ Complete documentation is available at https://kool.dev/docs
 * [kool logs](kool-logs.md)	 - Displays log output from services.
 * [kool run](kool-run.md)	 - Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
 * [kool self-update](kool-self-update.md)	 - Update kool to latest version
-* [kool start](kool-start.md)	 - Start Kool environment containers
+* [kool start](kool-start.md)	 - Start the specified Kool environment containers. If no service is specified, start all.
 * [kool status](kool-status.md)	 - Shows the status for containers
 * [kool stop](kool-stop.md)	 - Stop kool environment containers
 

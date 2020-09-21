@@ -23,8 +23,8 @@ var startCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
 // NewStartCommand initializes new kool start command
 func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
 	return &cobra.Command{
-		Use:   "start",
-		Short: "Start Kool environment containers",
+		Use:   "start [service]",
+		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
 		Run: func(cmd *cobra.Command, args []string) {
 			startCmdOutputWriter.SetWriter(cmd.OutOrStdout())
 
