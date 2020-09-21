@@ -55,6 +55,15 @@ func (c *FakeStartRunner) Exec(args ...string) (outStr string, err error) {
 	return
 }
 
+type FakeFailedStartRunner struct {
+	FakeStartRunner
+}
+
+func (c *FakeFailedStartRunner) Interactive(args ...string) (err error) {
+	err = errors.New("")
+	return
+}
+
 var startExitCode int
 
 type FakeStartExiter struct{}
@@ -140,6 +149,28 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 		&FakeStartDependenciesChecker{},
 		&FakeStartFailedNetworkHandler{},
 		&FakeStartRunner{},
+		&FakeStartExiter{},
+	}
+
+	cmd := NewStartCommand(defaultStartCmd)
+	startExitCode = 0
+
+	_, err := execStartCommand(cmd)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if startExitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	}
+}
+
+func TestStartWithError(t *testing.T) {
+	defaultStartCmd := &DefaultStartCmd{
+		&FakeStartDependenciesChecker{},
+		&FakeStartNetworkHandler{},
+		&FakeFailedStartRunner{},
 		&FakeStartExiter{},
 	}
 
