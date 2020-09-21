@@ -26,7 +26,7 @@ func setup() {
 func TestInfo(t *testing.T) {
 	setup()
 
-	output, err := execCommand(NewInfoCmd())
+	output, err := execInfoCommand(NewInfoCmd())
 
 	if err != nil {
 		t.Fatal(err)
@@ -45,7 +45,7 @@ func TestFilteredInfo(t *testing.T) {
 	cmd := NewInfoCmd()
 	cmd.SetArgs([]string{"FILTER"})
 
-	output, err := execCommand(cmd)
+	output, err := execInfoCommand(cmd)
 
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +58,7 @@ func TestFilteredInfo(t *testing.T) {
 	}
 }
 
-func execCommand(cmd *cobra.Command) (output string, err error) {
+func execInfoCommand(cmd *cobra.Command) (output string, err error) {
 	b := bytes.NewBufferString("")
 	cmd.SetOut(b)
 
