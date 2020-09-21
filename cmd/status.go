@@ -20,12 +20,16 @@ type DefaultStatusCmd struct {
 	GetServicesRunner          builder.Runner
 	GetServiceIDRunner         builder.Runner
 	GetServiceStatusPortRunner builder.Runner
+	Exiter                     shell.Exiter
 }
 
 type statusService struct {
 	service, state, ports string
 	running               bool
+	err                   error
 }
+
+var statusCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
 
 // NewStatusCommand Initialize new kool status command
 func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
@@ -33,9 +37,11 @@ func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
+			statusCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+
 			if err := statusCmd.checkDependencies(); err != nil {
-				shell.FexecError(cmd.OutOrStdout(), "", err)
-				os.Exit(1)
+				statusCmdOutputWriter.ExecError("", err)
+				statusCmd.Exiter.Exit(1)
 			}
 
 			statusCmd.statusDisplayServices(cmd)
@@ -50,6 +56,7 @@ func init() {
 		builder.NewCommand("docker-compose", "ps", "--services"),
 		builder.NewCommand("docker-compose", "ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
+		shell.NewExiter(),
 	}
 	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
 }
@@ -105,12 +112,12 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	services, err := s.getServices()
 
 	if err != nil {
-		shell.Fwarning(cobraCmd.OutOrStdout(), "No services found.")
+		statusCmdOutputWriter.Warning(cobraCmd.OutOrStdout(), "No services found.")
 		return
 	}
 
 	if len(services) == 0 {
-		shell.Fwarning(cobraCmd.OutOrStdout(), "No services found.")
+		statusCmdOutputWriter.Warning(cobraCmd.OutOrStdout(), "No services found.")
 		return
 	}
 
@@ -126,11 +133,8 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 			ss := &statusService{service: service}
 
 			if serviceID, err = s.GetServiceIDRunner.Exec(service); err != nil {
-				shell.FexecError(cobraCmd.OutOrStdout(), serviceID, err)
-				os.Exit(1)
-			}
-
-			if serviceID != "" {
+				ss.err = err
+			} else if serviceID != "" {
 				status, port = s.getStatusPort(serviceID)
 
 				ss.running = strings.HasPrefix(status, "Up")
@@ -146,6 +150,12 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	status := make([]*statusService, l)
 	for ss := range chStatus {
 		status[i] = ss
+
+		if status[i].err != nil {
+			statusCmdOutputWriter.ExecError(status[i].service, status[i].err)
+			s.Exiter.Exit(1)
+		}
+
 		if i == l-1 {
 			close(chStatus)
 			break

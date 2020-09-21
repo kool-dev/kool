@@ -6,8 +6,6 @@ import (
 	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"os"
-	"os/exec"
 	"strings"
 	"testing"
 )
@@ -110,6 +108,14 @@ func (c *FakeNotRunningGetServiceStatusPortRunner) Exec(args ...string) (outStr 
 	return
 }
 
+var exitCode int
+
+type FakeExiter struct{}
+
+func (e *FakeExiter) Exit(code int) {
+	exitCode = code
+}
+
 func TestStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
 		&FakeDependenciesChecker{},
@@ -117,6 +123,7 @@ func TestStatusCommand(t *testing.T) {
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
+		&FakeExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -149,6 +156,7 @@ func TestNotRunningStatusCommand(t *testing.T) {
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeNotRunningGetServiceStatusPortRunner{},
+		&FakeExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -181,6 +189,7 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeRunner{},
+		&FakeExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -213,6 +222,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 		&FakeRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
+		&FakeExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -236,6 +246,7 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 		&FakeFailedGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
+		&FakeExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -253,89 +264,71 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 }
 
 func TestFailedDependenciesStatusCommand(t *testing.T) {
-	if os.Getenv("FLAG") == "1" {
-		defaultStatusCmd := &DefaultStatusCmd{
-			&FakeFailedDependenciesChecker{},
-			&FakeNetworkHandler{},
-			&FakeGetServicesRunner{},
-			&FakeGetServiceIDRunner{},
-			&FakeGetServiceStatusPortRunner{},
-		}
-		cmd := NewStatusCommand(defaultStatusCmd)
-		_, _ = execStatusCommand(cmd)
-		return
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeFailedDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeGetServicesRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeGetServiceStatusPortRunner{},
+		&FakeExiter{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
+	exitCode = 0
+
+	_, err := execStatusCommand(cmd)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestFailedDependenciesStatusCommand")
-	cmd.Env = append(os.Environ(), "FLAG=1")
-	err := cmd.Run()
-
-	e, ok := err.(*exec.ExitError)
-
-	if !ok {
-		t.Error("Expected an exit error")
-	}
-
-	if e == nil {
-		t.Error("Expected an error, got none")
+	if exitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", exitCode)
 	}
 }
 
 func TestFailedNetworkStatusCommand(t *testing.T) {
-	if os.Getenv("FLAG") == "1" {
-		defaultStatusCmd := &DefaultStatusCmd{
-			&FakeDependenciesChecker{},
-			&FakeFailedNetworkHandler{},
-			&FakeGetServicesRunner{},
-			&FakeGetServiceIDRunner{},
-			&FakeGetServiceStatusPortRunner{},
-		}
-		cmd := NewStatusCommand(defaultStatusCmd)
-		_, _ = execStatusCommand(cmd)
-		return
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeFailedNetworkHandler{},
+		&FakeGetServicesRunner{},
+		&FakeGetServiceIDRunner{},
+		&FakeGetServiceStatusPortRunner{},
+		&FakeExiter{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
+	exitCode = 0
+
+	_, err := execStatusCommand(cmd)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestFailedNetworkStatusCommand")
-	cmd.Env = append(os.Environ(), "FLAG=1")
-	err := cmd.Run()
-
-	e, ok := err.(*exec.ExitError)
-
-	if !ok {
-		t.Error("Expected an exit error")
-	}
-
-	if e == nil {
-		t.Error("Expected an error, got none")
+	if exitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", exitCode)
 	}
 }
 
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
-	if os.Getenv("FLAG") == "1" {
-		defaultStatusCmd := &DefaultStatusCmd{
-			&FakeDependenciesChecker{},
-			&FakeNetworkHandler{},
-			&FakeGetServicesRunner{},
-			&FakeFailedGetServiceIDRunner{},
-			&FakeGetServiceStatusPortRunner{},
-		}
-		cmd := NewStatusCommand(defaultStatusCmd)
-		_, _ = execStatusCommand(cmd)
-		return
+	defaultStatusCmd := &DefaultStatusCmd{
+		&FakeDependenciesChecker{},
+		&FakeNetworkHandler{},
+		&FakeGetServicesRunner{},
+		&FakeFailedGetServiceIDRunner{},
+		&FakeGetServiceStatusPortRunner{},
+		&FakeExiter{},
+	}
+	cmd := NewStatusCommand(defaultStatusCmd)
+	exitCode = 0
+
+	_, err := execStatusCommand(cmd)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestFailedGetServiceIDStatusCommand")
-	cmd.Env = append(os.Environ(), "FLAG=1")
-	err := cmd.Run()
-
-	e, ok := err.(*exec.ExitError)
-
-	if !ok {
-		t.Error("Expected an exit error")
-	}
-
-	if e == nil {
-		t.Error("Expected an error, got none")
+	if exitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", exitCode)
 	}
 }
 
