@@ -112,12 +112,12 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	services, err := s.getServices()
 
 	if err != nil {
-		statusCmdOutputWriter.Warning(cobraCmd.OutOrStdout(), "No services found.")
+		statusCmdOutputWriter.Warning("No services found.")
 		return
 	}
 
 	if len(services) == 0 {
-		statusCmdOutputWriter.Warning(cobraCmd.OutOrStdout(), "No services found.")
+		statusCmdOutputWriter.Warning("No services found.")
 		return
 	}
 
