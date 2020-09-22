@@ -1,68 +1,70 @@
 package cmd
 
 import (
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
-	"log"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-// StartFlags holds the flags for the start command
-type StartFlags struct {
-	Services string
+// DefaultStartCmd holds interfaces for status command logic
+type DefaultStartCmd struct {
+	DependenciesChecker   checker.Checker
+	NetworkHandler        network.Handler
+	StartContainersRunner builder.Runner
+	Exiter                shell.Exiter
 }
 
-var startCmd = &cobra.Command{
-	Use:   "start",
-	Short: "Start Kool environment containers",
-	Run:   runStart,
-}
+var startCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
 
-var startFlags = &StartFlags{""}
+// NewStartCommand initializes new kool start command
+func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
+	return &cobra.Command{
+		Use:   "start [service]",
+		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
+		Run: func(cmd *cobra.Command, args []string) {
+			startCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+
+			if err := startCmd.checkDependencies(); err != nil {
+				startCmdOutputWriter.ExecError("", err)
+				startCmd.Exiter.Exit(1)
+			}
+
+			startCmd.startContainers(args)
+		},
+	}
+}
 
 func init() {
-	rootCmd.AddCommand(startCmd)
-
-	startCmd.Flags().StringVarP(&startFlags.Services, "services", "", "", "Specific services to be started")
+	defaultStartCmd := &DefaultStartCmd{
+		checker.NewChecker(),
+		network.NewHandler(),
+		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
+		shell.NewExiter(),
+	}
+	rootCmd.AddCommand(NewStartCommand(defaultStartCmd))
 }
 
-func runStart(cmd *cobra.Command, args []string) {
-	var dependenciesChecker = checker.NewChecker()
-
-	if err := dependenciesChecker.VerifyDependencies(); err != nil {
-		shell.ExecError("", err)
-		os.Exit(1)
+func (s *DefaultStartCmd) checkDependencies() (err error) {
+	if err = s.DependenciesChecker.VerifyDependencies(); err != nil {
+		return
 	}
 
-	var globalNetworkHandler = network.NewHandler()
-
-	if err := globalNetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
-		log.Fatal(err)
+	if err = s.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+		return
 	}
 
-	startContainers(startFlags.Services)
+	return
 }
 
-func startContainers(services string) {
-	var (
-		args []string
-		err  error
-	)
-
-	args = []string{"up", "-d", "--force-recreate"}
-
-	if services != "" {
-		args = append(args, strings.Split(services, " ")...)
-	}
-
-	err = shell.Interactive("docker-compose", args...)
+func (s *DefaultStartCmd) startContainers(services []string) {
+	err := s.StartContainersRunner.Interactive(services...)
 
 	if err != nil {
-		shell.ExecError("", err)
-		os.Exit(1)
+		startCmdOutputWriter.ExecError("", err)
+		s.Exiter.Exit(1)
 	}
 }

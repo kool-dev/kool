@@ -1,20 +1,19 @@
 ## kool start
 
-Start Kool environment containers
+Start the specified Kool environment containers. If no service is specified, start all.
 
 ### Synopsis
 
-Start Kool environment containers
+Start the specified Kool environment containers. If no service is specified, start all.
 
 ```
-kool start [flags]
+kool start [service] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help              help for start
-      --services string   Specific services to be started
+  -h, --help   help for start
 ```
 
 ### SEE ALSO

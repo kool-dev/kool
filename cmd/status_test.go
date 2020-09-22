@@ -10,48 +10,48 @@ import (
 	"testing"
 )
 
-type FakeDependenciesChecker struct{}
+type FakeStatusDependenciesChecker struct{}
 
-func (c *FakeDependenciesChecker) VerifyDependencies() (err error) {
+func (c *FakeStatusDependenciesChecker) VerifyDependencies() (err error) {
 	return
 }
 
-type FakeFailedDependenciesChecker struct{}
+type FakeStatusFailedDependenciesChecker struct{}
 
-func (c *FakeFailedDependenciesChecker) VerifyDependencies() (err error) {
+func (c *FakeStatusFailedDependenciesChecker) VerifyDependencies() (err error) {
 	err = errors.New("")
 	return
 }
 
-type FakeNetworkHandler struct{}
+type FakeStatusNetworkHandler struct{}
 
-func (c *FakeNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
+func (c *FakeStatusNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
 	return
 }
 
-type FakeFailedNetworkHandler struct{}
+type FakeStatusFailedNetworkHandler struct{}
 
-func (c *FakeFailedNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
+func (c *FakeStatusFailedNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
 	err = errors.New("")
 	return
 }
 
-type FakeRunner struct{}
+type FakeStatusRunner struct{}
 
-func (c *FakeRunner) LookPath() (err error) {
+func (c *FakeStatusRunner) LookPath() (err error) {
 	return
 }
 
-func (c *FakeRunner) Interactive(args ...string) (err error) {
+func (c *FakeStatusRunner) Interactive(args ...string) (err error) {
 	return
 }
 
-func (c *FakeRunner) Exec(args ...string) (outStr string, err error) {
+func (c *FakeStatusRunner) Exec(args ...string) (outStr string, err error) {
 	return
 }
 
 type FakeGetServicesRunner struct {
-	FakeRunner
+	FakeStatusRunner
 }
 
 func (c *FakeGetServicesRunner) Exec(args ...string) (outStr string, err error) {
@@ -64,7 +64,7 @@ database
 }
 
 type FakeFailedGetServicesRunner struct {
-	FakeRunner
+	FakeStatusRunner
 }
 
 func (c *FakeFailedGetServicesRunner) Exec(args ...string) (outStr string, err error) {
@@ -73,7 +73,7 @@ func (c *FakeFailedGetServicesRunner) Exec(args ...string) (outStr string, err e
 }
 
 type FakeGetServiceIDRunner struct {
-	FakeRunner
+	FakeStatusRunner
 }
 
 func (c *FakeGetServiceIDRunner) Exec(args ...string) (outStr string, err error) {
@@ -82,7 +82,7 @@ func (c *FakeGetServiceIDRunner) Exec(args ...string) (outStr string, err error)
 }
 
 type FakeFailedGetServiceIDRunner struct {
-	FakeRunner
+	FakeStatusRunner
 }
 
 func (c *FakeFailedGetServiceIDRunner) Exec(args ...string) (outStr string, err error) {
@@ -91,7 +91,7 @@ func (c *FakeFailedGetServiceIDRunner) Exec(args ...string) (outStr string, err 
 }
 
 type FakeGetServiceStatusPortRunner struct {
-	FakeRunner
+	FakeStatusRunner
 }
 
 func (c *FakeGetServiceStatusPortRunner) Exec(args ...string) (outStr string, err error) {
@@ -100,7 +100,7 @@ func (c *FakeGetServiceStatusPortRunner) Exec(args ...string) (outStr string, er
 }
 
 type FakeNotRunningGetServiceStatusPortRunner struct {
-	FakeRunner
+	FakeStatusRunner
 }
 
 func (c *FakeNotRunningGetServiceStatusPortRunner) Exec(args ...string) (outStr string, err error) {
@@ -108,22 +108,22 @@ func (c *FakeNotRunningGetServiceStatusPortRunner) Exec(args ...string) (outStr 
 	return
 }
 
-var exitCode int
+var statusExitCode int
 
-type FakeExiter struct{}
+type FakeStatusExiter struct{}
 
-func (e *FakeExiter) Exit(code int) {
-	exitCode = code
+func (e *FakeStatusExiter) Exit(code int) {
+	statusExitCode = code
 }
 
 func TestStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeNetworkHandler{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -142,7 +142,6 @@ func TestStatusCommand(t *testing.T) {
 +----------+---------+------------------------------+------------------+
 `
 	expected = strings.Trim(expected, "\n")
-	output = strings.Trim(output, "\n")
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -151,12 +150,12 @@ func TestStatusCommand(t *testing.T) {
 
 func TestNotRunningStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeNetworkHandler{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeNotRunningGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -175,7 +174,6 @@ func TestNotRunningStatusCommand(t *testing.T) {
 +----------+-------------+-------+--------------------+
 `
 	expected = strings.Trim(expected, "\n")
-	output = strings.Trim(output, "\n")
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -184,12 +182,12 @@ func TestNotRunningStatusCommand(t *testing.T) {
 
 func TestNoStatusPortStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeNetworkHandler{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
-		&FakeRunner{},
-		&FakeExiter{},
+		&FakeStatusRunner{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -208,7 +206,6 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 +----------+-------------+-------+-------+
 `
 	expected = strings.Trim(expected, "\n")
-	output = strings.Trim(output, "\n")
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -217,12 +214,12 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 
 func TestNoServicesStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeNetworkHandler{},
-		&FakeRunner{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
+		&FakeStatusRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -232,7 +229,6 @@ func TestNoServicesStatusCommand(t *testing.T) {
 	}
 
 	expected := color.New(color.Yellow).Sprint("No services found.")
-	output = strings.Trim(output, "\n")
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -241,12 +237,12 @@ func TestNoServicesStatusCommand(t *testing.T) {
 
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeNetworkHandler{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
 		&FakeFailedGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -256,7 +252,6 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 	}
 
 	expected := color.New(color.Yellow).Sprint("No services found.")
-	output = strings.Trim(output, "\n")
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -265,15 +260,15 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 
 func TestFailedDependenciesStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeFailedDependenciesChecker{},
-		&FakeNetworkHandler{},
+		&FakeStatusFailedDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
-	exitCode = 0
+	statusExitCode = 0
 
 	_, err := execStatusCommand(cmd)
 
@@ -281,22 +276,22 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if exitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", exitCode)
+	if statusExitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
 	}
 }
 
 func TestFailedNetworkStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeFailedNetworkHandler{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusFailedNetworkHandler{},
 		&FakeGetServicesRunner{},
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
-	exitCode = 0
+	statusExitCode = 0
 
 	_, err := execStatusCommand(cmd)
 
@@ -304,22 +299,22 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if exitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", exitCode)
+	if statusExitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
 	}
 }
 
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeDependenciesChecker{},
-		&FakeNetworkHandler{},
+		&FakeStatusDependenciesChecker{},
+		&FakeStatusNetworkHandler{},
 		&FakeGetServicesRunner{},
 		&FakeFailedGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
-		&FakeExiter{},
+		&FakeStatusExiter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
-	exitCode = 0
+	statusExitCode = 0
 
 	_, err := execStatusCommand(cmd)
 
@@ -327,8 +322,8 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if exitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", exitCode)
+	if statusExitCode != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
 	}
 }
 
@@ -345,6 +340,6 @@ func execStatusCommand(cmd *cobra.Command) (output string, err error) {
 		return
 	}
 
-	output = string(out)
+	output = strings.Trim(string(out), "\n")
 	return
 }
