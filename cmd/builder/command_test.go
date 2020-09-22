@@ -108,7 +108,7 @@ func TestExec(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	output = strings.Trim(output, "\t \n")
+	output = strings.TrimSpace(output)
 
 	if output != "x" {
 		t.Errorf("Exec failed; expected output 'x', got '%s'", output)
@@ -145,7 +145,7 @@ func TestInteractive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	output := strings.Trim(buf.String(), "\t \n")
+	output := strings.TrimSpace(buf.String())
 
 	if output != "x" {
 		t.Errorf("Interactive failed; expected output 'x', got '%s'", output)
