@@ -22,34 +22,50 @@ All this script will do is download latest kool bin from https://github.com/kool
 
 Download the installer [here](https://github.com/kool-dev/kool/releases)
 
-To check if everything looks good simply run **kool** and you will see something like this:
+To check if everything looks good simply run **kool** to see the list of available commands.
 
-```bash
-$ kool
+## Autocompletion
 
-An easy and robust software development environment
-tool helping you from project creation until deployment.
-Complete documentation is available at https://kool.dev
+To load completions:
 
-Usage:
-  kool [command]
+### Bash
 
-Available Commands:
-  deploy      Deploys your application usin Kool Dev
-  docker      Creates a new container and runs the command in it.
-  exec        Execute a command within a running service container
-  help        Help about any command
-  info        Prints out information about kool setup (like environment variables)
-  init        Initialize kool preset in the current working directory
-  run         Runs a custom command defined at kool.yaml
-  start       Start Kool environment containers
-  status      Shows the status for containers
-  stop        Stop kool environment containers
+```
+$ source <(kool completion bash)
+```
 
-Flags:
-  -T, --disable-tty   Disables TTY
-  -h, --help          help for kool
-  -v, --version       version for kool
+To load completions for each session, execute once:
+Linux:
+```
+  $ kool completion bash > /etc/bash_completion.d/kool
+```
+MacOS:
+```
+  $ kool completion bash > /usr/local/etc/bash_completion.d/kool
+```
 
-Use "kool [command] --help" for more information about a command.
+Attention: MacOS bash doesn't come with completion enabled by default, you need to look into enabling it.
+
+### Zsh
+
+```
+# If shell completion is not already enabled in your environment you will need
+# to enable it.  You can execute the following once:
+
+$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+# To load completions for each session, execute once:
+$ kool completion zsh > "${fpath[1]}/_kool"
+
+# You will need to start a new shell for this setup to take effect.
+```
+
+
+### Fish
+
+```
+$ kool completion fish | source
+
+# To load completions for each session, execute once:
+$ kool completion fish > ~/.config/fish/completions/kool.fish
 ```
