@@ -15,6 +15,7 @@ type DefaultOutputWriter struct {
 
 // OutputWriter holds logic to output content
 type OutputWriter interface {
+	GetWriter() io.Writer
 	SetWriter(writer io.Writer)
 	ExecError(out string, err error)
 	Warning(out ...interface{})
@@ -23,6 +24,11 @@ type OutputWriter interface {
 // NewOutputWriter creates a new output writer
 func NewOutputWriter() OutputWriter {
 	return &DefaultOutputWriter{os.Stdout}
+}
+
+// GetWriter get default writer
+func (w *DefaultOutputWriter) GetWriter() io.Writer {
+	return w.Writer
 }
 
 // SetWriter set default writer
