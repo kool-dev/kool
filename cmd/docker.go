@@ -57,9 +57,9 @@ func execDockerRun(image string, command []string) {
 	)
 
 	workDir, _ = os.Getwd()
-	args = []string{"run", "--init", "--rm", "-w", "/app"}
+	args = []string{"run", "--init", "--rm", "-w", "/app", "-i"}
 	if !dockerFlags.DisableTty && !environment.IsTrue("KOOL_TTY_DISABLE") {
-		args = append(args, "-ti")
+		args = append(args, "-t")
 	}
 
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "kooldev") || strings.HasPrefix(image, "fireworkweb")) {
