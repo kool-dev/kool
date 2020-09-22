@@ -10,14 +10,14 @@ import (
 
 // DefaultOutputWriter holds writer to put content
 type DefaultOutputWriter struct {
-	Writer io.Writer
+	w io.Writer
 }
 
 // OutputWriter holds logic to output content
 type OutputWriter interface {
-	SetWriter(writer io.Writer)
-	ExecError(out string, err error)
-	Warning(out ...interface{})
+	SetWriter(io.Writer)
+	Error(error)
+	Warning(...interface{})
 }
 
 // NewOutputWriter creates a new output writer
@@ -26,26 +26,19 @@ func NewOutputWriter() OutputWriter {
 }
 
 // SetWriter set default writer
-func (w *DefaultOutputWriter) SetWriter(writer io.Writer) {
-	w.Writer = writer
+func (w *DefaultOutputWriter) SetWriter(wr io.Writer) {
+	w.w = wr
 }
 
-// ExecError error output
-func (w *DefaultOutputWriter) ExecError(out string, err error) {
-	if err != nil {
-		errorMessage := color.New(color.BgRed, color.FgWhite).Sprintf("error: %v", err)
-		fmt.Fprintf(w.Writer, "%v\n", errorMessage)
-	}
-
-	if out != "" {
-		fmt.Fprintf(w.Writer, "Output: %s\n", out)
-	}
+// Error error output
+func (w *DefaultOutputWriter) Error(err error) {
+	fmt.Fprintf(w.w, "%v\n", color.New(color.BgRed, color.FgWhite).Sprintf("error: %v", err))
 }
 
 // Warning warning message
 func (w *DefaultOutputWriter) Warning(out ...interface{}) {
 	warningMessage := color.New(color.Yellow).Sprint(out...)
-	fmt.Fprintln(w.Writer, warningMessage)
+	fmt.Fprintln(w.w, warningMessage)
 }
 
 // ExecError error output

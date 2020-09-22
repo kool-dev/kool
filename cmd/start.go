@@ -12,13 +12,13 @@ import (
 
 // DefaultStartCmd holds interfaces for status command logic
 type DefaultStartCmd struct {
-	DependenciesChecker   checker.Checker
-	NetworkHandler        network.Handler
-	StartContainersRunner builder.Runner
-	Exiter                shell.Exiter
-}
+	dependenciesChecker   checker.Checker
+	networkHandler        network.Handler
+	startContainersRunner builder.Runner
+	exiter                shell.Exiter
 
-var startCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
+	out shell.OutputWriter
+}
 
 // NewStartCommand initializes new kool start command
 func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
@@ -26,11 +26,11 @@ func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
 		Use:   "start [SERVICE]",
 		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
 		Run: func(cmd *cobra.Command, args []string) {
-			startCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+			startCmd.out.SetWriter(cmd.OutOrStdout())
 
 			if err := startCmd.checkDependencies(); err != nil {
-				startCmdOutputWriter.ExecError("", err)
-				startCmd.Exiter.Exit(1)
+				startCmd.out.Error(err)
+				startCmd.exiter.Exit(1)
 			}
 
 			startCmd.startContainers(args)
@@ -43,6 +43,7 @@ var startCmd = NewStartCommand(&DefaultStartCmd{
 	network.NewHandler(),
 	builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
 	shell.NewExiter(),
+	shell.NewOutputWriter(),
 })
 
 func init() {
@@ -50,11 +51,11 @@ func init() {
 }
 
 func (s *DefaultStartCmd) checkDependencies() (err error) {
-	if err = s.DependenciesChecker.Check(); err != nil {
+	if err = s.dependenciesChecker.Check(); err != nil {
 		return
 	}
 
-	if err = s.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.networkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
@@ -62,10 +63,10 @@ func (s *DefaultStartCmd) checkDependencies() (err error) {
 }
 
 func (s *DefaultStartCmd) startContainers(services []string) {
-	err := s.StartContainersRunner.Interactive(services...)
+	err := s.startContainersRunner.Interactive(services...)
 
 	if err != nil {
-		startCmdOutputWriter.ExecError("", err)
-		s.Exiter.Exit(1)
+		s.out.Error(err)
+		s.exiter.Exit(1)
 	}
 }

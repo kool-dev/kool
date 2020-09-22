@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
 
@@ -125,6 +126,7 @@ func TestStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -157,6 +159,7 @@ func TestNotRunningStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeNotRunningGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -189,6 +192,7 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeStatusRunner{},
 		&FakeStatusExiter{},
+		&FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -221,6 +225,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		shell.NewOutputWriter(),
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -244,6 +249,7 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		shell.NewOutputWriter(),
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -267,6 +273,7 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0
@@ -290,6 +297,7 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0
@@ -313,6 +321,7 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 		&FakeFailedGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0

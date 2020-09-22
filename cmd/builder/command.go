@@ -18,14 +18,14 @@ type DefaultCommand struct {
 
 // Builder holds available methods for building commands.
 type Builder interface {
-	AppendArgs(args ...string)
+	AppendArgs(...string)
 	String() string
 }
 
 // Runner holds available methods for running commands.
 type Runner interface {
-	Interactive(args ...string) error
-	Exec(args ...string) (string, error)
+	Interactive(...string) error
+	Exec(...string) (string, error)
 	LookPath() error
 }
 

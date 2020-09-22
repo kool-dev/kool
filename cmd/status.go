@@ -21,6 +21,8 @@ type DefaultStatusCmd struct {
 	GetServiceIDRunner         builder.Runner
 	GetServiceStatusPortRunner builder.Runner
 	Exiter                     shell.Exiter
+
+	out shell.OutputWriter
 }
 
 type statusService struct {
@@ -29,18 +31,16 @@ type statusService struct {
 	err                   error
 }
 
-var statusCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
-
 // NewStatusCommand Initialize new kool status command
 func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
-			statusCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+			statusCmd.out.SetWriter(cmd.OutOrStdout())
 
 			if err := statusCmd.checkDependencies(); err != nil {
-				statusCmdOutputWriter.ExecError("", err)
+				statusCmd.out.Error(err)
 				statusCmd.Exiter.Exit(1)
 			}
 
@@ -57,6 +57,7 @@ func init() {
 		builder.NewCommand("docker-compose", "ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewExiter(),
+		shell.NewOutputWriter(),
 	}
 	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
 }
@@ -112,12 +113,12 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	services, err := s.getServices()
 
 	if err != nil {
-		statusCmdOutputWriter.Warning("No services found.")
+		s.out.Warning("No services found.")
 		return
 	}
 
 	if len(services) == 0 {
-		statusCmdOutputWriter.Warning("No services found.")
+		s.out.Warning("No services found.")
 		return
 	}
 
@@ -152,7 +153,7 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 		status[i] = ss
 
 		if status[i].err != nil {
-			statusCmdOutputWriter.ExecError(status[i].service, status[i].err)
+			s.out.Error(status[i].err)
 			s.Exiter.Exit(1)
 		}
 
