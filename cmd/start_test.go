@@ -3,21 +3,22 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 type FakeStartDependenciesChecker struct{}
 
-func (c *FakeStartDependenciesChecker) VerifyDependencies() (err error) {
+func (c *FakeStartDependenciesChecker) Check() (err error) {
 	return
 }
 
 type FakeStartFailedDependenciesChecker struct{}
 
-func (c *FakeStartFailedDependenciesChecker) VerifyDependencies() (err error) {
+func (c *FakeStartFailedDependenciesChecker) Check() (err error) {
 	err = errors.New("dependencies")
 	return
 }

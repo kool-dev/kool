@@ -30,7 +30,7 @@ func init() {
 func runStop(cmd *cobra.Command, args []string) {
 	var dependenciesChecker = checker.NewChecker()
 
-	if err := dependenciesChecker.VerifyDependencies(); err != nil {
+	if err := dependenciesChecker.Check(); err != nil {
 		shell.ExecError("", err)
 		os.Exit(1)
 	}

@@ -97,7 +97,7 @@ func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port 
 }
 
 func (s *DefaultStatusCmd) checkDependencies() (err error) {
-	if err = s.DependenciesChecker.VerifyDependencies(); err != nil {
+	if err = s.DependenciesChecker.Check(); err != nil {
 		return
 	}
 

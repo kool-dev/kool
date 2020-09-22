@@ -23,7 +23,7 @@ var startCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
 // NewStartCommand initializes new kool start command
 func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
 	return &cobra.Command{
-		Use:   "start [service]",
+		Use:   "start [SERVICE]",
 		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
 		Run: func(cmd *cobra.Command, args []string) {
 			startCmdOutputWriter.SetWriter(cmd.OutOrStdout())
@@ -38,18 +38,19 @@ func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
 	}
 }
 
+var startCmd = NewStartCommand(&DefaultStartCmd{
+	checker.NewChecker(),
+	network.NewHandler(),
+	builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
+	shell.NewExiter(),
+})
+
 func init() {
-	defaultStartCmd := &DefaultStartCmd{
-		checker.NewChecker(),
-		network.NewHandler(),
-		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
-		shell.NewExiter(),
-	}
-	rootCmd.AddCommand(NewStartCommand(defaultStartCmd))
+	rootCmd.AddCommand(startCmd)
 }
 
 func (s *DefaultStartCmd) checkDependencies() (err error) {
-	if err = s.DependenciesChecker.VerifyDependencies(); err != nil {
+	if err = s.DependenciesChecker.Check(); err != nil {
 		return
 	}
 
