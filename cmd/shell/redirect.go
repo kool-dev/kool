@@ -20,55 +20,73 @@ const OutputRedirect string = ">"
 // written in append mode to the destiny pointed by the right part.
 const OutputRedirectAppend string = ">>"
 
-func parseRedirects(originalArgs []string) (
-	args []string,
-	in io.ReadCloser,
-	out io.WriteCloser,
-	closeStdin bool,
-	closeStdout bool,
-	err error) {
-	var numArgs int
+// DefaultParsedRedirect holds parsed redirect data
+type DefaultParsedRedirect struct {
+	args        []string
+	in          io.ReadCloser
+	out         io.WriteCloser
+	closeStdin  bool
+	closeStdout bool
+}
 
-	args = originalArgs
+// ParsedRedirect holds logic for parsed redirect
+type ParsedRedirect interface {
+	Close()
+}
 
-	if numArgs = len(args); numArgs < 2 {
-		in = os.Stdin
-		out = os.Stdout
+// Close close readers and writers if necessary
+func (p *DefaultParsedRedirect) Close() {
+	if p.closeStdin {
+		p.in.Close()
+	}
+	if p.closeStdout {
+		p.out.Close()
+	}
+}
+
+func parseRedirects(originalArgs []string) (parsed *DefaultParsedRedirect, err error) {
+	var (
+		numArgs int
+		inFile  io.ReadCloser
+		outFile io.WriteCloser
+	)
+	parsed = &DefaultParsedRedirect{originalArgs, os.Stdin, os.Stdout, false, false}
+
+	if numArgs = len(parsed.args); numArgs < 2 {
 		return
 	}
 
-	in = os.Stdin
-	out = os.Stdout
-
 	// check the before-last position of the command
 	// for some redirect key and properly handle them.
-	switch args[numArgs-2] {
+	switch parsed.args[numArgs-2] {
 	case InputRedirect:
 		{
-			if in, err = os.OpenFile(args[numArgs-1], os.O_RDONLY, os.ModePerm); err != nil {
+			if inFile, err = os.OpenFile(parsed.args[numArgs-1], os.O_RDONLY, os.ModePerm); err != nil {
 				return
 			}
-			closeStdin = true
+			parsed.in = inFile
+			parsed.closeStdin = true
 		}
 	case OutputRedirect, OutputRedirectAppend:
 		{
 			var mode int = os.O_CREATE | os.O_WRONLY
-			if args[numArgs-2] == OutputRedirectAppend {
+			if parsed.args[numArgs-2] == OutputRedirectAppend {
 				mode |= os.O_APPEND
 			} else {
 				mode |= os.O_TRUNC
 			}
 
-			if out, err = os.OpenFile(args[numArgs-1], mode, os.ModePerm); err != nil {
+			if outFile, err = os.OpenFile(parsed.args[numArgs-1], mode, os.ModePerm); err != nil {
 				return
 			}
-			closeStdout = true
+			parsed.out = outFile
+			parsed.closeStdout = true
 		}
 	}
 
-	if closeStdin || closeStdout {
+	if parsed.closeStdin || parsed.closeStdout {
 		// fix arguments removing the redirect
-		args = args[:numArgs-2]
+		parsed.args = parsed.args[:numArgs-2]
 	}
 
 	return

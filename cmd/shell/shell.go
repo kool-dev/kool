@@ -2,7 +2,6 @@ package shell
 
 import (
 	"fmt"
-	"io"
 	"kool-dev/kool/environment"
 	"log"
 	"os"
@@ -41,11 +40,8 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 // which makes it interactive for running even something like `bash`.
 func Interactive(exe string, args ...string) (err error) {
 	var (
-		cmd         *exec.Cmd
-		cmdStdin    io.ReadCloser
-		cmdStdout   io.WriteCloser
-		closeStdin  bool
-		closeStdout bool
+		cmd            *exec.Cmd
+		parsedRedirect *DefaultParsedRedirect
 	)
 
 	if lookedUp == nil {
@@ -62,22 +58,17 @@ func Interactive(exe string, args ...string) (err error) {
 
 	// soon should refactor this onto a struct with methods
 	// so we can remove this too long list of returned values.
-	if args, cmdStdin, cmdStdout, closeStdin, closeStdout, err = parseRedirects(args); err != nil {
+	if parsedRedirect, err = parseRedirects(args); err != nil {
 		return
 	}
 
-	if closeStdin {
-		defer cmdStdin.Close()
-	}
-	if closeStdout {
-		defer cmdStdout.Close()
-	}
+	defer parsedRedirect.Close()
 
-	cmd = exec.Command(exe, args...)
+	cmd = exec.Command(exe, parsedRedirect.args...)
 	cmd.Env = os.Environ()
-	cmd.Stdout = cmdStdout
+	cmd.Stdout = parsedRedirect.out
 	cmd.Stderr = os.Stderr
-	cmd.Stdin = cmdStdin
+	cmd.Stdin = parsedRedirect.in
 
 	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
 		// non-kool and non-absolute/relative path... let's look it up
