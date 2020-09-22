@@ -15,12 +15,12 @@ import (
 
 // DefaultStatusCmd holds interfaces for status command logic
 type DefaultStatusCmd struct {
-	DependenciesChecker        checker.Checker
-	NetworkHandler             network.Handler
-	GetServicesRunner          builder.Runner
-	GetServiceIDRunner         builder.Runner
-	GetServiceStatusPortRunner builder.Runner
-	Exiter                     shell.Exiter
+	dependenciesChecker        checker.Checker
+	networkHandler             network.Handler
+	getServicesRunner          builder.Runner
+	getServiceIDRunner         builder.Runner
+	getServiceStatusPortRunner builder.Runner
+	exiter                     shell.Exiter
 
 	out shell.OutputWriter
 }
@@ -41,7 +41,7 @@ func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 
 			if err := statusCmd.checkDependencies(); err != nil {
 				statusCmd.out.Error(err)
-				statusCmd.Exiter.Exit(1)
+				statusCmd.exiter.Exit(1)
 			}
 
 			statusCmd.statusDisplayServices(cmd)
@@ -50,7 +50,7 @@ func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 }
 
 func init() {
-	defaultStatusCmd := &DefaultStatusCmd{
+	rootCmd.AddCommand(NewStatusCommand(&DefaultStatusCmd{
 		checker.NewChecker(),
 		network.NewHandler(),
 		builder.NewCommand("docker-compose", "ps", "--services"),
@@ -58,14 +58,13 @@ func init() {
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewExiter(),
 		shell.NewOutputWriter(),
-	}
-	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
+	}))
 }
 
 func (s *DefaultStatusCmd) getServices() (services []string, err error) {
 	var output string
 
-	if output, err = s.GetServicesRunner.Exec(); err != nil {
+	if output, err = s.getServicesRunner.Exec(); err != nil {
 		return
 	}
 
@@ -82,7 +81,7 @@ func (s *DefaultStatusCmd) getServices() (services []string, err error) {
 func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port string) {
 	var output string
 
-	if output, _ = s.GetServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
+	if output, _ = s.getServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
 		return
 	}
 
@@ -98,11 +97,11 @@ func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port 
 }
 
 func (s *DefaultStatusCmd) checkDependencies() (err error) {
-	if err = s.DependenciesChecker.Check(); err != nil {
+	if err = s.dependenciesChecker.Check(); err != nil {
 		return
 	}
 
-	if err = s.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.networkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
@@ -133,7 +132,7 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 
 			ss := &statusService{service: service}
 
-			if serviceID, err = s.GetServiceIDRunner.Exec(service); err != nil {
+			if serviceID, err = s.getServiceIDRunner.Exec(service); err != nil {
 				ss.err = err
 			} else if serviceID != "" {
 				status, port = s.getStatusPort(serviceID)
@@ -154,7 +153,7 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 
 		if status[i].err != nil {
 			s.out.Error(status[i].err)
-			s.Exiter.Exit(1)
+			s.exiter.Exit(1)
 		}
 
 		if i == l-1 {

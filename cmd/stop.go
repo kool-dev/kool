@@ -15,7 +15,7 @@ type StopFlags struct {
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop kool environment containers",
+	Short: "Stop all running containers started with 'kool start' command",
 	Run:   runStop,
 }
 
@@ -24,7 +24,7 @@ var stopFlags = &StopFlags{false}
 func init() {
 	rootCmd.AddCommand(stopCmd)
 
-	stopCmd.Flags().BoolVarP(&stopFlags.Purge, "purge", "", false, "Remove all persistent data from containers")
+	stopCmd.Flags().BoolVarP(&stopFlags.Purge, "purge", "", false, "Remove all persistent data from volume mounts on containers")
 }
 
 func runStop(cmd *cobra.Command, args []string) {

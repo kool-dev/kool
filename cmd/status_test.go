@@ -126,7 +126,7 @@ func TestStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -159,7 +159,7 @@ func TestNotRunningStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeNotRunningGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -192,7 +192,7 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeStatusRunner{},
 		&FakeStatusExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -273,7 +273,7 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0
@@ -297,7 +297,7 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0
@@ -321,7 +321,7 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 		&FakeFailedGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0

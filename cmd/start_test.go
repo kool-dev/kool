@@ -3,8 +3,8 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"io"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
 
@@ -35,18 +35,6 @@ type FakeStartFailedNetworkHandler struct{}
 func (c *FakeStartFailedNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
 	err = errors.New("network")
 	return
-}
-
-type FakeOutputWriter struct{}
-
-func (f *FakeOutputWriter) SetWriter(w io.Writer) {
-	// do nothing
-}
-func (f *FakeOutputWriter) Error(err error) {
-	// do nothing
-}
-func (f *FakeOutputWriter) Warning(out ...interface{}) {
-	// do nothing
 }
 
 type FakeStartRunner struct{}
@@ -92,7 +80,7 @@ func TestStartAllCommand(t *testing.T) {
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
 		&FakeStartExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 
 	cmd := NewStartCommand(defaultStartCmd)
@@ -117,7 +105,7 @@ func TestStartServicesCommand(t *testing.T) {
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
 		&FakeStartExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 
 	cmd := NewStartCommand(defaultStartCmd)
@@ -144,7 +132,7 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
 		&FakeStartExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 
 	cmd := NewStartCommand(defaultStartCmd)
@@ -167,7 +155,7 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 		&FakeStartFailedNetworkHandler{},
 		&FakeStartRunner{},
 		&FakeStartExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 
 	cmd := NewStartCommand(defaultStartCmd)
@@ -190,7 +178,7 @@ func TestStartWithError(t *testing.T) {
 		&FakeStartNetworkHandler{},
 		&FakeFailedStartRunner{},
 		&FakeStartExiter{},
-		&FakeOutputWriter{},
+		&shell.FakeOutputWriter{},
 	}
 
 	cmd := NewStartCommand(defaultStartCmd)
