@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
 	"log"
 	"os"
@@ -38,26 +38,13 @@ func runStart(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	handleGlobalNetwork()
+	var globalNetworkHandler = network.NewHandler()
+
+	if err := globalNetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+		log.Fatal(err)
+	}
+
 	startContainers(startFlags.Services)
-}
-
-func handleGlobalNetwork() {
-	networkID, err := shell.Exec("docker", "network", "ls", "-q", "-f", fmt.Sprintf("NAME=^%s$", os.Getenv("KOOL_GLOBAL_NETWORK")))
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if networkID != "" {
-		return
-	}
-
-	err = shell.Interactive("docker", "network", "create", "--attachable", os.Getenv("KOOL_GLOBAL_NETWORK"))
-
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func startContainers(services string) {

@@ -12,11 +12,11 @@ func (c *FakeCommand) LookPath() (err error) {
 	return
 }
 
-func (c *FakeCommand) Interactive() (err error) {
+func (c *FakeCommand) Interactive(args ...string) (err error) {
 	return
 }
 
-func (c *FakeCommand) Exec() (outStr string, err error) {
+func (c *FakeCommand) Exec(args ...string) (outStr string, err error) {
 	return
 }
 
@@ -33,7 +33,7 @@ type NotRunningDockerCmd struct {
 	FakeCommand
 }
 
-func (c *NotRunningDockerCmd) Exec() (outStr string, err error) {
+func (c *NotRunningDockerCmd) Exec(args ...string) (outStr string, err error) {
 	err = errors.New("not running")
 	outStr = "error"
 	return
