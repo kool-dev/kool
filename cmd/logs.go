@@ -1,53 +1,75 @@
 package cmd
 
 import (
-	"kool-dev/kool/cmd/shell"
-	"os"
+	"kool-dev/kool/cmd/builder"
 	"strconv"
 
 	"github.com/spf13/cobra"
 )
 
-// LogsFlags holds the flags for the logs command
-type LogsFlags struct {
+// KoolLogsFlags holds the flags for the logs command
+type KoolLogsFlags struct {
 	Tail   int
 	Follow bool
 }
 
-var logsCmd = &cobra.Command{
-	Use:   "logs [options] [service...]",
-	Short: "Displays log output from services.",
-	Run:   runLogs,
-}
+// KoolLogs holds handlers and functions to implement the logs command logic
+type KoolLogs struct {
+	DefaultKoolService
+	Flags *KoolLogsFlags
 
-var logsFlags = &LogsFlags{25, false}
+	logs builder.Command
+}
 
 func init() {
+	var (
+		logs    = NewKoolLogs()
+		logsCmd = NewLogsCommand(logs)
+	)
+
 	rootCmd.AddCommand(logsCmd)
 
-	logsCmd.Flags().IntVarP(&logsFlags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown.")
-	logsCmd.Flags().BoolVarP(&logsFlags.Follow, "follow", "f", false, "Follow log output.")
+	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown.")
+	logsCmd.Flags().BoolVarP(&logs.Flags.Follow, "follow", "f", false, "Follow log output.")
 }
 
-func runLogs(cmd *cobra.Command, originalArgs []string) {
-	var args []string = []string{"logs"}
+// NewKoolLogs creates a new handler for logs logic
+func NewKoolLogs() *KoolLogs {
+	return &KoolLogs{
+		*newDefaultKoolService(),
+		&KoolLogsFlags{25, false},
+		builder.NewCommand("docker-compose", "logs"),
+	}
+}
 
-	if logsFlags.Tail == 0 {
-		args = append(args, "--tail", "all")
+// Execute runs the logs logic with incoming arguments.
+func (l *KoolLogs) Execute(args []string) (err error) {
+	if l.Flags.Tail == 0 {
+		l.logs.AppendArgs("--tail", "all")
 	} else {
-		args = append(args, "--tail", strconv.Itoa(logsFlags.Tail))
+		l.logs.AppendArgs("--tail", strconv.Itoa(l.Flags.Tail))
 	}
 
-	if logsFlags.Follow {
-		args = append(args, "--follow")
+	if l.Flags.Follow {
+		l.logs.AppendArgs("--follow")
 	}
 
-	args = append(args, originalArgs...)
+	err = l.logs.Interactive(args...)
+	return
+}
 
-	err := shell.Interactive("docker-compose", args...)
+// NewLogsCommand initializes new kool logs command
+func NewLogsCommand(logs *KoolLogs) *cobra.Command {
+	return &cobra.Command{
+		Use:   "logs [options] [service...]",
+		Short: "Displays log output from services.",
+		Run: func(cmd *cobra.Command, args []string) {
+			logs.SetWriter(cmd.OutOrStdout())
 
-	if err != nil {
-		shell.ExecError("", err)
-		os.Exit(1)
+			if err := logs.Execute(args); err != nil {
+				logs.Error(err)
+				logs.Exit(1)
+			}
+		},
 	}
 }
