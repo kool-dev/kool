@@ -7,7 +7,7 @@ Start the specified Kool environment containers. If no service is specified, sta
 Start the specified Kool environment containers. If no service is specified, start all.
 
 ```
-kool start [service] [flags]
+kool start [SERVICE]
 ```
 
 ### Options
