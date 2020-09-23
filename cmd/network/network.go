@@ -7,7 +7,7 @@ import (
 
 // Handler defines network handler
 type Handler interface {
-	HandleGlobalNetwork(networkName string) error
+	HandleGlobalNetwork(string) error
 }
 
 // DefaultHandler holds docker network command

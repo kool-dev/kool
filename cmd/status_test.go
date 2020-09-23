@@ -3,22 +3,24 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"github.com/gookit/color"
-	"github.com/spf13/cobra"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
+
+	"github.com/gookit/color"
+	"github.com/spf13/cobra"
 )
 
 type FakeStatusDependenciesChecker struct{}
 
-func (c *FakeStatusDependenciesChecker) VerifyDependencies() (err error) {
+func (c *FakeStatusDependenciesChecker) Check() (err error) {
 	return
 }
 
 type FakeStatusFailedDependenciesChecker struct{}
 
-func (c *FakeStatusFailedDependenciesChecker) VerifyDependencies() (err error) {
+func (c *FakeStatusFailedDependenciesChecker) Check() (err error) {
 	err = errors.New("")
 	return
 }
@@ -124,6 +126,7 @@ func TestStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -156,6 +159,7 @@ func TestNotRunningStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeNotRunningGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -188,6 +192,7 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeStatusRunner{},
 		&FakeStatusExiter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -220,6 +225,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		shell.NewOutputWriter(),
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -243,6 +249,7 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		shell.NewOutputWriter(),
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	output, err := execStatusCommand(cmd)
@@ -266,6 +273,7 @@ func TestFailedDependenciesStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0
@@ -289,6 +297,7 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 		&FakeGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0
@@ -312,6 +321,7 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 		&FakeFailedGetServiceIDRunner{},
 		&FakeGetServiceStatusPortRunner{},
 		&FakeStatusExiter{},
+		&shell.FakeOutputWriter{},
 	}
 	cmd := NewStatusCommand(defaultStatusCmd)
 	statusExitCode = 0

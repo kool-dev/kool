@@ -64,7 +64,7 @@ func TestDockerNotInstalled(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	err := c.VerifyDependencies()
+	err := c.Check()
 
 	if err == nil {
 		t.Error("Expected an error, got none.")
@@ -84,7 +84,7 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	err := c.VerifyDependencies()
+	err := c.Check()
 
 	if err == nil {
 		t.Error("Expected an error, got none.")
@@ -104,7 +104,7 @@ func TestDockerNotRunning(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	err := c.VerifyDependencies()
+	err := c.Check()
 
 	if err == nil {
 		t.Error("Expected an error, got none.")
@@ -124,7 +124,7 @@ func TestCheckKoolDependencies(t *testing.T) {
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
 
-	if err := c.VerifyDependencies(); err != nil {
+	if err := c.Check(); err != nil {
 		t.Errorf("Expected no errors, got %v.", err)
 		return
 	}

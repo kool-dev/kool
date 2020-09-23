@@ -15,12 +15,14 @@ import (
 
 // DefaultStatusCmd holds interfaces for status command logic
 type DefaultStatusCmd struct {
-	DependenciesChecker        checker.Checker
-	NetworkHandler             network.Handler
-	GetServicesRunner          builder.Runner
-	GetServiceIDRunner         builder.Runner
-	GetServiceStatusPortRunner builder.Runner
-	Exiter                     shell.Exiter
+	dependenciesChecker        checker.Checker
+	networkHandler             network.Handler
+	getServicesRunner          builder.Runner
+	getServiceIDRunner         builder.Runner
+	getServiceStatusPortRunner builder.Runner
+	exiter                     shell.Exiter
+
+	out shell.OutputWriter
 }
 
 type statusService struct {
@@ -29,19 +31,17 @@ type statusService struct {
 	err                   error
 }
 
-var statusCmdOutputWriter shell.OutputWriter = shell.NewOutputWriter()
-
 // NewStatusCommand Initialize new kool status command
 func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Shows the status for containers",
 		Run: func(cmd *cobra.Command, args []string) {
-			statusCmdOutputWriter.SetWriter(cmd.OutOrStdout())
+			statusCmd.out.SetWriter(cmd.OutOrStdout())
 
 			if err := statusCmd.checkDependencies(); err != nil {
-				statusCmdOutputWriter.ExecError("", err)
-				statusCmd.Exiter.Exit(1)
+				statusCmd.out.Error(err)
+				statusCmd.exiter.Exit(1)
 			}
 
 			statusCmd.statusDisplayServices(cmd)
@@ -50,21 +50,21 @@ func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
 }
 
 func init() {
-	defaultStatusCmd := &DefaultStatusCmd{
+	rootCmd.AddCommand(NewStatusCommand(&DefaultStatusCmd{
 		checker.NewChecker(),
 		network.NewHandler(),
 		builder.NewCommand("docker-compose", "ps", "--services"),
 		builder.NewCommand("docker-compose", "ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewExiter(),
-	}
-	rootCmd.AddCommand(NewStatusCommand(defaultStatusCmd))
+		shell.NewOutputWriter(),
+	}))
 }
 
 func (s *DefaultStatusCmd) getServices() (services []string, err error) {
 	var output string
 
-	if output, err = s.GetServicesRunner.Exec(); err != nil {
+	if output, err = s.getServicesRunner.Exec(); err != nil {
 		return
 	}
 
@@ -81,7 +81,7 @@ func (s *DefaultStatusCmd) getServices() (services []string, err error) {
 func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port string) {
 	var output string
 
-	if output, _ = s.GetServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
+	if output, _ = s.getServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
 		return
 	}
 
@@ -97,11 +97,11 @@ func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port 
 }
 
 func (s *DefaultStatusCmd) checkDependencies() (err error) {
-	if err = s.DependenciesChecker.VerifyDependencies(); err != nil {
+	if err = s.dependenciesChecker.Check(); err != nil {
 		return
 	}
 
-	if err = s.NetworkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.networkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
@@ -112,12 +112,12 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	services, err := s.getServices()
 
 	if err != nil {
-		statusCmdOutputWriter.Warning("No services found.")
+		s.out.Warning("No services found.")
 		return
 	}
 
 	if len(services) == 0 {
-		statusCmdOutputWriter.Warning("No services found.")
+		s.out.Warning("No services found.")
 		return
 	}
 
@@ -132,7 +132,7 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 
 			ss := &statusService{service: service}
 
-			if serviceID, err = s.GetServiceIDRunner.Exec(service); err != nil {
+			if serviceID, err = s.getServiceIDRunner.Exec(service); err != nil {
 				ss.err = err
 			} else if serviceID != "" {
 				status, port = s.getStatusPort(serviceID)
@@ -152,8 +152,8 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 		status[i] = ss
 
 		if status[i].err != nil {
-			statusCmdOutputWriter.ExecError(status[i].service, status[i].err)
-			s.Exiter.Exit(1)
+			s.out.Error(status[i].err)
+			s.exiter.Exit(1)
 		}
 
 		if i == l-1 {

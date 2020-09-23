@@ -1,10 +1,10 @@
 ## kool stop
 
-Stop kool environment containers
+Stop all running containers started with 'kool start' command
 
 ### Synopsis
 
-Stop kool environment containers
+Stop all running containers started with 'kool start' command
 
 ```
 kool stop [flags]
@@ -14,7 +14,7 @@ kool stop [flags]
 
 ```
   -h, --help    help for stop
-      --purge   Remove all persistent data from containers
+      --purge   Remove all persistent data from volume mounts on containers
 ```
 
 ### SEE ALSO

@@ -2,14 +2,14 @@ package shell
 
 import "os"
 
-// DefaultExiter holds the default Exit behaviour
-type DefaultExiter struct{}
-
 // Exiter interface allows for interchageable usage of implementations
 // mainly for testing and extension purposes.
 type Exiter interface {
 	Exit(int)
 }
+
+// DefaultExiter holds the default Exit behaviour
+type DefaultExiter struct{}
 
 // NewExiter creates a new DefaultExiter
 func NewExiter() Exiter {

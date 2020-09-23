@@ -4,12 +4,12 @@ import "kool-dev/kool/cmd/builder"
 
 // Checker defines the check kool dependencies method
 type Checker interface {
-	VerifyDependencies() error
+	Check() error
 }
 
 // DefaultChecker holds commands to be checked.
 type DefaultChecker struct {
-	DockerCmd        builder.Runner
+	dockerCmd        builder.Runner
 	dockerComposeCmd builder.Runner
 }
 
@@ -23,9 +23,9 @@ func NewChecker() *DefaultChecker {
 	return &DefaultChecker{dockerInfoCmd, dockerComposePsCmd}
 }
 
-// VerifyDependencies checks kool dependencies
-func (c *DefaultChecker) VerifyDependencies() error {
-	if err := c.DockerCmd.LookPath(); err != nil {
+// Check checks kool dependencies
+func (c *DefaultChecker) Check() error {
+	if err := c.dockerCmd.LookPath(); err != nil {
 		return ErrDockerNotFound
 	}
 
@@ -33,7 +33,7 @@ func (c *DefaultChecker) VerifyDependencies() error {
 		return ErrDockerComposeNotFound
 	}
 
-	if _, err := c.DockerCmd.Exec(); err != nil {
+	if _, err := c.dockerCmd.Exec(); err != nil {
 		return ErrDockerNotRunning
 	}
 
