@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"kool-dev/kool/cmd/shell"
 	"testing"
 )
@@ -12,7 +13,7 @@ func newFakeKoolService() *DefaultKoolService {
 	}
 }
 
-func TestExitProxy(t *testing.T) {
+func TestKoolServiceProxies(t *testing.T) {
 	code := 100
 	k := newFakeKoolService()
 
@@ -24,5 +25,33 @@ func TestExitProxy(t *testing.T) {
 
 	if k.exiter.(*shell.FakeExiter).Code() != code {
 		t.Errorf("Exit did not proxy the proper code by DefaultKoolService; expected %d got %d", code, k.exiter.(*shell.FakeExiter).Code())
+	}
+
+	err := errors.New("fake error")
+	k.Error(err)
+
+	if !k.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("Error was not proxied by DefaultKoolService")
+	}
+
+	if k.out.(*shell.FakeOutputWriter).Err != err {
+		t.Errorf("Error did not proxy the proper error on DefaultKoolService; expected %v got %v", err, k.out.(*shell.FakeOutputWriter).Err)
+	}
+
+	out := []interface{}{"out"}
+	k.Warning(out...)
+
+	if !k.out.(*shell.FakeOutputWriter).CalledWarning {
+		t.Error("Warning was not proxied by DefaultKoolService")
+	}
+
+	if len(k.out.(*shell.FakeOutputWriter).Out) != len(out) {
+		t.Errorf("Warning did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).Out)
+	}
+
+	k.SetWriter(nil)
+
+	if !k.out.(*shell.FakeOutputWriter).CalledSetWriter {
+		t.Error("SetWriter was not proxied by DefaultKoolService")
 	}
 }
