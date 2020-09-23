@@ -23,13 +23,13 @@ func TestFakeCommand(t *testing.T) {
 		t.Errorf("failed to use mocked LookPath function on FakeCommand")
 	}
 
-	f.Interactive("arg1", "arg2")
+	_ = f.Interactive("arg1", "arg2")
 
 	if !f.CalledInteractive || f.ArgsInteractive == nil || f.ArgsInteractive[0] != "arg1" || f.ArgsInteractive[1] != "arg2" {
 		t.Errorf("failed to use mocked Interactive function on FakeCommand")
 	}
 
-	f.Exec("arg1", "arg2")
+	_, _ = f.Exec("arg1", "arg2")
 
 	if !f.CalledExec || f.ArgsExec == nil || f.ArgsExec[0] != "arg1" || f.ArgsExec[1] != "arg2" {
 		t.Errorf("failed to use mocked Exec function on FakeCommand")
