@@ -66,32 +66,26 @@ func (c *FakeFailedStartRunner) Interactive(args ...string) (err error) {
 	return
 }
 
-var startExitCode int
-
-type FakeStartExiter struct{}
-
-func (e *FakeStartExiter) Exit(code int) {
-	startExitCode = code
-}
-
 func TestStartAllCommand(t *testing.T) {
-	defaultStartCmd := &KoolStart{
+	koolStart := &KoolStart{
+		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
-		&FakeStartExiter{},
-		&shell.FakeOutputWriter{},
 	}
 
-	cmd := NewStartCommand(defaultStartCmd)
-	startExitCode = 0
+	cmd := NewStartCommand(koolStart)
 
 	if _, err := execStartCommand(cmd); err != nil {
 		t.Fatal(err)
 	}
 
-	if startExitCode != 0 {
-		t.Errorf("Expected no exit error, got '%v'", startExitCode)
+	if koolStart.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not expect for KoolStart service to call exit")
+	}
+
+	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Errorf("did not expect KoolStart service to have exit code different than 0; got '%d", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 
 	if len(startedServices) > 0 {
@@ -100,16 +94,14 @@ func TestStartAllCommand(t *testing.T) {
 }
 
 func TestStartServicesCommand(t *testing.T) {
-	defaultStartCmd := &KoolStart{
+	koolStart := &KoolStart{
+		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
-		&FakeStartExiter{},
-		&shell.FakeOutputWriter{},
 	}
 
-	cmd := NewStartCommand(defaultStartCmd)
-	startExitCode = 0
+	cmd := NewStartCommand(koolStart)
 	expected := []string{"app", "database"}
 	cmd.SetArgs(expected)
 
@@ -117,8 +109,8 @@ func TestStartServicesCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if startExitCode != 0 {
-		t.Errorf("Expected no exit error, got '%v'", startExitCode)
+	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Errorf("did not expect KoolStart to exit with error, got %d", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 
 	if !startedServicesAreEqual(startedServices, expected) {
@@ -127,16 +119,14 @@ func TestStartServicesCommand(t *testing.T) {
 }
 
 func TestFailedDependenciesStartCommand(t *testing.T) {
-	defaultStartCmd := &KoolStart{
+	koolStart := &KoolStart{
+		*newFakeKoolService(),
 		&FakeStartFailedDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
-		&FakeStartExiter{},
-		&shell.FakeOutputWriter{},
 	}
 
-	cmd := NewStartCommand(defaultStartCmd)
-	startExitCode = 0
+	cmd := NewStartCommand(koolStart)
 
 	_, err := execStartCommand(cmd)
 
@@ -144,22 +134,20 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if startExitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	if koolStart.exiter.(*shell.FakeExiter).Code() != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 }
 
 func TestFailedNetworkStartCommand(t *testing.T) {
-	defaultStartCmd := &KoolStart{
+	koolStart := &KoolStart{
+		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartFailedNetworkHandler{},
 		&FakeStartRunner{},
-		&FakeStartExiter{},
-		&shell.FakeOutputWriter{},
 	}
 
-	cmd := NewStartCommand(defaultStartCmd)
-	startExitCode = 0
+	cmd := NewStartCommand(koolStart)
 
 	_, err := execStartCommand(cmd)
 
@@ -167,22 +155,20 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if startExitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	if koolStart.exiter.(*shell.FakeExiter).Code() != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 }
 
 func TestStartWithError(t *testing.T) {
-	defaultStartCmd := &KoolStart{
+	koolStart := &KoolStart{
+		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeFailedStartRunner{},
-		&FakeStartExiter{},
-		&shell.FakeOutputWriter{},
 	}
 
-	cmd := NewStartCommand(defaultStartCmd)
-	startExitCode = 0
+	cmd := NewStartCommand(koolStart)
 
 	_, err := execStartCommand(cmd)
 
@@ -190,8 +176,8 @@ func TestStartWithError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if startExitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	if koolStart.exiter.(*shell.FakeExiter).Code() != 1 {
+		t.Errorf("Expected an exit code 1, got '%v'", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 }
 

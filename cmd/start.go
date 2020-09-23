@@ -4,7 +4,6 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
-	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -12,12 +11,11 @@ import (
 
 // KoolStart holds handlers and functions for starting containers logic
 type KoolStart struct {
+	DefaultKoolService
+
 	dependenciesChecker   checker.Checker
 	networkHandler        network.Handler
 	startContainersRunner builder.Runner
-
-	exiter shell.Exiter
-	out    shell.OutputWriter
 }
 
 // NewStartCommand initializes new kool start command
@@ -26,11 +24,11 @@ func NewStartCommand(start *KoolStart) *cobra.Command {
 		Use:   "start [SERVICE]",
 		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
 		Run: func(cmd *cobra.Command, args []string) {
-			start.out.SetWriter(cmd.OutOrStdout())
+			start.SetWriter(cmd.OutOrStdout())
 
 			if err := start.Execute(args); err != nil {
-				start.out.Error(err)
-				start.exiter.Exit(1)
+				start.Error(err)
+				start.Exit(1)
 			}
 		},
 		DisableFlagsInUseLine: true,
@@ -41,11 +39,10 @@ func NewStartCommand(start *KoolStart) *cobra.Command {
 // dependencies.
 func NewKoolStart() *KoolStart {
 	return &KoolStart{
+		*newDefaultKoolService(),
 		checker.NewChecker(),
 		network.NewHandler(),
 		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
-		shell.NewExiter(),
-		shell.NewOutputWriter(),
 	}
 }
 

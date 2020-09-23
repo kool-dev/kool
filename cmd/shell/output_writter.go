@@ -40,22 +40,3 @@ func (w *DefaultOutputWriter) Warning(out ...interface{}) {
 	warningMessage := color.New(color.Yellow).Sprint(out...)
 	fmt.Fprintln(w.w, warningMessage)
 }
-
-// FakeOutputWriter is meant to be used for tests - a simple empty mock
-// implementing the OutputWriter interface here defined.
-type FakeOutputWriter struct{}
-
-// SetWriter is a mocked empty function
-func (f *FakeOutputWriter) SetWriter(w io.Writer) {
-	// do nothing
-}
-
-// Error is a mocked empty function
-func (f *FakeOutputWriter) Error(err error) {
-	// do nothing
-}
-
-// Warning is a mocked empty function
-func (f *FakeOutputWriter) Warning(out ...interface{}) {
-	// do nothing
-}

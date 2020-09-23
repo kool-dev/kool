@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// KoolStop holds the logic
+// KoolStop holds handlers and functions to implement the stop command logic
 type KoolStop struct {
 	exiter shell.Exiter
 	out    shell.OutputWriter
