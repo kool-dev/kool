@@ -18,5 +18,5 @@ func NewExiter() Exiter {
 
 // Exit implements the default Exit behaviour (proxy to OS)
 func (e *DefaultExiter) Exit(code int) {
-	os.Exit(1)
+	os.Exit(code)
 }
