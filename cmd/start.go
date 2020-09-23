@@ -10,47 +10,62 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DefaultStartCmd holds interfaces for status command logic
-type DefaultStartCmd struct {
+// KoolStart holds handlers and functions for starting containers logic
+type KoolStart struct {
 	dependenciesChecker   checker.Checker
 	networkHandler        network.Handler
 	startContainersRunner builder.Runner
-	exiter                shell.Exiter
 
-	out shell.OutputWriter
+	exiter shell.Exiter
+	out    shell.OutputWriter
 }
 
 // NewStartCommand initializes new kool start command
-func NewStartCommand(startCmd *DefaultStartCmd) *cobra.Command {
+func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
 		Use:   "start [SERVICE]",
 		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
 		Run: func(cmd *cobra.Command, args []string) {
-			startCmd.out.SetWriter(cmd.OutOrStdout())
+			start.out.SetWriter(cmd.OutOrStdout())
 
-			if err := startCmd.checkDependencies(); err != nil {
-				startCmd.out.Error(err)
-				startCmd.exiter.Exit(1)
+			if err := start.Execute(args); err != nil {
+				start.out.Error(err)
+				start.exiter.Exit(1)
 			}
-
-			startCmd.startContainers(args)
 		},
+		DisableFlagsInUseLine: true,
 	}
 }
 
-var startCmd = NewStartCommand(&DefaultStartCmd{
-	checker.NewChecker(),
-	network.NewHandler(),
-	builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
-	shell.NewExiter(),
-	shell.NewOutputWriter(),
-})
+// NewKoolStart creates a new pointer with default KoolStart service
+// dependencies.
+func NewKoolStart() *KoolStart {
+	return &KoolStart{
+		checker.NewChecker(),
+		network.NewHandler(),
+		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
+		shell.NewExiter(),
+		shell.NewOutputWriter(),
+	}
+}
+
+var startCmd = NewStartCommand(NewKoolStart())
 
 func init() {
 	rootCmd.AddCommand(startCmd)
 }
 
-func (s *DefaultStartCmd) checkDependencies() (err error) {
+// Execute runs the start logic with incoming arguments.
+func (s *KoolStart) Execute(args []string) (err error) {
+	if err = s.checkDependencies(); err != nil {
+		return
+	}
+
+	err = s.startContainers(args)
+	return
+}
+
+func (s *KoolStart) checkDependencies() (err error) {
 	if err = s.dependenciesChecker.Check(); err != nil {
 		return
 	}
@@ -62,11 +77,7 @@ func (s *DefaultStartCmd) checkDependencies() (err error) {
 	return
 }
 
-func (s *DefaultStartCmd) startContainers(services []string) {
-	err := s.startContainersRunner.Interactive(services...)
-
-	if err != nil {
-		s.out.Error(err)
-		s.exiter.Exit(1)
-	}
+func (s *KoolStart) startContainers(services []string) (err error) {
+	err = s.startContainersRunner.Interactive(services...)
+	return
 }

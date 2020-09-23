@@ -75,7 +75,7 @@ func (e *FakeStartExiter) Exit(code int) {
 }
 
 func TestStartAllCommand(t *testing.T) {
-	defaultStartCmd := &DefaultStartCmd{
+	defaultStartCmd := &KoolStart{
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
@@ -100,7 +100,7 @@ func TestStartAllCommand(t *testing.T) {
 }
 
 func TestStartServicesCommand(t *testing.T) {
-	defaultStartCmd := &DefaultStartCmd{
+	defaultStartCmd := &KoolStart{
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
@@ -127,7 +127,7 @@ func TestStartServicesCommand(t *testing.T) {
 }
 
 func TestFailedDependenciesStartCommand(t *testing.T) {
-	defaultStartCmd := &DefaultStartCmd{
+	defaultStartCmd := &KoolStart{
 		&FakeStartFailedDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeStartRunner{},
@@ -150,7 +150,7 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 }
 
 func TestFailedNetworkStartCommand(t *testing.T) {
-	defaultStartCmd := &DefaultStartCmd{
+	defaultStartCmd := &KoolStart{
 		&FakeStartDependenciesChecker{},
 		&FakeStartFailedNetworkHandler{},
 		&FakeStartRunner{},
@@ -173,7 +173,7 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 }
 
 func TestStartWithError(t *testing.T) {
-	defaultStartCmd := &DefaultStartCmd{
+	defaultStartCmd := &KoolStart{
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
 		&FakeFailedStartRunner{},
