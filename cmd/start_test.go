@@ -11,9 +11,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type FakeStartDependenciesChecker struct{}
+type FakeStartDependenciesChecker struct {
+	called bool
+}
 
 func (c *FakeStartDependenciesChecker) Check() (err error) {
+	c.called = true
 	return
 }
 

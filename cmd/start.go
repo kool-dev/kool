@@ -13,9 +13,9 @@ import (
 type KoolStart struct {
 	DefaultKoolService
 
-	dependenciesChecker   checker.Checker
-	networkHandler        network.Handler
-	startContainersRunner builder.Runner
+	check checker.Checker
+	net   network.Handler
+	start builder.Runner
 }
 
 // NewStartCommand initializes new kool start command
@@ -63,11 +63,11 @@ func (s *KoolStart) Execute(args []string) (err error) {
 }
 
 func (s *KoolStart) checkDependencies() (err error) {
-	if err = s.dependenciesChecker.Check(); err != nil {
+	if err = s.check.Check(); err != nil {
 		return
 	}
 
-	if err = s.networkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.net.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
@@ -75,6 +75,6 @@ func (s *KoolStart) checkDependencies() (err error) {
 }
 
 func (s *KoolStart) startContainers(services []string) (err error) {
-	err = s.startContainersRunner.Interactive(services...)
+	err = s.start.Interactive(services...)
 	return
 }

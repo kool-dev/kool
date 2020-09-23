@@ -29,6 +29,12 @@ type Runner interface {
 	LookPath() error
 }
 
+// Command interface comprehends bot Runner and Builder interfaces
+type Command interface {
+	Builder
+	Runner
+}
+
 // NewCommand Create a new command.
 func NewCommand(command string, args ...string) *DefaultCommand {
 	return &DefaultCommand{command, args}
