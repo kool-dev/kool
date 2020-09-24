@@ -38,11 +38,11 @@ func TestNewKoolLogs(t *testing.T) {
 	}
 
 	if _, ok := k.logs.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected checker.Checker on default KoolLogs instance")
+		t.Errorf("unexpected builder.Command on default KoolLogs instance")
 	}
 
 	if k.logs.(*builder.DefaultCommand).String() != "docker-compose logs" {
-		t.Errorf("unexpected builder.DefaultCommand.String() on default KoolLogs instance doStop")
+		t.Errorf("unexpected builder.DefaultCommand.String() on default KoolLogs instance logs")
 	}
 }
 
