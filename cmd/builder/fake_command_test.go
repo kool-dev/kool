@@ -42,24 +42,6 @@ func TestFakeCommand(t *testing.T) {
 func TestFakeFailedCommand(t *testing.T) {
 	f := &FakeFailedCommand{MockError: errors.New("error")}
 
-	f.AppendArgs("arg1", "arg2")
-
-	if !f.CalledAppendArgs || f.ArgsAppend == nil || f.ArgsAppend[0] != "arg1" || f.ArgsAppend[1] != "arg2" {
-		t.Errorf("failed to use mocked AppendArgs function on FakeFailedCommand")
-	}
-
-	_ = f.String()
-
-	if !f.CalledString {
-		t.Errorf("failed to use mocked String function on FakeFailedCommand")
-	}
-
-	_ = f.LookPath()
-
-	if !f.CalledLookPath {
-		t.Errorf("failed to use mocked LookPath function on FakeFailedCommand")
-	}
-
 	if err := f.Interactive("arg1", "arg2"); err == nil {
 		t.Errorf("failed to mock error calling Interactive function on FakeFailedCommand")
 	}

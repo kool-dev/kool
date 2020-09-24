@@ -52,16 +52,14 @@ func (f *FakeCommand) Exec(args ...string) (outStr string, err error) {
 
 // Interactive will send the command to an interactive execution.
 func (f *FakeFailedCommand) Interactive(args ...string) (err error) {
-	f.CalledInteractive = true
-	f.ArgsInteractive = args
+	_ = f.FakeCommand.Interactive(args...)
 	err = f.MockError
 	return
 }
 
 // Exec will send the command to shell execution.
 func (f *FakeFailedCommand) Exec(args ...string) (outStr string, err error) {
-	f.CalledExec = true
-	f.ArgsExec = args
+	_, _ = f.FakeCommand.Exec(args...)
 	err = f.MockError
 	return
 }
