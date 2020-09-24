@@ -1,6 +1,9 @@
 package builder
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestFakeCommand(t *testing.T) {
 	f := &FakeCommand{}
@@ -33,5 +36,25 @@ func TestFakeCommand(t *testing.T) {
 
 	if !f.CalledExec || f.ArgsExec == nil || f.ArgsExec[0] != "arg1" || f.ArgsExec[1] != "arg2" {
 		t.Errorf("failed to use mocked Exec function on FakeCommand")
+	}
+}
+
+func TestFakeFailedCommand(t *testing.T) {
+	f := &FakeFailedCommand{MockError: errors.New("error")}
+
+	if err := f.Interactive("arg1", "arg2"); err == nil {
+		t.Errorf("failed to mock error calling Interactive function on FakeFailedCommand")
+	}
+
+	if !f.CalledInteractive || f.ArgsInteractive == nil || f.ArgsInteractive[0] != "arg1" || f.ArgsInteractive[1] != "arg2" {
+		t.Errorf("failed to use mocked Interactive function on FakeFailedCommand")
+	}
+
+	if _, err := f.Exec("arg1", "arg2"); err == nil {
+		t.Errorf("failed to mock error calling Exec function on FakeFailedCommand")
+	}
+
+	if !f.CalledExec || f.ArgsExec == nil || f.ArgsExec[0] != "arg1" || f.ArgsExec[1] != "arg2" {
+		t.Errorf("failed to use mocked Exec function on FakeFailedCommand")
 	}
 }
