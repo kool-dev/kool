@@ -94,7 +94,7 @@ func TestNewRunCommandMultipleScriptsWarning(t *testing.T) {
 
 	expectedWarning := "Attention: the script was found in more than one kool.yml file"
 
-	if gotWarning := fmt.Sprint(f.out.(*shell.FakeOutputWriter).Out...); gotWarning != expectedWarning {
+	if gotWarning := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...); gotWarning != expectedWarning {
 		t.Errorf("expecting warning '%s', got '%s'", expectedWarning, gotWarning)
 	}
 }

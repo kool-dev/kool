@@ -45,8 +45,19 @@ func TestKoolServiceProxies(t *testing.T) {
 		t.Error("Warning was not proxied by DefaultKoolService")
 	}
 
-	if len(k.out.(*shell.FakeOutputWriter).Out) != len(out) {
-		t.Errorf("Warning did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).Out)
+	if len(k.out.(*shell.FakeOutputWriter).WarningOutput) != len(out) {
+		t.Errorf("Warning did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).WarningOutput)
+	}
+
+	out = []interface{}{"success"}
+	k.Success(out...)
+
+	if !k.out.(*shell.FakeOutputWriter).CalledSuccess {
+		t.Error("Success was not proxied by DefaultKoolService")
+	}
+
+	if len(k.out.(*shell.FakeOutputWriter).SuccessOutput) != len(out) {
+		t.Errorf("Success did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).SuccessOutput)
 	}
 
 	k.SetWriter(nil)

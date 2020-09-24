@@ -37,4 +37,10 @@ func TestFakeKoolService(t *testing.T) {
 	if !f.CalledWarning {
 		t.Errorf("failed to assert calling method Warning on FakeKoolService")
 	}
+
+	f.Success()
+
+	if !f.CalledSuccess {
+		t.Errorf("failed to assert calling method Success on FakeKoolService")
+	}
 }

@@ -18,6 +18,7 @@ type OutputWriter interface {
 	SetWriter(io.Writer)
 	Error(error)
 	Warning(...interface{})
+	Success(...interface{})
 }
 
 // NewOutputWriter creates a new output writer
@@ -39,4 +40,10 @@ func (w *DefaultOutputWriter) Error(err error) {
 func (w *DefaultOutputWriter) Warning(out ...interface{}) {
 	warningMessage := color.New(color.Yellow).Sprint(out...)
 	fmt.Fprintln(w.w, warningMessage)
+}
+
+// Success success message
+func (w *DefaultOutputWriter) Success(out ...interface{}) {
+	successMessage := color.New(color.Green).Sprint(out...)
+	fmt.Fprintln(w.w, successMessage)
 }
