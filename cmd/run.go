@@ -1,75 +1,108 @@
 package cmd
 
 import (
-	"fmt"
+	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
-	"kool-dev/kool/cmd/shell"
 	"os"
 	"path"
 
 	"github.com/spf13/cobra"
 )
 
-var runCmd = &cobra.Command{
-	Use:   "run [SCRIPT]",
-	Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
-	Args:  cobra.MinimumNArgs(1),
-	Run:   runRun,
+// KoolRun holds handlers and functions to implement the run command logic
+type KoolRun struct {
+	DefaultKoolService
+	parser   parser.Parser
+	commands []builder.Command
 }
 
+// ErrExtraArguments Extra arguments error
+var ErrExtraArguments = errors.New("error: you cannot pass in extra arguments to multiple commands scripts")
+
+// ErrKoolScriptNotFound means that the given script was not found
+var ErrKoolScriptNotFound = errors.New("script was not found in any kool.yml file")
+
 func init() {
+	var (
+		run    = NewKoolRun()
+		runCmd = NewRunCommand(run)
+	)
+
 	rootCmd.AddCommand(runCmd)
 
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
 }
 
-func runRun(cmd *cobra.Command, originalArgs []string) {
+// NewKoolRun creates a new handler for run logic with default dependencies
+func NewKoolRun() *KoolRun {
+	return &KoolRun{
+		*newDefaultKoolService(),
+		parser.NewParser(),
+		[]builder.Command{},
+	}
+}
+
+// Execute runs the run logic with incoming arguments.
+func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	var (
-		script   string
-		args     []string
-		commands []*builder.DefaultCommand
-		err      error
-		kool     parser.Parser
+		script string
+		args   []string
 	)
 
-	kool = parser.NewParser()
-
 	// look for kool.yml on current working directory
-	_ = kool.AddLookupPath(os.Getenv("PWD"))
+	_ = r.parser.AddLookupPath(os.Getenv("PWD"))
 	// look for kool.yml on kool folder within user home directory
-	_ = kool.AddLookupPath(path.Join(os.Getenv("HOME"), "kool"))
+	_ = r.parser.AddLookupPath(path.Join(os.Getenv("HOME"), "kool"))
 
 	script = originalArgs[0]
 	args = originalArgs[1:]
 
-	if commands, err = kool.Parse(script); err != nil {
+	if r.commands, err = r.parser.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
 			// we should just warn the user about multiple finds for the script
-			shell.Warning("Attention: the script was found in more than one kool.yml file")
+			r.Warning("Attention: the script was found in more than one kool.yml file")
 		} else {
-			shell.Error("failed parsing script")
-			fmt.Println("error:", err)
-			os.Exit(1)
+			return
 		}
 	}
 
-	if len(args) > 0 && len(commands) > 1 {
-		shell.Error("error: you cannot pass in extra arguments to multiple commands scripts")
-		os.Exit(2)
+	if len(r.commands) == 0 {
+		err = ErrKoolScriptNotFound
+		return
 	}
 
-	for _, command := range commands {
+	if len(args) > 0 && len(r.commands) > 1 {
+		err = ErrExtraArguments
+		return
+	}
+
+	for _, command := range r.commands {
 		if len(args) > 0 {
 			command.AppendArgs(args...)
 		}
 
-		err = command.Interactive()
-
-		if err != nil {
-			shell.Error(err)
-			os.Exit(1)
+		if err = command.Interactive(); err != nil {
+			return
 		}
+	}
+	return
+}
+
+// NewRunCommand initializes new kool stop command
+func NewRunCommand(run *KoolRun) *cobra.Command {
+	return &cobra.Command{
+		Use:   "run [SCRIPT]",
+		Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			run.SetWriter(cmd.OutOrStdout())
+
+			if err := run.Execute(args); err != nil {
+				run.Error(err)
+				run.Exit(1)
+			}
+		},
 	}
 }
