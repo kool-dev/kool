@@ -1,50 +1,69 @@
 package cmd
 
 import (
-	"kool-dev/kool/cmd/shell"
-	"os"
+	"fmt"
+	"kool-dev/kool/cmd/updater"
 
 	"github.com/blang/semver"
-	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"github.com/spf13/cobra"
 )
 
+// KoolSelfUpdate holds handlers and functions to implement the self-update command logic
+type KoolSelfUpdate struct {
+	DefaultKoolService
+	updater updater.Updater
+}
+
 func init() {
+	var (
+		selfUpdate    = NewKoolSelfUpdate()
+		selfUpdateCmd = NewSelfUpdateCommand(selfUpdate)
+	)
+
 	rootCmd.AddCommand(selfUpdateCmd)
 }
 
-var selfUpdateCmd = &cobra.Command{
-	Use:   "self-update",
-	Short: "Update kool to latest version",
-	Long:  "Checks for the latest release of Kool on Github Releases, downloads and replaces the local binary if a newer version is available.",
-	Run:   runSelfUpdate,
-	Args:  cobra.MaximumNArgs(0),
+// NewKoolSelfUpdate creates a new handler for self-update logic with default dependencies
+func NewKoolSelfUpdate() *KoolSelfUpdate {
+	return &KoolSelfUpdate{
+		*newDefaultKoolService(),
+		&updater.DefaultUpdater{RootCommand: rootCmd},
+	}
 }
 
-func runSelfUpdate(cmf *cobra.Command, args []string) {
-	var (
-		currentVersion semver.Version
-		updater        *selfupdate.Updater
-		err            error
-		latest         *selfupdate.Release
-	)
+// Execute runs the self-update logic with incoming arguments.
+func (s *KoolSelfUpdate) Execute(args []string) (err error) {
+	var latestVersion semver.Version
 
-	currentVersion = semver.MustParse(version)
-	if updater, err = selfupdate.NewUpdater(selfupdate.Config{
-		Validator: &selfupdate.SHA2Validator{},
-	}); err != nil {
-		shell.Error("Failed to create updater controller", err)
-		os.Exit(1)
+	currentVersion := s.updater.GetCurrentVersion()
+
+	if latestVersion, err = s.updater.Update(currentVersion); err != nil {
+		return fmt.Errorf("kool self-update failed: %v", err)
 	}
 
-	if latest, err = updater.UpdateSelf(currentVersion, "kool-dev/kool"); err != nil {
-		shell.Error("Kool self-update failed:", err)
-		os.Exit(1)
-	}
-
-	if latest.Version.Equals(currentVersion) {
-		shell.Warning("You already have the latest version.", version)
+	if latestVersion.Equals(currentVersion) {
+		s.Warning("You already have the latest version ", currentVersion.String())
 	} else {
-		shell.Success("Successfully updated to version", latest.Version)
+		s.Success("Successfully updated to version ", latestVersion.String())
+	}
+
+	return
+}
+
+// NewSelfUpdateCommand initializes new kool self-update command
+func NewSelfUpdateCommand(selfUpdate *KoolSelfUpdate) *cobra.Command {
+	return &cobra.Command{
+		Use:   "self-update",
+		Short: "Update kool to latest version",
+		Long:  "Checks for the latest release of Kool on Github Releases, downloads and replaces the local binary if a newer version is available.",
+		Args:  cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			selfUpdate.SetWriter(cmd.OutOrStdout())
+
+			if err := selfUpdate.Execute(args); err != nil {
+				selfUpdate.Error(err)
+				selfUpdate.Exit(1)
+			}
+		},
 	}
 }

@@ -48,3 +48,8 @@ func (k *DefaultKoolService) Error(err error) {
 func (k *DefaultKoolService) Warning(out ...interface{}) {
 	k.out.Warning(out...)
 }
+
+// Success proxies the call to the given OutputWriter
+func (k *DefaultKoolService) Success(out ...interface{}) {
+	k.out.Success(out...)
+}

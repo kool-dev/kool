@@ -11,6 +11,7 @@ type FakeKoolService struct {
 	CalledSetWriter bool
 	CalledError     bool
 	CalledWarning   bool
+	CalledSuccess   bool
 }
 
 // Execute mocks the function for testing
@@ -39,4 +40,9 @@ func (f *FakeKoolService) Error(err error) {
 // Warning mocks the function for testing
 func (f *FakeKoolService) Warning(out ...interface{}) {
 	f.CalledWarning = true
+}
+
+// Success mocks the function for testing
+func (f *FakeKoolService) Success(out ...interface{}) {
+	f.CalledSuccess = true
 }
