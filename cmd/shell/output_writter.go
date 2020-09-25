@@ -16,6 +16,7 @@ type DefaultOutputWriter struct {
 // OutputWriter holds logic to output content
 type OutputWriter interface {
 	SetWriter(io.Writer)
+	Println(...interface{})
 	Error(error)
 	Warning(...interface{})
 	Success(...interface{})
@@ -29,6 +30,11 @@ func NewOutputWriter() OutputWriter {
 // SetWriter set default writer
 func (w *DefaultOutputWriter) SetWriter(wr io.Writer) {
 	w.w = wr
+}
+
+// Println execs Println on writer
+func (w *DefaultOutputWriter) Println(out ...interface{}) {
+	fmt.Fprintln(w.w, out...)
 }
 
 // Error error output

@@ -9,6 +9,7 @@ type FakeKoolService struct {
 	CalledExecute   bool
 	CalledExit      bool
 	CalledSetWriter bool
+	CalledPrintln   bool
 	CalledError     bool
 	CalledWarning   bool
 	CalledSuccess   bool
@@ -30,6 +31,11 @@ func (f *FakeKoolService) Exit(code int) {
 // SetWriter mocks the function for testing
 func (f *FakeKoolService) SetWriter(w io.Writer) {
 	f.CalledSetWriter = true
+}
+
+// Println mocks the function for testing
+func (f *FakeKoolService) Println(out ...interface{}) {
+	f.CalledPrintln = true
 }
 
 // Error mocks the function for testing

@@ -1,8 +1,13 @@
-package cmd
+package presets
 
 // auto generated file
 
 var presets = make(map[string]map[string]string) //nolint
+
+// GetAll get all presets
+func GetAll() map[string]map[string]string {
+	return presets
+}
 func init() {
 	presets["adonis"] = map[string]string{
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
