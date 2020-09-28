@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
 	"os"
 	"strings"
@@ -9,90 +9,104 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DockerFlags holds the flags for the docker command
-type DockerFlags struct {
+// KoolDockerFlags holds the flags for the docker command
+type KoolDockerFlags struct {
 	DisableTty   bool
 	EnvVariables []string
 	Volumes      []string
 	Publish      []string
 }
 
-var dockerCmd = &cobra.Command{
-	Use:   "docker [options] [image] [command]",
-	Args:  cobra.MinimumNArgs(1),
-	Run:   runDocker,
-	Short: "Creates a new container and runs the command in it.",
-	Long: `This command acts as a helper for docker run.
-You can start with options that go before the image name
-for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
-the image name and the command you want to execute on that image.`,
-}
+// KoolDocker holds handlers and functions to implement the docker command logic
+type KoolDocker struct {
+	DefaultKoolService
+	Flags *KoolDockerFlags
 
-var dockerFlags = &DockerFlags{false, []string{}, []string{}, []string{}}
+	dockerRun builder.Command
+}
 
 func init() {
-	rootCmd.AddCommand(dockerCmd)
-
-	dockerCmd.Flags().BoolVarP(&dockerFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
-	dockerCmd.Flags().StringArrayVarP(&dockerFlags.EnvVariables, "env", "e", []string{}, "Environment variables")
-	dockerCmd.Flags().StringArrayVarP(&dockerFlags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
-	dockerCmd.Flags().StringArrayVarP(&dockerFlags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")
-
-	//After a non-flag arg, stop parsing flags
-	dockerCmd.Flags().SetInterspersed(false)
-}
-
-func runDocker(docker *cobra.Command, args []string) {
-	image := args[0]
-	command := args[1:]
-
-	execDockerRun(image, command)
-}
-
-func execDockerRun(image string, command []string) {
 	var (
-		args    []string
-		err     error
-		workDir string
+		docker    = NewKoolDocker()
+		dockerCmd = NewDockerCommand(docker)
 	)
 
-	workDir, _ = os.Getwd()
-	args = []string{"run", "--init", "--rm", "-w", "/app", "-i"}
-	if !dockerFlags.DisableTty && !environment.IsTrue("KOOL_TTY_DISABLE") {
-		args = append(args, "-t")
+	rootCmd.AddCommand(dockerCmd)
+}
+
+// NewKoolDocker creates a new handler for docker logic
+func NewKoolDocker() *KoolDocker {
+	return &KoolDocker{
+		*newDefaultKoolService(),
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
+	}
+}
+
+// Execute runs the docker logic with incoming arguments.
+func (d *KoolDocker) Execute(args []string) (err error) {
+	image := args[0]
+	workDir, _ := os.Getwd()
+
+	if !d.Flags.DisableTty && !environment.IsTrue("KOOL_TTY_DISABLE") {
+		d.dockerRun.AppendArgs("-t")
 	}
 
 	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "kooldev") || strings.HasPrefix(image, "fireworkweb")) {
-		args = append(args, "--env", "ASUSER="+asuser)
+		d.dockerRun.AppendArgs("--env", "ASUSER="+asuser)
 	}
 
-	if len(dockerFlags.EnvVariables) > 0 {
-		for _, envVar := range dockerFlags.EnvVariables {
-			args = append(args, "--env", envVar)
+	if len(d.Flags.EnvVariables) > 0 {
+		for _, envVar := range d.Flags.EnvVariables {
+			d.dockerRun.AppendArgs("--env", envVar)
 		}
 	}
 
-	args = append(args, "--volume", workDir+":/app:delegated")
+	d.dockerRun.AppendArgs("--volume", workDir+":/app:delegated")
 
-	if len(dockerFlags.Volumes) > 0 {
-		for _, volume := range dockerFlags.Volumes {
-			args = append(args, "--volume", volume)
+	if len(d.Flags.Volumes) > 0 {
+		for _, volume := range d.Flags.Volumes {
+			d.dockerRun.AppendArgs("--volume", volume)
 		}
 	}
 
-	if len(dockerFlags.Publish) > 0 {
-		for _, publish := range dockerFlags.Publish {
-			args = append(args, "--publish", publish)
+	if len(d.Flags.Publish) > 0 {
+		for _, publish := range d.Flags.Publish {
+			d.dockerRun.AppendArgs("--publish", publish)
 		}
 	}
 
-	args = append(args, image)
-	args = append(args, command...)
+	err = d.dockerRun.Interactive(args...)
+	return
+}
 
-	err = shell.Interactive("docker", args...)
+// NewDockerCommand initializes new kool docker command
+func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
+	cmd = &cobra.Command{
+		Use:   "docker [options] [image] [command]",
+		Args:  cobra.MinimumNArgs(1),
+		Short: "Creates a new container and runs the command in it.",
+		Long: `This command acts as a helper for docker run.
+	You can start with options that go before the image name
+	for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
+	the image name and the command you want to execute on that image.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			docker.SetWriter(cmd.OutOrStdout())
 
-	if err != nil {
-		shell.ExecError("", err)
-		os.Exit(1)
+			if err := docker.Execute(args); err != nil {
+				docker.Error(err)
+				docker.Exit(1)
+			}
+		},
 	}
+
+	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")
+
+	//After a non-flag arg, stop parsing flags
+	cmd.Flags().SetInterspersed(false)
+
+	return
 }
