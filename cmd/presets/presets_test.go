@@ -1,4 +1,4 @@
-package cmd
+package presets
 
 import (
 	"gopkg.in/yaml.v2"

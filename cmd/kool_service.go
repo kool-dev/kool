@@ -39,6 +39,11 @@ func (k *DefaultKoolService) SetWriter(w io.Writer) {
 	k.out.SetWriter(w)
 }
 
+// Println proxies the call to the given OutputWriter
+func (k *DefaultKoolService) Println(out ...interface{}) {
+	k.out.Println(out...)
+}
+
 // Error proxies the call to the given OutputWriter
 func (k *DefaultKoolService) Error(err error) {
 	k.out.Error(err)

@@ -6,15 +6,22 @@ import "io"
 // implementing the OutputWriter interface here defined.
 type FakeOutputWriter struct {
 	Err           error
+	Out           []interface{}
 	WarningOutput []interface{}
 	SuccessOutput []interface{}
 
-	CalledSetWriter, CalledError, CalledWarning, CalledSuccess bool
+	CalledSetWriter, CalledPrintln, CalledError, CalledWarning, CalledSuccess bool
 }
 
 // SetWriter is a mocked testing function
 func (f *FakeOutputWriter) SetWriter(w io.Writer) {
 	f.CalledSetWriter = true
+}
+
+// Println is a mocked testing function
+func (f *FakeOutputWriter) Println(out ...interface{}) {
+	f.CalledPrintln = true
+	f.Out = out
 }
 
 // Error is a mocked testing function
