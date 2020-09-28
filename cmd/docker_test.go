@@ -83,7 +83,7 @@ func TestNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 3 || argsAppend[0] != "-t" || argsAppend[1] != "--volume" || argsAppend[2] != workDir+":/app:delegated" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with default flags")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with default flags")
 	}
 
 	if !f.dockerRun.(*builder.FakeCommand).CalledInteractive {
@@ -121,7 +121,7 @@ func TestDisableTTYFlagNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with disable-tty flag")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with disable-tty flag")
 	}
 }
 
@@ -141,7 +141,7 @@ func TestDisableTTYEnvNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with 'KOOL_TTY_DISABLE' variable")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with 'KOOL_TTY_DISABLE' variable")
 	}
 }
 
@@ -161,7 +161,7 @@ func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 4 || argsAppend[0] != "--env" || argsAppend[1] != "ASUSER=kooldev_user_test" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with 'KOOL_ASUSER' variable")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with 'KOOL_ASUSER' variable")
 	}
 }
 
@@ -181,7 +181,7 @@ func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 4 || argsAppend[0] != "--env" || argsAppend[1] != "ASUSER=kooldev_user_test" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with 'KOOL_ASUSER' variable")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with 'KOOL_ASUSER' variable")
 	}
 }
 
@@ -198,7 +198,7 @@ func TestEnvFlagNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 4 || argsAppend[0] != "--env" || argsAppend[1] != "VAR_TEST=1" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with EnvVariables flag")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with EnvVariables flag")
 	}
 }
 
@@ -215,7 +215,7 @@ func TestVolumesFlagNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 4 || argsAppend[2] != "--volume" || argsAppend[3] != "volume_test" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with Volumes flag")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with Volumes flag")
 	}
 }
 
@@ -232,7 +232,7 @@ func TestPublishFlagNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 4 || argsAppend[2] != "--publish" || argsAppend[3] != "publish_test" {
-		t.Errorf("bad arguments to KoolDocker.logs Command with Volumes flag")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with Volumes flag")
 	}
 }
 
