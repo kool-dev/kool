@@ -10,7 +10,13 @@ type FakeOutputWriter struct {
 	WarningOutput []interface{}
 	SuccessOutput []interface{}
 
-	CalledSetWriter, CalledPrintln, CalledError, CalledWarning, CalledSuccess bool
+	CalledGetWriter, CalledSetWriter, CalledPrintln, CalledError, CalledWarning, CalledSuccess bool
+}
+
+// GetWriter is a mocked testing function
+func (f *FakeOutputWriter) GetWriter() (w io.Writer) {
+	f.CalledGetWriter = true
+	return
 }
 
 // SetWriter is a mocked testing function
