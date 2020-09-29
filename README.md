@@ -10,7 +10,7 @@
 ![Golang CI Lint](https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield)
 
-**kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environemnts - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging Kubernetes cloud deployment for staging and production deployments.
+**kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environments - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging Kubernetes cloud deployment for staging and production deployments.
 
 Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provide all flexibility the DevOps team needs to tailor up everything.
 
