@@ -1,70 +1,92 @@
 package cmd
 
-import (
-	"fmt"
-	"os"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/cobra"
-)
+// KoolCompletion holds handlers and functions to implement the docker command logic
+type KoolCompletion struct {
+	DefaultKoolService
+	rootCmd *cobra.Command
+}
 
 func init() {
+	var (
+		completion    = NewKoolCompletion()
+		completionCmd = NewCompletionCommand(completion)
+	)
+
 	rootCmd.AddCommand(completionCmd)
 }
 
-var completionCmd = &cobra.Command{
-	Use:   "completion [bash|zsh|fish|powershell]",
-	Short: "Generate completion script",
-	Long: `To load completions:
+// NewKoolCompletion creates a new handler for completion logic
+func NewKoolCompletion() *KoolCompletion {
+	return &KoolCompletion{
+		*newDefaultKoolService(),
+		rootCmd,
+	}
+}
 
-Bash:
+// Execute runs the completion logic with incoming arguments.
+func (c *KoolCompletion) Execute(args []string) (err error) {
+	switch args[0] {
+	case "bash":
+		err = c.rootCmd.GenBashCompletion(c.GetWriter())
+	case "zsh":
+		err = c.rootCmd.GenZshCompletion(c.GetWriter())
+	case "fish":
+		err = c.rootCmd.GenFishCompletion(c.GetWriter(), true)
+	case "powershell":
+		err = c.rootCmd.GenPowerShellCompletion(c.GetWriter())
+	}
+	return
+}
 
-$ source <(kool completion bash)
+// NewCompletionCommand initializes new kool completion command
+func NewCompletionCommand(completion *KoolCompletion) *cobra.Command {
+	return &cobra.Command{
+		Use:   "completion [bash|zsh|fish|powershell]",
+		Short: "Generate completion script",
+		Long: `To load completions:
 
-# To load completions for each session, execute once:
-Linux:
-  $ kool completion bash > /etc/bash_completion.d/kool
-MacOS:
-  $ kool completion bash > /usr/local/etc/bash_completion.d/kool
+	Bash:
 
-Zsh:
+	$ source <(kool completion bash)
 
-# If shell completion is not already enabled in your environment you will need
-# to enable it.  You can execute the following once:
+	# To load completions for each session, execute once:
+	Linux:
+	  $ kool completion bash > /etc/bash_completion.d/kool
+	MacOS:
+	  $ kool completion bash > /usr/local/etc/bash_completion.d/kool
 
-$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+	Zsh:
 
-# To load completions for each session, execute once:
-$ kool completion zsh > "${fpath[1]}/_kool"
+	# If shell completion is not already enabled in your environment you will need
+	# to enable it.  You can execute the following once:
 
-# You will need to start a new shell for this setup to take effect.
+	$ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
-Fish:
+	# To load completions for each session, execute once:
+	$ kool completion zsh > "${fpath[1]}/_kool"
 
-$ kool completion fish | source
+	# You will need to start a new shell for this setup to take effect.
 
-# To load completions for each session, execute once:
-$ kool completion fish > ~/.config/fish/completions/kool.fish
-`,
-	DisableFlagsInUseLine: true,
-	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
-	Args:                  cobra.ExactValidArgs(1),
-	Hidden:                true,
-	Run: func(cmd *cobra.Command, args []string) {
-		var err error
-		switch args[0] {
-		case "bash":
-			err = cmd.Root().GenBashCompletion(os.Stdout)
-		case "zsh":
-			err = cmd.Root().GenZshCompletion(os.Stdout)
-		case "fish":
-			err = cmd.Root().GenFishCompletion(os.Stdout, true)
-		case "powershell":
-			err = cmd.Root().GenPowerShellCompletion(os.Stdout)
-		}
+	Fish:
 
-		if err != nil {
-			fmt.Println("Could not write completion code; ERROR:", err)
-			os.Exit(1)
-		}
-	},
+	$ kool completion fish | source
+
+	# To load completions for each session, execute once:
+	$ kool completion fish > ~/.config/fish/completions/kool.fish
+	`,
+		DisableFlagsInUseLine: true,
+		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+		Args:                  cobra.ExactValidArgs(1),
+		Hidden:                true,
+		Run: func(cmd *cobra.Command, args []string) {
+			completion.SetWriter(cmd.OutOrStdout())
+
+			if err := completion.Execute(args); err != nil {
+				completion.Error(err)
+				completion.Exit(1)
+			}
+		},
+	}
 }

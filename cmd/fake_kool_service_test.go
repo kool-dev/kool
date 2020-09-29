@@ -26,6 +26,12 @@ func TestFakeKoolService(t *testing.T) {
 		t.Errorf("failed to assert calling method SetWriter on FakeKoolService")
 	}
 
+	f.GetWriter()
+
+	if !f.CalledGetWriter {
+		t.Errorf("failed to assert calling method GetWriter on FakeKoolService")
+	}
+
 	f.Println()
 
 	if !f.CalledPrintln {

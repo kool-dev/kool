@@ -65,4 +65,10 @@ func TestKoolServiceProxies(t *testing.T) {
 	if !k.out.(*shell.FakeOutputWriter).CalledSetWriter {
 		t.Error("SetWriter was not proxied by DefaultKoolService")
 	}
+
+	k.GetWriter()
+
+	if !k.out.(*shell.FakeOutputWriter).CalledGetWriter {
+		t.Error("GetWriter was not proxied by DefaultKoolService")
+	}
 }

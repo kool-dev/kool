@@ -34,6 +34,12 @@ func (k *DefaultKoolService) Exit(code int) {
 	k.exiter.Exit(code)
 }
 
+// GetWriter proxies the call to the given OutputWriter
+func (k *DefaultKoolService) GetWriter() (w io.Writer) {
+	w = k.out.GetWriter()
+	return
+}
+
 // SetWriter proxies the call to the given OutputWriter
 func (k *DefaultKoolService) SetWriter(w io.Writer) {
 	k.out.SetWriter(w)
