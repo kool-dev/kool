@@ -199,3 +199,25 @@ func TestNewRunCommandScriptNotFound(t *testing.T) {
 		t.Error("got an not found script error, but command did not exit")
 	}
 }
+
+func TestNewRunCommandWithArguments(t *testing.T) {
+	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}}
+	f := newFakeKoolRun(fakeParsedCommands, nil)
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script", "arg1", "arg2"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.commands[0].(*builder.FakeCommand).CalledAppendArgs {
+		t.Error("did not call AppendArgs for parsed command")
+	}
+
+	fakeCommandArgs := f.commands[0].(*builder.FakeCommand).ArgsAppend
+
+	if len(fakeCommandArgs) != 2 || fakeCommandArgs[0] != "arg1" || fakeCommandArgs[1] != "arg2" {
+		t.Error("did not call AppendArgs properly for parsed command")
+	}
+}
