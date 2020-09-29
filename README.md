@@ -1,47 +1,62 @@
 # kool
 
+[![Kool.dev](https://kool.dev/img/logo.png)](https://kool.dev)
+
+---
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/kool-dev/kool)](https://goreportcard.com/report/github.com/kool-dev/kool)
 [![codecov](https://codecov.io/gh/kool-dev/kool/branch/master/graph/badge.svg)](https://codecov.io/gh/kool-dev/kool)
 ![Docker Hub](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
 ![Golang CI Lint](https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield)
 
-### Development workspaces made easy
+**kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environemnts - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging Kubernetes cloud deployment for staging and production deployments.
 
-Dev environment made easy, a standardized way for running applications no matter the stack on your local machine and deploying it to a development environment.
+Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provide all flexibility the DevOps team needs to tailor up everything.
 
-Run any stack / tool with any version, powered by Docker and Docker Compose in a simple way avoiding you to install lots of stuff on your machine.
+### Why adopt kool for your development environment?
 
-Have the same feeling working on multiple projects with different stacks.
-
-## Documentation
-
-Full documentation at **https://kool.dev/docs** or at [docs/](docs/).
-
-## Demo
-
-<a href="https://www.youtube.com/watch?v=c4LonyQkFEI" target="_blank" title="Click to see full demo">
-    <img src="https://user-images.githubusercontent.com/347400/87970968-fad10c80-ca9a-11ea-9bef-a88400b01f2c.png" alt="kool - demo" style="max-width:100%;">
-</a>
+- Provides out-of-the-box simple and fast development environments.
+- No problems with running several projects with different versions and dependency needs.
+- Do not install other project specific dependency ever again in your machine.
+- Removes the learning curve of managing Docker and Docker Compose youteself (yet flexible if you know your way around them).
+- Standard tool/fashion for different stacks - helps micro-services team to communicate and navigate among projects.
 
 ## Installation
 
-Kool is powered by [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/), you need to have it installed on your machine.
+Kool is powered by [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/), you need to have them already installed on your machine.
 
-The run the follow script to install `kool` bin in your machine.
+#### For Linux or MacOS
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | bash
-```
-In case you need sudo:
+In order to obtain `kool` under **Linux** and **MacOS** run the following script:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
 ```
 
-## For Windows
+#### For Windows
 
-Download the installer [here](https://github.com/kool-dev/kool/releases)
+Download and run the latest installer from our releases artifacts [here](https://github.com/kool-dev/kool/releases).
+
+## Getting started
+
+It is easy to get started leveraging `kool`. Provided you have all requirements (Docker and Docker Compose), to get started in an existing Laravel project you only need to:
+
+```console
+$ cd my-laravel-projects/
+$ kool init laravel
+$ kool start
+$ kool run reset
+```
+
+There you go! Now you have a PHP 7.4, Mysql and Redis environment. You are encouraged to take a look and make changes you see fit at `docker-compose.yml` or `kool.yml` to better adjust your project specifications.
+
+The script above will write some configuration files in your project - which you should commit and version properly.
+
+## Documentation
+
+You can check the documentation at **https://kool.dev/docs** or at [docs/](docs/).
+
 
 ## Usage
 
@@ -49,8 +64,8 @@ To help learning how to use kool we've built presets with good starting point fo
 
 ### Presets
 
-- [Adonis](docs/2-resets/Adonis.md)
 - [Laravel](docs/2-Presets/Laravel.md)
+- [Adonis](docs/2-resets/Adonis.md)
 - [NextJS](docs/2-Presets/NestJS.md)
 - [NextJS](docs/2-Presets/NextJS.md)
 - [NuxtJS](docs/2-Presets/NuxtJS.md)
@@ -59,6 +74,12 @@ To help learning how to use kool we've built presets with good starting point fo
 ### Examples
 
 You can see projects using it here: https://github.com/kool-dev/examples
+
+## Demo
+
+<a href="https://www.youtube.com/watch?v=c4LonyQkFEI" target="_blank" title="Click to see full demo">
+    <img src="https://user-images.githubusercontent.com/347400/87970968-fad10c80-ca9a-11ea-9bef-a88400b01f2c.png" alt="kool - demo" style="max-width:100%;">
+</a>
 
 ## Contributing
 
