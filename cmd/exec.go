@@ -1,76 +1,91 @@
 package cmd
 
 import (
-	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/environment"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
-// ExecFlags holds the flags for the start command
-type ExecFlags struct {
+// KoolExecFlags holds the flags for the exec command
+type KoolExecFlags struct {
 	DisableTty   bool
 	EnvVariables []string
 	Detach       bool
 }
 
-var execCmd = &cobra.Command{
-	Use:   "exec [options] [service] [command]",
-	Short: "Execute a command within a running service container",
-	Args:  cobra.MinimumNArgs(2),
-	Run:   runExec,
-}
+// KoolExec holds handlers and functions to implement the exec command logic
+type KoolExec struct {
+	DefaultKoolService
+	Flags *KoolExecFlags
 
-var execFlags = &ExecFlags{false, []string{}, false}
+	composeExec builder.Command
+}
 
 func init() {
-	rootCmd.AddCommand(execCmd)
-
-	execCmd.Flags().BoolVarP(&execFlags.DisableTty, "disable-tty", "T", false, "Disables TTY")
-	execCmd.Flags().StringArrayVarP(&execFlags.EnvVariables, "env", "e", []string{}, "Environment variables")
-	execCmd.Flags().BoolVarP(&execFlags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
-
-	//After a non-flag arg, stop parsing flags
-	execCmd.Flags().SetInterspersed(false)
-}
-
-func runExec(cmd *cobra.Command, args []string) {
-	var service string = args[0]
-
-	dockerComposeExec(service, args[1:]...)
-}
-
-func dockerComposeExec(service string, command ...string) {
 	var (
-		err  error
-		args []string
+		exec    = NewKoolExec()
+		execCmd = NewExecCommand(exec)
 	)
 
-	args = []string{"exec"}
-	if disableTty := os.Getenv("KOOL_TTY_DISABLE"); execFlags.DisableTty || disableTty == "1" || disableTty == "true" {
-		args = append(args, "-T")
+	rootCmd.AddCommand(execCmd)
+}
+
+// NewKoolExec creates a new handler for exec logic
+func NewKoolExec() *KoolExec {
+	return &KoolExec{
+		*newDefaultKoolService(),
+		&KoolExecFlags{false, []string{}, false},
+		builder.NewCommand("docker-compose", "exec"),
 	}
-	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" {
-		args = append(args, "--user", asuser)
+}
+
+// Execute runs the exec logic with incoming arguments.
+func (e *KoolExec) Execute(args []string) (err error) {
+	if e.Flags.DisableTty || environment.IsTrue("KOOL_TTY_DISABLE") {
+		e.composeExec.AppendArgs("-T")
 	}
 
-	if len(execFlags.EnvVariables) > 0 {
-		for _, envVar := range execFlags.EnvVariables {
-			args = append(args, "--env", envVar)
+	if asuser := os.Getenv("KOOL_ASUSER"); asuser != "" {
+		e.composeExec.AppendArgs("--user", asuser)
+	}
+
+	if len(e.Flags.EnvVariables) > 0 {
+		for _, envVar := range e.Flags.EnvVariables {
+			e.composeExec.AppendArgs("--env", envVar)
 		}
 	}
 
-	if execFlags.Detach {
-		args = append(args, "--detach")
+	if e.Flags.Detach {
+		e.composeExec.AppendArgs("--detach")
 	}
 
-	args = append(args, service)
-	args = append(args, command...)
+	err = e.composeExec.Interactive(args...)
+	return
+}
 
-	err = shell.Interactive("docker-compose", args...)
+// NewExecCommand initializes new kool exec command
+func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
+	execCmd = &cobra.Command{
+		Use:   "exec [options] [service] [command]",
+		Short: "Execute a command within a running service container",
+		Args:  cobra.MinimumNArgs(2),
+		Run: func(cmd *cobra.Command, args []string) {
+			exec.SetWriter(cmd.OutOrStdout())
 
-	if err != nil {
-		shell.ExecError("", err)
-		os.Exit(1)
+			if err := exec.Execute(args); err != nil {
+				exec.Error(err)
+				exec.Exit(1)
+			}
+		},
 	}
+
+	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
+	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
+
+	//After a non-flag arg, stop parsing flags
+	execCmd.Flags().SetInterspersed(false)
+	return
 }
