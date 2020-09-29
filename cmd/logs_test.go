@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"testing"
@@ -11,6 +12,14 @@ func newFakeKoolLogs() *KoolLogs {
 		*newFakeKoolService(),
 		&KoolLogsFlags{25, false},
 		&builder.FakeCommand{},
+	}
+}
+
+func newFakeFailedKoolLogs() *KoolLogs {
+	return &KoolLogs{
+		*newFakeKoolService(),
+		&KoolLogsFlags{25, false},
+		&builder.FakeFailedCommand{MockError: errors.New("error logs")},
 	}
 }
 
@@ -138,5 +147,22 @@ func TestNewLogsServiceCommand(t *testing.T) {
 	args := f.logs.(*builder.FakeCommand).ArgsInteractive
 	if len(args) != 1 || args[0] != "app" {
 		t.Errorf("bad arguments to KoolLogs.logs Command when executing it")
+	}
+}
+
+func TestFailingNewLogsCommand(t *testing.T) {
+	f := newFakeFailedKoolLogs()
+	cmd := NewLogsCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing logs command; error: %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("expecting command to exit due to an error.")
+	}
+
+	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error logs" {
+		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
 	}
 }
