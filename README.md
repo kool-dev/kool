@@ -19,8 +19,8 @@ Get your local development environment up and running easy and quickly, put time
 - Provides out-of-the-box simple and fast development environments.
 - No problems with running several projects with different versions and dependency needs.
 - Do not install other project specific dependency ever again in your machine.
-- Removes the learning curve of managing Docker and Docker Compose youteself (yet flexible if you know your way around them).
-- Standard tool/fashion for different stacks - helps micro-services team to communicate and navigate among projects.
+- Removes the learning curve of managing Docker and Docker Compose yourself (yet does not remove one inch of flexibity if you know your way around them).
+- Standard tool for different stacks - helps micro-services teams to communicate and navigate amongst projects.
 
 ## Installation
 
@@ -43,33 +43,36 @@ Download and run the latest installer from our releases artifacts [here](https:/
 It is easy to get started leveraging `kool`. Provided you have all requirements (Docker and Docker Compose), to get started in an existing Laravel project you only need to:
 
 ```console
-$ cd my-laravel-projects/
+$ cd my-laravel-project/
 $ kool init laravel
+$ # make sure your `.env` points to the proper database and Redis hosts (`database` and `cache`)
 $ kool start
 $ kool run reset
 ```
 
-There you go! Now you have a PHP 7.4, Mysql and Redis environment. You are encouraged to take a look and make changes you see fit at `docker-compose.yml` or `kool.yml` to better adjust your project specifications.
 
-The script above will write some configuration files in your project - which you should commit and version properly.
+- There you go! Now you have a PHP 7.4, Mysql and Redis environment. You are encouraged to take a look and make changes you see fit at `docker-compose.yml` or `kool.yml` to better adjust your project specifications.
+
+- The steps above will create some configuration files in your project folder - all of which you should commit to your version control system.
 
 ## Documentation
 
 You can check the documentation at **https://kool.dev/docs** or at [docs/](docs/).
 
 
-## Usage
+## Frameworks Presets
 
-To help learning how to use kool we've built presets with good starting point for some popular stacks, feel free to open a PR in case you miss one.
+To help getting you started we've built presets as a starting point for some popular stacks and frameworks. In case you miss one let us know in an issue or feel free to open up a PR for it!
 
-### Presets
+Out current presets:
 
 - [Laravel](docs/2-Presets/Laravel.md)
+- [Symfony](docs/2-Presets/Symfony.md)
+- [Wordpress](docs/2-Presets/Wordpress.md)
 - [Adonis](docs/2-resets/Adonis.md)
 - [NextJS](docs/2-Presets/NestJS.md)
 - [NextJS](docs/2-Presets/NextJS.md)
 - [NuxtJS](docs/2-Presets/NuxtJS.md)
-- [NuxtJS](docs/2-Presets/Symfony.md)
 
 ### Examples
 
@@ -89,12 +92,14 @@ The flow is not written in stone, so you may go ahead and fork, code and PR with
 
 PS: our main pain point at this moment is the lack of testing. Might be a great starting point.
 
-### Lint
+### Lint, formatting and tests
 
 Before submitting a PR make sure to run `fmt` and linters.
 
 ```bash
+kool run fmt
 kool run lint
+kool run test
 ```
 
 ### Updating commands signature documentation
