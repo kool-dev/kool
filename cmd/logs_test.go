@@ -19,7 +19,7 @@ func newFakeFailedKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newFakeKoolService(),
 		&KoolLogsFlags{25, false},
-		&builder.FakeFailedCommand{MockError: errors.New("error logs")},
+		&builder.FakeCommand{MockError: errors.New("error logs")},
 	}
 }
 

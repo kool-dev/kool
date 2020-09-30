@@ -21,7 +21,7 @@ func newFailedFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
-		&builder.FakeFailedCommand{MockError: errors.New("error exec")},
+		&builder.FakeCommand{MockError: errors.New("error exec")},
 	}
 }
 

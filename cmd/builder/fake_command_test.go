@@ -40,21 +40,30 @@ func TestFakeCommand(t *testing.T) {
 }
 
 func TestFakeFailedCommand(t *testing.T) {
-	f := &FakeFailedCommand{MockError: errors.New("error")}
+	mockErr := errors.New("error")
+	f := &FakeCommand{MockError: mockErr, MockLookPathError: mockErr}
+
+	if err := f.LookPath(); err == nil {
+		t.Errorf("failed to mock error calling LookPath function on FakeCommand")
+	}
+
+	if !f.CalledLookPath {
+		t.Errorf("failed to use mocked LookPath function on FakeCommand")
+	}
 
 	if err := f.Interactive("arg1", "arg2"); err == nil {
-		t.Errorf("failed to mock error calling Interactive function on FakeFailedCommand")
+		t.Errorf("failed to mock error calling Interactive function on FakeCommand")
 	}
 
 	if !f.CalledInteractive || f.ArgsInteractive == nil || f.ArgsInteractive[0] != "arg1" || f.ArgsInteractive[1] != "arg2" {
-		t.Errorf("failed to use mocked Interactive function on FakeFailedCommand")
+		t.Errorf("failed to use mocked Interactive function on FakeCommand")
 	}
 
 	if _, err := f.Exec("arg1", "arg2"); err == nil {
-		t.Errorf("failed to mock error calling Exec function on FakeFailedCommand")
+		t.Errorf("failed to mock error calling Exec function on FakeCommand")
 	}
 
 	if !f.CalledExec || f.ArgsExec == nil || f.ArgsExec[0] != "arg1" || f.ArgsExec[1] != "arg2" {
-		t.Errorf("failed to use mocked Exec function on FakeFailedCommand")
+		t.Errorf("failed to use mocked Exec function on FakeCommand")
 	}
 }

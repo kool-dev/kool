@@ -1,150 +1,81 @@
 package cmd
 
 import (
-	"bytes"
 	"errors"
-	"io/ioutil"
+	"fmt"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
-
-	"github.com/gookit/color"
-	"github.com/spf13/cobra"
 )
 
-type FakeStatusDependenciesChecker struct{}
-
-func (c *FakeStatusDependenciesChecker) Check() (err error) {
-	return
+func newFakeKoolStatus() *KoolStatus {
+	return &KoolStatus{
+		*newFakeKoolService(),
+		&checker.FakeChecker{},
+		&network.FakeHandler{},
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
+		&shell.FakeTableWriter{},
+	}
 }
 
-type FakeStatusFailedDependenciesChecker struct{}
+func TestNewKoolStatus(t *testing.T) {
+	k := NewKoolStatus()
 
-func (c *FakeStatusFailedDependenciesChecker) Check() (err error) {
-	err = errors.New("")
-	return
-}
+	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
+		t.Errorf("unexpected shell.OutputWriter on default KoolStatus instance")
+	}
 
-type FakeStatusNetworkHandler struct{}
+	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
+		t.Errorf("unexpected shell.Exiter on default KoolStatus instance")
+	}
 
-func (c *FakeStatusNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
-	return
-}
+	if _, ok := k.check.(*checker.DefaultChecker); !ok {
+		t.Errorf("unexpected checker.Checker on default KoolStatus instance")
+	}
 
-type FakeStatusFailedNetworkHandler struct{}
+	if _, ok := k.net.(*network.DefaultHandler); !ok {
+		t.Errorf("unexpected network.Handler on default KoolStatus instance")
+	}
 
-func (c *FakeStatusFailedNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
-	err = errors.New("")
-	return
-}
+	if _, ok := k.getServicesRunner.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Runner on default KoolStatus instance")
+	}
 
-type FakeStatusRunner struct{}
+	if _, ok := k.getServiceIDRunner.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Runner on default KoolStatus instance")
+	}
 
-func (c *FakeStatusRunner) LookPath() (err error) {
-	return
-}
+	if _, ok := k.getServiceStatusPortRunner.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Runner on default KoolStatus instance")
+	}
 
-func (c *FakeStatusRunner) Interactive(args ...string) (err error) {
-	return
-}
-
-func (c *FakeStatusRunner) Exec(args ...string) (outStr string, err error) {
-	return
-}
-
-type FakeGetServicesRunner struct {
-	FakeStatusRunner
-}
-
-func (c *FakeGetServicesRunner) Exec(args ...string) (outStr string, err error) {
-	outStr = `
-app
-cache
-database
-`
-	return
-}
-
-type FakeFailedGetServicesRunner struct {
-	FakeStatusRunner
-}
-
-func (c *FakeFailedGetServicesRunner) Exec(args ...string) (outStr string, err error) {
-	err = errors.New("")
-	return
-}
-
-type FakeGetServiceIDRunner struct {
-	FakeStatusRunner
-}
-
-func (c *FakeGetServiceIDRunner) Exec(args ...string) (outStr string, err error) {
-	outStr = "100"
-	return
-}
-
-type FakeFailedGetServiceIDRunner struct {
-	FakeStatusRunner
-}
-
-func (c *FakeFailedGetServiceIDRunner) Exec(args ...string) (outStr string, err error) {
-	err = errors.New("")
-	return
-}
-
-type FakeGetServiceStatusPortRunner struct {
-	FakeStatusRunner
-}
-
-func (c *FakeGetServiceStatusPortRunner) Exec(args ...string) (outStr string, err error) {
-	outStr = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
-	return
-}
-
-type FakeNotRunningGetServiceStatusPortRunner struct {
-	FakeStatusRunner
-}
-
-func (c *FakeNotRunningGetServiceStatusPortRunner) Exec(args ...string) (outStr string, err error) {
-	outStr = "Exited an hour ago"
-	return
-}
-
-var statusExitCode int
-
-type FakeStatusExiter struct{}
-
-func (e *FakeStatusExiter) Exit(code int) {
-	statusExitCode = code
+	if _, ok := k.table.(*shell.DefaultTableWriter); !ok {
+		t.Errorf("unexpected shell.TableWriter on default KoolStatus instance")
+	}
 }
 
 func TestStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeGetServicesRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		&shell.FakeOutputWriter{},
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	output, err := execStatusCommand(cmd)
+	f := newFakeKoolStatus()
 
-	if err != nil {
-		t.Fatal(err)
+	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortRunner.(*builder.FakeCommand).MockExecOut = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `
-+----------+---------+------------------------------+------------------+
-| SERVICE  | RUNNING | PORTS                        | STATE            |
-+----------+---------+------------------------------+------------------+
-| app      | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour |
-| cache    | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour |
-| database | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour |
-+----------+---------+------------------------------+------------------+
-`
-	expected = strings.Trim(expected, "\n")
+	expected := `Service | Running | Ports | State
+app | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour`
+
+	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -152,32 +83,22 @@ func TestStatusCommand(t *testing.T) {
 }
 
 func TestNotRunningStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeGetServicesRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeNotRunningGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		&shell.FakeOutputWriter{},
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	output, err := execStatusCommand(cmd)
+	f := newFakeKoolStatus()
 
-	if err != nil {
-		t.Fatal(err)
+	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortRunner.(*builder.FakeCommand).MockExecOut = "Exited an hour ago"
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `
-+----------+-------------+-------+--------------------+
-| SERVICE  | RUNNING     | PORTS | STATE              |
-+----------+-------------+-------+--------------------+
-| app      | Not running |       | Exited an hour ago |
-| cache    | Not running |       | Exited an hour ago |
-| database | Not running |       | Exited an hour ago |
-+----------+-------------+-------+--------------------+
-`
-	expected = strings.Trim(expected, "\n")
+	expected := `Service | Running | Ports | State
+app | Not running |  | Exited an hour ago`
+
+	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -185,32 +106,21 @@ func TestNotRunningStatusCommand(t *testing.T) {
 }
 
 func TestNoStatusPortStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeGetServicesRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeStatusRunner{},
-		&FakeStatusExiter{},
-		&shell.FakeOutputWriter{},
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	output, err := execStatusCommand(cmd)
+	f := newFakeKoolStatus()
 
-	if err != nil {
-		t.Fatal(err)
+	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "100"
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `
-+----------+-------------+-------+-------+
-| SERVICE  | RUNNING     | PORTS | STATE |
-+----------+-------------+-------+-------+
-| app      | Not running |       |       |
-| cache    | Not running |       |       |
-| database | Not running |       |       |
-+----------+-------------+-------+-------+
-`
-	expected = strings.Trim(expected, "\n")
+	expected := `Service | Running | Ports | State
+app | Not running |  |`
+
+	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -218,23 +128,16 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 }
 
 func TestNoServicesStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeStatusRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		shell.NewOutputWriter(),
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	output, err := execStatusCommand(cmd)
+	f := newFakeKoolStatus()
+	cmd := NewStatusCommand(f)
 
-	if err != nil {
-		t.Fatal(err)
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := color.New(color.Yellow).Sprint("No services found.")
+	expected := "No services found."
+
+	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -242,23 +145,19 @@ func TestNoServicesStatusCommand(t *testing.T) {
 }
 
 func TestFailedGetServicesStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeFailedGetServicesRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		shell.NewOutputWriter(),
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	output, err := execStatusCommand(cmd)
+	f := newFakeKoolStatus()
 
-	if err != nil {
-		t.Fatal(err)
+	f.getServicesRunner.(*builder.FakeCommand).MockError = errors.New("")
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := color.New(color.Yellow).Sprint("No services found.")
+	expected := "No services found."
+
+	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -266,90 +165,48 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 }
 
 func TestFailedDependenciesStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusFailedDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeGetServicesRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		&shell.FakeOutputWriter{},
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	statusExitCode = 0
+	f := newFakeKoolStatus()
+	f.check.(*checker.FakeChecker).MockError = errors.New("")
 
-	_, err := execStatusCommand(cmd)
+	cmd := NewStatusCommand(f)
 
-	if err != nil {
-		t.Fatal(err)
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	if statusExitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("expecting command to exit due to an error.")
 	}
 }
 
 func TestFailedNetworkStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusFailedNetworkHandler{},
-		&FakeGetServicesRunner{},
-		&FakeGetServiceIDRunner{},
-		&FakeGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		&shell.FakeOutputWriter{},
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	statusExitCode = 0
+	f := newFakeKoolStatus()
+	f.net.(*network.FakeHandler).MockError = errors.New("")
 
-	_, err := execStatusCommand(cmd)
+	cmd := NewStatusCommand(f)
 
-	if err != nil {
-		t.Fatal(err)
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	if statusExitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("expecting command to exit due to an error.")
 	}
 }
 
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
-	defaultStatusCmd := &DefaultStatusCmd{
-		&FakeStatusDependenciesChecker{},
-		&FakeStatusNetworkHandler{},
-		&FakeGetServicesRunner{},
-		&FakeFailedGetServiceIDRunner{},
-		&FakeGetServiceStatusPortRunner{},
-		&FakeStatusExiter{},
-		&shell.FakeOutputWriter{},
-	}
-	cmd := NewStatusCommand(defaultStatusCmd)
-	statusExitCode = 0
+	f := newFakeKoolStatus()
 
-	_, err := execStatusCommand(cmd)
+	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDRunner.(*builder.FakeCommand).MockError = errors.New("")
 
-	if err != nil {
-		t.Fatal(err)
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	if statusExitCode != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", statusExitCode)
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("expecting command to exit due to an error.")
 	}
-}
-
-func execStatusCommand(cmd *cobra.Command) (output string, err error) {
-	b := bytes.NewBufferString("")
-	cmd.SetOut(b)
-
-	if err = cmd.Execute(); err != nil {
-		return
-	}
-
-	var out []byte
-	if out, err = ioutil.ReadAll(b); err != nil {
-		return
-	}
-
-	output = strings.Trim(string(out), "\n")
-	return
 }
