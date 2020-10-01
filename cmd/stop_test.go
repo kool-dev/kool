@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/shell"
@@ -11,7 +12,7 @@ func newFakeKoolStop() *KoolStop {
 	return &KoolStop{
 		*newFakeKoolService(),
 		&KoolStopFlags{false},
-		&FakeStartDependenciesChecker{},
+		&checker.FakeChecker{},
 		&builder.FakeCommand{},
 	}
 }
@@ -28,7 +29,7 @@ func TestNewKoolStop(t *testing.T) {
 	}
 
 	if k.Flags == nil {
-		t.Errorf("Flags not initliased on default KoolStop instance")
+		t.Errorf("Flags not initialized on default KoolStop instance")
 	} else if k.Flags.Purge {
 		t.Errorf("bad default value for Purge flag on default KoolStop instance")
 	}
@@ -58,7 +59,7 @@ func TestNewStopCommand(t *testing.T) {
 		t.Errorf("did not call SetWriter")
 	}
 
-	if !f.check.(*FakeStartDependenciesChecker).called {
+	if !f.check.(*checker.FakeChecker).CalledCheck {
 		t.Errorf("did not call Check")
 	}
 
@@ -71,7 +72,7 @@ func TestNewStopPurgeCommand(t *testing.T) {
 	f := newFakeKoolStop()
 	cmd := NewStopCommand(f)
 
-	f.Flags.Purge = true
+	cmd.SetArgs([]string{"--purge"})
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing stop command with args; error: %v", err)
 	}
@@ -83,5 +84,24 @@ func TestNewStopPurgeCommand(t *testing.T) {
 	argsAppend := f.doStop.(*builder.FakeCommand).ArgsAppend
 	if len(argsAppend) != 2 || argsAppend[0] != "--volumes" || argsAppend[1] != "--remove-orphans" {
 		t.Errorf("bad arguments to KoolStop.doStop Command when passing --purge flag")
+	}
+}
+
+func TestNewFailingDependenciesCheckStopCommand(t *testing.T) {
+	f := newFakeKoolStop()
+
+	f.check.(*checker.FakeChecker).MockError = errors.New("check error")
+	cmd := NewStopCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing stop command with args; error: %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not exit command due to dependencies checking error")
+	}
+
+	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "check error" {
+		t.Errorf("expecting error 'check error', got '%v'", err)
 	}
 }

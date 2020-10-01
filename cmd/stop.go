@@ -28,8 +28,6 @@ func init() {
 	)
 
 	rootCmd.AddCommand(stopCmd)
-
-	stopCmd.Flags().BoolVarP(&stop.Flags.Purge, "purge", "", false, "Remove all persistent data from volume mounts on containers")
 }
 
 // NewKoolStop creates a new handler for stop logic with default dependencies
@@ -57,8 +55,8 @@ func (s *KoolStop) Execute(args []string) (err error) {
 }
 
 // NewStopCommand initializes new kool stop command
-func NewStopCommand(stop *KoolStop) *cobra.Command {
-	return &cobra.Command{
+func NewStopCommand(stop *KoolStop) (stopCmd *cobra.Command) {
+	stopCmd = &cobra.Command{
 		Use:   "stop",
 		Short: "Stop all running containers started with 'kool start' command",
 		Args:  cobra.NoArgs,
@@ -71,4 +69,7 @@ func NewStopCommand(stop *KoolStop) *cobra.Command {
 			}
 		},
 	}
+
+	stopCmd.Flags().BoolVarP(&stop.Flags.Purge, "purge", "", false, "Remove all persistent data from volume mounts on containers")
+	return
 }
