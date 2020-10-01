@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -54,5 +55,13 @@ func TestFakeKoolService(t *testing.T) {
 
 	if !f.CalledSuccess {
 		t.Errorf("failed to assert calling method Success on FakeKoolService")
+	}
+
+	f.MockExecError = errors.New("error")
+
+	err := f.Execute(nil)
+
+	if err == nil || err.Error() != f.MockExecError.Error() {
+		t.Errorf("failed to assert returning Execute mocked error on FakeKoolService")
 	}
 }

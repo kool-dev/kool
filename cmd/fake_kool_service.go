@@ -14,12 +14,14 @@ type FakeKoolService struct {
 	CalledError     bool
 	CalledWarning   bool
 	CalledSuccess   bool
+	MockExecError   error
 }
 
 // Execute mocks the function for testing
 func (f *FakeKoolService) Execute(args []string) (err error) {
 	f.ArgsExecute = args
 	f.CalledExecute = true
+	err = f.MockExecError
 	return
 }
 
