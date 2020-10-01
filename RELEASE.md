@@ -13,3 +13,4 @@ For generating a new release we follow the steps:
 - Go through all PRs merged and write the changelog (Added / Fixed / Removed / Changed / Notes)
 - Upload to the release all the artifacts built at dist/ folder.
 - Publish the new version (which will create the tag as well)
+- In case of version bumping, check if we need to update `SECURITY.md` to show what version we currently support.
