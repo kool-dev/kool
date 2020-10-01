@@ -11,6 +11,18 @@ import (
 	"testing"
 )
 
+// FakeChannelCommand fake command not setting fake variables
+// this way, it works inside go routines
+type FakeChannelCommand struct {
+	builder.FakeCommand
+}
+
+// Exec will send the command to shell execution.
+func (f *FakeChannelCommand) Exec(args ...string) (outStr string, err error) {
+	outStr = "output"
+	return
+}
+
 func newFakeKoolStatus() *KoolStatus {
 	return &KoolStatus{
 		*newFakeKoolService(),
@@ -208,5 +220,36 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {
 		t.Error("expecting command to exit due to an error.")
+	}
+}
+
+func TestServicesOrderStatusCommand(t *testing.T) {
+	f := &KoolStatus{
+		*newFakeKoolService(),
+		&checker.FakeChecker{},
+		&network.FakeHandler{},
+		&builder.FakeCommand{},
+		&FakeChannelCommand{},
+		&FakeChannelCommand{},
+		&shell.FakeTableWriter{},
+	}
+
+	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = `cache
+app`
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
+	}
+
+	expected := `Service | Running | Ports | State
+app | Not running |  | output
+cache | Not running |  | output`
+
+	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
+
+	if output != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, output)
 	}
 }
