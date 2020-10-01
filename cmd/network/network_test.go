@@ -1,32 +1,9 @@
 package network
 
-import "testing"
-
-var createNetworkCalled bool
-
-type FakeCommand struct{}
-
-func (c *FakeCommand) LookPath() (err error) {
-	return
-}
-
-func (c *FakeCommand) Interactive(args ...string) (err error) {
-	createNetworkCalled = true
-	return
-}
-
-func (c *FakeCommand) Exec(args ...string) (outStr string, err error) {
-	return
-}
-
-type NetworkExistsCheckCmd struct {
-	FakeCommand
-}
-
-func (c *NetworkExistsCheckCmd) Exec(args ...string) (outStr string, err error) {
-	outStr = "NetworkID"
-	return
-}
+import (
+	"kool-dev/kool/cmd/builder"
+	"testing"
+)
 
 func TestDefaultHandler(t *testing.T) {
 	var c Handler = NewHandler()
@@ -39,16 +16,18 @@ func TestDefaultHandler(t *testing.T) {
 func TestGlobalNetworkExists(t *testing.T) {
 	var h Handler
 
-	createNetworkCalled = false
-
-	checkNetCmd := &NetworkExistsCheckCmd{}
-	createNetCmd := &FakeCommand{}
+	checkNetCmd := &builder.FakeCommand{MockExecOut: "NetworkID"}
+	createNetCmd := &builder.FakeCommand{}
 
 	h = &DefaultHandler{checkNetCmd, createNetCmd}
 
 	err := h.HandleGlobalNetwork("global_network")
 
-	if createNetworkCalled {
+	if !h.(*DefaultHandler).CheckNetworkCmd.(*builder.FakeCommand).CalledExec {
+		t.Errorf("HandleGlobalNetwork() did not check if network exists.")
+	}
+
+	if h.(*DefaultHandler).CreateNetworkCmd.(*builder.FakeCommand).CalledInteractive {
 		t.Errorf("HandleGlobalNetwork() should not try to create the global network if it already exists.")
 	}
 
@@ -60,16 +39,14 @@ func TestGlobalNetworkExists(t *testing.T) {
 func TestGlobalNetworkNotExists(t *testing.T) {
 	var h Handler
 
-	createNetworkCalled = false
-
-	checkNetCmd := &FakeCommand{}
-	createNetCmd := &FakeCommand{}
+	checkNetCmd := &builder.FakeCommand{}
+	createNetCmd := &builder.FakeCommand{}
 
 	h = &DefaultHandler{checkNetCmd, createNetCmd}
 
 	err := h.HandleGlobalNetwork("global_network")
 
-	if !createNetworkCalled {
+	if !h.(*DefaultHandler).CreateNetworkCmd.(*builder.FakeCommand).CalledInteractive {
 		t.Errorf("HandleGlobalNetwork() is not trying to create the global network when it not exists.")
 	}
 

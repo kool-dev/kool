@@ -9,20 +9,21 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 )
 
-// DefaultStatusCmd holds interfaces for status command logic
-type DefaultStatusCmd struct {
-	dependenciesChecker        checker.Checker
-	networkHandler             network.Handler
+// KoolStatus holds handlers and functions to implement the status command logic
+type KoolStatus struct {
+	DefaultKoolService
+
+	check checker.Checker
+	net   network.Handler
+
 	getServicesRunner          builder.Runner
 	getServiceIDRunner         builder.Runner
 	getServiceStatusPortRunner builder.Runner
-	exiter                     shell.Exiter
 
-	out shell.OutputWriter
+	table shell.TableWriter
 }
 
 type statusService struct {
@@ -31,93 +32,47 @@ type statusService struct {
 	err                   error
 }
 
-// NewStatusCommand Initialize new kool status command
-func NewStatusCommand(statusCmd *DefaultStatusCmd) *cobra.Command {
-	return &cobra.Command{
-		Use:   "status",
-		Short: "Shows the status for containers",
-		Run: func(cmd *cobra.Command, args []string) {
-			statusCmd.out.SetWriter(cmd.OutOrStdout())
+func init() {
+	var (
+		status    = NewKoolStatus()
+		statusCmd = NewStatusCommand(status)
+	)
 
-			if err := statusCmd.checkDependencies(); err != nil {
-				statusCmd.out.Error(err)
-				statusCmd.exiter.Exit(1)
-			}
-
-			statusCmd.statusDisplayServices(cmd)
-		},
-	}
+	rootCmd.AddCommand(statusCmd)
 }
 
-func init() {
-	rootCmd.AddCommand(NewStatusCommand(&DefaultStatusCmd{
+// NewKoolStatus creates a new handler for status logic
+func NewKoolStatus() *KoolStatus {
+	return &KoolStatus{
+		*newDefaultKoolService(),
 		checker.NewChecker(),
 		network.NewHandler(),
 		builder.NewCommand("docker-compose", "ps", "--services"),
 		builder.NewCommand("docker-compose", "ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
-		shell.NewExiter(),
-		shell.NewOutputWriter(),
-	}))
+		shell.NewTableWriter(),
+	}
 }
 
-func (s *DefaultStatusCmd) getServices() (services []string, err error) {
-	var output string
-
-	if output, err = s.getServicesRunner.Exec(); err != nil {
+// Execute runs the status logic with incoming arguments.
+func (s *KoolStatus) Execute(args []string) (err error) {
+	if err = s.check.Check(); err != nil {
 		return
 	}
 
-	parsedServices := strings.Split(strings.Replace(output, "\r\n", "\n", -1), "\n")
-	for _, s := range parsedServices {
-		if s != "" {
-			services = append(services, s)
-		}
-	}
-
-	return
-}
-
-func (s *DefaultStatusCmd) getStatusPort(serviceID string) (status string, port string) {
-	var output string
-
-	if output, _ = s.getServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
+	if err = s.net.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
-	containerInfo := strings.Split(output, "|")
-
-	status = containerInfo[0]
-
-	if len(containerInfo) > 1 {
-		port = containerInfo[1]
-	}
-
-	return
-}
-
-func (s *DefaultStatusCmd) checkDependencies() (err error) {
-	if err = s.dependenciesChecker.Check(); err != nil {
-		return
-	}
-
-	if err = s.networkHandler.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
-		return
-	}
-
-	return
-}
-
-func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 	services, err := s.getServices()
 
 	if err != nil {
-		s.out.Warning("No services found.")
+		s.Warning("No services found.")
 		return
 	}
 
 	if len(services) == 0 {
-		s.out.Warning("No services found.")
+		s.Warning("No services found.")
 		return
 	}
 
@@ -152,8 +107,8 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 		status[i] = ss
 
 		if status[i].err != nil {
-			s.out.Error(status[i].err)
-			s.exiter.Exit(1)
+			err = status[i].err
+			return
 		}
 
 		if i == l-1 {
@@ -163,21 +118,72 @@ func (s *DefaultStatusCmd) statusDisplayServices(cobraCmd *cobra.Command) {
 		i++
 	}
 
-	t := table.NewWriter()
-	t.SetOutputMirror(cobraCmd.OutOrStdout())
-	t.AppendHeader(table.Row{"Service", "Running", "Ports", "State"})
+	s.table.SetWriter(s.GetWriter())
+	s.table.AppendHeader("Service", "Running", "Ports", "State")
 
 	sort.SliceStable(status, func(i, j int) bool {
 		return status[i].service < status[j].service
 	})
 
-	for _, s := range status {
+	for _, st := range status {
 		running := "Not running"
-		if s.running {
+		if st.running {
 			running = "Running"
 		}
-		t.AppendRow([]interface{}{s.service, running, s.ports, s.state})
+		s.table.AppendRow(st.service, running, st.ports, st.state)
 	}
 
-	t.Render()
+	s.table.Render()
+	return
+}
+
+func (s *KoolStatus) getServices() (services []string, err error) {
+	var output string
+
+	if output, err = s.getServicesRunner.Exec(); err != nil {
+		return
+	}
+
+	parsedServices := strings.Split(strings.Replace(output, "\r\n", "\n", -1), "\n")
+	for _, s := range parsedServices {
+		if s != "" {
+			services = append(services, s)
+		}
+	}
+
+	return
+}
+
+func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string) {
+	var output string
+
+	if output, _ = s.getServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
+		return
+	}
+
+	containerInfo := strings.Split(output, "|")
+
+	status = containerInfo[0]
+
+	if len(containerInfo) > 1 {
+		port = containerInfo[1]
+	}
+
+	return
+}
+
+// NewStatusCommand Initialize new kool status command
+func NewStatusCommand(status *KoolStatus) *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Shows the status for containers",
+		Run: func(cmd *cobra.Command, args []string) {
+			status.SetWriter(cmd.OutOrStdout())
+
+			if err := status.Execute(args); err != nil {
+				status.Error(err)
+				status.Exit(1)
+			}
+		},
+	}
 }
