@@ -4,6 +4,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type cobraRunFN func(*cobra.Command, []string)
+
+// NewCommandData holds data to create a new command
+type NewCommandData struct {
+	Use, Short, Long string
+	Run              cobraRunFN
+}
+
 var version string = "0.0.0-dev"
 
 var rootCmd = &cobra.Command{
@@ -24,4 +32,28 @@ func Execute() error {
 // RootCmd exposes the root command
 func RootCmd() *cobra.Command {
 	return rootCmd
+}
+
+// CreateCommand creates a new command
+func CreateCommand(service KoolService, values NewCommandData) *cobra.Command {
+	newCmd := &cobra.Command{
+		Use:   values.Use,
+		Short: values.Short,
+		Long:  values.Long,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			service.SetWriter(cmd.OutOrStdout())
+		},
+		Run: values.Run,
+	}
+
+	if newCmd.Run == nil {
+		newCmd.Run = func(cmd *cobra.Command, args []string) {
+			if err := service.Execute(args); err != nil {
+				service.Error(err)
+				service.Exit(1)
+			}
+		}
+	}
+
+	return newCmd
 }

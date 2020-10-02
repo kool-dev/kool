@@ -60,16 +60,11 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 
 // NewLogsCommand initializes new kool logs command
 func NewLogsCommand(logs *KoolLogs) *cobra.Command {
-	return &cobra.Command{
-		Use:   "logs [options] [service...]",
-		Short: "Displays log output from services.",
-		Run: func(cmd *cobra.Command, args []string) {
-			logs.SetWriter(cmd.OutOrStdout())
-
-			if err := logs.Execute(args); err != nil {
-				logs.Error(err)
-				logs.Exit(1)
-			}
+	return CreateCommand(
+		logs,
+		NewCommandData{
+			Use:   "logs [options] [service...]",
+			Short: "Displays log output from services.",
 		},
-	}
+	)
 }
