@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"os"
 
@@ -20,6 +21,7 @@ type KoolExec struct {
 	DefaultKoolService
 	Flags *KoolExecFlags
 
+	terminal    shell.TerminalChecker
 	composeExec builder.Command
 }
 
@@ -37,13 +39,14 @@ func NewKoolExec() *KoolExec {
 	return &KoolExec{
 		*newDefaultKoolService(),
 		&KoolExecFlags{false, []string{}, false},
+		shell.NewTerminalChecker(),
 		builder.NewCommand("docker-compose", "exec"),
 	}
 }
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if e.Flags.DisableTty || environment.IsTrue("KOOL_TTY_DISABLE") {
+	if e.Flags.DisableTty || environment.IsTrue("KOOL_TTY_DISABLE") || !e.terminal.IsTerminal(e.GetWriter()) {
 		e.composeExec.AppendArgs("-T")
 	}
 

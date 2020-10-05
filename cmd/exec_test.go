@@ -13,6 +13,7 @@ func newFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		&builder.FakeCommand{},
 	}
 }
@@ -21,6 +22,7 @@ func newFailedFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		&builder.FakeCommand{MockError: errors.New("error exec")},
 	}
 }
@@ -220,5 +222,24 @@ func TestFailingNewExecCommand(t *testing.T) {
 
 	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error exec" {
 		t.Errorf("expecting error 'error exec', got '%s'", err.Error())
+	}
+}
+
+func TestNonTerminalNewExecCommand(t *testing.T) {
+	f := newFakeKoolExec()
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = false
+
+	cmd := NewExecCommand(f)
+
+	cmd.SetArgs([]string{"service", "command"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing exec command; error: %v", err)
+	}
+
+	argsAppend := f.composeExec.(*builder.FakeCommand).ArgsAppend
+
+	if len(argsAppend) != 1 || argsAppend[0] != "-T" {
+		t.Errorf("bad arguments to KoolExec.composeExec Command on non terminal environment")
 	}
 }

@@ -13,6 +13,7 @@ func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		&builder.FakeCommand{},
 	}
 }
@@ -21,6 +22,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		&builder.FakeCommand{MockError: errors.New("error docker")},
 	}
 }
@@ -269,5 +271,24 @@ func TestFailingNewDockerCommand(t *testing.T) {
 
 	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error docker" {
 		t.Errorf("expecting error 'error docker', got '%s'", err.Error())
+	}
+}
+
+func TestNonTerminalNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = false
+
+	cmd := NewDockerCommand(f)
+
+	cmd.SetArgs([]string{"image"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing docker command; error: %v", err)
+	}
+
+	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
+
+	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command on non terminal environment")
 	}
 }
