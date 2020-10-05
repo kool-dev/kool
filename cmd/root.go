@@ -4,13 +4,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type cobraRunFN func(*cobra.Command, []string)
-
-// NewCommandData holds data to create a new command
-type NewCommandData struct {
-	Use, Short, Long string
-	Run              cobraRunFN
-}
+// CobraRunFN Cobra command run function
+type CobraRunFN func(*cobra.Command, []string)
 
 var version string = "0.0.0-dev"
 
@@ -34,26 +29,14 @@ func RootCmd() *cobra.Command {
 	return rootCmd
 }
 
-// CreateCommand creates a new command
-func CreateCommand(service KoolService, values NewCommandData) *cobra.Command {
-	newCmd := &cobra.Command{
-		Use:   values.Use,
-		Short: values.Short,
-		Long:  values.Long,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			service.SetWriter(cmd.OutOrStdout())
-		},
-		Run: values.Run,
-	}
+// DefaultCommandRunFunction default run function logic
+func DefaultCommandRunFunction(service KoolService) CobraRunFN {
+	return func(cmd *cobra.Command, args []string) {
+		service.SetWriter(cmd.OutOrStdout())
 
-	if newCmd.Run == nil {
-		newCmd.Run = func(cmd *cobra.Command, args []string) {
-			if err := service.Execute(args); err != nil {
-				service.Error(err)
-				service.Exit(1)
-			}
+		if err := service.Execute(args); err != nil {
+			service.Error(err)
+			service.Exit(1)
 		}
 	}
-
-	return newCmd
 }
