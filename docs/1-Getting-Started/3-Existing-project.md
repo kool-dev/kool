@@ -8,7 +8,7 @@ $ kool init laravel
 
 This will create the files you need to configure your services. Feel free to edit **docker-compose.yml** to add or remove services as needed.
 
-Then we will go ahead an run:
+Then we will go ahead and run:
 
 ```bash
 $ kool start
