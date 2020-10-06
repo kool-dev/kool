@@ -3,7 +3,6 @@ package cmd
 import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
-	"kool-dev/kool/environment"
 	"os"
 	"strings"
 
@@ -50,14 +49,6 @@ func NewKoolDocker() *KoolDocker {
 func (d *KoolDocker) Execute(args []string) (err error) {
 	image := args[0]
 	workDir, _ := os.Getwd()
-
-	if d.Flags.DisableTty {
-		d.Warning("Warning: --disable-tty flag is obsolete")
-	}
-
-	if environment.IsTrue("KOOL_TTY_DISABLE") {
-		d.Warning("Warning: KOOL_TTY_DISABLE environment variable is obsolete")
-	}
 
 	if d.terminal.IsTerminal(d.GetWriter()) {
 		d.dockerRun.AppendArgs("-t")

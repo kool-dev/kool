@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"os"
@@ -93,53 +92,6 @@ func TestNoArgsNewExecCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err == nil {
 		t.Error("expecting no arguments error executing exec command")
-	}
-}
-
-func TestDisableTTYFlagNewExecCommand(t *testing.T) {
-	f := newFakeKoolExec()
-	cmd := NewExecCommand(f)
-
-	cmd.SetArgs([]string{"--disable-tty", "service", "command"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing exec command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
-		t.Error("did not call Warning")
-	}
-
-	expected := "Warning: --disable-tty flag is obsolete"
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
-
-	if output != expected {
-		t.Errorf("expecting warning '%s', got '%s'", expected, output)
-	}
-}
-
-func TestDisableTTYEnvNewExecCommand(t *testing.T) {
-	f := newFakeKoolExec()
-	cmd := NewExecCommand(f)
-
-	cmd.SetArgs([]string{"service", "command"})
-
-	os.Setenv("KOOL_TTY_DISABLE", "1")
-	defer os.Unsetenv("KOOL_TTY_DISABLE")
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing exec command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
-		t.Error("did not call Warning")
-	}
-
-	expected := "Warning: KOOL_TTY_DISABLE environment variable is obsolete"
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
-
-	if output != expected {
-		t.Errorf("expecting warning '%s', got '%s'", expected, output)
 	}
 }
 

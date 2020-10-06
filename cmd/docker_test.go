@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"os"
@@ -110,53 +109,6 @@ func TestNoArgsNewDockerCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err == nil {
 		t.Error("expecting no arguments error executing docker command")
-	}
-}
-
-func TestDisableTTYFlagNewDockerCommand(t *testing.T) {
-	f := newFakeKoolDocker()
-	cmd := NewDockerCommand(f)
-
-	cmd.SetArgs([]string{"--disable-tty", "image"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing docker command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
-		t.Error("did not call Warning")
-	}
-
-	expected := "Warning: --disable-tty flag is obsolete"
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
-
-	if output != expected {
-		t.Errorf("expecting warning '%s', got '%s'", expected, output)
-	}
-}
-
-func TestDisableTTYEnvNewDockerCommand(t *testing.T) {
-	f := newFakeKoolDocker()
-	cmd := NewDockerCommand(f)
-
-	os.Setenv("KOOL_TTY_DISABLE", "1")
-	defer os.Unsetenv("KOOL_TTY_DISABLE")
-
-	cmd.SetArgs([]string{"image"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing docker command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
-		t.Error("did not call Warning")
-	}
-
-	expected := "Warning: KOOL_TTY_DISABLE environment variable is obsolete"
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
-
-	if output != expected {
-		t.Errorf("expecting warning '%s', got '%s'", expected, output)
 	}
 }
 

@@ -3,7 +3,6 @@ package cmd
 import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
-	"kool-dev/kool/environment"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -46,14 +45,6 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if e.Flags.DisableTty {
-		e.Warning("Warning: --disable-tty flag is obsolete")
-	}
-
-	if environment.IsTrue("KOOL_TTY_DISABLE") {
-		e.Warning("Warning: KOOL_TTY_DISABLE environment variable is obsolete")
-	}
-
 	if !e.terminal.IsTerminal(e.GetWriter()) {
 		e.composeExec.AppendArgs("-T")
 	}
