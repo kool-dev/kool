@@ -16,7 +16,7 @@ func (t *DefaultTerminalChecker) IsTerminal(in interface{}) (isTerminal bool) {
 	return
 }
 
-// NewTerminalChecker creates a new output writer
+// NewTerminalChecker creates a new terminal checker
 func NewTerminalChecker() TerminalChecker {
 	return &DefaultTerminalChecker{}
 }

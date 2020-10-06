@@ -51,7 +51,15 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 	image := args[0]
 	workDir, _ := os.Getwd()
 
-	if !d.Flags.DisableTty && !environment.IsTrue("KOOL_TTY_DISABLE") && d.terminal.IsTerminal(d.GetWriter()) {
+	if d.Flags.DisableTty {
+		d.Warning("Warning: --disable-tty flag is obsolete")
+	}
+
+	if environment.IsTrue("KOOL_TTY_DISABLE") {
+		d.Warning("Warning: KOOL_TTY_DISABLE environment variable is obsolete")
+	}
+
+	if d.terminal.IsTerminal(d.GetWriter()) {
 		d.dockerRun.AppendArgs("-t")
 	}
 
@@ -103,7 +111,7 @@ the image name and the command you want to execute on that image.`,
 		},
 	}
 
-	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
 	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")

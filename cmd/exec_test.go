@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"os"
@@ -105,14 +106,15 @@ func TestDisableTTYFlagNewExecCommand(t *testing.T) {
 		t.Errorf("unexpected error executing exec command; error: %v", err)
 	}
 
-	if !f.composeExec.(*builder.FakeCommand).CalledAppendArgs {
-		t.Error("did not call AppendArgs on KoolExec.composeExec Command")
+	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+		t.Error("did not call Warning")
 	}
 
-	argsAppend := f.composeExec.(*builder.FakeCommand).ArgsAppend
+	expected := "Warning: --disable-tty flag is obsolete"
+	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
 
-	if len(argsAppend) != 1 || argsAppend[0] != "-T" {
-		t.Errorf("bad arguments to KoolExec.composeExec Command with disable-tty flag")
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
 	}
 }
 
@@ -129,14 +131,15 @@ func TestDisableTTYEnvNewExecCommand(t *testing.T) {
 		t.Errorf("unexpected error executing exec command; error: %v", err)
 	}
 
-	if !f.composeExec.(*builder.FakeCommand).CalledAppendArgs {
-		t.Error("did not call AppendArgs on KoolExec.composeExec Command")
+	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+		t.Error("did not call Warning")
 	}
 
-	argsAppend := f.composeExec.(*builder.FakeCommand).ArgsAppend
+	expected := "Warning: KOOL_TTY_DISABLE environment variable is obsolete"
+	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
 
-	if len(argsAppend) != 1 || argsAppend[0] != "-T" {
-		t.Error("bad arguments to KoolExec.composeExec Command with KOOL_TTY_DISABLE environment variable")
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
 	}
 }
 

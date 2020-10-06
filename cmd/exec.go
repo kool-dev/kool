@@ -46,7 +46,15 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if e.Flags.DisableTty || environment.IsTrue("KOOL_TTY_DISABLE") || !e.terminal.IsTerminal(e.GetWriter()) {
+	if e.Flags.DisableTty {
+		e.Warning("Warning: --disable-tty flag is obsolete")
+	}
+
+	if environment.IsTrue("KOOL_TTY_DISABLE") {
+		e.Warning("Warning: KOOL_TTY_DISABLE environment variable is obsolete")
+	}
+
+	if !e.terminal.IsTerminal(e.GetWriter()) {
 		e.composeExec.AppendArgs("-T")
 	}
 
@@ -84,7 +92,7 @@ func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 		},
 	}
 
-	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
 	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
 	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
 
