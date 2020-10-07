@@ -42,7 +42,10 @@ func Interactive(exe string, args ...string) (err error) {
 	var (
 		cmd            *exec.Cmd
 		parsedRedirect *DefaultParsedRedirect
+		outputWriter   OutputWriter
 	)
+
+	outputWriter = NewOutputWriter()
 
 	if lookedUp == nil {
 		lookedUp = make(map[string]bool)
@@ -75,7 +78,7 @@ func Interactive(exe string, args ...string) (err error) {
 		_, err = exec.LookPath(exe)
 
 		if err != nil {
-			Error("Failed to run ", cmd.String(), "error:", err)
+			outputWriter.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
 			os.Exit(2)
 		}
 
@@ -114,7 +117,7 @@ func Interactive(exe string, args ...string) (err error) {
 			if err := cmd.Process.Signal(sig); err != nil {
 				// check if it is something we should care about
 				if err.Error() != "os: process already finished" {
-					Error("error sending signal to child process", sig, err)
+					outputWriter.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
 				}
 			}
 		}

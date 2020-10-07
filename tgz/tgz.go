@@ -3,6 +3,7 @@ package tgz
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
@@ -46,7 +47,7 @@ func (tgz *TarGz) CompressFiles(files []string) (tmpfile string, err error) {
 	for _, file = range files {
 		fi, err = os.Stat(file)
 		if addErr := tgz.add(file, fi, err); err != nil {
-			shell.Error("failed to add file into archive:", addErr)
+			shell.NewOutputWriter().Error(fmt.Errorf("failed to add file into archive: %v", addErr))
 		}
 	}
 
