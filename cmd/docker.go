@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/builder"
-	"kool-dev/kool/environment"
+	"kool-dev/kool/cmd/shell"
 	"os"
 	"strings"
 
@@ -22,6 +22,7 @@ type KoolDocker struct {
 	DefaultKoolService
 	Flags *KoolDockerFlags
 
+	terminal  shell.TerminalChecker
 	dockerRun builder.Command
 }
 
@@ -39,6 +40,7 @@ func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		shell.NewTerminalChecker(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
 }
@@ -48,7 +50,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 	image := args[0]
 	workDir, _ := os.Getwd()
 
-	if !d.Flags.DisableTty && !environment.IsTrue("KOOL_TTY_DISABLE") {
+	if d.terminal.IsTerminal(d.GetWriter()) {
 		d.dockerRun.AppendArgs("-t")
 	}
 
@@ -100,7 +102,7 @@ the image name and the command you want to execute on that image.`,
 		},
 	}
 
-	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
 	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")

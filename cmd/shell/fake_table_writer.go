@@ -20,7 +20,7 @@ func (f *FakeTableWriter) SetWriter(w io.Writer) {
 
 // AppendHeader fake AppendHeader behavior
 func (f *FakeTableWriter) AppendHeader(columns ...interface{}) {
-	f.CalledSetWriter = true
+	f.CalledAppendHeader = true
 	f.Headers = append(f.Headers, columns)
 }
 

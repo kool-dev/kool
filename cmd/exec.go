@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/builder"
-	"kool-dev/kool/environment"
+	"kool-dev/kool/cmd/shell"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -20,6 +20,7 @@ type KoolExec struct {
 	DefaultKoolService
 	Flags *KoolExecFlags
 
+	terminal    shell.TerminalChecker
 	composeExec builder.Command
 }
 
@@ -37,13 +38,14 @@ func NewKoolExec() *KoolExec {
 	return &KoolExec{
 		*newDefaultKoolService(),
 		&KoolExecFlags{false, []string{}, false},
+		shell.NewTerminalChecker(),
 		builder.NewCommand("docker-compose", "exec"),
 	}
 }
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if e.Flags.DisableTty || environment.IsTrue("KOOL_TTY_DISABLE") {
+	if !e.terminal.IsTerminal(e.GetWriter()) {
 		e.composeExec.AppendArgs("-T")
 	}
 
@@ -81,7 +83,7 @@ func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 		},
 	}
 
-	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Disables TTY")
+	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
 	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
 	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
 

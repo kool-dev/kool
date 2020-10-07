@@ -13,6 +13,7 @@ func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&shell.FakeTerminalChecker{MockIsTerminal: false},
 		&builder.FakeCommand{},
 	}
 }
@@ -21,6 +22,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&shell.FakeTerminalChecker{MockIsTerminal: false},
 		&builder.FakeCommand{MockError: errors.New("error docker")},
 	}
 }
@@ -63,6 +65,8 @@ func TestNewKoolDocker(t *testing.T) {
 
 func TestNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
+
 	cmd := NewDockerCommand(f)
 	workDir, _ := os.Getwd()
 
@@ -108,43 +112,6 @@ func TestNoArgsNewDockerCommand(t *testing.T) {
 	}
 }
 
-func TestDisableTTYFlagNewDockerCommand(t *testing.T) {
-	f := newFakeKoolDocker()
-	cmd := NewDockerCommand(f)
-
-	cmd.SetArgs([]string{"--disable-tty", "image"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing docker command; error: %v", err)
-	}
-
-	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
-
-	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
-		t.Errorf("bad arguments to KoolDocker.dockerRun Command with disable-tty flag")
-	}
-}
-
-func TestDisableTTYEnvNewDockerCommand(t *testing.T) {
-	f := newFakeKoolDocker()
-	cmd := NewDockerCommand(f)
-
-	os.Setenv("KOOL_TTY_DISABLE", "1")
-	defer os.Unsetenv("KOOL_TTY_DISABLE")
-
-	cmd.SetArgs([]string{"image"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing docker command; error: %v", err)
-	}
-
-	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
-
-	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
-		t.Errorf("bad arguments to KoolDocker.dockerRun Command with 'KOOL_TTY_DISABLE' variable")
-	}
-}
-
 func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	cmd := NewDockerCommand(f)
@@ -152,7 +119,7 @@ func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 	os.Setenv("KOOL_ASUSER", "kooldev_user_test")
 	defer os.Unsetenv("KOOL_ASUSER")
 
-	cmd.SetArgs([]string{"--disable-tty", "kooldev/image"})
+	cmd.SetArgs([]string{"kooldev/image"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
@@ -172,7 +139,7 @@ func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
 	os.Setenv("KOOL_ASUSER", "kooldev_user_test")
 	defer os.Unsetenv("KOOL_ASUSER")
 
-	cmd.SetArgs([]string{"--disable-tty", "fireworkweb/image"})
+	cmd.SetArgs([]string{"fireworkweb/image"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
@@ -189,7 +156,7 @@ func TestEnvFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	cmd := NewDockerCommand(f)
 
-	cmd.SetArgs([]string{"--disable-tty", "--env=VAR_TEST=1", "image"})
+	cmd.SetArgs([]string{"--env=VAR_TEST=1", "image"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
@@ -206,7 +173,7 @@ func TestVolumesFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	cmd := NewDockerCommand(f)
 
-	cmd.SetArgs([]string{"--disable-tty", "--volume=volume_test", "image"})
+	cmd.SetArgs([]string{"--volume=volume_test", "image"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
@@ -223,7 +190,7 @@ func TestPublishFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	cmd := NewDockerCommand(f)
 
-	cmd.SetArgs([]string{"--disable-tty", "--publish=publish_test", "image"})
+	cmd.SetArgs([]string{"--publish=publish_test", "image"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
@@ -269,5 +236,24 @@ func TestFailingNewDockerCommand(t *testing.T) {
 
 	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error docker" {
 		t.Errorf("expecting error 'error docker', got '%s'", err.Error())
+	}
+}
+
+func TestNonTerminalNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = false
+
+	cmd := NewDockerCommand(f)
+
+	cmd.SetArgs([]string{"image"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing docker command; error: %v", err)
+	}
+
+	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
+
+	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command on non terminal environment")
 	}
 }
