@@ -21,16 +21,9 @@ type KoolStart struct {
 // NewStartCommand initializes new kool start command
 func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
-		Use:   "start [SERVICE]",
-		Short: "Start the specified Kool environment containers. If no service is specified, start all.",
-		Run: func(cmd *cobra.Command, args []string) {
-			start.SetWriter(cmd.OutOrStdout())
-
-			if err := start.Execute(args); err != nil {
-				start.Error(err)
-				start.Exit(1)
-			}
-		},
+		Use:                   "start [SERVICE]",
+		Short:                 "Start the specified Kool environment containers. If no service is specified, start all.",
+		Run:                   DefaultCommandRunFunction(start),
 		DisableFlagsInUseLine: true,
 	}
 }
@@ -46,23 +39,12 @@ func NewKoolStart() *KoolStart {
 	}
 }
 
-var startCmd = NewStartCommand(NewKoolStart())
-
 func init() {
-	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(NewStartCommand(NewKoolStart()))
 }
 
 // Execute runs the start logic with incoming arguments.
 func (s *KoolStart) Execute(args []string) (err error) {
-	if err = s.checkDependencies(); err != nil {
-		return
-	}
-
-	err = s.startContainers(args)
-	return
-}
-
-func (s *KoolStart) checkDependencies() (err error) {
 	if err = s.check.Check(); err != nil {
 		return
 	}
@@ -71,10 +53,6 @@ func (s *KoolStart) checkDependencies() (err error) {
 		return
 	}
 
-	return
-}
-
-func (s *KoolStart) startContainers(services []string) (err error) {
-	err = s.start.Interactive(services...)
+	err = s.start.Interactive(args...)
 	return
 }

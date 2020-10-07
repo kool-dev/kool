@@ -30,8 +30,6 @@ func init() {
 	)
 
 	rootCmd.AddCommand(initCmd)
-
-	initCmd.Flags().BoolVarP(&init.Flags.Override, "override", "", false, "Force replace local existing files with the preset files")
 }
 
 // NewKoolInit creates a new handler for init logic
@@ -77,8 +75,8 @@ func (i *KoolInit) Execute(args []string) (err error) {
 }
 
 // NewInitCommand initializes new kool init command
-func NewInitCommand(init *KoolInit) *cobra.Command {
-	return &cobra.Command{
+func NewInitCommand(init *KoolInit) (initCmd *cobra.Command) {
+	initCmd = &cobra.Command{
 		Use:   "init [PRESET]",
 		Short: "Initialize kool preset in the current working directory",
 		Args:  cobra.ExactArgs(1),
@@ -98,4 +96,7 @@ func NewInitCommand(init *KoolInit) *cobra.Command {
 			}
 		},
 	}
+
+	initCmd.Flags().BoolVarP(&init.Flags.Override, "override", "", false, "Force replace local existing files with the preset files")
+	return
 }

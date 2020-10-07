@@ -4,6 +4,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// CobraRunFN Cobra command run function
+type CobraRunFN func(*cobra.Command, []string)
+
 var version string = "0.0.0-dev"
 
 var rootCmd = &cobra.Command{
@@ -24,4 +27,18 @@ func Execute() error {
 // RootCmd exposes the root command
 func RootCmd() *cobra.Command {
 	return rootCmd
+}
+
+// DefaultCommandRunFunction default run function logic
+func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
+	return func(cmd *cobra.Command, args []string) {
+		for _, service := range services {
+			service.SetWriter(cmd.OutOrStdout())
+
+			if err := service.Execute(args); err != nil {
+				service.Error(err)
+				service.Exit(1)
+			}
+		}
+	}
 }

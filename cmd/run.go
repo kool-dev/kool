@@ -30,9 +30,6 @@ func init() {
 	)
 
 	rootCmd.AddCommand(runCmd)
-
-	// after a non-flag arg, stop parsing flags
-	runCmd.Flags().SetInterspersed(false)
 }
 
 // NewKoolRun creates a new handler for run logic with default dependencies
@@ -91,18 +88,15 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 }
 
 // NewRunCommand initializes new kool stop command
-func NewRunCommand(run *KoolRun) *cobra.Command {
-	return &cobra.Command{
+func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
+	runCmd = &cobra.Command{
 		Use:   "run [SCRIPT]",
 		Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
 		Args:  cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			run.SetWriter(cmd.OutOrStdout())
-
-			if err := run.Execute(args); err != nil {
-				run.Error(err)
-				run.Exit(1)
-			}
-		},
+		Run:   DefaultCommandRunFunction(run),
 	}
+
+	// after a non-flag arg, stop parsing flags
+	runCmd.Flags().SetInterspersed(false)
+	return
 }

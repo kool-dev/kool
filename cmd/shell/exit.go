@@ -2,6 +2,8 @@ package shell
 
 import "os"
 
+var exitFn = os.Exit
+
 // Exiter interface allows for interchageable usage of implementations
 // mainly for testing and extension purposes.
 type Exiter interface {
@@ -18,5 +20,5 @@ func NewExiter() Exiter {
 
 // Exit implements the default Exit behaviour (proxy to OS)
 func (e *DefaultExiter) Exit(code int) {
-	os.Exit(code)
+	exitFn(code)
 }

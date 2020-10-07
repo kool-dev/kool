@@ -28,9 +28,6 @@ func init() {
 	)
 
 	rootCmd.AddCommand(logsCmd)
-
-	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown.")
-	logsCmd.Flags().BoolVarP(&logs.Flags.Follow, "follow", "f", false, "Follow log output.")
 }
 
 // NewKoolLogs creates a new handler for logs logic
@@ -59,17 +56,14 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 }
 
 // NewLogsCommand initializes new kool logs command
-func NewLogsCommand(logs *KoolLogs) *cobra.Command {
-	return &cobra.Command{
+func NewLogsCommand(logs *KoolLogs) (logsCmd *cobra.Command) {
+	logsCmd = &cobra.Command{
 		Use:   "logs [options] [service...]",
 		Short: "Displays log output from services.",
-		Run: func(cmd *cobra.Command, args []string) {
-			logs.SetWriter(cmd.OutOrStdout())
-
-			if err := logs.Execute(args); err != nil {
-				logs.Error(err)
-				logs.Exit(1)
-			}
-		},
+		Run:   DefaultCommandRunFunction(logs),
 	}
+
+	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown.")
+	logsCmd.Flags().BoolVarP(&logs.Flags.Follow, "follow", "f", false, "Follow log output.")
+	return
 }

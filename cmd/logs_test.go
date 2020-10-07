@@ -81,7 +81,8 @@ func TestNewLogsTailCommand(t *testing.T) {
 	f := newFakeKoolLogs()
 	cmd := NewLogsCommand(f)
 
-	f.Flags.Tail = 10
+	cmd.SetArgs([]string{"--tail=10"})
+
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
 	}
@@ -100,7 +101,8 @@ func TestNewLogsTailAllCommand(t *testing.T) {
 	f := newFakeKoolLogs()
 	cmd := NewLogsCommand(f)
 
-	f.Flags.Tail = 0
+	cmd.SetArgs([]string{"--tail=0"})
+
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
 	}
@@ -119,7 +121,8 @@ func TestNewLogsFollowCommand(t *testing.T) {
 	f := newFakeKoolLogs()
 	cmd := NewLogsCommand(f)
 
-	f.Flags.Follow = true
+	cmd.SetArgs([]string{"--follow"})
+
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
 	}
