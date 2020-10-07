@@ -57,13 +57,6 @@ func NewSelfUpdateCommand(selfUpdate *KoolSelfUpdate) *cobra.Command {
 		Short: "Update kool to latest version",
 		Long:  "Checks for the latest release of Kool on Github Releases, downloads and replaces the local binary if a newer version is available.",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			selfUpdate.SetWriter(cmd.OutOrStdout())
-
-			if err := selfUpdate.Execute(args); err != nil {
-				selfUpdate.Error(err)
-				selfUpdate.Exit(1)
-			}
-		},
+		Run:   DefaultCommandRunFunction(selfUpdate),
 	}
 }
