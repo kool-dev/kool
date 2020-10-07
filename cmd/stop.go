@@ -60,14 +60,7 @@ func NewStopCommand(stop *KoolStop) (stopCmd *cobra.Command) {
 		Use:   "stop",
 		Short: "Stop all running containers started with 'kool start' command",
 		Args:  cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			stop.SetWriter(cmd.OutOrStdout())
-
-			if err := stop.Execute(args); err != nil {
-				stop.Error(err)
-				stop.Exit(1)
-			}
-		},
+		Run:   DefaultCommandRunFunction(stop),
 	}
 
 	stopCmd.Flags().BoolVarP(&stop.Flags.Purge, "purge", "", false, "Remove all persistent data from volume mounts on containers")
