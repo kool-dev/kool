@@ -2,7 +2,9 @@
 
 cp templates/presets_template.go cmd/presets/presets.go
 
-echo "func init() {" >> cmd/presets/presets.go
+echo "// GetAll get all presets" >> cmd/presets/presets.go
+echo "func GetAll() map[string]map[string]string {" >> cmd/presets/presets.go
+echo "	var presets = make(map[string]map[string]string)" >> cmd/presets/presets.go
 
 for folder in presets/*/; do
     if [ ! -d $folder ]; then
@@ -25,6 +27,7 @@ for folder in presets/*/; do
 	echo "	}" >> cmd/presets/presets.go
 done
 
+echo "	return presets" >> cmd/presets/presets.go
 echo "}" >> cmd/presets/presets.go
 
 echo "Finished building cmd/presets/presets.go"
