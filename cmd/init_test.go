@@ -150,11 +150,10 @@ func TestOverrideFilesInitCommand(t *testing.T) {
 	f := newFakeKoolInit()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
-	f.Flags.Override = true
 
 	cmd := NewInitCommand(f)
 
-	cmd.SetArgs([]string{"laravel"})
+	cmd.SetArgs([]string{"--override", "laravel"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing init command; error: %v", err)
