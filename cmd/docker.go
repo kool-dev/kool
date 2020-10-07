@@ -92,14 +92,7 @@ func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 You can start with options that go before the image name
 for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
 the image name and the command you want to execute on that image.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			docker.SetWriter(cmd.OutOrStdout())
-
-			if err := docker.Execute(args); err != nil {
-				docker.Error(err)
-				docker.Exit(1)
-			}
-		},
+		Run: DefaultCommandRunFunction(docker),
 	}
 
 	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
