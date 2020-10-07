@@ -49,6 +49,8 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 		t.Errorf("bad parse - should close in; not out")
 	}
 
+	p.Close()
+
 	// test output
 	output := filepath.Join(t.TempDir(), "output")
 	file, _ = os.Create(output)
@@ -62,6 +64,8 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 	if p.closeStdin || !p.closeStdout {
 		t.Errorf("bad parse - should close in; not out")
 	}
+
+	p.Close()
 }
 
 func TestParsedRedirectCreateCommand(t *testing.T) {
