@@ -1,14 +1,9 @@
 package presets
 
 // auto generated file
-
-var presets = make(map[string]map[string]string) //nolint
-
 // GetAll get all presets
 func GetAll() map[string]map[string]string {
-	return presets
-}
-func init() {
+	var presets = make(map[string]map[string]string)
 	presets["adonis"] = map[string]string{
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
@@ -576,4 +571,5 @@ networks:
   mysql: kool exec database mysql -uroot -p$DB_PASSWORD
   mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD`,
 	}
+	return presets
 }

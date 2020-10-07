@@ -1,14 +1,15 @@
 package presets
 
 import (
-	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 func TestPresetsKoolFile(t *testing.T) {
-	for preset, files := range presets {
+	for preset, files := range GetAll() {
 		var (
 			parsed *parser.KoolYaml
 			kool   []byte
