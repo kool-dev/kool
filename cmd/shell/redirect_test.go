@@ -37,7 +37,7 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 
 	// test input redirect
 	input := filepath.Join(t.TempDir(), "input")
-	file, err := os.Create(input)
+	file, _ := os.Create(input)
 	file.Close()
 	p, err = parseRedirects([]string{"foo", "<", input})
 
@@ -51,7 +51,7 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 
 	// test output
 	output := filepath.Join(t.TempDir(), "output")
-	file, err = os.Create(output)
+	file, _ = os.Create(output)
 	file.Close()
 	p, err = parseRedirects([]string{"foo", ">", output})
 
@@ -78,9 +78,10 @@ func TestParsedRedirectCreateCommand(t *testing.T) {
 
 	if cmd == nil {
 		t.Errorf("failed to create command")
+		return
 	}
 
-	if cmd.Args[0] != exe || cmd.Args[1] != "arg1" || cmd.Args[2] != "arg2" {
+	if cmd.Args == nil || cmd.Args[0] != exe || cmd.Args[1] != "arg1" || cmd.Args[2] != "arg2" {
 		t.Errorf("bad command/arguments for created Commands")
 	}
 }
