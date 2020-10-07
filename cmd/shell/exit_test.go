@@ -1,10 +1,6 @@
 package shell
 
-import (
-	"os"
-	"os/exec"
-	"testing"
-)
+import "testing"
 
 func TestNewExiter(t *testing.T) {
 	e := NewExiter()
@@ -15,47 +11,39 @@ func TestNewExiter(t *testing.T) {
 }
 
 func TestExitCode1NewExiter(t *testing.T) {
-	if os.Getenv("TESTING_FLAG") == "1" {
-		e := NewExiter()
-		e.Exit(1)
-		return
+	var exitCode int
+
+	oldExit := exitFn
+
+	exitFn = func(code int) {
+		exitCode = code
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestExitCode1NewExiter")
-	cmd.Env = append(os.Environ(), "TESTING_FLAG=1")
+	defer func() { exitFn = oldExit }()
 
-	err := cmd.Run()
+	e := NewExiter()
+	e.Exit(1)
 
-	e, ok := err.(*exec.ExitError)
-
-	if !ok {
-		t.Errorf("exiter did not exit")
-	}
-
-	if e.Error() != "exit status 1" {
-		t.Errorf("expecting exit status 1, got '%s'", e.Error())
+	if exitCode != 1 {
+		t.Errorf("expecting exit code 1, got '%v'", exitCode)
 	}
 }
 
 func TestExitCode2NewExiter(t *testing.T) {
-	if os.Getenv("TESTING_FLAG") == "1" {
-		e := NewExiter()
-		e.Exit(2)
-		return
+	var exitCode int
+
+	oldExit := exitFn
+
+	exitFn = func(code int) {
+		exitCode = code
 	}
 
-	cmd := exec.Command(os.Args[0], "-test.run=TestExitCode2NewExiter")
-	cmd.Env = append(os.Environ(), "TESTING_FLAG=1")
+	defer func() { exitFn = oldExit }()
 
-	err := cmd.Run()
+	e := NewExiter()
+	e.Exit(2)
 
-	e, ok := err.(*exec.ExitError)
-
-	if !ok {
-		t.Errorf("exiter did not exit")
-	}
-
-	if e.Error() != "exit status 2" {
-		t.Errorf("expecting exit status 2, got '%s'", e.Error())
+	if exitCode != 2 {
+		t.Errorf("expecting exit code 2, got '%v'", exitCode)
 	}
 }
