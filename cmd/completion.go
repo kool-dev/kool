@@ -80,13 +80,6 @@ $ kool completion fish > ~/.config/fish/completions/kool.fish
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.ExactValidArgs(1),
 		Hidden:                true,
-		Run: func(cmd *cobra.Command, args []string) {
-			completion.SetWriter(cmd.OutOrStdout())
-
-			if err := completion.Execute(args); err != nil {
-				completion.Error(err)
-				completion.Exit(1)
-			}
-		},
+		Run:                   DefaultCommandRunFunction(completion),
 	}
 }
