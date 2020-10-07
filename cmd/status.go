@@ -177,13 +177,6 @@ func NewStatusCommand(status *KoolStatus) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Shows the status for containers",
-		Run: func(cmd *cobra.Command, args []string) {
-			status.SetWriter(cmd.OutOrStdout())
-
-			if err := status.Execute(args); err != nil {
-				status.Error(err)
-				status.Exit(1)
-			}
-		},
+		Run:   DefaultCommandRunFunction(status),
 	}
 }
