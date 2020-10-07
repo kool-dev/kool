@@ -73,14 +73,7 @@ func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 		Use:   "exec [options] [service] [command]",
 		Short: "Execute a command within a running service container",
 		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			exec.SetWriter(cmd.OutOrStdout())
-
-			if err := exec.Execute(args); err != nil {
-				exec.Error(err)
-				exec.Exit(1)
-			}
-		},
+		Run:   DefaultCommandRunFunction(exec),
 	}
 
 	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
