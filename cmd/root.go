@@ -30,13 +30,15 @@ func RootCmd() *cobra.Command {
 }
 
 // DefaultCommandRunFunction default run function logic
-func DefaultCommandRunFunction(service KoolService) CobraRunFN {
+func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 	return func(cmd *cobra.Command, args []string) {
-		service.SetWriter(cmd.OutOrStdout())
+		for _, service := range services {
+			service.SetWriter(cmd.OutOrStdout())
 
-		if err := service.Execute(args); err != nil {
-			service.Error(err)
-			service.Exit(1)
+			if err := service.Execute(args); err != nil {
+				service.Error(err)
+				service.Exit(1)
+			}
 		}
 	}
 }
