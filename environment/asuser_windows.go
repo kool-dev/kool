@@ -4,8 +4,8 @@ import (
 	"os"
 )
 
-func initAsuser() {
+func initAsuser(envStorage EnvStorage) {
 	// under native windows defaults to using
 	// root inside containers for kool managed images
-	os.Setenv("KOOL_ASUSER", "0")
+	envStorage.Set("KOOL_ASUSER", "0")
 }

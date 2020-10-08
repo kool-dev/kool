@@ -5,7 +5,7 @@ import (
 	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
-	"os"
+	"kool-dev/kool/environment"
 	"testing"
 )
 
@@ -14,6 +14,7 @@ func newFakeKoolExec() *KoolExec {
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 	}
 }
@@ -23,6 +24,7 @@ func newFailedFakeKoolExec() *KoolExec {
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockError: errors.New("error exec")},
 	}
 }
@@ -101,8 +103,7 @@ func TestKoolUserEnvNewExecCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"service", "command"})
 
-	os.Setenv("KOOL_ASUSER", "user_testing")
-	defer os.Unsetenv("KOOL_ASUSER")
+	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "user_testing"
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing exec command; error: %v", err)

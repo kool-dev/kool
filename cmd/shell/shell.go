@@ -51,7 +51,7 @@ func Interactive(exe string, args ...string) (err error) {
 		args = append(dockerComposeDefaultArgs(), args...)
 	}
 
-	if environment.IsTrue("KOOL_VERBOSE") {
+	if environment.NewEnvStorage().IsTrue("KOOL_VERBOSE") {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
@@ -124,5 +124,5 @@ func lookPath(exe string) (err error) {
 }
 
 func dockerComposeDefaultArgs() []string {
-	return []string{"-p", os.Getenv("KOOL_NAME")}
+	return []string{"-p", environment.NewEnvStorage().Get("KOOL_NAME")}
 }

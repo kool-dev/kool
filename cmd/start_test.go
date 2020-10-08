@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/environment"
 	"strings"
 	"testing"
 
@@ -74,6 +75,7 @@ func TestStartAllCommand(t *testing.T) {
 		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
+		environment.NewFakeEnvStorage(),
 		&FakeStartRunner{},
 	}
 
@@ -101,6 +103,7 @@ func TestStartServicesCommand(t *testing.T) {
 		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
+		environment.NewFakeEnvStorage(),
 		&FakeStartRunner{},
 	}
 
@@ -126,6 +129,7 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 		*newFakeKoolService(),
 		&FakeStartFailedDependenciesChecker{},
 		&FakeStartNetworkHandler{},
+		environment.NewFakeEnvStorage(),
 		&FakeStartRunner{},
 	}
 
@@ -147,6 +151,7 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartFailedNetworkHandler{},
+		environment.NewFakeEnvStorage(),
 		&FakeStartRunner{},
 	}
 
@@ -168,6 +173,7 @@ func TestStartWithError(t *testing.T) {
 		*newFakeKoolService(),
 		&FakeStartDependenciesChecker{},
 		&FakeStartNetworkHandler{},
+		environment.NewFakeEnvStorage(),
 		&FakeFailedStartRunner{},
 	}
 

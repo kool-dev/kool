@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/fireworkweb/godotenv"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"os"
+	"kool-dev/kool/environment"
 	"sort"
 	"strings"
 	"testing"
@@ -16,17 +15,20 @@ KOOL_FILTER_TESTING=1
 KOOL_TESTING=1
 `
 
-func setup() {
-	testingEnv, _ := godotenv.Unmarshal(testingEnv)
-	for k, v := range testingEnv {
-		os.Setenv(k, v)
-	}
+func setup(f *KoolInfo) {
+	f.envStorage.Set("KOOL_FILTER_TESTING", "1")
+	f.envStorage.Set("KOOL_TESTING", "1")
 }
 
 func TestInfo(t *testing.T) {
-	setup()
+	f := &KoolInfo{
+		*newDefaultKoolService(),
+		environment.NewFakeEnvStorage(),
+	}
 
-	output, err := execInfoCommand(NewInfoCmd())
+	setup(f)
+
+	output, err := execInfoCommand(NewInfoCmd(f))
 
 	if err != nil {
 		t.Fatal(err)
@@ -40,9 +42,14 @@ func TestInfo(t *testing.T) {
 }
 
 func TestFilteredInfo(t *testing.T) {
-	setup()
+	f := &KoolInfo{
+		*newDefaultKoolService(),
+		environment.NewFakeEnvStorage(),
+	}
 
-	cmd := NewInfoCmd()
+	setup(f)
+
+	cmd := NewInfoCmd(f)
 	cmd.SetArgs([]string{"FILTER"})
 
 	output, err := execInfoCommand(cmd)

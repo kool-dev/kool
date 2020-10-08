@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/api"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/environment"
 	"kool-dev/kool/tgz"
 	"os"
 	"os/exec"
@@ -33,7 +34,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 	outputWriter = shell.NewOutputWriter()
 
-	if url := os.Getenv("KOOL_API_URL"); url != "" {
+	if url := environment.NewEnvStorage().Get("KOOL_API_URL"); url != "" {
 		api.SetBaseURL(url)
 	}
 

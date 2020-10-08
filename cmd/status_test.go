@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/environment"
 	"strings"
 	"testing"
 )
@@ -28,6 +29,7 @@ func newFakeKoolStatus() *KoolStatus {
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
@@ -228,6 +230,7 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 		&FakeChannelCommand{},
 		&FakeChannelCommand{},

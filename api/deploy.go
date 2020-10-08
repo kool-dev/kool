@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"kool-dev/kool/environment"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -61,7 +62,7 @@ func (d *Deploy) SendFile() (err error) {
 	}
 
 	defer file.Close()
-	if domain = os.Getenv("KOOL_DEPLOY_DOMAIN"); domain != "" {
+	if domain = environment.NewEnvStorage().Get("KOOL_DEPLOY_DOMAIN"); domain != "" {
 		if err = w.WriteField("domain", domain); err != nil {
 			return
 		}

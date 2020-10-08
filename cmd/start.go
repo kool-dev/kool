@@ -4,7 +4,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
-	"os"
+	"kool-dev/kool/environment"
 
 	"github.com/spf13/cobra"
 )
@@ -13,9 +13,10 @@ import (
 type KoolStart struct {
 	DefaultKoolService
 
-	check checker.Checker
-	net   network.Handler
-	start builder.Runner
+	check      checker.Checker
+	net        network.Handler
+	envStorage environment.EnvStorage
+	start      builder.Runner
 }
 
 // NewStartCommand initializes new kool start command
@@ -35,6 +36,7 @@ func NewKoolStart() *KoolStart {
 		*newDefaultKoolService(),
 		checker.NewChecker(),
 		network.NewHandler(),
+		environment.NewEnvStorage(),
 		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
 	}
 }
@@ -49,7 +51,7 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 
-	if err = s.net.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 
