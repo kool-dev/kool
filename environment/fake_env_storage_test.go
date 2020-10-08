@@ -27,7 +27,7 @@ func TestFakeEnvStorage(t *testing.T) {
 	}
 }
 
-func TestAllEnvStorage(t *testing.T) {
+func TestAllFakeEnvStorage(t *testing.T) {
 	f := NewFakeEnvStorage()
 
 	f.Envs["VAR_1"] = "1"
@@ -42,7 +42,7 @@ func TestAllEnvStorage(t *testing.T) {
 	}
 }
 
-func TestIsTrueUnsetVariableEnvStorage(t *testing.T) {
+func TestIsTrueUnsetVariableFakeEnvStorage(t *testing.T) {
 	f := NewFakeEnvStorage()
 
 	if f.IsTrue("undefined-env-variable") {
@@ -50,7 +50,7 @@ func TestIsTrueUnsetVariableEnvStorage(t *testing.T) {
 	}
 }
 
-func TestIsTrueNumeric1EnvStorage(t *testing.T) {
+func TestIsTrueNumeric1FakeEnvStorage(t *testing.T) {
 	f := NewFakeEnvStorage()
 	f.Envs["env-numeric"] = "1"
 
@@ -59,7 +59,7 @@ func TestIsTrueNumeric1EnvStorage(t *testing.T) {
 	}
 }
 
-func TestIsTrueStringTrueEnvStorage(t *testing.T) {
+func TestIsTrueStringTrueFakeEnvStorage(t *testing.T) {
 	f := NewFakeEnvStorage()
 	f.Envs["env-string"] = "true"
 
@@ -68,7 +68,7 @@ func TestIsTrueStringTrueEnvStorage(t *testing.T) {
 	}
 }
 
-func TestIsTrueNonBooleanStringEnvStorage(t *testing.T) {
+func TestIsTrueNonBooleanStringFakeEnvStorage(t *testing.T) {
 	f := NewFakeEnvStorage()
 	f.Envs["env-other"] = "something"
 

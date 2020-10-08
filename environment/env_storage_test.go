@@ -34,3 +34,54 @@ func TestEnvStorage(t *testing.T) {
 		t.Error("failed to load environment file on EnvStorage")
 	}
 }
+
+func TestAllEnvStorage(t *testing.T) {
+	e := NewEnvStorage()
+
+	os.Setenv("TESTING_ALL_VAR_1", "1")
+	os.Setenv("TESTING_ALL_VAR_1", "1")
+
+	envs := e.All()
+
+	if len(envs) != len(os.Environ()) {
+		t.Error("failed to return all environment variables")
+	}
+}
+
+func TestIsTrueUnsetVariableEnvStorage(t *testing.T) {
+	e := NewEnvStorage()
+
+	if e.IsTrue("undefined-env-variable") {
+		t.Error("Undefined environment variable thought as true.")
+	}
+}
+
+func TestIsTrueNumeric1EnvStorage(t *testing.T) {
+	e := NewEnvStorage()
+
+	os.Setenv("env-numeric", "1")
+
+	if !e.IsTrue("env-numeric") {
+		t.Error("Environment variable with value 1 should be true.")
+	}
+}
+
+func TestIsTrueStringTrueEnvStorage(t *testing.T) {
+	e := NewEnvStorage()
+
+	os.Setenv("env-string", "true")
+
+	if !e.IsTrue("env-string") {
+		t.Error("Environment variable with value 'true' should be true.")
+	}
+}
+
+func TestIsTrueNonBooleanStringEnvStorage(t *testing.T) {
+	e := NewEnvStorage()
+
+	os.Setenv("env-other", "something")
+
+	if e.IsTrue("env-other") {
+		t.Error("Environment variable non-boolean value should not be true.")
+	}
+}
