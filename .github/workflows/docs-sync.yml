@@ -6,9 +6,10 @@ on:
       - master
     paths:
       - docs/**
+      - .github/workflows/docs-sync.yml
 
 jobs:
-  docker-description:
+  docs-sync:
     runs-on: ubuntu-latest
     steps:
       - run: curl -fsSL http://kool.dev/sync-docs?token=$KOOL_DEV_DOCS_TOKEN
