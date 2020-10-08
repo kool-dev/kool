@@ -158,7 +158,6 @@ networks:
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
   mysql: kool exec database mysql -uroot -p$DB_PASSWORD
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD
 
   setup:
     - cp .env.example .env
@@ -251,10 +250,8 @@ networks:
   nest: kool exec app nest
 
   mysql: kool exec database mysql -uroot -prootpass
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -prootpass
 
   mongo: kool exec mongo mongo -uroot -prootpass
-  mongo-no-tty: kool exec --disable-tty mongo mongo -uroot -prootpass
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
@@ -511,7 +508,6 @@ networks:
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
   mysql: kool exec database mysql -uroot -prootpass
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -prootpass
 
   setup:
     - kool start
@@ -568,8 +564,7 @@ networks:
   php: kool exec app php
   wp: kool exec app wp
 
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -p$DB_PASSWORD`,
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD`,
 	}
 	return presets
 }

@@ -14,9 +14,6 @@ const DefaultEnv string = `
 # Host user for mapping execution within the containers using kool images
 # KOOL_ASUSER=$UID
 
-# Docker Run flags
-# KOOL_TTY_DISABLE=1
-
 # Docker Composer
 # KOOL_GLOBAL_NETWORK="custom-network" # by default will be generated on the fly
 `
