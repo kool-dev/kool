@@ -4,10 +4,8 @@ scripts:
   nest: kool exec app nest
 
   mysql: kool exec database mysql -uroot -prootpass
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -prootpass
 
   mongo: kool exec mongo mongo -uroot -prootpass
-  mongo-no-tty: kool exec --disable-tty mongo mongo -uroot -prootpass
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm

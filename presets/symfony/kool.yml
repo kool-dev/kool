@@ -7,7 +7,6 @@ scripts:
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
   mysql: kool exec database mysql -uroot -prootpass
-  mysql-no-tty: kool exec --disable-tty database mysql -uroot -prootpass
 
   setup:
     - kool start
