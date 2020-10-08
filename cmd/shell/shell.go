@@ -47,10 +47,6 @@ func Interactive(exe string, args ...string) (err error) {
 
 	outputWriter = NewOutputWriter()
 
-	if lookedUp == nil {
-		lookedUp = make(map[string]bool)
-	}
-
 	if exe == "docker-compose" {
 		args = append(dockerComposeDefaultArgs(), args...)
 	}
@@ -67,22 +63,11 @@ func Interactive(exe string, args ...string) (err error) {
 
 	defer parsedRedirect.Close()
 
-	cmd = exec.Command(exe, parsedRedirect.args...)
-	cmd.Env = os.Environ()
-	cmd.Stdout = parsedRedirect.out
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = parsedRedirect.in
+	cmd = parsedRedirect.CreateCommand(exe)
 
-	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
-		// non-kool and non-absolute/relative path... let's look it up
-		_, err = exec.LookPath(exe)
-
-		if err != nil {
-			outputWriter.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
-			os.Exit(2)
-		}
-
-		lookedUp[exe] = true
+	if err = lookPath(exe); err != nil {
+		outputWriter.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
+		os.Exit(2)
 	}
 
 	err = cmd.Start()
@@ -122,6 +107,20 @@ func Interactive(exe string, args ...string) (err error) {
 			}
 		}
 	}
+}
+
+func lookPath(exe string) (err error) {
+	if lookedUp == nil {
+		lookedUp = make(map[string]bool)
+	}
+
+	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
+		// non-kool and non-absolute/relative path... let's look it up
+		_, err = exec.LookPath(exe)
+
+		lookedUp[exe] = true
+	}
+	return
 }
 
 func dockerComposeDefaultArgs() []string {

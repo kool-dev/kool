@@ -9,6 +9,7 @@
 ![Docker Hub](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
 ![Golang CI Lint](https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield)
+[![Maintainability](https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability)](https://codeclimate.com/github/kool-dev/kool/maintainability)
 
 **kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environments - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging Kubernetes cloud deployment for staging and production deployments.
 

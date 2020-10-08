@@ -3,6 +3,7 @@ package shell
 import (
 	"io"
 	"os"
+	"os/exec"
 )
 
 // InputRedirect holds the key to indicate the right part
@@ -34,7 +35,7 @@ type ParsedRedirect interface {
 	Close()
 }
 
-// Close close readers and writers if necessary
+// Close closes reader and writer if necessary
 func (p *DefaultParsedRedirect) Close() {
 	if p.closeStdin {
 		p.in.Close()
@@ -44,12 +45,23 @@ func (p *DefaultParsedRedirect) Close() {
 	}
 }
 
+// CreateCommand creates a new *exec.Command for given executable
+func (p *DefaultParsedRedirect) CreateCommand(executable string) (cmd *exec.Cmd) {
+	cmd = exec.Command(executable, p.args...)
+	cmd.Env = os.Environ()
+	cmd.Stdout = p.out
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = p.in
+	return
+}
+
 func parseRedirects(originalArgs []string) (parsed *DefaultParsedRedirect, err error) {
 	var (
 		numArgs int
 		inFile  io.ReadCloser
 		outFile io.WriteCloser
 	)
+
 	parsed = &DefaultParsedRedirect{originalArgs, os.Stdin, os.Stdout, false, false}
 
 	if numArgs = len(parsed.args); numArgs < 2 {
