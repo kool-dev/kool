@@ -1,0 +1,16 @@
+name: Docs Sync
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - docs/**
+
+jobs:
+  docker-description:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsSL http://kool.dev/sync-docs?token=$KOOL_DEV_DOCS_TOKEN
+        env:
+          KOOL_DEV_DOCS_TOKEN: ${{ secrets.KOOL_DEV_DOCS_TOKEN }}
