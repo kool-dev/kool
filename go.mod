@@ -3,6 +3,7 @@ module kool-dev/kool
 go 1.14
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.1.1
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/creack/pty v1.1.11
 	github.com/fireworkweb/godotenv v1.3.1-0.20200525231918-bdecbe8dfc58

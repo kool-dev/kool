@@ -29,4 +29,11 @@ func TestFakeParser(t *testing.T) {
 	if !f.CalledWriteFiles || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
 		t.Error("failed to use mocked WriteFiles function on FakeParser")
 	}
+
+	f.MockPresets = []string{"preset"}
+	presets := f.GetPresets()
+
+	if !f.CalledGetPresets || len(presets) != 1 || presets[0] != "preset" {
+		t.Error("failed to use mocked GetPresets function on FakeParser")
+	}
 }
