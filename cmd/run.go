@@ -4,7 +4,7 @@ import (
 	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
-	"os"
+	"kool-dev/kool/environment"
 	"path"
 
 	"github.com/spf13/cobra"
@@ -13,8 +13,9 @@ import (
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
-	parser   parser.Parser
-	commands []builder.Command
+	parser     parser.Parser
+	envStorage environment.EnvStorage
+	commands   []builder.Command
 }
 
 // ErrExtraArguments Extra arguments error
@@ -37,6 +38,7 @@ func NewKoolRun() *KoolRun {
 	return &KoolRun{
 		*newDefaultKoolService(),
 		parser.NewParser(),
+		environment.NewEnvStorage(),
 		[]builder.Command{},
 	}
 }
@@ -49,9 +51,9 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	)
 
 	// look for kool.yml on current working directory
-	_ = r.parser.AddLookupPath(os.Getenv("PWD"))
+	_ = r.parser.AddLookupPath(r.envStorage.Get("PWD"))
 	// look for kool.yml on kool folder within user home directory
-	_ = r.parser.AddLookupPath(path.Join(os.Getenv("HOME"), "kool"))
+	_ = r.parser.AddLookupPath(path.Join(r.envStorage.Get("HOME"), "kool"))
 
 	script = originalArgs[0]
 	args = originalArgs[1:]

@@ -10,10 +10,12 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
+var envFile string = ".env"
+
 // InitEnvironmentVariables handles the reading of .env files and
 // setting up important environment variables necessary for kool
 // to operate as expected.
-func InitEnvironmentVariables() {
+func InitEnvironmentVariables(envStorage EnvStorage, defaultEnvValues string) {
 	var (
 		homeDir, workDir string
 		err              error
@@ -23,26 +25,25 @@ func InitEnvironmentVariables() {
 	if err != nil {
 		log.Fatal("Could not evaluate HOME directory - ", err)
 	}
-	if os.Getenv("HOME") == "" {
-		os.Setenv("HOME", homeDir)
+	if envStorage.Get("HOME") == "" {
+		envStorage.Set("HOME", homeDir)
 	}
-	if os.Getenv("UID") == "" {
-		os.Setenv("UID", fmt.Sprintf("%d", os.Getuid()))
+	if envStorage.Get("UID") == "" {
+		envStorage.Set("UID", fmt.Sprintf("%d", os.Getuid()))
 	}
 
-	if os.Getenv("PWD") == "" {
+	if envStorage.Get("PWD") == "" {
 		workDir, err = os.Getwd()
 		if err != nil {
 			log.Fatal("Could not evaluate working directory - ", err)
 		}
-		os.Setenv("PWD", workDir)
+		envStorage.Set("PWD", workDir)
 	}
 
-	var file string = ".env"
-	if _, err = os.Stat(file); !os.IsNotExist(err) {
-		err = godotenv.Load(file)
+	if _, err = os.Stat(envFile); !os.IsNotExist(err) {
+		err = envStorage.Load(envFile)
 		if err != nil {
-			log.Fatal("Failure loading environment file ", file, " error: '", err, "'")
+			log.Fatal("Failure loading environment file ", envFile, " error: '", err, "'")
 		}
 	}
 
@@ -53,23 +54,23 @@ func InitEnvironmentVariables() {
 	for _, env := range allEnv {
 		currentEnv[strings.Split(env, "=")[0]] = true
 	}
-	defaultEnv, _ := godotenv.Unmarshal(DefaultEnv)
+	defaultEnv, _ := godotenv.Unmarshal(defaultEnvValues)
 	for k, v := range defaultEnv {
 		if _, exists := currentEnv[k]; !exists {
-			os.Setenv(k, v)
+			envStorage.Set(k, v)
 		}
 	}
 
 	// Now that we loaded up the files, we will check for
 	// missing variables that we need to fix
-	if os.Getenv("KOOL_NAME") == "" {
-		pieces := strings.Split(os.Getenv("PWD"), string(os.PathSeparator))
-		os.Setenv("KOOL_NAME", pieces[len(pieces)-1])
+	if envStorage.Get("KOOL_NAME") == "" {
+		pieces := strings.Split(envStorage.Get("PWD"), string(os.PathSeparator))
+		envStorage.Set("KOOL_NAME", pieces[len(pieces)-1])
 	}
 
-	if os.Getenv("KOOL_GLOBAL_NETWORK") == "" {
-		os.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
+	if envStorage.Get("KOOL_GLOBAL_NETWORK") == "" {
+		envStorage.Set("KOOL_GLOBAL_NETWORK", "kool_global")
 	}
 
-	initAsuser()
+	initAsuser(envStorage)
 }

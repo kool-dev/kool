@@ -5,7 +5,7 @@ import (
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
-	"os"
+	"kool-dev/kool/environment"
 	"sort"
 	"strings"
 
@@ -16,8 +16,9 @@ import (
 type KoolStatus struct {
 	DefaultKoolService
 
-	check checker.Checker
-	net   network.Handler
+	check      checker.Checker
+	net        network.Handler
+	envStorage environment.EnvStorage
 
 	getServicesRunner          builder.Runner
 	getServiceIDRunner         builder.Runner
@@ -47,6 +48,7 @@ func NewKoolStatus() *KoolStatus {
 		*newDefaultKoolService(),
 		checker.NewChecker(),
 		network.NewHandler(),
+		environment.NewEnvStorage(),
 		builder.NewCommand("docker-compose", "ps", "--services"),
 		builder.NewCommand("docker-compose", "ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
@@ -60,7 +62,7 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		return
 	}
 
-	if err = s.net.HandleGlobalNetwork(os.Getenv("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK")); err != nil {
 		return
 	}
 

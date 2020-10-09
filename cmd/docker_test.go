@@ -5,6 +5,7 @@ import (
 	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/environment"
 	"os"
 	"testing"
 )
@@ -14,6 +15,7 @@ func newFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		&shell.FakeTerminalChecker{MockIsTerminal: false},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 	}
 }
@@ -23,6 +25,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		&shell.FakeTerminalChecker{MockIsTerminal: false},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockError: errors.New("error docker")},
 	}
 }
@@ -116,8 +119,7 @@ func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	cmd := NewDockerCommand(f)
 
-	os.Setenv("KOOL_ASUSER", "kooldev_user_test")
-	defer os.Unsetenv("KOOL_ASUSER")
+	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "kooldev_user_test"
 
 	cmd.SetArgs([]string{"kooldev/image"})
 
@@ -136,8 +138,7 @@ func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	cmd := NewDockerCommand(f)
 
-	os.Setenv("KOOL_ASUSER", "kooldev_user_test")
-	defer os.Unsetenv("KOOL_ASUSER")
+	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "kooldev_user_test"
 
 	cmd.SetArgs([]string{"fireworkweb/image"})
 

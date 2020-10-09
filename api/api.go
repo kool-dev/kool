@@ -1,12 +1,13 @@
 package api
 
 import (
+	"kool-dev/kool/environment"
 	"net/http"
-	"os"
 )
 
 var (
 	apiBaseURL string = "https://kool.dev/api"
+	envStorage        = environment.NewEnvStorage()
 )
 
 // SetBaseURL defines the target Kool API URL to be used
@@ -16,7 +17,7 @@ func SetBaseURL(url string) {
 }
 
 func doRequest(request *http.Request) (resp *http.Response, err error) {
-	var apiToken string = os.Getenv("KOOL_API_TOKEN")
+	var apiToken string = envStorage.Get("KOOL_API_TOKEN")
 
 	if apiToken == "" {
 		err = ErrMissingToken

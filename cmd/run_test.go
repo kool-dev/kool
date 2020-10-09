@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/environment"
 	"testing"
 )
 
@@ -13,6 +14,7 @@ func newFakeKoolRun(mockParsedCommands []builder.Command, mockParseError error) 
 	return &KoolRun{
 		*newFakeKoolService(),
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
+		environment.NewFakeEnvStorage(),
 		[]builder.Command{},
 	}
 }
