@@ -3,6 +3,7 @@ package presets
 import (
 	"errors"
 	"os"
+	"sort"
 )
 
 // DefaultParser holds presets parsing data
@@ -13,6 +14,7 @@ type DefaultParser struct {
 // Parser holds presets parsing logic
 type Parser interface {
 	Exists(string) bool
+	GetPresets() []string
 	LookUpFiles(string) []string
 	WriteFiles(string) (string, error)
 }
@@ -20,6 +22,19 @@ type Parser interface {
 // Exists check if preset exists
 func (p *DefaultParser) Exists(preset string) (exists bool) {
 	_, exists = p.Presets[preset]
+	return
+}
+
+// GetPresets get all presets names
+func (p *DefaultParser) GetPresets() (presets []string) {
+	if len(p.Presets) == 0 {
+		return
+	}
+
+	for key := range p.Presets {
+		presets = append(presets, key)
+	}
+	sort.Strings(presets)
 	return
 }
 

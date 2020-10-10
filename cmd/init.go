@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"kool-dev/kool/cmd/presets"
+	"kool-dev/kool/cmd/shell"
 
 	"github.com/spf13/cobra"
 )
@@ -16,8 +17,9 @@ type KoolInitFlags struct {
 // KoolInit holds handlers and functions to implement the init command logic
 type KoolInit struct {
 	DefaultKoolService
-	Flags  *KoolInitFlags
-	parser presets.Parser
+	Flags        *KoolInitFlags
+	parser       presets.Parser
+	promptSelect shell.PromptSelect
 }
 
 // ErrPresetFilesAlreadyExists error for existing presets files
@@ -38,6 +40,7 @@ func NewKoolInit() *KoolInit {
 		*newDefaultKoolService(),
 		&KoolInitFlags{false},
 		&presets.DefaultParser{Presets: presets.GetAll()},
+		shell.NewPromptSelect(),
 	}
 }
 
@@ -45,7 +48,13 @@ func NewKoolInit() *KoolInit {
 func (i *KoolInit) Execute(args []string) (err error) {
 	var fileError, preset string
 
-	preset = args[0]
+	if len(args) == 0 {
+		if preset, err = i.promptSelect.Ask("What preset do you want to use", i.parser.GetPresets()); err != nil {
+			return
+		}
+	} else {
+		preset = args[0]
+	}
 
 	if !i.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
@@ -71,6 +80,7 @@ func (i *KoolInit) Execute(args []string) (err error) {
 		return
 	}
 
+	i.Success("Preset ", preset, " initialized!")
 	return
 }
 
@@ -79,7 +89,7 @@ func NewInitCommand(init *KoolInit) (initCmd *cobra.Command) {
 	initCmd = &cobra.Command{
 		Use:   "init [PRESET]",
 		Short: "Initialize kool preset in the current working directory",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			init.SetWriter(cmd.OutOrStdout())
 
@@ -87,12 +97,13 @@ func NewInitCommand(init *KoolInit) (initCmd *cobra.Command) {
 				if err.Error() == ErrPresetFilesAlreadyExists.Error() {
 					init.Warning("Some preset files already exist. In case you wanna override them, use --override.")
 					init.Exit(2)
+				} else if err.Error() == shell.ErrPromptSelectInterrupted.Error() {
+					init.Warning("Operation Cancelled")
+					init.Exit(0)
 				} else {
 					init.Error(err)
 					init.Exit(1)
 				}
-			} else {
-				init.Success("Preset ", args[0], " initialized!")
 			}
 		},
 	}
