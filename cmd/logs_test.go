@@ -197,3 +197,22 @@ func TestNoContainersNewLogsCommand(t *testing.T) {
 		t.Error("should not call docker-compose logs if there are no containers")
 	}
 }
+
+func TestFailingNoContainersNewLogsCommand(t *testing.T) {
+	f := newFakeKoolLogs()
+	f.list.(*builder.FakeCommand).MockError = errors.New("error list")
+
+	cmd := NewLogsCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing logs command; error: %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("expecting command to exit due to an error.")
+	}
+
+	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error list" {
+		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
+	}
+}
