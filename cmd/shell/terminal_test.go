@@ -30,7 +30,7 @@ func TestPipeIsTerminal(t *testing.T) {
 
 	terminalChecker := NewTerminalChecker()
 
-	if terminalChecker.IsTerminal(c1.Stdout) {
+	if terminalChecker.IsTerminal(c1.Stdin, c1.Stdout) {
 		t.Error("unexpected tty terminal on piped command")
 	}
 }
@@ -45,7 +45,7 @@ func TestPtyIsTerminal(t *testing.T) {
 
 	terminalChecker := NewTerminalChecker()
 
-	if !terminalChecker.IsTerminal(f) {
+	if !terminalChecker.IsTerminal(f, f) {
 		t.Error("expecting tty terminal on command")
 	}
 }

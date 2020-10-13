@@ -47,7 +47,7 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if !e.terminal.IsTerminal(e.GetWriter()) {
+	if !e.terminal.IsTerminal(e.GetReader(), e.GetWriter()) {
 		e.composeExec.AppendArgs("-T")
 	}
 

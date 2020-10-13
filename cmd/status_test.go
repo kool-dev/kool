@@ -48,6 +48,10 @@ func TestNewKoolStatus(t *testing.T) {
 		t.Errorf("unexpected shell.Exiter on default KoolStatus instance")
 	}
 
+	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
+		t.Errorf("unexpected shell.InputReader on default KoolStatus instance")
+	}
+
 	if _, ok := k.check.(*checker.DefaultChecker); !ok {
 		t.Errorf("unexpected checker.Checker on default KoolStatus instance")
 	}

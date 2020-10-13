@@ -28,6 +28,10 @@ func TestNewKoolStop(t *testing.T) {
 		t.Errorf("unexpected shell.Exiter on default KoolStop instance")
 	}
 
+	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
+		t.Errorf("unexpected shell.InputReader on default KoolStop instance")
+	}
+
 	if k.Flags == nil {
 		t.Errorf("Flags not initialized on default KoolStop instance")
 	} else if k.Flags.Purge {
