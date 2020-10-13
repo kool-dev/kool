@@ -13,6 +13,7 @@ type KoolService interface {
 
 	shell.Exiter
 	shell.OutputWriter
+	shell.InputReader
 }
 
 // DefaultKoolService holds handlers and functions shared by all
@@ -20,12 +21,14 @@ type KoolService interface {
 type DefaultKoolService struct {
 	exiter shell.Exiter
 	out    shell.OutputWriter
+	in     shell.InputReader
 }
 
 func newDefaultKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
 		shell.NewExiter(),
 		shell.NewOutputWriter(),
+		shell.NewInputReader(),
 	}
 }
 
@@ -43,6 +46,17 @@ func (k *DefaultKoolService) GetWriter() (w io.Writer) {
 // SetWriter proxies the call to the given OutputWriter
 func (k *DefaultKoolService) SetWriter(w io.Writer) {
 	k.out.SetWriter(w)
+}
+
+// GetReader proxies the call to the given InputReader
+func (k *DefaultKoolService) GetReader() (r io.Reader) {
+	r = k.in.GetReader()
+	return
+}
+
+// SetReader proxies the call to the given InputReader
+func (k *DefaultKoolService) SetReader(r io.Reader) {
+	k.in.SetReader(r)
 }
 
 // Println proxies the call to the given OutputWriter

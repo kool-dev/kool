@@ -34,6 +34,7 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 	return func(cmd *cobra.Command, args []string) {
 		for _, service := range services {
 			service.SetWriter(cmd.OutOrStdout())
+			service.SetReader(cmd.InOrStdin())
 
 			if err := service.Execute(args); err != nil {
 				service.Error(err)

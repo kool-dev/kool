@@ -53,7 +53,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 	image := args[0]
 	workDir, _ := os.Getwd()
 
-	if d.terminal.IsTerminal(d.GetWriter()) {
+	if d.terminal.IsTerminal(d.GetReader(), d.GetWriter()) {
 		d.dockerRun.AppendArgs("-t")
 	}
 

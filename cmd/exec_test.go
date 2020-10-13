@@ -40,6 +40,10 @@ func TestNewKoolExec(t *testing.T) {
 		t.Errorf("unexpected shell.Exiter on default KoolExec instance")
 	}
 
+	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
+		t.Errorf("unexpected shell.InputReader on default KoolExec instance")
+	}
+
 	if k.Flags == nil {
 		t.Errorf("Flags not initialized on default KoolExec instance")
 	} else {

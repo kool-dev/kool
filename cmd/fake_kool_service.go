@@ -10,6 +10,8 @@ type FakeKoolService struct {
 	CalledExit      bool
 	CalledGetWriter bool
 	CalledSetWriter bool
+	CalledGetReader bool
+	CalledSetReader bool
 	CalledPrintln   bool
 	CalledError     bool
 	CalledWarning   bool
@@ -40,6 +42,17 @@ func (f *FakeKoolService) GetWriter() (w io.Writer) {
 // SetWriter mocks the function for testing
 func (f *FakeKoolService) SetWriter(w io.Writer) {
 	f.CalledSetWriter = true
+}
+
+// GetReader mocks the function for testing
+func (f *FakeKoolService) GetReader() (r io.Reader) {
+	f.CalledGetReader = true
+	return
+}
+
+// SetReader mocks the function for testing
+func (f *FakeKoolService) SetReader(r io.Reader) {
+	f.CalledSetReader = true
 }
 
 // Println mocks the function for testing

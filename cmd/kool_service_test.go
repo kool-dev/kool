@@ -10,6 +10,7 @@ func newFakeKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
 		&shell.FakeExiter{},
 		&shell.FakeOutputWriter{},
+		&shell.FakeInputReader{},
 	}
 }
 
@@ -70,5 +71,17 @@ func TestKoolServiceProxies(t *testing.T) {
 
 	if !k.out.(*shell.FakeOutputWriter).CalledGetWriter {
 		t.Error("GetWriter was not proxied by DefaultKoolService")
+	}
+
+	k.SetReader(nil)
+
+	if !k.in.(*shell.FakeInputReader).CalledSetReader {
+		t.Error("SetReader was not proxied by DefaultKoolService")
+	}
+
+	k.GetReader()
+
+	if !k.in.(*shell.FakeInputReader).CalledGetReader {
+		t.Error("GetReader was not proxied by DefaultKoolService")
 	}
 }

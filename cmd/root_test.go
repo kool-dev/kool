@@ -17,6 +17,11 @@ func assertServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage
 		return
 	}
 
+	if !service.CalledSetReader {
+		errMessage = "did not call SetReader on kool service"
+		return
+	}
+
 	if !service.CalledExecute {
 		errMessage = "did not call Execute on kool service"
 		return
@@ -28,6 +33,11 @@ func assertServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage
 func assertFailingServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage string) {
 	if !service.CalledSetWriter {
 		errMessage = "did not call SetWriter on kool service"
+		return
+	}
+
+	if !service.CalledSetReader {
+		errMessage = "did not call SetReader on kool service"
 		return
 	}
 
