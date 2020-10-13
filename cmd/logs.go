@@ -3,6 +3,7 @@ package cmd
 import (
 	"kool-dev/kool/cmd/builder"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,7 @@ type KoolLogs struct {
 	DefaultKoolService
 	Flags *KoolLogsFlags
 
+	list builder.Command
 	logs builder.Command
 }
 
@@ -35,12 +37,24 @@ func NewKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newDefaultKoolService(),
 		&KoolLogsFlags{25, false},
+		builder.NewCommand("docker-compose", "ps", "-aq"),
 		builder.NewCommand("docker-compose", "logs"),
 	}
 }
 
 // Execute runs the logs logic with incoming arguments.
 func (l *KoolLogs) Execute(args []string) (err error) {
+	var services string
+
+	if services, err = l.list.Exec(args...); err != nil {
+		return
+	}
+
+	if services = strings.TrimSpace(services); services == "" {
+		l.Warning("There are no containers")
+		return
+	}
+
 	if l.Flags.Tail == 0 {
 		l.logs.AppendArgs("--tail", "all")
 	} else {

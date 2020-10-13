@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"testing"
@@ -11,6 +12,7 @@ func newFakeKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newFakeKoolService(),
 		&KoolLogsFlags{25, false},
+		&builder.FakeCommand{MockExecOut: "app"},
 		&builder.FakeCommand{},
 	}
 }
@@ -19,6 +21,7 @@ func newFakeFailedKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newFakeKoolService(),
 		&KoolLogsFlags{25, false},
+		&builder.FakeCommand{MockExecOut: "app"},
 		&builder.FakeCommand{MockError: errors.New("error logs")},
 	}
 }
@@ -166,6 +169,50 @@ func TestFailingNewLogsCommand(t *testing.T) {
 	}
 
 	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error logs" {
+		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
+	}
+}
+
+func TestNoContainersNewLogsCommand(t *testing.T) {
+	f := newFakeKoolLogs()
+	f.list.(*builder.FakeCommand).MockExecOut = ""
+
+	cmd := NewLogsCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing logs command; error: %v", err)
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+		t.Error("did not call Warning")
+	}
+
+	expectedWarning := "There are no containers"
+
+	if gotWarning := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...); gotWarning != expectedWarning {
+		t.Errorf("expecting warning '%s', got '%s'", expectedWarning, gotWarning)
+	}
+
+	if f.logs.(*builder.FakeCommand).CalledInteractive {
+		t.Error("should not call docker-compose logs if there are no containers")
+	}
+}
+
+func TestFailingNoContainersNewLogsCommand(t *testing.T) {
+	f := newFakeKoolLogs()
+	f.list.(*builder.FakeCommand).MockError = errors.New("error list")
+
+	cmd := NewLogsCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing logs command; error: %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("expecting command to exit due to an error.")
+	}
+
+	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error list" {
 		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
 	}
 }
