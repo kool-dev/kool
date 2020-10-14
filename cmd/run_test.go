@@ -240,3 +240,29 @@ func TestNewRunCommandUsageTemplate(t *testing.T) {
 		t.Error("did not find testing_script as available script on usage text")
 	}
 }
+
+func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
+	f := newFakeKoolRun([]builder.Command{}, nil)
+	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
+	f.parser.(*parser.FakeParser).MockParseAvailableScriptsError = errors.New("error parse avaliable scripts")
+	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_VERBOSE"] = "1"
+
+	cmd := NewRunCommand(f)
+
+	usageTemplate := cmd.UsageTemplate()
+
+	if strings.Contains(usageTemplate, "testing_script") {
+		t.Error("should not find testing_script as available script on usage text due to error on parsing scripts")
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledPrintln {
+		t.Error("did not call Println to output error on getting available scripts when KOOL_VERBOSE is true")
+	}
+
+	expected := "$ got an error trying to add available scripts to command usage template; error: error parse avaliable scripts"
+	output := strings.TrimSpace(fmt.Sprintln(f.out.(*shell.FakeOutputWriter).Out...))
+
+	if expected != output {
+		t.Errorf("expecting message '%s', got '%s'", expected, output)
+	}
+}

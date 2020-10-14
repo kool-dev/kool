@@ -12,7 +12,7 @@ import (
 type Parser interface {
 	AddLookupPath(string) error
 	Parse(string) ([]builder.Command, error)
-	GetScripts() ([]string, error)
+	ParseAvailableScripts() ([]string, error)
 }
 
 // DefaultParser implements all default behavior for using kool.yml files.
@@ -84,8 +84,8 @@ func (p *DefaultParser) Parse(script string) (commands []builder.Command, err er
 	return
 }
 
-// GetScripts get all parsed scripts
-func (p *DefaultParser) GetScripts() (scripts []string, err error) {
+// ParseAvailableScripts parse all available scripts
+func (p *DefaultParser) ParseAvailableScripts() (scripts []string, err error) {
 	var (
 		koolFile     string
 		parsedFile   *KoolYaml

@@ -71,14 +71,14 @@ func TestParserParse(t *testing.T) {
 	}
 }
 
-func TestParserGetScripts(t *testing.T) {
+func TestParserParseAvailableScripts(t *testing.T) {
 	var (
 		p       Parser = NewParser()
 		scripts []string
 		err     error
 	)
 
-	if _, err = p.GetScripts(); err == nil {
+	if _, err = p.ParseAvailableScripts(); err == nil {
 		t.Error("expecting 'kool.yml not found' error, got none")
 	}
 
@@ -89,7 +89,7 @@ func TestParserGetScripts(t *testing.T) {
 	workDir, _ := os.Getwd()
 	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
 
-	if scripts, err = p.GetScripts(); err != nil {
+	if scripts, err = p.ParseAvailableScripts(); err != nil {
 		t.Errorf("unexpected error; error: %s", err)
 	}
 

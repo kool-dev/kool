@@ -102,8 +102,15 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	// look for kool.yml on kool folder within user home directory
 	_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
 
-	if usageTempl, err := getRunUsageTemplate(run, runCmd); err == nil {
+	var (
+		usageTempl string
+		err        error
+	)
+
+	if usageTempl, err = getRunUsageTemplate(run, runCmd); err == nil {
 		runCmd.SetUsageTemplate(usageTempl)
+	} else if run.envStorage.IsTrue("KOOL_VERBOSE") {
+		run.Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
 	}
 
 	return
@@ -115,7 +122,7 @@ func getRunUsageTemplate(run *KoolRun, cmd *cobra.Command) (templ string, err er
 		scripts []string
 	)
 
-	if scripts, err = run.parser.GetScripts(); err != nil {
+	if scripts, err = run.parser.ParseAvailableScripts(); err != nil {
 		return
 	}
 

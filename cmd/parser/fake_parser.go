@@ -6,14 +6,14 @@ import (
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledAddLookupPath bool
-	TargetFiles         []string
-	CalledParse         bool
-	CalledGetScripts    bool
-	MockParsedCommands  []builder.Command
-	MockParseError      error
-	MockScripts         []string
-	MockGetScriptsError error
+	CalledAddLookupPath            bool
+	TargetFiles                    []string
+	CalledParse                    bool
+	CalledParseAvailableScripts    bool
+	MockParsedCommands             []builder.Command
+	MockParseError                 error
+	MockScripts                    []string
+	MockParseAvailableScriptsError error
 }
 
 // AddLookupPath implements fake AddLookupPath behavior
@@ -31,10 +31,10 @@ func (f *FakeParser) Parse(script string) (commands []builder.Command, err error
 	return
 }
 
-// GetScripts implements fake GetScripts behavior
-func (f *FakeParser) GetScripts() (scripts []string, err error) {
-	f.CalledGetScripts = true
+// ParseAvailableScripts implements fake ParseAvailableScripts behavior
+func (f *FakeParser) ParseAvailableScripts() (scripts []string, err error) {
+	f.CalledParseAvailableScripts = true
 	scripts = f.MockScripts
-	err = f.MockGetScriptsError
+	err = f.MockParseAvailableScriptsError
 	return
 }
