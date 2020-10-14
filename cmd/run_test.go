@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
+	"strings"
 	"testing"
 )
 
@@ -225,5 +226,17 @@ func TestNewRunCommandWithArguments(t *testing.T) {
 
 	if len(fakeCommandArgs) != 2 || fakeCommandArgs[0] != "arg1" || fakeCommandArgs[1] != "arg2" {
 		t.Error("did not call AppendArgs properly for parsed command")
+	}
+}
+
+func TestNewRunCommandUsageTemplate(t *testing.T) {
+	f := newFakeKoolRun([]builder.Command{}, nil)
+	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
+	cmd := NewRunCommand(f)
+
+	usageTemplate := cmd.UsageTemplate()
+
+	if !strings.Contains(usageTemplate, "testing_script") {
+		t.Error("did not find testing_script as available script on usage text")
 	}
 }
