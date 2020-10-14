@@ -5,12 +5,14 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"os"
 	"path"
+	"sort"
 )
 
 // Parser defines the functions required for handling kool.yml files.
 type Parser interface {
 	AddLookupPath(string) error
 	Parse(string) ([]builder.Command, error)
+	ParseAvailableScripts() ([]string, error)
 }
 
 // DefaultParser implements all default behavior for using kool.yml files.
@@ -18,7 +20,7 @@ type DefaultParser struct {
 	targetFiles []string
 }
 
-// NewParser initialises a Parser to be used for handling kool.yml scripts.
+// NewParser initializes a Parser to be used for handling kool.yml scripts.
 func NewParser() Parser {
 	return &DefaultParser{}
 }
@@ -79,5 +81,39 @@ func (p *DefaultParser) Parse(script string) (commands []builder.Command, err er
 			}
 		}
 	}
+	return
+}
+
+// ParseAvailableScripts parse all available scripts
+func (p *DefaultParser) ParseAvailableScripts() (scripts []string, err error) {
+	var (
+		koolFile     string
+		parsedFile   *KoolYaml
+		foundScripts map[string]bool
+	)
+
+	if len(p.targetFiles) == 0 {
+		err = errors.New("kool.yml not found")
+		return
+	}
+
+	foundScripts = make(map[string]bool)
+
+	for _, koolFile = range p.targetFiles {
+		if parsedFile, err = ParseKoolYaml(koolFile); err != nil {
+			return
+		}
+
+		for script := range parsedFile.Scripts {
+			if !foundScripts[script] {
+				scripts = append(scripts, script)
+			}
+
+			foundScripts[script] = true
+		}
+	}
+
+	sort.Strings(scripts)
+
 	return
 }

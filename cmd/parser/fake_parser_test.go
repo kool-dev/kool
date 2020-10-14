@@ -26,18 +26,33 @@ func TestFakeParser(t *testing.T) {
 	commands, _ := f.Parse("script")
 
 	if !f.CalledParse || len(commands) != 1 {
-		t.Error("failed to use mocked Parse function more then once on FakeParser")
+		t.Error("failed to use mocked Parse function on FakeParser")
+	}
+
+	f.MockScripts = []string{"script"}
+
+	scripts, _ := f.ParseAvailableScripts()
+
+	if !f.CalledParseAvailableScripts || len(scripts) != 1 || scripts[0] != "script" {
+		t.Error("failed to use mocked ParseAvailableScripts function on FakeParser")
 	}
 }
 
 func TestFakeFailedParser(t *testing.T) {
 	f := &FakeParser{
-		MockParseError: errors.New("error"),
+		MockParseError:                 errors.New("parser error"),
+		MockParseAvailableScriptsError: errors.New("get scripts error"),
 	}
 
 	_, err := f.Parse("script")
 
 	if !f.CalledParse || err == nil {
-		t.Error("failed to use mocked failing Parse function more then once on FakeParser")
+		t.Error("failed to use mocked failing Parse function on FakeParser")
+	}
+
+	_, err = f.ParseAvailableScripts()
+
+	if !f.CalledParseAvailableScripts || err == nil {
+		t.Error("failed to use mocked failing ParseAvailableScripts function on FakeParser")
 	}
 }

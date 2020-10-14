@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"io/ioutil"
+	"kool-dev/kool/cmd/builder"
 	"os"
 	"path"
 	"testing"
@@ -29,12 +29,71 @@ func TestParserAddLooupPath(t *testing.T) {
 		return
 	}
 
-	if err = ioutil.WriteFile(path.Join(tmpDir, "kool.yml"), []byte(KoolYmlOK), os.ModePerm); err != nil {
-		t.Fatalf("failed creating temp file; error: %s", err)
-	}
-
-	if err = p.AddLookupPath(tmpDir); err != nil {
+	workDir, _ := os.Getwd()
+	if err = p.AddLookupPath(path.Join(workDir, "testing_files")); err != nil {
 		t.Errorf("unexpected error; error: %s", err)
 		return
+	}
+}
+
+func TestParserParse(t *testing.T) {
+	var (
+		p        Parser = NewParser()
+		commands []builder.Command
+		err      error
+	)
+
+	if _, err = p.Parse("testing"); err == nil {
+		t.Error("expecting 'kool.yml not found' error, got none")
+	}
+
+	if err != nil && err.Error() != "kool.yml not found" {
+		t.Errorf("expecting error 'kool.yml not found', got '%s'", err.Error())
+	}
+
+	workDir, _ := os.Getwd()
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+
+	if commands, err = p.Parse("testing"); err != nil {
+		t.Errorf("unexpected error; error: %s", err)
+	}
+
+	if len(commands) != 1 || commands[0].String() != "echo testing" {
+		t.Error("failed to parse testing kool.yml")
+	}
+
+	if commands, err = p.Parse("invalid"); err != nil {
+		t.Errorf("unexpected error; error: %s", err)
+	}
+
+	if len(commands) > 0 {
+		t.Error("should not find scripts")
+	}
+}
+
+func TestParserParseAvailableScripts(t *testing.T) {
+	var (
+		p       Parser = NewParser()
+		scripts []string
+		err     error
+	)
+
+	if _, err = p.ParseAvailableScripts(); err == nil {
+		t.Error("expecting 'kool.yml not found' error, got none")
+	}
+
+	if err != nil && err.Error() != "kool.yml not found" {
+		t.Errorf("expecting error 'kool.yml not found', got '%s'", err.Error())
+	}
+
+	workDir, _ := os.Getwd()
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+
+	if scripts, err = p.ParseAvailableScripts(); err != nil {
+		t.Errorf("unexpected error; error: %s", err)
+	}
+
+	if len(scripts) != 1 || scripts[0] != "testing" {
+		t.Error("failed to get all scripts from kool.yml")
 	}
 }
