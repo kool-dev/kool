@@ -32,6 +32,8 @@ func init() {
 	)
 
 	rootCmd.AddCommand(runCmd)
+
+	SetRunUsageFunc(run, runCmd)
 }
 
 // NewKoolRun creates a new handler for run logic with default dependencies
@@ -50,6 +52,11 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 		script string
 		args   []string
 	)
+
+	// look for kool.yml on current working directory
+	_ = r.parser.AddLookupPath(r.envStorage.Get("PWD"))
+	// look for kool.yml on kool folder within user home directory
+	_ = r.parser.AddLookupPath(path.Join(r.envStorage.Get("HOME"), "kool"))
 
 	script = originalArgs[0]
 	args = originalArgs[1:]
@@ -97,45 +104,45 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
 
-	// look for kool.yml on current working directory
-	_ = run.parser.AddLookupPath(run.envStorage.Get("PWD"))
-	// look for kool.yml on kool folder within user home directory
-	_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
-
-	var (
-		usageTempl string
-		err        error
-	)
-
-	if usageTempl, err = getRunUsageTemplate(run, runCmd); err == nil {
-		runCmd.SetUsageTemplate(usageTempl)
-	} else if run.envStorage.IsTrue("KOOL_VERBOSE") {
-		run.Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
-	}
-
 	return
 }
 
-func getRunUsageTemplate(run *KoolRun, cmd *cobra.Command) (templ string, err error) {
-	var (
-		sb      strings.Builder
-		scripts []string
-	)
+// SetRunUsageFunc overrides usage function
+func SetRunUsageFunc(run *KoolRun, runCmd *cobra.Command) {
+	originalUsageText := runCmd.UsageString()
+	runCmd.SetUsageFunc(getRunUsageFunc(run, originalUsageText))
+}
 
-	if scripts, err = run.parser.ParseAvailableScripts(); err != nil {
+func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command) error {
+	return func(cmd *cobra.Command) (err error) {
+		var (
+			sb      strings.Builder
+			scripts []string
+		)
+
+		// look for kool.yml on current working directory
+		_ = run.parser.AddLookupPath(run.envStorage.Get("PWD"))
+		// look for kool.yml on kool folder within user home directory
+		_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
+
+		if scripts, err = run.parser.ParseAvailableScripts(); err != nil {
+			if run.envStorage.IsTrue("KOOL_VERBOSE") {
+				run.Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
+			}
+			return
+		}
+
+		sb.WriteString(originalUsageText)
+		sb.WriteString("\n")
+		sb.WriteString("Available Scripts:\n")
+
+		for _, script := range scripts {
+			sb.WriteString("  ")
+			sb.WriteString(script)
+			sb.WriteString("\n")
+		}
+
+		run.Println(sb.String())
 		return
 	}
-
-	sb.WriteString(cmd.UsageTemplate())
-	sb.WriteString("\n")
-	sb.WriteString("Available Scripts:\n")
-
-	for _, script := range scripts {
-		sb.WriteString("  ")
-		sb.WriteString(script)
-		sb.WriteString("\n")
-	}
-
-	templ = sb.String()
-	return
 }
