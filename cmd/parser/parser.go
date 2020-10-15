@@ -18,6 +18,7 @@ type Parser interface {
 // DefaultParser implements all default behavior for using kool.yml files.
 type DefaultParser struct {
 	targetFiles []string
+	lookedUp    map[string]bool
 }
 
 // NewParser initializes a Parser to be used for handling kool.yml scripts.
@@ -29,16 +30,27 @@ func NewParser() Parser {
 func (p *DefaultParser) AddLookupPath(rootPath string) (err error) {
 	var koolFile string
 
-	if _, err = os.Stat(path.Join(rootPath, "kool.yml")); err == nil {
-		koolFile = path.Join(rootPath, "kool.yml")
-	} else if _, err = os.Stat(path.Join(rootPath, "kool.yaml")); err == nil {
-		koolFile = path.Join(rootPath, "kool.yaml")
+	if p.lookedUp == nil {
+		p.lookedUp = make(map[string]bool)
+	}
+
+	ymlPath := path.Join(rootPath, "kool.yml")
+	yamlPath := path.Join(rootPath, "kool.yaml")
+
+	if _, err = os.Stat(ymlPath); err == nil {
+		koolFile = ymlPath
+	} else if _, err = os.Stat(yamlPath); err == nil {
+		koolFile = yamlPath
 	}
 
 	if koolFile == "" {
 		err = ErrKoolYmlNotFound
 	} else {
-		p.targetFiles = append(p.targetFiles, koolFile)
+		if !p.lookedUp[koolFile] {
+			p.targetFiles = append(p.targetFiles, koolFile)
+		}
+
+		p.lookedUp[koolFile] = true
 	}
 
 	return

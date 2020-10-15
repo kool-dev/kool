@@ -26,13 +26,18 @@ func TestParserAddLooupPath(t *testing.T) {
 
 	if err == nil || ErrKoolYmlNotFound.Error() != err.Error() {
 		t.Errorf("expected ErrKoolYmlNotFound; got %s", err)
-		return
 	}
 
 	workDir, _ := os.Getwd()
 	if err = p.AddLookupPath(path.Join(workDir, "testing_files")); err != nil {
 		t.Errorf("unexpected error; error: %s", err)
-		return
+	}
+
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+
+	if commands, _ := p.Parse("testing"); len(commands) != 1 {
+		t.Errorf("expecting to get only one command, got '%v'", len(commands))
 	}
 }
 
