@@ -20,8 +20,7 @@ kool init [PRESET] [flags]
 ### Options inherited from parent commands
 
 ```
-      --asuser int   execute commands as user
-      --verbose      execute commands with verbosity
+      --verbose   execute commands with verbosity
 ```
 
 ### SEE ALSO

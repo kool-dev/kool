@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 	"kool-dev/kool/environment"
-	"os"
 )
 
 // CobraRunFN Cobra command run function
@@ -27,15 +26,10 @@ Complete documentation is available at https://kool.dev/docs`,
 			if verbose := cmf.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				envStorage.Set("KOOL_VERBOSE", verbose.Value.String())
 			}
-
-			if asuser := cmf.Flags().Lookup("asuser"); asuser != nil && asuser.Value.String() != "0" {
-				envStorage.Set("KOOL_ASUSER", asuser.Value.String())
-			}
 		},
 	}
 
 	cmd.PersistentFlags().Bool("verbose", false, "execute commands with verbosity")
-	cmd.PersistentFlags().Int("asuser", os.Getuid(), "execute commands as user")
 	return
 }
 

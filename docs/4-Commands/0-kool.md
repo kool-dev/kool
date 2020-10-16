@@ -11,9 +11,8 @@ Complete documentation is available at https://kool.dev/docs
 ### Options
 
 ```
-      --asuser int   execute commands as user
-  -h, --help         help for kool
-      --verbose      execute commands with verbosity
+  -h, --help      help for kool
+      --verbose   execute commands with verbosity
 ```
 
 ### SEE ALSO

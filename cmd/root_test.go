@@ -230,26 +230,3 @@ func TestVerboseFlagRootCommand(t *testing.T) {
 		t.Error("expecting 'KOOL_VERBOSE' to be true, got false")
 	}
 }
-
-func TestAsuserFlagRootCommand(t *testing.T) {
-	fakeEnv := environment.NewFakeEnvStorage()
-
-	fInfo := &KoolInfo{
-		*newFakeKoolService(),
-		fakeEnv,
-	}
-
-	root := NewRootCmd(fakeEnv)
-	info := NewInfoCmd(fInfo)
-	root.AddCommand(info)
-
-	root.SetArgs([]string{"--asuser", "999", "info"})
-
-	if err := root.Execute(); err != nil {
-		t.Errorf("unexpected error executing root command; error: %v", err)
-	}
-
-	if asuser := fakeEnv.Get("KOOL_ASUSER"); asuser != "999" {
-		t.Errorf("expecting 'KOOL_ASUSER' to be 999, got %s", asuser)
-	}
-}
