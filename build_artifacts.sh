@@ -11,6 +11,12 @@ if [ "$KOOL_VERSION" == "" ]; then
     exit 5
 fi
 
+read -p "You are going to build all artifacts for version $KOOL_VERSION. Continue? (y/N) "
+if [[ ! $REPLY =~ ^(yes|YES|y|Y)$ ]]
+then
+   exit
+fi
+
 rm -rf dist
 mkdir -p dist
 
@@ -51,3 +57,5 @@ echo "Going to generate CHECKSUMS"
 for file in dist/*; do
     shasum -a 256 $file > $file.sha256
 done
+
+echo "Finished building all artifacts for version $KOOL_VERSION"
