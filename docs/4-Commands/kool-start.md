@@ -16,6 +16,13 @@ kool start [SERVICE]
   -h, --help   help for start
 ```
 
+### Options inherited from parent commands
+
+```
+      --asuser int   execute commands as user
+      --verbose      execute commands with verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff

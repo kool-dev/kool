@@ -18,6 +18,13 @@ kool logs [options] [service...] [flags]
   -t, --tail int   Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown. (default 25)
 ```
 
+### Options inherited from parent commands
+
+```
+      --asuser int   execute commands as user
+      --verbose      execute commands with verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff

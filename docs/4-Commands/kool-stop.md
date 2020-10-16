@@ -17,6 +17,13 @@ kool stop [flags]
       --purge   Remove all persistent data from volume mounts on containers
 ```
 
+### Options inherited from parent commands
+
+```
+      --asuser int   execute commands as user
+      --verbose      execute commands with verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff

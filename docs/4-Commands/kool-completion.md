@@ -46,6 +46,13 @@ kool completion [bash|zsh|fish|powershell]
   -h, --help   help for completion
 ```
 
+### Options inherited from parent commands
+
+```
+      --asuser int   execute commands as user
+      --verbose      execute commands with verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff
