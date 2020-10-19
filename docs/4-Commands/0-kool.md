@@ -11,7 +11,8 @@ Complete documentation is available at https://kool.dev/docs
 ### Options
 
 ```
-  -h, --help   help for kool
+  -h, --help      help for kool
+      --verbose   increases output verbosity
 ```
 
 ### SEE ALSO

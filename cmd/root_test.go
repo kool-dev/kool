@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"kool-dev/kool/environment"
 	"os"
 	"strings"
 	"testing"
@@ -62,6 +63,15 @@ func assertFailingServiceAfterExecutingDefaultRun(service *FakeKoolService) (err
 	}
 
 	return
+}
+
+func TestNewRootCmd(t *testing.T) {
+	fakeEnv := environment.NewFakeEnvStorage()
+	cmd := NewRootCmd(fakeEnv)
+
+	if cmd.Name() != rootCmd.Name() {
+		t.Errorf("expecting RootCmd to return '%s', got '%s'", rootCmd.Name(), cmd.Name())
+	}
 }
 
 func TestRootCmd(t *testing.T) {
@@ -195,5 +205,28 @@ func TestMultipleServicesFailingDefaultCommandRunFunction(t *testing.T) {
 
 	if errMessage := assertFailingServiceAfterExecutingDefaultRun(failing); errMessage != "" {
 		t.Error(errMessage)
+	}
+}
+
+func TestVerboseFlagRootCommand(t *testing.T) {
+	fakeEnv := environment.NewFakeEnvStorage()
+
+	fInfo := &KoolInfo{
+		*newFakeKoolService(),
+		fakeEnv,
+	}
+
+	root := NewRootCmd(fakeEnv)
+	info := NewInfoCmd(fInfo)
+	root.AddCommand(info)
+
+	root.SetArgs([]string{"--verbose", "info"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing command; error: %v", err)
+	}
+
+	if verbose := fakeEnv.IsTrue("KOOL_VERBOSE"); !verbose {
+		t.Error("expecting 'KOOL_VERBOSE' to be true, got false")
 	}
 }

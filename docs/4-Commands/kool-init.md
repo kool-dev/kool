@@ -17,6 +17,12 @@ kool init [PRESET] [flags]
       --override   Force replace local existing files with the preset files
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   increases output verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff

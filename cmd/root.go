@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"kool-dev/kool/environment"
 )
 
 // CobraRunFN Cobra command run function
@@ -9,14 +10,27 @@ type CobraRunFN func(*cobra.Command, []string)
 
 var version string = "0.0.0-dev"
 
-var rootCmd = &cobra.Command{
-	Use:   "kool",
-	Short: "kool - Kool stuff",
-	Long: `An easy and robust software development environment
+var rootCmd = NewRootCmd(environment.NewEnvStorage())
+
+// NewRootCmd creates the root command
+func NewRootCmd(envStorage environment.EnvStorage) (cmd *cobra.Command) {
+	cmd = &cobra.Command{
+		Use:   "kool",
+		Short: "kool - Kool stuff",
+		Long: `An easy and robust software development environment
 tool helping you from project creation until deployment.
 Complete documentation is available at https://kool.dev/docs`,
-	Version:           version,
-	DisableAutoGenTag: true,
+		Version:           version,
+		DisableAutoGenTag: true,
+		PersistentPreRun: func(cmf *cobra.Command, args []string) {
+			if verbose := cmf.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
+				envStorage.Set("KOOL_VERBOSE", verbose.Value.String())
+			}
+		},
+	}
+
+	cmd.PersistentFlags().Bool("verbose", false, "increases output verbosity")
+	return
 }
 
 // Execute proxies the call to cobra root command

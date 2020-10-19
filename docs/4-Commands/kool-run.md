@@ -16,6 +16,12 @@ kool run [SCRIPT] [flags]
   -h, --help   help for run
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   increases output verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff

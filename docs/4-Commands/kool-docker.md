@@ -23,6 +23,12 @@ kool docker [options] [image] [command] [flags]
   -v, --volume stringArray    Bind mount a volume
 ```
 
+### Options inherited from parent commands
+
+```
+      --verbose   increases output verbosity
+```
+
 ### SEE ALSO
 
 * [kool](kool.md)	 - kool - Kool stuff
