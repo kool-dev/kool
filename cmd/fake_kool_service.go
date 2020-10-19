@@ -13,6 +13,7 @@ type FakeKoolService struct {
 	CalledGetReader bool
 	CalledSetReader bool
 	CalledPrintln   bool
+	CalledPrintf    bool
 	CalledError     bool
 	CalledWarning   bool
 	CalledSuccess   bool
@@ -58,6 +59,11 @@ func (f *FakeKoolService) SetReader(r io.Reader) {
 // Println mocks the function for testing
 func (f *FakeKoolService) Println(out ...interface{}) {
 	f.CalledPrintln = true
+}
+
+// Printf mocks the function for testing
+func (f *FakeKoolService) Printf(format string, a ...interface{}) {
+	f.CalledPrintf = true
 }
 
 // Error mocks the function for testing

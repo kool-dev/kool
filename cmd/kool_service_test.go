@@ -61,6 +61,28 @@ func TestKoolServiceProxies(t *testing.T) {
 		t.Errorf("Success did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).SuccessOutput)
 	}
 
+	out = []interface{}{"success"}
+	k.Println(out...)
+
+	if !k.out.(*shell.FakeOutputWriter).CalledPrintln {
+		t.Error("Println was not proxied by DefaultKoolService")
+	}
+
+	if len(k.out.(*shell.FakeOutputWriter).Out) != len(out) {
+		t.Errorf("Println did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).SuccessOutput)
+	}
+
+	k.Printf("testing %s", "format")
+
+	if !k.out.(*shell.FakeOutputWriter).CalledPrintf {
+		t.Error("Printf was not proxied by DefaultKoolService")
+	}
+
+	expectedFOutput := "testing format"
+	if fOutput := k.out.(*shell.FakeOutputWriter).FOutput; fOutput != expectedFOutput {
+		t.Errorf("Printf did not proxy the proper output on DefaultKoolService; expected '%s', got %s", expectedFOutput, fOutput)
+	}
+
 	k.SetWriter(nil)
 
 	if !k.out.(*shell.FakeOutputWriter).CalledSetWriter {

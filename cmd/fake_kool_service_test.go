@@ -51,6 +51,12 @@ func TestFakeKoolService(t *testing.T) {
 		t.Errorf("failed to assert calling method Println on FakeKoolService")
 	}
 
+	f.Printf("")
+
+	if !f.CalledPrintf {
+		t.Errorf("failed to assert calling method Printf on FakeKoolService")
+	}
+
 	f.Error(nil)
 
 	if !f.CalledError {

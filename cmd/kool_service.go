@@ -64,6 +64,11 @@ func (k *DefaultKoolService) Println(out ...interface{}) {
 	k.out.Println(out...)
 }
 
+// Printf proxies the call to the given OutputWriter
+func (k *DefaultKoolService) Printf(format string, a ...interface{}) {
+	k.out.Printf(format, a...)
+}
+
 // Error proxies the call to the given OutputWriter
 func (k *DefaultKoolService) Error(err error) {
 	k.out.Error(err)

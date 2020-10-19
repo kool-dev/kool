@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"kool-dev/kool/cmd/task"
 	"kool-dev/kool/cmd/updater"
 
 	"github.com/blang/semver"
@@ -11,7 +12,8 @@ import (
 // KoolSelfUpdate holds handlers and functions to implement the self-update command logic
 type KoolSelfUpdate struct {
 	DefaultKoolService
-	updater updater.Updater
+	taskRunner task.Runner
+	updater    updater.Updater
 }
 
 func init() {
@@ -27,17 +29,22 @@ func init() {
 func NewKoolSelfUpdate() *KoolSelfUpdate {
 	return &KoolSelfUpdate{
 		*newDefaultKoolService(),
+		task.NewRunner(),
 		&updater.DefaultUpdater{RootCommand: rootCmd},
 	}
 }
 
 // Execute runs the self-update logic with incoming arguments.
 func (s *KoolSelfUpdate) Execute(args []string) (err error) {
-	var latestVersion semver.Version
+	var currentVersion, latestVersion semver.Version
 
-	currentVersion := s.updater.GetCurrentVersion()
+	err = s.taskRunner.Run("Updating kool version", func() (taskError error) {
+		currentVersion = s.updater.GetCurrentVersion()
+		latestVersion, taskError = s.updater.Update(currentVersion)
+		return
+	})
 
-	if latestVersion, err = s.updater.Update(currentVersion); err != nil {
+	if err != nil {
 		return fmt.Errorf("kool self-update failed: %v", err)
 	}
 
