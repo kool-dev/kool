@@ -19,7 +19,7 @@ kool start [SERVICE]
 ### Options inherited from parent commands
 
 ```
-      --verbose   execute commands with verbosity
+      --verbose   increases output verbosity
 ```
 
 ### SEE ALSO

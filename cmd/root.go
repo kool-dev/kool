@@ -29,7 +29,7 @@ Complete documentation is available at https://kool.dev/docs`,
 		},
 	}
 
-	cmd.PersistentFlags().Bool("verbose", false, "execute commands with verbosity")
+	cmd.PersistentFlags().Bool("verbose", false, "increases output verbosity")
 	return
 }
 

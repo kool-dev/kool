@@ -12,7 +12,7 @@ Complete documentation is available at https://kool.dev/docs
 
 ```
   -h, --help      help for kool
-      --verbose   execute commands with verbosity
+      --verbose   increases output verbosity
 ```
 
 ### SEE ALSO

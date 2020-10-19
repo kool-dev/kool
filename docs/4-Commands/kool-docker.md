@@ -26,7 +26,7 @@ kool docker [options] [image] [command] [flags]
 ### Options inherited from parent commands
 
 ```
-      --verbose   execute commands with verbosity
+      --verbose   increases output verbosity
 ```
 
 ### SEE ALSO
