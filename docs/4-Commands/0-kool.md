@@ -20,7 +20,7 @@ Complete documentation is available at https://kool.dev/docs
 * [kool exec](kool-exec.md)	 - Execute a command within a running service container
 * [kool info](kool-info.md)	 - Prints out information about kool setup (like environment variables)
 * [kool logs](kool-logs.md)	 - Displays log output from services.
-* [kool preset](kool-preset.md)	 - Initialize kool preset in the current working directory. If none is specified, a wizard will be prompt to choose one
+* [kool preset](kool-preset.md)	 - Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
 * [kool restart](kool-restart.md)	 - Restart containers - the same as stop followed by start.
 * [kool run](kool-run.md)	 - Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
 * [kool self-update](kool-self-update.md)	 - Update kool to latest version

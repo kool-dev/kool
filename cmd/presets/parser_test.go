@@ -1,6 +1,9 @@
 package presets
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestExistsParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
@@ -95,5 +98,34 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 
 	if len(phpPresets) != 1 || phpPresets[0] != "php_language" {
 		t.Error("failed to get preset by language")
+	}
+}
+
+func TestIgnorePresetMetaKeysParser(t *testing.T) {
+	originalStat := osStat
+
+	defer func() { osStat = originalStat }()
+
+	osStat = func(name string) (os.FileInfo, error) {
+		return nil, nil
+	}
+
+	presets := make(map[string]map[string]string)
+
+	testingPreset := make(map[string]string)
+
+	testingPreset["preset_language"] = "php"
+	testingPreset["kool.yml"] = ""
+
+	presets["preset"] = testingPreset
+
+	p := &DefaultParser{
+		Presets: presets,
+	}
+
+	foundFiles := p.LookUpFiles("preset")
+
+	if len(foundFiles) != 1 || foundFiles[0] != "kool.yml" {
+		t.Errorf("expecting to find only 'kool.yml', found %v", foundFiles)
 	}
 }

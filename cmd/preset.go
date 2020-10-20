@@ -92,7 +92,7 @@ func (i *KoolPreset) Execute(args []string) (err error) {
 func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 	presetCmd = &cobra.Command{
 		Use:   "preset [PRESET]",
-		Short: "Initialize kool preset in the current working directory. If none is specified, a wizard will be prompt to choose one",
+		Short: "Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			preset.SetWriter(cmd.OutOrStdout())

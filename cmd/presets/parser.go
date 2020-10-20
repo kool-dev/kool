@@ -4,7 +4,10 @@ import (
 	"errors"
 	"os"
 	"sort"
+	"strings"
 )
+
+var osStat func(string) (os.FileInfo, error) = os.Stat
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
@@ -68,7 +71,11 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 	presetFiles := p.Presets[preset]
 
 	for fileName := range presetFiles {
-		if _, err := os.Stat(fileName); !os.IsNotExist(err) {
+		if strings.HasPrefix(fileName, "preset_") {
+			continue
+		}
+
+		if _, err := osStat(fileName); !os.IsNotExist(err) {
 			foundFiles = append(foundFiles, fileName)
 		}
 	}
@@ -80,6 +87,10 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 	presetFiles := p.Presets[preset]
 
 	for fileName, fileContent := range presetFiles {
+		if strings.HasPrefix(fileName, "preset_") {
+			continue
+		}
+
 		var (
 			file  *os.File
 			lines int

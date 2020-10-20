@@ -1,10 +1,10 @@
 ## kool preset
 
-Initialize kool preset in the current working directory. If none is specified, a wizard will be prompt to choose one
+Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
 
 ### Synopsis
 
-Initialize kool preset in the current working directory. If none is specified, a wizard will be prompt to choose one
+Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
 
 ```
 kool preset [PRESET] [flags]
