@@ -283,3 +283,34 @@ func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
 		t.Errorf("expecting message '%s', got '%s'", expected, output)
 	}
 }
+
+func TestNewRunCommandCompletion(t *testing.T) {
+	var scripts []string
+	f := newFakeKoolRun([]builder.Command{}, nil)
+	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
+	cmd := NewRunCommand(f)
+
+	scripts, _ = cmd.ValidArgsFunction(cmd, []string{}, "")
+
+	if len(scripts) != 1 || scripts[0] != "testing_script" {
+		t.Errorf("expecting suggestions [testing_script], got %v", scripts)
+	}
+
+	scripts, _ = cmd.ValidArgsFunction(cmd, []string{}, "tes")
+
+	if len(scripts) != 1 || scripts[0] != "testing_script" {
+		t.Errorf("expecting suggestions [testing_script], got %v", scripts)
+	}
+
+	scripts, _ = cmd.ValidArgsFunction(cmd, []string{}, "invalid")
+
+	if len(scripts) != 0 {
+		t.Errorf("expecting no suggestion, got %v", scripts)
+	}
+
+	scripts, _ = cmd.ValidArgsFunction(cmd, []string{"testing_script"}, "")
+
+	if scripts != nil {
+		t.Errorf("expecting no suggestion, got %v", scripts)
+	}
+}

@@ -36,6 +36,18 @@ func TestFakeParser(t *testing.T) {
 	if !f.CalledParseAvailableScripts || len(scripts) != 1 || scripts[0] != "script" {
 		t.Error("failed to use mocked ParseAvailableScripts function on FakeParser")
 	}
+
+	scripts, _ = f.ParseAvailableScripts("scr")
+
+	if len(scripts) != 1 || scripts[0] != "script" {
+		t.Error("failed to use mocked ParseAvailableScripts function on FakeParser")
+	}
+
+	scripts, _ = f.ParseAvailableScripts("invalid")
+
+	if len(scripts) != 0 {
+		t.Error("failed to use mocked ParseAvailableScripts function on FakeParser")
+	}
 }
 
 func TestFakeFailedParser(t *testing.T) {
