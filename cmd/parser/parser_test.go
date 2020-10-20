@@ -15,7 +15,7 @@ func TestDefaultParser(t *testing.T) {
 	}
 }
 
-func TestParserAddLooupPath(t *testing.T) {
+func TestParserAddLookupPath(t *testing.T) {
 	var (
 		p      Parser = NewParser()
 		err    error
@@ -83,7 +83,7 @@ func TestParserParseAvailableScripts(t *testing.T) {
 		err     error
 	)
 
-	if _, err = p.ParseAvailableScripts(); err == nil {
+	if _, err = p.ParseAvailableScripts(""); err == nil {
 		t.Error("expecting 'kool.yml not found' error, got none")
 	}
 
@@ -94,11 +94,38 @@ func TestParserParseAvailableScripts(t *testing.T) {
 	workDir, _ := os.Getwd()
 	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
 
-	if scripts, err = p.ParseAvailableScripts(); err != nil {
+	if scripts, err = p.ParseAvailableScripts(""); err != nil {
 		t.Errorf("unexpected error; error: %s", err)
 	}
 
 	if len(scripts) != 1 || scripts[0] != "testing" {
 		t.Error("failed to get all scripts from kool.yml")
+	}
+}
+
+func TestParserParseAvailableScriptsFilter(t *testing.T) {
+	var (
+		p       Parser = NewParser()
+		scripts []string
+		err     error
+	)
+
+	workDir, _ := os.Getwd()
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+
+	if scripts, err = p.ParseAvailableScripts("tes"); err != nil {
+		t.Errorf("unexpected error; error: %s", err)
+	}
+
+	if len(scripts) != 1 || scripts[0] != "testing" {
+		t.Error("failed to get filtered scripts from kool.yml")
+	}
+
+	if scripts, err = p.ParseAvailableScripts("invalidFilter"); err != nil {
+		t.Errorf("unexpected error; error: %s", err)
+	}
+
+	if len(scripts) != 0 {
+		t.Error("failed to get filtered scripts from kool.yml")
 	}
 }

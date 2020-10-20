@@ -6,13 +6,14 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 )
 
 // Parser defines the functions required for handling kool.yml files.
 type Parser interface {
 	AddLookupPath(string) error
 	Parse(string) ([]builder.Command, error)
-	ParseAvailableScripts() ([]string, error)
+	ParseAvailableScripts(string) ([]string, error)
 }
 
 // DefaultParser implements all default behavior for using kool.yml files.
@@ -97,7 +98,7 @@ func (p *DefaultParser) Parse(script string) (commands []builder.Command, err er
 }
 
 // ParseAvailableScripts parse all available scripts
-func (p *DefaultParser) ParseAvailableScripts() (scripts []string, err error) {
+func (p *DefaultParser) ParseAvailableScripts(filter string) (scripts []string, err error) {
 	var (
 		koolFile     string
 		parsedFile   *KoolYaml
@@ -117,7 +118,7 @@ func (p *DefaultParser) ParseAvailableScripts() (scripts []string, err error) {
 		}
 
 		for script := range parsedFile.Scripts {
-			if !foundScripts[script] {
+			if !foundScripts[script] && (filter == "" || strings.HasPrefix(script, filter)) {
 				scripts = append(scripts, script)
 			}
 

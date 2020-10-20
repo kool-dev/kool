@@ -2,10 +2,6 @@
 
 Start the specified Kool environment containers. If no service is specified, start all.
 
-### Synopsis
-
-Start the specified Kool environment containers. If no service is specified, start all.
-
 ```
 kool start [SERVICE]
 ```

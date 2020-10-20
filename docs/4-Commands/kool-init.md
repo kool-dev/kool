@@ -2,10 +2,6 @@
 
 Initialize kool preset in the current working directory
 
-### Synopsis
-
-Initialize kool preset in the current working directory
-
 ```
 kool init [PRESET] [flags]
 ```
