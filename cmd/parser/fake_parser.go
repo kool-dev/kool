@@ -32,7 +32,7 @@ func (f *FakeParser) Parse(script string) (commands []builder.Command, err error
 }
 
 // ParseAvailableScripts implements fake ParseAvailableScripts behavior
-func (f *FakeParser) ParseAvailableScripts() (scripts []string, err error) {
+func (f *FakeParser) ParseAvailableScripts(filter string) (scripts []string, err error) {
 	f.CalledParseAvailableScripts = true
 	scripts = f.MockScripts
 	err = f.MockParseAvailableScriptsError

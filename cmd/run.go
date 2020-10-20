@@ -99,6 +99,13 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 		Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
 		Args:  cobra.MinimumNArgs(1),
 		Run:   DefaultCommandRunFunction(run),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) != 0 {
+				return nil, cobra.ShellCompDirectiveNoFileComp
+			}
+
+			return compListScripts(toComplete, run), cobra.ShellCompDirectiveNoFileComp
+		},
 	}
 
 	// after a non-flag arg, stop parsing flags
@@ -125,7 +132,7 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 		// look for kool.yml on kool folder within user home directory
 		_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
 
-		if scripts, err = run.parser.ParseAvailableScripts(); err != nil {
+		if scripts, err = run.parser.ParseAvailableScripts(""); err != nil {
 			if run.envStorage.IsTrue("KOOL_VERBOSE") {
 				run.Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
 			}
@@ -145,4 +152,18 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 		run.Println(sb.String())
 		return
 	}
+}
+
+func compListScripts(toComplete string, run *KoolRun) (scripts []string) {
+	var err error
+	// look for kool.yml on current working directory
+	_ = run.parser.AddLookupPath(run.envStorage.Get("PWD"))
+	// look for kool.yml on kool folder within user home directory
+	_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
+
+	if scripts, err = run.parser.ParseAvailableScripts(toComplete); err != nil {
+		return nil
+	}
+
+	return
 }

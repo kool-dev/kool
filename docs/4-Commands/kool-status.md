@@ -2,10 +2,6 @@
 
 Shows the status for containers
 
-### Synopsis
-
-Shows the status for containers
-
 ```
 kool status [flags]
 ```

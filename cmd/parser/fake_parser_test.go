@@ -31,7 +31,7 @@ func TestFakeParser(t *testing.T) {
 
 	f.MockScripts = []string{"script"}
 
-	scripts, _ := f.ParseAvailableScripts()
+	scripts, _ := f.ParseAvailableScripts("")
 
 	if !f.CalledParseAvailableScripts || len(scripts) != 1 || scripts[0] != "script" {
 		t.Error("failed to use mocked ParseAvailableScripts function on FakeParser")
@@ -50,7 +50,7 @@ func TestFakeFailedParser(t *testing.T) {
 		t.Error("failed to use mocked failing Parse function on FakeParser")
 	}
 
-	_, err = f.ParseAvailableScripts()
+	_, err = f.ParseAvailableScripts("")
 
 	if !f.CalledParseAvailableScripts || err == nil {
 		t.Error("failed to use mocked failing ParseAvailableScripts function on FakeParser")

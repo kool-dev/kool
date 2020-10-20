@@ -2,10 +2,6 @@
 
 Stop all running containers started with 'kool start' command
 
-### Synopsis
-
-Stop all running containers started with 'kool start' command
-
 ```
 kool stop [flags]
 ```
