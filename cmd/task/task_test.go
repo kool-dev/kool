@@ -14,22 +14,20 @@ func TestNewTaskRunner(t *testing.T) {
 }
 
 func TestRunTaskRunner(t *testing.T) {
-	var ran bool = false
+	var result interface{}
+
 	r := NewRunner()
 
-	_ = r.Run("testing", func() error {
-		ran = true
-		return nil
+	result, _ = r.Run("testing", func() (interface{}, error) {
+		return true, nil
 	})
 
-	if !ran {
+	if ran, ok := result.(bool); !ok || !ran {
 		t.Error("failed to run task on Runner")
 	}
 
-	ran = false
-
-	err := r.Run("testing", func() error {
-		return errors.New("run error")
+	_, err := r.Run("testing", func() (interface{}, error) {
+		return nil, errors.New("run error")
 	})
 
 	if err != nil && err.Error() != "run error" {

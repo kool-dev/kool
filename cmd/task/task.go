@@ -2,14 +2,13 @@ package task
 
 import (
 	"kool-dev/kool/cmd/shell"
-	"sync"
 
 	"github.com/gookit/color"
 )
 
 // Runner holds logic for running tasks
 type Runner interface {
-	Run(string, func() error) error
+	Run(string, func() (interface{}, error)) (interface{}, error)
 }
 
 // DefaultRunner holds data for running tasks
@@ -23,21 +22,18 @@ func NewRunner() Runner {
 }
 
 // Run runs task
-func (r *DefaultRunner) Run(message string, closure func() error) (err error) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
+func (r *DefaultRunner) Run(message string, closure func() (interface{}, error)) (result interface{}, err error) {
 	r.out.Printf("%s ... ", message)
+
 	chError := make(chan error)
+	chResult := make(chan interface{})
+	defer close(chResult)
+	defer close(chError)
 
-	go func() {
-		chError <- closure()
-		wg.Done()
-	}()
+	go execClosure(closure, chResult, chError)
 
+	result = <-chResult
 	err = <-chError
-	wg.Wait()
-	close(chError)
 
 	if err != nil {
 		errorOutput := color.New(color.Red).Sprint("error")
@@ -47,4 +43,10 @@ func (r *DefaultRunner) Run(message string, closure func() error) (err error) {
 	}
 
 	return
+}
+
+func execClosure(closure func() (interface{}, error), chResult chan interface{}, chError chan error) {
+	result, err := closure()
+	chResult <- result
+	chError <- err
 }

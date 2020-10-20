@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/cmd/task"
 	"kool-dev/kool/cmd/updater"
+	"strings"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
@@ -36,24 +37,33 @@ func NewKoolSelfUpdate() *KoolSelfUpdate {
 
 // Execute runs the self-update logic with incoming arguments.
 func (s *KoolSelfUpdate) Execute(args []string) (err error) {
-	var currentVersion, latestVersion semver.Version
-
-	err = s.taskRunner.Run("Updating kool version", func() (taskError error) {
+	newVersion, err := s.taskRunner.Run("Updating kool version", func() (taskResult interface{}, taskError error) {
+		var currentVersion, latestVersion semver.Version
 		currentVersion = s.updater.GetCurrentVersion()
-		latestVersion, taskError = s.updater.Update(currentVersion)
+
+		if latestVersion, taskError = s.updater.Update(currentVersion); taskError != nil {
+			return
+		}
+
+		if latestVersion.Equals(currentVersion) {
+			taskError = fmt.Errorf("You already have the latest version %s", currentVersion.String())
+		}
+
+		taskResult = latestVersion
+
 		return
 	})
 
 	if err != nil {
+		if strings.Contains(err.Error(), "You already have the latest version") {
+			s.Warning(err.Error())
+			return nil
+		}
+
 		return fmt.Errorf("kool self-update failed: %v", err)
 	}
 
-	if latestVersion.Equals(currentVersion) {
-		s.Warning("You already have the latest version ", currentVersion.String())
-	} else {
-		s.Success("Successfully updated to version ", latestVersion.String())
-	}
-
+	s.Success("Successfully updated to version ", newVersion.(semver.Version).String())
 	return
 }
 

@@ -6,8 +6,8 @@ type FakeTask struct {
 }
 
 // Run fake task run
-func (f *FakeTask) Run(message string, closure func() error) (err error) {
+func (f *FakeTask) Run(message string, closure func() (interface{}, error)) (result interface{}, err error) {
 	f.CalledRun = true
-	err = closure()
+	result, err = closure()
 	return
 }
