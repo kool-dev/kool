@@ -2,15 +2,15 @@ Kool works with Docker / Docker Compose under the hood, and comes with some cool
 
 Let's use **Laravel** preset as example and explain how it works.
 
-When you run **kool init laravel** all it does is create a few files for you:
+When you run **kool preset laravel** all it does is create a few files for you:
 
 ```bash
-$ kool init laravel
+$ kool preset laravel
 Preset laravel is initializing!
   Preset file Dockerfile.build created.
   Preset file docker-compose.yml created.
   Preset file kool.yml created.
-Preset  laravel  initialized!
+Preset laravel initialized!
 ```
 
 ### Dockerfile.build
@@ -27,7 +27,7 @@ You can add/change/remove services as you will.
 
 ### kool.yml
 
-This is where most of the magic happens, a way to make your life easy, encapsulating scripts for you to use on your local environment or CI/CDs. It is created in your working directory when you run **kool init**, but you can also create it inside a folder named **kool** in your user's home directory.
+This is where most of the magic happens, a way to make your life easy, encapsulating scripts for you to use on your local environment or CI/CDs. It is created in your working directory when you run **kool preset**, but you can also create it inside a folder named **kool** in your user's home directory.
 
 The **scripts** defined can be used with **kool run <script>** command.
 
@@ -46,7 +46,7 @@ Usage:
 kool run artisan tinker
 ```
 
-You can pass in after kool run any options or arguments you wish to pass down the incapsulated command.
+You can pass in after kool run any options or arguments you wish to pass down the encapsulated command.
 
 #### Arguments to kool run <script>
 

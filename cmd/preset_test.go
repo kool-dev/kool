@@ -8,50 +8,50 @@ import (
 	"testing"
 )
 
-func newFakeKoolInit() *KoolInit {
-	return &KoolInit{
+func newFakeKoolPreset() *KoolPreset {
+	return &KoolPreset{
 		*newFakeKoolService(),
-		&KoolInitFlags{false},
+		&KoolPresetFlags{false},
 		&presets.FakeParser{},
 		&shell.FakePromptSelect{},
 	}
 }
 
-func TestNewKoolInit(t *testing.T) {
-	k := NewKoolInit()
+func TestNewKoolPreset(t *testing.T) {
+	k := NewKoolPreset()
 
 	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolInit instance")
+		t.Errorf("unexpected shell.OutputWriter on default KoolPreset instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolInit instance")
+		t.Errorf("unexpected shell.Exiter on default KoolPreset instance")
 	}
 
 	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolInit instance")
+		t.Errorf("unexpected shell.InputReader on default KoolPreset instance")
 	}
 
 	if k.Flags == nil {
-		t.Errorf("Flags not initialized on default KoolInit instance")
+		t.Errorf("Flags not initialized on default KoolPreset instance")
 	} else if k.Flags.Override {
-		t.Errorf("bad default value for Override flag on default KoolInit instance")
+		t.Errorf("bad default value for Override flag on default KoolPreset instance")
 	}
 
 	if _, ok := k.parser.(*presets.DefaultParser); !ok {
-		t.Errorf("unexpected presets.Parser on default KoolInit instance")
+		t.Errorf("unexpected presets.Parser on default KoolPreset instance")
 	}
 }
 
-func TestInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
@@ -93,14 +93,14 @@ func TestInitCommand(t *testing.T) {
 	}
 }
 
-func TestInvalidScriptInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
-	cmd := NewInitCommand(f)
+func TestInvalidScriptPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"invalid"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.parser.(*presets.FakeParser).CalledExists {
@@ -123,16 +123,16 @@ func TestInvalidScriptInitCommand(t *testing.T) {
 	}
 }
 
-func TestExistingFilesInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestExistingFilesPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
@@ -151,17 +151,17 @@ func TestExistingFilesInitCommand(t *testing.T) {
 	}
 }
 
-func TestOverrideFilesInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestOverrideFilesPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
 
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"--override", "laravel"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if f.parser.(*presets.FakeParser).CalledLookUpFiles {
@@ -181,17 +181,17 @@ func TestOverrideFilesInitCommand(t *testing.T) {
 	}
 }
 
-func TestWriteErrorInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestWriteErrorPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockError = errors.New("write error")
 
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledError {
@@ -210,16 +210,16 @@ func TestWriteErrorInitCommand(t *testing.T) {
 	}
 }
 
-func TestNoArgsInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestNoArgsPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = "laravel"
 	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.parser.(*presets.FakeParser).MockExists = true
 
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
@@ -234,15 +234,15 @@ func TestNoArgsInitCommand(t *testing.T) {
 	}
 }
 
-func TestFailingNoArgsInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestFailingNoArgsPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.promptSelect.(*shell.FakePromptSelect).MockError = errors.New("error prompt select preset")
 
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
@@ -265,14 +265,14 @@ func TestFailingNoArgsInitCommand(t *testing.T) {
 	}
 }
 
-func TestCancellingInitCommand(t *testing.T) {
-	f := newFakeKoolInit()
+func TestCancellingPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
 	f.promptSelect.(*shell.FakePromptSelect).MockError = shell.ErrPromptSelectInterrupted
 
-	cmd := NewInitCommand(f)
+	cmd := NewPresetCommand(f)
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing init command; error: %v", err)
+		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledWarning {

@@ -3,7 +3,7 @@
 First of all you will need to cd into your application's directory and run:
 
 ```bash
-$ kool init laravel
+$ kool preset laravel
 ```
 
 This will create the files you need to configure your services. Feel free to edit **docker-compose.yml** to add or remove services as needed.

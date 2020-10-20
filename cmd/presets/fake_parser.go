@@ -2,12 +2,13 @@ package presets
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists, CalledLookUpFiles, CalledWriteFiles, CalledGetPresets bool
+	CalledExists, CalledLookUpFiles, CalledWriteFiles, CalledGetPresets, CalledGetLanguages bool
 
 	MockExists     bool
 	MockFoundFiles []string
 	MockFileError  string
 	MockError      error
+	MockLanguages  []string
 	MockPresets    []string
 }
 
@@ -18,8 +19,15 @@ func (f *FakeParser) Exists(preset string) (exists bool) {
 	return
 }
 
+// GetLanguages get all presets languages
+func (f *FakeParser) GetLanguages() (languages []string) {
+	f.CalledGetLanguages = true
+	languages = f.MockLanguages
+	return
+}
+
 // GetPresets get all presets names
-func (f *FakeParser) GetPresets() (presets []string) {
+func (f *FakeParser) GetPresets(language string) (presets []string) {
 	f.CalledGetPresets = true
 	presets = f.MockPresets
 	return

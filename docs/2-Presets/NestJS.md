@@ -13,10 +13,10 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool init nestjs
+$ kool preset nestjs
 ```
 
-**kool init** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
 
 By default nestjs preset comes with **mysql** and **redis** pre-configured, to enable you can uncomment it at **docker-compose.yml** file.
 

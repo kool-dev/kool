@@ -1,5 +1,5 @@
 scripts:
-  # Helper for local development - compiling and installig locally
+  # Helper for local development - compiling and installing locally
   dev:
     - kool run compile
     - kool run install

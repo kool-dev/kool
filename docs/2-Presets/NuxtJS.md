@@ -13,10 +13,10 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool init nuxtjs
+$ kool preset nuxtjs
 ```
 
-**kool init** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
 
 Also comes with some scripts to bring you up to speed at **kool.yaml**, take a look at the defaults.
 

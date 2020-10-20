@@ -13,10 +13,10 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool init adonis
+$ kool preset adonis
 ```
 
-**kool init** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
 
 By default adonis preset comes with **mysql** and **redis** pre-configured, to enable you can uncomment it at **docker-compose.yml** file.
 
