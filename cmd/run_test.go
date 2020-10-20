@@ -314,3 +314,17 @@ func TestNewRunCommandCompletion(t *testing.T) {
 		t.Errorf("expecting no suggestion, got %v", scripts)
 	}
 }
+
+func TestNewRunCommandFailingCompletion(t *testing.T) {
+	var scripts []string
+	f := newFakeKoolRun([]builder.Command{}, nil)
+	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
+	f.parser.(*parser.FakeParser).MockParseAvailableScriptsError = errors.New("parsing error")
+	cmd := NewRunCommand(f)
+
+	scripts, _ = cmd.ValidArgsFunction(cmd, []string{}, "")
+
+	if scripts != nil {
+		t.Errorf("expecting no suggestion, got %v", scripts)
+	}
+}
