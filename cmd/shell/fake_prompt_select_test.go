@@ -7,7 +7,8 @@ import (
 
 func TestFakePromptSelect(t *testing.T) {
 	f := &FakePromptSelect{}
-	f.MockAnswer = "answer"
+	f.MockAnswer = make(map[string]string)
+	f.MockAnswer["question"] = "answer"
 
 	answer, err := f.Ask("question", []string{"option"})
 
@@ -19,7 +20,8 @@ func TestFakePromptSelect(t *testing.T) {
 		t.Errorf("expecting answer 'answer', got %s", answer)
 	}
 
-	f.MockError = errors.New("error")
+	f.MockError = make(map[string]error)
+	f.MockError["question"] = errors.New("error")
 
 	_, err = f.Ask("question", []string{"option"})
 

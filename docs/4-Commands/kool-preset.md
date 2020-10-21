@@ -1,15 +1,15 @@
-## kool init
+## kool preset
 
-Initialize kool preset in the current working directory
+Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
 
 ```
-kool init [PRESET] [flags]
+kool preset [PRESET] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help       help for init
+  -h, --help       help for preset
       --override   Force replace local existing files with the preset files
 ```
 

@@ -31,9 +31,16 @@ func TestFakeParser(t *testing.T) {
 	}
 
 	f.MockPresets = []string{"preset"}
-	presets := f.GetPresets()
+	presets := f.GetPresets("")
 
 	if !f.CalledGetPresets || len(presets) != 1 || presets[0] != "preset" {
+		t.Error("failed to use mocked GetPresets function on FakeParser")
+	}
+
+	f.MockLanguages = []string{"php"}
+	languages := f.GetLanguages()
+
+	if !f.CalledGetLanguages || len(languages) != 1 || languages[0] != "php" {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
 }

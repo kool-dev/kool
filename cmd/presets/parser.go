@@ -4,7 +4,10 @@ import (
 	"errors"
 	"os"
 	"sort"
+	"strings"
 )
+
+var osStat func(string) (os.FileInfo, error) = os.Stat
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
@@ -14,7 +17,8 @@ type DefaultParser struct {
 // Parser holds presets parsing logic
 type Parser interface {
 	Exists(string) bool
-	GetPresets() []string
+	GetLanguages() []string
+	GetPresets(string) []string
 	LookUpFiles(string) []string
 	WriteFiles(string) (string, error)
 }
@@ -25,14 +29,35 @@ func (p *DefaultParser) Exists(preset string) (exists bool) {
 	return
 }
 
-// GetPresets get all presets names
-func (p *DefaultParser) GetPresets() (presets []string) {
+// GetLanguages get all presets languages
+func (p *DefaultParser) GetLanguages() (languages []string) {
 	if len(p.Presets) == 0 {
 		return
 	}
 
-	for key := range p.Presets {
-		presets = append(presets, key)
+	var lookedLangs map[string]bool = make(map[string]bool)
+	for _, content := range p.Presets {
+		if presetLang, ok := content["preset_language"]; ok && !lookedLangs[presetLang] {
+			languages = append(languages, presetLang)
+			lookedLangs[presetLang] = true
+		}
+	}
+	sort.Strings(languages)
+	return
+}
+
+// GetPresets get all presets names
+func (p *DefaultParser) GetPresets(language string) (presets []string) {
+	if len(p.Presets) == 0 {
+		return
+	}
+
+	for key, content := range p.Presets {
+		if language == "" {
+			presets = append(presets, key)
+		} else if presetLang, ok := content["preset_language"]; ok && presetLang == language {
+			presets = append(presets, key)
+		}
 	}
 	sort.Strings(presets)
 	return
@@ -46,7 +71,11 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 	presetFiles := p.Presets[preset]
 
 	for fileName := range presetFiles {
-		if _, err := os.Stat(fileName); !os.IsNotExist(err) {
+		if strings.HasPrefix(fileName, "preset_") {
+			continue
+		}
+
+		if _, err := osStat(fileName); !os.IsNotExist(err) {
 			foundFiles = append(foundFiles, fileName)
 		}
 	}
@@ -58,6 +87,10 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 	presetFiles := p.Presets[preset]
 
 	for fileName, fileContent := range presetFiles {
+		if strings.HasPrefix(fileName, "preset_") {
+			continue
+		}
+
 		var (
 			file  *os.File
 			lines int
