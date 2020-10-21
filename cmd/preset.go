@@ -19,6 +19,7 @@ type KoolPreset struct {
 	DefaultKoolService
 	Flags        *KoolPresetFlags
 	parser       presets.Parser
+	terminal     shell.TerminalChecker
 	promptSelect shell.PromptSelect
 }
 
@@ -40,37 +41,43 @@ func NewKoolPreset() *KoolPreset {
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
 		&presets.DefaultParser{Presets: presets.GetAll()},
+		shell.NewTerminalChecker(),
 		shell.NewPromptSelect(),
 	}
 }
 
 // Execute runs the preset logic with incoming arguments.
-func (i *KoolPreset) Execute(args []string) (err error) {
+func (p *KoolPreset) Execute(args []string) (err error) {
 	var fileError, preset, language string
 
 	if len(args) == 0 {
-		if language, err = i.promptSelect.Ask("What language do you want to use", i.parser.GetLanguages()); err != nil {
+		if !p.terminal.IsTerminal(p.GetReader(), p.GetWriter()) {
+			err = fmt.Errorf("the input device is not a TTY; for non-tty environments, please specify a preset argument")
 			return
 		}
 
-		if preset, err = i.promptSelect.Ask("What preset do you want to use", i.parser.GetPresets(language)); err != nil {
+		if language, err = p.promptSelect.Ask("What language do you want to use", p.parser.GetLanguages()); err != nil {
+			return
+		}
+
+		if preset, err = p.promptSelect.Ask("What preset do you want to use", p.parser.GetPresets(language)); err != nil {
 			return
 		}
 	} else {
 		preset = args[0]
 	}
 
-	if !i.parser.Exists(preset) {
+	if !p.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
 		return
 	}
 
-	i.Println("Preset", preset, "is initializing!")
+	p.Println("Preset", preset, "is initializing!")
 
-	if !i.Flags.Override {
-		existingFiles := i.parser.LookUpFiles(preset)
+	if !p.Flags.Override {
+		existingFiles := p.parser.LookUpFiles(preset)
 		for _, fileName := range existingFiles {
-			i.Warning("Preset file ", fileName, " already exists.")
+			p.Warning("Preset file ", fileName, " already exists.")
 		}
 
 		if len(existingFiles) > 0 {
@@ -79,12 +86,12 @@ func (i *KoolPreset) Execute(args []string) (err error) {
 		}
 	}
 
-	if fileError, err = i.parser.WriteFiles(preset); err != nil {
+	if fileError, err = p.parser.WriteFiles(preset); err != nil {
 		err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
 		return
 	}
 
-	i.Success("Preset ", preset, " initialized!")
+	p.Success("Preset ", preset, " initialized!")
 	return
 }
 

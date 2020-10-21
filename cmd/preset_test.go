@@ -13,6 +13,7 @@ func newFakeKoolPreset() *KoolPreset {
 		*newFakeKoolService(),
 		&KoolPresetFlags{false},
 		&presets.FakeParser{},
+		&shell.FakeTerminalChecker{},
 		&shell.FakePromptSelect{},
 	}
 }
@@ -41,11 +42,20 @@ func TestNewKoolPreset(t *testing.T) {
 	if _, ok := k.parser.(*presets.DefaultParser); !ok {
 		t.Errorf("unexpected presets.Parser on default KoolPreset instance")
 	}
+
+	if _, ok := k.promptSelect.(*shell.DefaultPromptSelect); !ok {
+		t.Errorf("unexpected shell.PromptSelect on default KoolPreset instance")
+	}
+
+	if _, ok := k.terminal.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolPreset instance")
+	}
 }
 
 func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
@@ -95,6 +105,7 @@ func TestPresetCommand(t *testing.T) {
 
 func TestInvalidScriptPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"invalid"})
@@ -127,6 +138,7 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
@@ -155,6 +167,7 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
 
@@ -185,6 +198,7 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockError = errors.New("write error")
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
 
@@ -212,9 +226,16 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 
 func TestNoArgsPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = "laravel"
+
+	mockAnswer := make(map[string]string)
+	mockAnswer["What language do you want to use"] = "php"
+	mockAnswer["What preset do you want to use"] = "laravel"
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = mockAnswer
+	f.parser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.parser.(*presets.FakeParser).MockExists = true
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
 
@@ -234,10 +255,58 @@ func TestNoArgsPresetCommand(t *testing.T) {
 	}
 }
 
-func TestFailingNoArgsPresetCommand(t *testing.T) {
+func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
+	f.parser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
-	f.promptSelect.(*shell.FakePromptSelect).MockError = errors.New("error prompt select preset")
+
+	mockError := make(map[string]error)
+	mockError["What language do you want to use"] = errors.New("error prompt select language")
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = mockError
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
+
+	cmd := NewPresetCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("did not call Ask on PromptSelect")
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("did not call Error")
+	}
+
+	expected := "error prompt select language"
+	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+
+	if output != expected {
+		t.Errorf("expecting error '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+}
+
+func TestFailingPresetNoArgsPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	f.parser.(*presets.FakeParser).MockLanguages = []string{"php"}
+	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
+
+	mockAnswer := make(map[string]string)
+	mockAnswer["What language do you want to use"] = "php"
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = mockAnswer
+
+	mockError := make(map[string]error)
+	mockError["What preset do you want to use"] = errors.New("error prompt select preset")
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = mockError
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
 
@@ -267,7 +336,12 @@ func TestFailingNoArgsPresetCommand(t *testing.T) {
 
 func TestCancellingPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.promptSelect.(*shell.FakePromptSelect).MockError = shell.ErrPromptSelectInterrupted
+
+	mockError := make(map[string]error)
+	mockError["What language do you want to use"] = shell.ErrPromptSelectInterrupted
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = mockError
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
 
@@ -292,5 +366,28 @@ func TestCancellingPresetCommand(t *testing.T) {
 
 	if f.exiter.(*shell.FakeExiter).Code() != 0 {
 		t.Error("did not call Exit with code 0")
+	}
+}
+
+func TestNonTTYPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = false
+
+	cmd := NewPresetCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.out.(*shell.FakeOutputWriter).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "the input device is not a TTY; for non-tty environments, please specify a preset argument" {
+		t.Errorf("expecting error 'the input device is not a TTY; for non-tty environments, please specify a preset argument', got %v", err)
 	}
 }
