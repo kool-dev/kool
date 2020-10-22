@@ -16,7 +16,6 @@ kool docker [options] [image] [command] [flags]
 ### Options
 
 ```
-  -T, --disable-tty           Deprecated - no effect
   -e, --env stringArray       Environment variables
   -h, --help                  help for docker
   -p, --publish stringArray   Publish a container’s port(s) to the host
