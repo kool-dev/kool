@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -28,7 +27,7 @@ func TestInitEnvironmentVariables(t *testing.T) {
 		t.Errorf("expecting $HOME value '%s', got '%s'", homeDir, envHomeDir)
 	}
 
-	UID := fmt.Sprintf("%d", os.Getuid())
+	UID := uid()
 
 	if envUID := f.Envs["UID"]; envUID != UID {
 		t.Errorf("expecting $UID value '%s', got '%s'", UID, envUID)
