@@ -4,9 +4,6 @@ scripts:
   dev:
     - kool run compile
     - kool run install
-  # Parsing the preset files onto Go code in a shell automated fashion.
-  parse-presets:
-    - bash parse_presets.sh
   # Runs go CLI with proper version for kool development
   go: kool docker --volume=kool_gopath:/go --env='GOOS=$GOOS' golang:1.15.0 go
   # Compiling kool itself. In case you are on MacOS make sure to have your .env
@@ -22,4 +19,8 @@ scripts:
   # Generate documentation for kool commands
   make-docs:
     - rm -f docs/4-Commands/*.md
-    - kool docker golang:1.15.0 go run docs.go
+    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run docs.go
+  # Parsing the preset files onto Go code in an automated fashion.
+  parse-presets:
+    - rm -f cmd/presets/presets.go
+    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_presets.go

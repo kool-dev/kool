@@ -1,10 +1,14 @@
 package presets
 
 // auto generated file
+
 // GetAll get all presets
 func GetAll() map[string]map[string]string {
 	var presets = make(map[string]map[string]string)
 	presets["adonis"] = map[string]string{
+		".dockerignore": `/node_modules
+`,
+		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
 COPY . /app
@@ -17,7 +21,8 @@ COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3333
 
-CMD [ "npm", "start" ]`,
+CMD [ "npm", "start" ]
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -62,7 +67,8 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
@@ -70,11 +76,13 @@ networks:
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start`,
+    - kool start
+`,
 	}
 	presets["golang-cli"] = map[string]string{
+		"preset_language": "golang",
 		"kool.yml": `scripts:
-  # Helper for local development - compiling and installig locally
+  # Helper for local development - compiling and installing locally
   dev:
     - kool run compile
     - kool run install
@@ -88,9 +96,14 @@ networks:
   install:
     - mv my-cli /usr/local/bin/my-cli
   fmt: kool run go fmt
-  lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v`,
+  lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
+`,
 	}
 	presets["laravel"] = map[string]string{
+		".dockerignore": `/node_modules
+/vendor
+`,
+		"preset_language": "php",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -103,7 +116,8 @@ RUN yarn install && yarn prod
 
 FROM kooldev/php:7.4-nginx
 
-COPY --from=node --chown=kool:kool /app /app`,
+COPY --from=node --chown=kool:kool /app /app
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -149,7 +163,8 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.yml": `scripts:
   artisan: kool exec app php artisan
   composer: kool exec app composer
@@ -171,9 +186,13 @@ networks:
     - kool run composer install
     - kool run artisan migrate:fresh --seed
     - kool run npm install
-    - kool run npm run dev`,
+    - kool run npm run dev
+`,
 	}
 	presets["nestjs"] = map[string]string{
+		".dockerignore": `/node_modules
+`,
+		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14-nest AS build
 
 COPY . /app
@@ -186,7 +205,8 @@ COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3000
 
-CMD [ "npm", "start" ]`,
+CMD [ "npm", "start" ]
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -243,7 +263,8 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
@@ -255,9 +276,69 @@ networks:
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start`,
+    - kool start
+`,
+	}
+	presets["nextjs"] = map[string]string{
+		".dockerignore": `/.next
+/out
+/build
+/node_modules
+`,
+		"preset_language": "javascript",
+		"Dockerfile.build": `FROM kooldev/node:14 AS build
+
+COPY . /app
+
+RUN npm install && npm run build
+
+FROM kooldev/node:14
+
+COPY --from=build --chown=kool:kool /app /app
+
+EXPOSE 3000
+
+CMD [ "npm", "start" ]
+`,
+		"docker-compose.yml": `version: "3.7"
+services:
+  app:
+    image: kooldev/node:14
+    command: ["npm", "run", "dev"]
+    ports:
+     - "${KOOL_APP_PORT:-3000}:3000"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:delegated
+    #  - $HOME/.ssh:/home/kool/.ssh:delegated
+    networks:
+     - kool_local
+     - kool_global
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
+		"kool.yml": `scripts:
+  node: kool exec app node
+  npm: kool exec app npm # can change to: yarn,pnpm
+
+  setup:
+    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
+    - kool start
+`,
 	}
 	presets["nextjs-static"] = map[string]string{
+		".dockerignore": `/.next
+/out
+/build
+/node_modules
+`,
+		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -268,7 +349,8 @@ FROM kooldev/http:static
 
 ENV ROOT=/app/out
 
-COPY --from=node /app/out /app/out`,
+COPY --from=node /app/out /app/out
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -290,16 +372,23 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start`,
+    - kool start
+`,
 	}
-	presets["nextjs"] = map[string]string{
+	presets["nuxtjs"] = map[string]string{
+		".dockerignore": `/.nuxt
+/dist
+/node_modules
+`,
+		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -312,7 +401,8 @@ COPY --from=build --chown=kool:kool /app /app
 
 EXPOSE 3000
 
-CMD [ "npm", "start" ]`,
+CMD [ "npm", "start" ]
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -334,16 +424,29 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
+		"kool.nuxt.config.js": `export default {
+  server: {
+    host: '0.0.0.0',
+  }
+}
+`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start`,
+    - kool start
+`,
 	}
 	presets["nuxtjs-static"] = map[string]string{
+		".dockerignore": `/.nuxt
+/dist
+/node_modules
+`,
+		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -354,7 +457,8 @@ FROM kooldev/http:static
 
 ENV ROOT=/app/dist
 
-COPY --from=node /app/dist /app/dist`,
+COPY --from=node /app/dist /app/dist
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -376,70 +480,28 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.nuxt.config.js": `export default {
   server: {
     host: '0.0.0.0',
   }
-}`,
+}
+`,
 		"kool.yml": `scripts:
   node: kool exec app node
   npm: kool exec app npm # can change to: yarn,pnpm
 
   setup:
     - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start`,
-	}
-	presets["nuxtjs"] = map[string]string{
-		"Dockerfile.build": `FROM kooldev/node:14 AS build
-
-COPY . /app
-
-RUN npm install && npm run build
-
-FROM kooldev/node:14
-
-COPY --from=build --chown=kool:kool /app /app
-
-EXPOSE 3000
-
-CMD [ "npm", "start" ]`,
-		"docker-compose.yml": `version: "3.7"
-services:
-  app:
-    image: kooldev/node:14
-    command: ["npm", "run", "dev"]
-    ports:
-     - "${KOOL_APP_PORT:-3000}:3000"
-    environment:
-      ASUSER: "${KOOL_ASUSER:-0}"
-      UID: "${UID:-0}"
-    volumes:
-     - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
-    networks:
-     - kool_local
-     - kool_global
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
-		"kool.nuxt.config.js": `export default {
-  server: {
-    host: '0.0.0.0',
-  }
-}`,
-		"kool.yml": `scripts:
-  node: kool exec app node
-  npm: kool exec app npm # can change to: yarn,pnpm
-
-  setup:
-    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start`,
+    - kool start
+`,
 	}
 	presets["symfony"] = map[string]string{
+		".dockerignore": `/node_modules
+/vendor
+`,
+		"preset_language": "php",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -452,7 +514,8 @@ RUN yarn install && yarn prod
 
 FROM kooldev/php:7.4-nginx
 
-COPY --from=node --chown=kool:kool /app /app`,
+COPY --from=node --chown=kool:kool /app /app
+`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -498,7 +561,8 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.yml": `scripts:
   console: kool exec app php ./bin/console
   phpunit: kool exec app php ./bin/phpunit
@@ -512,9 +576,11 @@ networks:
   setup:
     - kool start
     - cp .env.example .env
-    - kool run composer install`,
+    - kool run composer install
+`,
 	}
 	presets["wordpress"] = map[string]string{
+		"preset_language": "php",
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -559,12 +625,14 @@ networks:
   kool_local:
   kool_global:
     external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"`,
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"kool.yml": `scripts:
   php: kool exec app php
   wp: kool exec app wp
 
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD`,
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+`,
 	}
 	return presets
 }

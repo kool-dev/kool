@@ -13,10 +13,10 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool init symfony
+$ kool preset symfony
 ```
 
-**kool init** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
 
 By default symfony preset comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
 

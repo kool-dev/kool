@@ -2,10 +2,6 @@
 
 Displays log output from services.
 
-### Synopsis
-
-Displays log output from services.
-
 ```
 kool logs [options] [service...] [flags]
 ```

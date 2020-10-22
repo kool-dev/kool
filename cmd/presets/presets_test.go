@@ -52,3 +52,19 @@ func TestPresetsKoolFile(t *testing.T) {
 		}
 	}
 }
+
+func TestLanguageMetadataFile(t *testing.T) {
+	for preset, files := range GetAll() {
+		var (
+			language        string
+			hasLanguageData bool
+		)
+		if language, hasLanguageData = files["preset_language"]; !hasLanguageData {
+			t.Errorf("preset_language is missing from %s preset", preset)
+		}
+
+		if len(language) == 0 {
+			t.Errorf("preset_language is does not have value on %s preset", preset)
+		}
+	}
+}

@@ -2,10 +2,6 @@
 
 Prints out information about kool setup (like environment variables)
 
-### Synopsis
-
-Prints out information about kool setup (like environment variables)
-
 ```
 kool info [flags]
 ```

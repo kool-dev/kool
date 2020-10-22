@@ -2,10 +2,6 @@
 
 Execute a command within a running service container
 
-### Synopsis
-
-Execute a command within a running service container
-
 ```
 kool exec [options] [service] [command] [flags]
 ```
