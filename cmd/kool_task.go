@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/gookit/color"
 	"io/ioutil"
 	"strings"
@@ -50,8 +49,6 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 	} else {
 		t.Println(color.New(color.Green).Sprint("done"))
 	}
-
-	fmt.Println(output)
 
 	if output != "" {
 		t.Println(output)
