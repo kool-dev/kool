@@ -12,7 +12,7 @@ import (
 func newFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
-		&KoolExecFlags{false, []string{}, false},
+		&KoolExecFlags{[]string{}, false},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
@@ -22,7 +22,7 @@ func newFakeKoolExec() *KoolExec {
 func newFailedFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
-		&KoolExecFlags{false, []string{}, false},
+		&KoolExecFlags{[]string{}, false},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockError: errors.New("error exec")},
@@ -47,10 +47,6 @@ func TestNewKoolExec(t *testing.T) {
 	if k.Flags == nil {
 		t.Errorf("Flags not initialized on default KoolExec instance")
 	} else {
-		if k.Flags.DisableTty {
-			t.Errorf("bad default value for DisableTty flag on default KoolExec instance")
-		}
-
 		if len(k.Flags.EnvVariables) > 0 {
 			t.Errorf("bad default value for EnvVariables flag on default KoolExec instance")
 		}

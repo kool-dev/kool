@@ -13,7 +13,7 @@ import (
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}},
 		&shell.FakeTerminalChecker{MockIsTerminal: false},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
@@ -23,7 +23,7 @@ func newFakeKoolDocker() *KoolDocker {
 func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}},
 		&shell.FakeTerminalChecker{MockIsTerminal: false},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockError: errors.New("error docker")},
@@ -48,10 +48,6 @@ func TestNewKoolDocker(t *testing.T) {
 	if k.Flags == nil {
 		t.Errorf("Flags not initialized on default KoolDocker instance")
 	} else {
-		if k.Flags.DisableTty {
-			t.Errorf("bad default value for DisableTty flag on default KoolDocker instance")
-		}
-
 		if len(k.Flags.EnvVariables) > 0 {
 			t.Errorf("bad default value for EnvVariables flag on default KoolDocker instance")
 		}
