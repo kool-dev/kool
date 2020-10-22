@@ -33,9 +33,9 @@ func NewKoolSelfUpdate() *KoolSelfUpdate {
 
 // Execute runs the self-update logic with incoming arguments.
 func (s *KoolSelfUpdate) Execute(args []string) (err error) {
-	var latestVersion semver.Version
+	var currentVersion, latestVersion semver.Version
 
-	currentVersion := s.updater.GetCurrentVersion()
+	currentVersion = s.updater.GetCurrentVersion()
 
 	if latestVersion, err = s.updater.Update(currentVersion); err != nil {
 		return fmt.Errorf("kool self-update failed: %v", err)
@@ -43,20 +43,22 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 
 	if latestVersion.Equals(currentVersion) {
 		s.Warning("You already have the latest version ", currentVersion.String())
-	} else {
-		s.Success("Successfully updated to version ", latestVersion.String())
+		return
 	}
 
+	s.Success("Successfully updated to version ", latestVersion.String())
 	return
 }
 
 // NewSelfUpdateCommand initializes new kool self-update command
 func NewSelfUpdateCommand(selfUpdate *KoolSelfUpdate) *cobra.Command {
+	selfUpdateTask := NewKoolTask("Updating kool version", selfUpdate)
+
 	return &cobra.Command{
 		Use:   "self-update",
 		Short: "Update kool to latest version",
 		Long:  "Checks for the latest release of Kool on Github Releases, downloads and replaces the local binary if a newer version is available.",
 		Args:  cobra.NoArgs,
-		Run:   DefaultCommandRunFunction(selfUpdate),
+		Run:   LongTaskCommandRunFunction(selfUpdateTask),
 	}
 }

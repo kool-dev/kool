@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"kool-dev/kool/cmd/shell"
+	"strings"
 	"testing"
 )
 
@@ -11,6 +13,7 @@ func newFakeKoolService() *DefaultKoolService {
 		&shell.FakeExiter{},
 		&shell.FakeOutputWriter{},
 		&shell.FakeInputReader{},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
 	}
 }
 
@@ -59,6 +62,29 @@ func TestKoolServiceProxies(t *testing.T) {
 
 	if len(k.out.(*shell.FakeOutputWriter).SuccessOutput) != len(out) {
 		t.Errorf("Success did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).SuccessOutput)
+	}
+
+	out = []interface{}{"success"}
+	k.Println(out...)
+
+	if !k.out.(*shell.FakeOutputWriter).CalledPrintln {
+		t.Error("Println was not proxied by DefaultKoolService")
+	}
+
+	expected := strings.TrimSpace(fmt.Sprintln(out...))
+	if len(k.out.(*shell.FakeOutputWriter).OutLines[0]) != len(expected) {
+		t.Errorf("Println did not proxy the proper output on DefaultKoolService; expected %v got %v", expected, k.out.(*shell.FakeOutputWriter).OutLines[0])
+	}
+
+	k.Printf("testing %s", "format")
+
+	if !k.out.(*shell.FakeOutputWriter).CalledPrintf {
+		t.Error("Printf was not proxied by DefaultKoolService")
+	}
+
+	expectedFOutput := "testing format"
+	if fOutput := k.out.(*shell.FakeOutputWriter).FOutput; fOutput != expectedFOutput {
+		t.Errorf("Printf did not proxy the proper output on DefaultKoolService; expected '%s', got %s", expectedFOutput, fOutput)
 	}
 
 	k.SetWriter(nil)

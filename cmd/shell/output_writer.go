@@ -18,6 +18,7 @@ type OutputWriter interface {
 	GetWriter() io.Writer
 	SetWriter(io.Writer)
 	Println(...interface{})
+	Printf(string, ...interface{})
 	Error(error)
 	Warning(...interface{})
 	Success(...interface{})
@@ -41,6 +42,11 @@ func (w *DefaultOutputWriter) SetWriter(wr io.Writer) {
 // Println execs Println on writer
 func (w *DefaultOutputWriter) Println(out ...interface{}) {
 	fmt.Fprintln(w.w, out...)
+}
+
+// Printf execs Printf on writer
+func (w *DefaultOutputWriter) Printf(format string, a ...interface{}) {
+	fmt.Fprintf(w.w, format, a...)
 }
 
 // Error error output

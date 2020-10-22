@@ -245,7 +245,7 @@ func TestNewRunCommandUsageTemplate(t *testing.T) {
 		t.Error("did not call Println for command usage")
 	}
 
-	usage := fmt.Sprintln(f.out.(*shell.FakeOutputWriter).Out...)
+	usage := f.out.(*shell.FakeOutputWriter).OutLines[0]
 
 	if !strings.Contains(usage, "testing_script") {
 		t.Error("did not find testing_script as available script on usage text")
@@ -267,7 +267,7 @@ func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	output := strings.TrimSpace(fmt.Sprintln(f.out.(*shell.FakeOutputWriter).Out...))
+	output := f.out.(*shell.FakeOutputWriter).OutLines[0]
 
 	if strings.Contains(output, "testing_script") {
 		t.Error("should not find testing_script as available script on usage text due to error on parsing scripts")

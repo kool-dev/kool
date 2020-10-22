@@ -13,7 +13,6 @@ func newFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
-		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 	}
@@ -23,7 +22,6 @@ func newFailedFakeKoolExec() *KoolExec {
 	return &KoolExec{
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
-		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockError: errors.New("error exec")},
 	}
@@ -187,7 +185,7 @@ func TestFailingNewExecCommand(t *testing.T) {
 
 func TestNonTerminalNewExecCommand(t *testing.T) {
 	f := newFakeKoolExec()
-	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
 
 	cmd := NewExecCommand(f)
 

@@ -76,8 +76,8 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call Println")
 	}
 
-	expected := "Preset laravel is initializing!\n"
-	output := fmt.Sprintln(f.out.(*shell.FakeOutputWriter).Out...)
+	expected := "Preset laravel is initializing!"
+	output := f.out.(*shell.FakeOutputWriter).OutLines[0]
 
 	if expected != output {
 		t.Errorf("Expecting message '%s', got '%s'", expected, output)
@@ -247,8 +247,8 @@ func TestNoArgsPresetCommand(t *testing.T) {
 		t.Error("did not call Ask on PromptSelect")
 	}
 
-	expected := "Preset laravel is initializing!\n"
-	output := fmt.Sprintln(f.out.(*shell.FakeOutputWriter).Out...)
+	expected := "Preset laravel is initializing!"
+	output := f.out.(*shell.FakeOutputWriter).OutLines[0]
 
 	if expected != output {
 		t.Errorf("Expecting message '%s', got '%s'", expected, output)

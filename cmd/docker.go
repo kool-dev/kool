@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/builder"
-	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"os"
 	"strings"
@@ -23,7 +22,6 @@ type KoolDocker struct {
 	DefaultKoolService
 	Flags *KoolDockerFlags
 
-	terminal   shell.TerminalChecker
 	envStorage environment.EnvStorage
 	dockerRun  builder.Command
 }
@@ -42,7 +40,6 @@ func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
-		shell.NewTerminalChecker(),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -53,7 +50,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 	image := args[0]
 	workDir, _ := os.Getwd()
 
-	if d.terminal.IsTerminal(d.GetReader(), d.GetWriter()) {
+	if d.IsTerminal() {
 		d.dockerRun.AppendArgs("-t")
 	}
 

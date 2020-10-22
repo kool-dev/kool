@@ -51,6 +51,12 @@ func TestFakeKoolService(t *testing.T) {
 		t.Errorf("failed to assert calling method Println on FakeKoolService")
 	}
 
+	f.Printf("")
+
+	if !f.CalledPrintf {
+		t.Errorf("failed to assert calling method Printf on FakeKoolService")
+	}
+
 	f.Error(nil)
 
 	if !f.CalledError {
@@ -75,5 +81,11 @@ func TestFakeKoolService(t *testing.T) {
 
 	if err == nil || err.Error() != f.MockExecError.Error() {
 		t.Errorf("failed to assert returning Execute mocked error on FakeKoolService")
+	}
+
+	f.IsTerminal()
+
+	if !f.CalledIsTerminal {
+		t.Errorf("failed to assert calling method IsTerminal on FakeKoolService")
 	}
 }

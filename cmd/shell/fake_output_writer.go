@@ -1,16 +1,21 @@
 package shell
 
-import "io"
+import (
+	"fmt"
+	"io"
+	"strings"
+)
 
 // FakeOutputWriter is meant to be used for tests - a simple empty mock
 // implementing the OutputWriter interface here defined.
 type FakeOutputWriter struct {
 	Err           error
-	Out           []interface{}
+	OutLines      []string
 	WarningOutput []interface{}
 	SuccessOutput []interface{}
+	FOutput       string
 
-	CalledGetWriter, CalledSetWriter, CalledPrintln, CalledError, CalledWarning, CalledSuccess bool
+	CalledGetWriter, CalledSetWriter, CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess bool
 }
 
 // GetWriter is a mocked testing function
@@ -27,7 +32,13 @@ func (f *FakeOutputWriter) SetWriter(w io.Writer) {
 // Println is a mocked testing function
 func (f *FakeOutputWriter) Println(out ...interface{}) {
 	f.CalledPrintln = true
-	f.Out = out
+	f.OutLines = append(f.OutLines, strings.TrimSpace(fmt.Sprintln(out...)))
+}
+
+// Printf is a mocked testing function
+func (f *FakeOutputWriter) Printf(format string, a ...interface{}) {
+	f.CalledPrintf = true
+	f.FOutput = fmt.Sprintf(format, a...)
 }
 
 // Error is a mocked testing function

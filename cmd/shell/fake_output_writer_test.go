@@ -23,6 +23,12 @@ func TestFakeOutputWriter(t *testing.T) {
 		t.Errorf("failed to assert calling method Println on FakeOutputWriter")
 	}
 
+	f.Printf("")
+
+	if !f.CalledPrintf {
+		t.Errorf("failed to assert calling method Printf on FakeOutputWriter")
+	}
+
 	f.Error(nil)
 
 	if !f.CalledError {

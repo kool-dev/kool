@@ -65,6 +65,23 @@ func TestPrintlnOutputWriter(t *testing.T) {
 	}
 }
 
+func TestPrintfOutputWriter(t *testing.T) {
+	o, b := newTestingOutputWriter()
+
+	expected := "testing text"
+	o.Printf("testing %s", "text")
+
+	output, err := readOutput(b)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if output != expected {
+		t.Errorf("expecting output '%s', got '%s'", expected, output)
+	}
+}
+
 func TestErrorOutputWriter(t *testing.T) {
 	o, b := newTestingOutputWriter()
 
