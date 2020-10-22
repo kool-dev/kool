@@ -3,13 +3,14 @@ package shell
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 // FakeOutputWriter is meant to be used for tests - a simple empty mock
 // implementing the OutputWriter interface here defined.
 type FakeOutputWriter struct {
 	Err           error
-	Out           []interface{}
+	OutLines      []string
 	WarningOutput []interface{}
 	SuccessOutput []interface{}
 	FOutput       string
@@ -31,7 +32,7 @@ func (f *FakeOutputWriter) SetWriter(w io.Writer) {
 // Println is a mocked testing function
 func (f *FakeOutputWriter) Println(out ...interface{}) {
 	f.CalledPrintln = true
-	f.Out = out
+	f.OutLines = append(f.OutLines, strings.TrimSpace(fmt.Sprintln(out...)))
 }
 
 // Printf is a mocked testing function

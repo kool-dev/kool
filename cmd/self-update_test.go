@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"kool-dev/kool/cmd/shell"
-	"kool-dev/kool/cmd/task"
 	"kool-dev/kool/cmd/updater"
 	"testing"
 )
@@ -12,7 +11,6 @@ import (
 func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err error) *KoolSelfUpdate {
 	return &KoolSelfUpdate{
 		*newFakeKoolService(),
-		&task.FakeTask{},
 		&updater.FakeUpdater{
 			MockCurrentVersion: currentVersion,
 			MockLatestVersion:  latestVersion,
@@ -51,10 +49,6 @@ func TestNewSelfUpdateCommand(t *testing.T) {
 
 	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
 		t.Errorf("did not call SetWriter")
-	}
-
-	if !f.taskRunner.(*task.FakeTask).CalledRun {
-		t.Errorf("did not call Update Task Run")
 	}
 
 	if !f.updater.(*updater.FakeUpdater).CalledGetCurrentVersion {

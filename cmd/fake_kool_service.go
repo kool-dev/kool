@@ -4,20 +4,21 @@ import "io"
 
 // FakeKoolService is a mock to be used on testing/replacement for KoolService interface
 type FakeKoolService struct {
-	ArgsExecute     []string
-	ExitCode        int
-	CalledExecute   bool
-	CalledExit      bool
-	CalledGetWriter bool
-	CalledSetWriter bool
-	CalledGetReader bool
-	CalledSetReader bool
-	CalledPrintln   bool
-	CalledPrintf    bool
-	CalledError     bool
-	CalledWarning   bool
-	CalledSuccess   bool
-	MockExecError   error
+	ArgsExecute      []string
+	ExitCode         int
+	CalledExecute    bool
+	CalledExit       bool
+	CalledGetWriter  bool
+	CalledSetWriter  bool
+	CalledGetReader  bool
+	CalledSetReader  bool
+	CalledPrintln    bool
+	CalledPrintf     bool
+	CalledError      bool
+	CalledWarning    bool
+	CalledSuccess    bool
+	CalledIsTerminal bool
+	MockExecError    error
 }
 
 // Execute mocks the function for testing
@@ -79,4 +80,10 @@ func (f *FakeKoolService) Warning(out ...interface{}) {
 // Success mocks the function for testing
 func (f *FakeKoolService) Success(out ...interface{}) {
 	f.CalledSuccess = true
+}
+
+// IsTerminal mocks the function for testing
+func (f *FakeKoolService) IsTerminal() (isTerminal bool) {
+	f.CalledIsTerminal = true
+	return
 }

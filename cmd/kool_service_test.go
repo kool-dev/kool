@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"kool-dev/kool/cmd/shell"
+	"strings"
 	"testing"
 )
 
@@ -11,6 +13,7 @@ func newFakeKoolService() *DefaultKoolService {
 		&shell.FakeExiter{},
 		&shell.FakeOutputWriter{},
 		&shell.FakeInputReader{},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
 	}
 }
 
@@ -68,8 +71,9 @@ func TestKoolServiceProxies(t *testing.T) {
 		t.Error("Println was not proxied by DefaultKoolService")
 	}
 
-	if len(k.out.(*shell.FakeOutputWriter).Out) != len(out) {
-		t.Errorf("Println did not proxy the proper output on DefaultKoolService; expected %v got %v", out, k.out.(*shell.FakeOutputWriter).SuccessOutput)
+	expected := strings.TrimSpace(fmt.Sprintln(out...))
+	if len(k.out.(*shell.FakeOutputWriter).OutLines[0]) != len(expected) {
+		t.Errorf("Println did not proxy the proper output on DefaultKoolService; expected %v got %v", expected, k.out.(*shell.FakeOutputWriter).OutLines[0])
 	}
 
 	k.Printf("testing %s", "format")

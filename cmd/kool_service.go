@@ -10,6 +10,7 @@ import (
 // of logic usually linked to a command.
 type KoolService interface {
 	Execute([]string) error
+	IsTerminal() bool
 
 	shell.Exiter
 	shell.OutputWriter
@@ -22,6 +23,7 @@ type DefaultKoolService struct {
 	exiter shell.Exiter
 	out    shell.OutputWriter
 	in     shell.InputReader
+	term   shell.TerminalChecker
 }
 
 func newDefaultKoolService() *DefaultKoolService {
@@ -29,6 +31,7 @@ func newDefaultKoolService() *DefaultKoolService {
 		shell.NewExiter(),
 		shell.NewOutputWriter(),
 		shell.NewInputReader(),
+		shell.NewTerminalChecker(),
 	}
 }
 
@@ -82,4 +85,9 @@ func (k *DefaultKoolService) Warning(out ...interface{}) {
 // Success proxies the call to the given OutputWriter
 func (k *DefaultKoolService) Success(out ...interface{}) {
 	k.out.Success(out...)
+}
+
+// IsTerminal checks if input/output is a terminal
+func (k *DefaultKoolService) IsTerminal() bool {
+	return k.term.IsTerminal(k.GetReader(), k.GetWriter())
 }

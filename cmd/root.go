@@ -57,3 +57,18 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 		}
 	}
 }
+
+// LongTaskCommandRunFunction long tasks run function logic
+func LongTaskCommandRunFunction(tasks ...KoolTask) CobraRunFN {
+	return func(cmd *cobra.Command, args []string) {
+		for _, task := range tasks {
+			task.SetWriter(cmd.OutOrStdout())
+			task.SetReader(cmd.InOrStdin())
+
+			if err := task.Run(args); err != nil {
+				task.Error(err)
+				task.Exit(1)
+			}
+		}
+	}
+}

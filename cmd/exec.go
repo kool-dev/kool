@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/builder"
-	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 
 	"github.com/spf13/cobra"
@@ -20,7 +19,6 @@ type KoolExec struct {
 	DefaultKoolService
 	Flags *KoolExecFlags
 
-	terminal    shell.TerminalChecker
 	envStorage  environment.EnvStorage
 	composeExec builder.Command
 }
@@ -39,7 +37,6 @@ func NewKoolExec() *KoolExec {
 	return &KoolExec{
 		*newDefaultKoolService(),
 		&KoolExecFlags{false, []string{}, false},
-		shell.NewTerminalChecker(),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker-compose", "exec"),
 	}
@@ -47,7 +44,7 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if !e.terminal.IsTerminal(e.GetReader(), e.GetWriter()) {
+	if !e.IsTerminal() {
 		e.composeExec.AppendArgs("-T")
 	}
 
