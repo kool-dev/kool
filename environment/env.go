@@ -1,7 +1,6 @@
 package environment
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -28,9 +27,8 @@ func InitEnvironmentVariables(envStorage EnvStorage, defaultEnvValues string) {
 	if envStorage.Get("HOME") == "" {
 		envStorage.Set("HOME", homeDir)
 	}
-	if envStorage.Get("UID") == "" {
-		envStorage.Set("UID", fmt.Sprintf("%d", os.Getuid()))
-	}
+
+	initUid(envStorage)
 
 	if envStorage.Get("PWD") == "" {
 		workDir, err = os.Getwd()
