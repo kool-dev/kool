@@ -15,12 +15,12 @@ cd my-project
 Go to the project folder and run:
 
 ```bash
-$ kool preset laravel
+$ kool init laravel
 ```
 
-**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool init** basically creates a few configuration files in order to enable you to configure / extend it.
 
-By default laravel preset comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
+By default laravel init comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
 
 Also comes with some scripts to bring you up to speed at **kool.yaml**, take a look at the defaults.
 
