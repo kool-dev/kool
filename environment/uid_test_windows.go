@@ -1,10 +1,6 @@
-// +build !windows
-
 package environment
 
 import (
-	"fmt"
-	"os"
 	"testing"
 )
 
@@ -12,7 +8,7 @@ func TestInitUid(t *testing.T) {
 	f := NewFakeEnvStorage()
 	initUid(f)
 
-	if f.Envs["UID"] != fmt.Sprintf("%d", os.Getuid()) {
+	if f.Envs["UID"] != uid() {
 		t.Error("failed setting current uid to UID")
 	}
 }
@@ -23,7 +19,7 @@ func TestAlreadyExistingKoolUserInitUid(t *testing.T) {
 
 	initUid(f)
 
-	if f.Envs["UID"] != "1000" {
+	if f.Envs["UID"] != uid() {
 		t.Error("should not set new uid if it is already set")
 	}
 }

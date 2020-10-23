@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var sidExp = regexp.MustCompile(`([\d\D]+-)(?P<uid>\d+)`)
+var sidExp = regexp.MustCompile(`.*-(?P<uid>\d+)`)
 
 func initUid(envStorage EnvStorage) {
 	// under native windows defaults to using
@@ -21,5 +21,10 @@ func uid() string {
 	for i, name := range match {
 		results[sidExp.SubexpNames()[i]] = name
 	}
-	return results["uid"]
+
+	if uid, ok := results["uid"]; ok {
+		return uid
+	}
+
+	return "0"
 }
