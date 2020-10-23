@@ -1,5 +1,22 @@
 #!/bin/bash
 
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --version )
+      KOOL_VERSION="$2"
+      shift 2
+      ;;
+    -- )
+      shift
+      break
+      ;;
+    *)
+      echo "Invalid Argument: ${1}"
+      exit 1
+      ;;
+  esac
+done
+
 if [ -f .env ]; then
     source .env
 fi

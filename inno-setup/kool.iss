@@ -43,9 +43,6 @@ Name: en; MessagesFile: "compiler:Default.isl"
 Source: "..\dist\kool.exe"; DestDir: "{autopf}\{#ApplicationGroup}\bin"; Flags: ignoreversion
 Source: "kool.ico"; DestDir: "{autopf}\{#ApplicationGroup}"; Flags: ignoreversion
 
-[Registry]
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "APPLICATION_NAME"; ValueData: "{autopf}\{#ApplicationGroup}\bin\kool.exe"; Flags: uninsdeletevalue
-
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
