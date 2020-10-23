@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
+	"fmt"
+	"os"
+	"time"
+
 	"github.com/gookit/color"
-	"io/ioutil"
-	"strings"
 )
 
 // KoolTask holds logic for running kool service as a long task
@@ -30,28 +33,70 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		return t.Execute(args)
 	}
 
-	var output string
-
-	t.Printf("%s ... ", t.message)
+	t.Println(t.message, "...")
 
 	originalWriter := t.GetWriter()
-	buf := bytes.NewBufferString("")
-	t.SetWriter(buf)
+
+	_ = bytes.NewBuffer([]byte{})
+
+	r, w, _ := os.Pipe()
+	t.SetWriter(w)
+
+	scanner := bufio.NewScanner(r)
+	scanner.Split(bufio.ScanLines)
+
+	done := make(chan bool)
+	lines := make(chan string)
+
+	go func() {
+		defer close(lines)
+
+		for range time.Tick(100 * time.Millisecond) {
+			select {
+			case <-done:
+				return
+			default:
+				if scanner.Scan() {
+					lines <- scanner.Text()
+				}
+			}
+		}
+	}()
+
+	go func() {
+		spinChars := []byte{'-', '/', '|', '\\'}
+		spinPos := 0
+
+		for range time.Tick(100 * time.Millisecond) {
+			select {
+			case <-done:
+				return
+			case line := <-lines:
+				spinPos = (spinPos + 1) % 4
+
+				fmt.Fprint(originalWriter, "\r")
+
+				fmt.Fprintln(originalWriter, line)
+
+				fmt.Fprintf(originalWriter, "Status: %s", spinChars[spinPos:spinPos+1])
+			default:
+				spinPos = (spinPos + 1) % 4
+				fmt.Fprintf(originalWriter, "\rStatus: %s", spinChars[spinPos:spinPos+1])
+			}
+		}
+	}()
 
 	err = <-t.execService(args)
 
+	done <- true
+	close(done)
+
 	t.SetWriter(originalWriter)
-	bufBytes, _ := ioutil.ReadAll(buf)
-	output = strings.TrimSpace(string(bufBytes))
 
 	if err != nil {
-		t.Println(color.New(color.Red).Sprint("error"))
+		t.Printf("\rStatus: %s\n", color.New(color.Red).Sprint("error"))
 	} else {
-		t.Println(color.New(color.Green).Sprint("done"))
-	}
-
-	if output != "" {
-		t.Println(output)
+		t.Printf("\rStatus: %s\n", color.New(color.Green).Sprint("done"))
 	}
 
 	return
@@ -61,7 +106,9 @@ func (t *DefaultKoolTask) execService(args []string) <-chan error {
 	chError := make(chan error)
 
 	go func() {
-		defer close(chError)
+		defer func() {
+			close(chError)
+		}()
 		chError <- t.Execute(args)
 	}()
 
