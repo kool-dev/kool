@@ -99,6 +99,62 @@ networks:
   lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
 `,
 	}
+	presets["goxygen"] = map[string]string{
+		"preset_language": "golang",
+		"docker-compose.kool.yml": `version: "3.7"
+services:
+  server:
+    image: golang:1.15.0
+    command: go run server.go
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+    working_dir: /app/server
+    volumes:
+      - gopath:/go
+      - ./:/app
+  app:
+    stdin_open: true
+    image: kooldev/node:14
+    command: npm start
+    ports:
+      - 3000:3000
+    working_dir: /app/webapp
+    depends_on:
+      - server
+    volumes:
+      - ./:/app
+  database:
+    image: mongo:4.2.3
+    container_name: db
+    environment:
+      MONGO_INITDB_DATABASE: tech
+    volumes:
+      - ./init-db.js:/docker-entrypoint-initdb.d/init.js
+
+volumes:
+  gopath:
+`,
+		"kool.yml": `scripts:
+  node: kool docker kooldev/node:14 node
+  npm: kool docker -- -w=/app/webapp kooldev/node:14 npm
+
+  go: kool docker --volume=kool_gopath:/go golang:1.15.0 go
+
+  create:
+    - kool run go get -u github.com/shpota/goxygen
+    - kool run go run github.com/shpota/goxygen init goxygen
+    - bash -c 'cp -rf goxygen/* ./'
+    - rm -rf goxygen
+    - mv docker-compose.yml docker-compose.goxygen.yml
+    - mv docker-compose.kool.yml docker-compose.yml
+
+# @TODO
+# be able to choose the frontend framework and database during project creation
+# go run github.com/shpota/goxygen init --frontend vue --db postgres my-app
+`,
+	}
 	presets["laravel"] = map[string]string{
 		".dockerignore": `/node_modules
 /vendor

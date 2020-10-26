@@ -1,0 +1,17 @@
+scripts:
+  node: kool docker kooldev/node:14 node
+  npm: kool docker -- -w=/app/webapp kooldev/node:14 npm
+
+  go: kool docker --volume=kool_gopath:/go golang:1.15.0 go
+
+  create:
+    - kool run go get -u github.com/shpota/goxygen
+    - kool run go run github.com/shpota/goxygen init goxygen
+    - bash -c 'cp -rf goxygen/* ./'
+    - rm -rf goxygen
+    - mv docker-compose.yml docker-compose.goxygen.yml
+    - mv docker-compose.kool.yml docker-compose.yml
+
+# @TODO
+# be able to choose the frontend framework and database during project creation
+# go run github.com/shpota/goxygen init --frontend vue --db postgres my-app

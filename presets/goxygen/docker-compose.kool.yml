@@ -1,0 +1,34 @@
+version: "3.7"
+services:
+  server:
+    image: golang:1.15.0
+    command: go run server.go
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+    working_dir: /app/server
+    volumes:
+      - gopath:/go
+      - ./:/app
+  app:
+    stdin_open: true
+    image: kooldev/node:14
+    command: npm start
+    ports:
+      - 3000:3000
+    working_dir: /app/webapp
+    depends_on:
+      - server
+    volumes:
+      - ./:/app
+  database:
+    image: mongo:4.2.3
+    container_name: db
+    environment:
+      MONGO_INITDB_DATABASE: tech
+    volumes:
+      - ./init-db.js:/docker-entrypoint-initdb.d/init.js
+
+volumes:
+  gopath:
