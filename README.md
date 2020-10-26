@@ -87,11 +87,20 @@ You can see projects using it here: https://github.com/kool-dev/examples
 
 ## Contributing
 
-Like what you see? You are most welcome to contribute! We are working in a backlog of issues, feel free to browse through and enter discussions or get to work!
+You are most welcome to contribute! There are issues with [`good first issue`](https://github.com/kool-dev/kool/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) label, feel free to browse through and enter discussions or get to work!
 
-The flow is not written in stone, so you may go ahead and fork, code and PR with clear and direct communication on the feature/improvement or fix you developed.
+The workflow is not written in stone, so you may go ahead and fork, code and PR with clear and direct communication on the feature/improvement or fix you developed.
 
-PS: our main pain point at this moment is the lack of testing. Might be a great starting point.
+### Roadmap
+
+We have been working in a loosely defined but clear roadmap:
+
+- Recently: we focused on tests coverage for moving forward condifently; we got from 0 to 90% coverage in a couple of weeks! *check!*
+- Currently focusing in: improving overall UX and stabilize features - error messages, progress display, output control, presets creation, getting started, etc...
+- Next steps:
+    - Continunously improve tests coverage;
+    - Continunously improve UX based on usage feedbacks;
+    - Expand features (Proposal issues);
 
 ### Lint, formatting and tests
 

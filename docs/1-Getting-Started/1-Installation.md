@@ -1,16 +1,12 @@
+## Installation
+
 ### Requirements
 
-Kool is powered by **[Docker](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)**, you need to have it installed on your machine.
+Kool is powered by **[Docker](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)**, you need to have them installed on your machine.
 
-### Installation
+### For Linux and MacOS
 
 To install **kool** simply run the following script.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | bash
-```
-
-In case it fails due to permission then run it using sudo:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
@@ -18,11 +14,25 @@ curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | s
 
 All this script will do is download latest kool bin from https://github.com/kool-dev/kool/releases for your OS and put in your `/usr/local/bin` folder.
 
-## For Windows
+### For Windows
 
 Download the installer [here](https://github.com/kool-dev/kool/releases)
 
 To check if everything looks good simply run **kool** to see the list of available commands.
+
+## Updating to a newer version
+
+When a new version is released you can obtain it with the builtin command `self-update`:
+
+```bash
+sudo kool self-update
+```
+
+This will check the latest realease and download/install it case there is a newer version.
+
+**Alternative**: in order to get a new release you can always repeat the installation steps provided above as well, which should get you the latest version.
+
+> We suggest that you *start* and sign up for new releases notifications on our Github main repository so you always will stay up to date with our latest features!
 
 ## Autocompletion
 
