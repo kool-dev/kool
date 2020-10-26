@@ -20,9 +20,9 @@ Download the installer [here](https://github.com/kool-dev/kool/releases)
 
 To check if everything looks good simply run **kool** to see the list of available commands.
 
-## Updating kool to a newer version
+## Updating to a newer version
 
-When a new version is released you can obtain it with the builtin command:
+When a new version is released you can obtain it with the builtin command `self-update`:
 
 ```bash
 sudo kool self-update
