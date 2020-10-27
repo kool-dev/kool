@@ -16,12 +16,14 @@ type FakeOutputWriter struct {
 	FOutput       string
 
 	CalledGetWriter, CalledSetWriter, CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess bool
+
+	MockWriter io.Writer
 }
 
 // GetWriter is a mocked testing function
 func (f *FakeOutputWriter) GetWriter() (w io.Writer) {
 	f.CalledGetWriter = true
-	return
+	return f.MockWriter
 }
 
 // SetWriter is a mocked testing function

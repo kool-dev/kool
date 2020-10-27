@@ -3,6 +3,8 @@ package cmd
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"strings"
@@ -28,9 +30,21 @@ func (t *koolTaskServiceTest) Execute(args []string) error {
 	return t.MockError
 }
 
+func newKoolServiceTest() *DefaultKoolService {
+	service := &DefaultKoolService{
+		&shell.FakeExiter{},
+		shell.NewOutputWriter(),
+		&shell.FakeInputReader{},
+		&shell.FakeTerminalChecker{MockIsTerminal: true},
+	}
+	buf := bytes.NewBufferString("")
+	service.SetWriter(buf)
+	return service
+}
+
 func newKoolTaskServiceTest() *koolTaskServiceTest {
 	return &koolTaskServiceTest{
-		*newFakeKoolService(),
+		*newKoolServiceTest(),
 		false,
 		nil,
 		"",
@@ -38,24 +52,36 @@ func newKoolTaskServiceTest() *koolTaskServiceTest {
 }
 
 func newKoolTaskServiceTestWithOutput() *koolTaskServiceTest {
-	baseservice := &DefaultKoolService{
-		&shell.FakeExiter{},
-		shell.NewOutputWriter(),
-		&shell.FakeInputReader{},
-		&shell.FakeTerminalChecker{MockIsTerminal: true},
-	}
-
 	return &koolTaskServiceTest{
-		*baseservice,
+		*newKoolServiceTest(),
 		false,
 		nil,
 		"testing output",
 	}
 }
 
+func newKoolTaskTest(message string, service KoolService) *DefaultKoolTask {
+	return &DefaultKoolTask{service, message, &shell.FakeOutputWriter{}}
+}
+
 func TestNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTest()
 	task := NewKoolTask("testing", service)
+
+	message := task.message
+
+	if message != "testing" {
+		t.Errorf("expecting message 'testing' on KoolTask, got '%s'", message)
+	}
+
+	if _, ok := task.taskOut.(*shell.DefaultOutputWriter); !ok {
+		t.Error("unexpected shell.OutputWriter on KoolTask.taskOut")
+	}
+}
+
+func TestRunNewKoolTask(t *testing.T) {
+	service := newKoolTaskServiceTest()
+	task := newKoolTaskTest("testing", service)
 
 	_ = task.Run([]string{})
 
@@ -67,24 +93,22 @@ func TestNewKoolTask(t *testing.T) {
 		t.Error("did not call Execute on task KoolService")
 	}
 
-	fOutput := service.out.(*shell.FakeOutputWriter).FOutput
+	outputLines := task.taskOut.(*shell.FakeOutputWriter).OutLines
 
-	if fOutput != "testing ... " {
-		t.Errorf("expecting message 'testing ... ', got %s", fOutput)
+	if len(outputLines) >= 1 && outputLines[0] != "testing ..." {
+		t.Errorf("expecting message 'testing ...', got %s", outputLines[0])
 	}
 
-	output := service.out.(*shell.FakeOutputWriter).OutLines
-
-	expected := color.New(color.Green).Sprint("done")
-	if len(output) > 0 && output[0] != expected {
-		t.Errorf("expecting task status '%s', got %s", expected, output[0])
+	expected := fmt.Sprintf("... %s", color.New(color.Green).Sprint("done"))
+	if len(outputLines) >= 3 && outputLines[2] != expected {
+		t.Errorf("expecting task status '%s', got %s", expected, outputLines[2])
 	}
 }
 
-func TestFailingNewKoolTask(t *testing.T) {
+func TestRunFailingNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTest()
 	service.MockError = errors.New("error execute")
-	task := NewKoolTask("testing", service)
+	task := newKoolTaskTest("testing", service)
 
 	err := task.Run([]string{})
 
@@ -94,40 +118,34 @@ func TestFailingNewKoolTask(t *testing.T) {
 		t.Errorf("expecting Run to return the error '%v', got '%v'", service.MockError, err)
 	}
 
-	output := service.out.(*shell.FakeOutputWriter).OutLines
+	outputLines := task.taskOut.(*shell.FakeOutputWriter).OutLines
 
-	expected := color.New(color.Red).Sprint("error")
-	if len(output) > 0 && output[0] != expected {
-		t.Errorf("expecting task status '%s', got %s", expected, output[0])
+	expected := fmt.Sprintf("... %s", color.New(color.Red).Sprint("error"))
+	if len(outputLines) >= 3 && outputLines[2] != expected {
+		t.Errorf("expecting task status '%s', got %s", expected, outputLines[2])
 	}
 }
 
-func TestNonTtyNewKoolTask(t *testing.T) {
+func TestRunNonTtyNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTest()
 	service.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
-	task := NewKoolTask("testing", service)
+	task := newKoolTaskTest("testing", service)
 
 	_ = task.Run([]string{})
 
-	if service.out.(*shell.FakeOutputWriter).CalledPrintf {
-		t.Error("should not call Printf for task message")
-	}
-
-	if service.out.(*shell.FakeOutputWriter).CalledPrintln {
-		t.Error("should not call Println for task status")
+	if outputLines := task.taskOut.(*shell.FakeOutputWriter).OutLines; len(outputLines) > 0 {
+		t.Error("should not print out task output")
 	}
 }
 
-func TestOutputNewKoolTask(t *testing.T) {
+func TestRunOutputNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTestWithOutput()
-	task := NewKoolTask("testing", service)
-
-	buf := bytes.NewBufferString("")
-	service.SetWriter(buf)
+	task := newKoolTaskTest("testing", service)
+	task.taskOut = shell.NewOutputWriter()
 
 	_ = task.Run([]string{})
 
-	bufBytes, err := ioutil.ReadAll(buf)
+	bufBytes, err := ioutil.ReadAll(task.taskOut.GetWriter().(io.Reader))
 
 	if err != nil {
 		t.Fatal(err)
@@ -136,6 +154,6 @@ func TestOutputNewKoolTask(t *testing.T) {
 	output := strings.TrimSpace(string(bufBytes))
 
 	if !strings.Contains(output, "testing output") {
-		t.Error("did not called Println with KoolService output")
+		t.Error("did not printed KoolService output")
 	}
 }
