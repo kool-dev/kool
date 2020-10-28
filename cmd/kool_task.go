@@ -35,11 +35,12 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		return t.Execute(args)
 	}
 
-	t.taskOut.SetWriter(t.GetWriter())
+	originalWriter := t.GetWriter()
+	t.taskOut.SetWriter(originalWriter)
 	pipeReader, pipeWriter := io.Pipe()
 
 	t.SetWriter(pipeWriter)
-	defer t.SetWriter(t.taskOut.GetWriter())
+	defer t.SetWriter(originalWriter)
 
 	startMessage := fmt.Sprintf("%s ...", t.message)
 	t.taskOut.Println(startMessage)
@@ -47,13 +48,11 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 
 	lines := make(chan string)
 
-	doneScanning := startServiceOutputScanner(pipeReader, lines)
-	donePrinting := t.startServiceOutputPrinter(lines, doneScanning)
+	readServiceOutput(pipeReader, lines)
+	donePrinting := t.printServiceOutput(lines)
 
 	err = <-t.execService(args)
 	pipeWriter.Close()
-
-	<-doneScanning
 	<-donePrinting
 
 	var statusMessage string
@@ -80,68 +79,52 @@ func (t *DefaultKoolTask) execService(args []string) <-chan error {
 	return err
 }
 
-func startServiceOutputScanner(reader io.Reader, lines chan string) <-chan bool {
-	doneScanning := make(chan bool)
-	scanner := bufio.NewScanner(reader)
-	scanner.Split(bufio.ScanLines)
+func readServiceOutput(reader io.Reader, lines chan string) {
+	bufReader := bufio.NewReader(reader)
 
 	go func() {
 		defer func() {
 			close(lines)
-			close(doneScanning)
 		}()
 
-		for range time.Tick(100 * time.Millisecond) {
-			if !scanner.Scan() {
-				break
+		var (
+			line string
+			err  error
+		)
+
+		for err == nil {
+			if line, err = bufReader.ReadString('\n'); line != "" {
+				lines <- strings.TrimSpace(line)
 			}
-
-			lines <- scanner.Text()
 		}
-
-		doneScanning <- true
 	}()
-
-	return doneScanning
 }
 
-func (t *DefaultKoolTask) startServiceOutputPrinter(lines chan string, doneScanning <-chan bool) <-chan bool {
+func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 	donePrinting := make(chan bool)
 	spinChars := []byte{'-', '/', '|', '\\'}
 	spinPos := 0
+	currentSpin := spinChars[spinPos : spinPos+1]
 
 	go func() {
 		defer close(donePrinting)
 
 	OutputPrint:
-		for range time.Tick(100 * time.Millisecond) {
-			spinPos = (spinPos + 1) % 4
-			currentSpin := spinChars[spinPos : spinPos+1]
-
+		for {
 			select {
-			case <-doneScanning:
-				t.taskOut.Printf("\r")
-
-				// remaining lines
-				for line := range lines {
-					if line != "" {
-						t.taskOut.Println(">", line)
-					}
-				}
-
-				t.taskOut.Printf("... %s", currentSpin)
-				break OutputPrint
-			case line := <-lines:
-				spinPos = (spinPos + 1) % 4
-
-				t.taskOut.Printf("\r")
-
-				if line != "" {
+			case line, ok := <-lines:
+				if ok {
+					t.taskOut.Printf("\r")
 					t.taskOut.Println(">", line)
+					t.taskOut.Printf("... %s", currentSpin)
+				} else {
+					t.taskOut.Printf("\r")
+					t.taskOut.Printf("... %s", currentSpin)
+					break OutputPrint
 				}
-
-				t.taskOut.Printf("... %s", currentSpin)
-			default:
+			case <-time.After(100 * time.Millisecond):
+				spinPos = (spinPos + 1) % 4
+				currentSpin = spinChars[spinPos : spinPos+1]
 				t.taskOut.Printf("\r... %s", currentSpin)
 			}
 		}
