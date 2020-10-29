@@ -3,13 +3,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/cmd/updater"
 	"testing"
 )
 
 func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err error) *KoolSelfUpdate {
-	return &KoolSelfUpdate{
+	selfUpdate := &KoolSelfUpdate{
 		*newFakeKoolService(),
 		&updater.FakeUpdater{
 			MockCurrentVersion: currentVersion,
@@ -17,6 +18,9 @@ func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err erro
 			MockError:          err,
 		},
 	}
+
+	selfUpdate.out.(*shell.FakeOutputWriter).MockWriter = ioutil.Discard
+	return selfUpdate
 }
 
 func TestNewKoolSelfUpdate(t *testing.T) {
