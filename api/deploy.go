@@ -35,12 +35,14 @@ func (d *Deploy) GetID() string {
 // SendFile calls deploy/create in the Kool Dev API
 func (d *Deploy) SendFile() (err error) {
 	var (
-		buff   bytes.Buffer
-		file   *os.File
-		fw     io.Writer
-		domain string
-		resp   *http.Response
-		raw    []byte
+		buff         bytes.Buffer
+		file         *os.File
+		fw           io.Writer
+		domain       string
+		domainExtras string
+		wwwRedirect  string
+		resp         *http.Response
+		raw          []byte
 	)
 
 	w := multipart.NewWriter(&buff)
@@ -62,11 +64,25 @@ func (d *Deploy) SendFile() (err error) {
 	}
 
 	defer file.Close()
+
 	if domain = environment.NewEnvStorage().Get("KOOL_DEPLOY_DOMAIN"); domain != "" {
 		if err = w.WriteField("domain", domain); err != nil {
 			return
 		}
 	}
+
+	if domainExtras = environment.NewEnvStorage().Get("KOOL_DEPLOY_DOMAIN_EXTRAS"); domainExtras != "" {
+		if err = w.WriteField("domain_extras", domainExtras); err != nil {
+			return
+		}
+	}
+
+	if wwwRedirect = environment.NewEnvStorage().Get("KOOL_DEPLOY_WWW_REDIRECT"); wwwRedirect != "" {
+		if err = w.WriteField("www_redirect", wwwRedirect); err != nil {
+			return
+		}
+	}
+
 	w.Close()
 
 	req, _ := http.NewRequest("POST", apiBaseURL+"/deploy/create", &buff)
