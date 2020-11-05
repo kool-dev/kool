@@ -66,13 +66,11 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 	fmt.Println("Going to deploy...")
 
-	var minutes = 10
+	timeout := 10 * time.Minute
 
 	if min, err := strconv.Atoi(environment.NewEnvStorage().Get("KOOL_API_TIMEOUT")); err == nil {
-		minutes = min
+		timeout = time.Duration(min) * time.Minute
 	}
-
-	timeout := time.Minute * time.Duration(minutes)
 
 	var finishes chan bool = make(chan bool)
 
