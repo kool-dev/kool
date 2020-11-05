@@ -8,6 +8,7 @@ import (
 	"kool-dev/kool/tgz"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -65,6 +66,12 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 	fmt.Println("Going to deploy...")
 
+	timeout := 10 * time.Minute
+
+	if min, err := strconv.Atoi(environment.NewEnvStorage().Get("KOOL_API_TIMEOUT")); err == nil {
+		timeout = time.Duration(min) * time.Minute
+	}
+
 	var finishes chan bool = make(chan bool)
 
 	go func(deploy *api.Deploy, finishes chan bool) {
@@ -105,7 +112,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			break
 		}
 
-	case <-time.After(time.Minute * 10):
+	case <-time.After(timeout):
 		{
 			outputWriter.Error(fmt.Errorf("timeout waiting deploy to finish"))
 			break
