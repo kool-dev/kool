@@ -15,6 +15,7 @@ type DefaultUpdater struct {
 type Updater interface {
 	GetCurrentVersion() semver.Version
 	Update(semver.Version) (semver.Version, error)
+	CheckForUpdates(semver.Version, chan bool)
 }
 
 // GetCurrentVersion get current version
@@ -41,4 +42,23 @@ func (u *DefaultUpdater) Update(currentVersion semver.Version) (updatedVersion s
 
 	updatedVersion = latest.Version
 	return
+}
+
+// CheckForUpdates checks if there is a new version
+func (u *DefaultUpdater) CheckForUpdates(current semver.Version, ch chan bool) {
+	var latest *selfupdate.Release
+	var isNewVersion bool
+	var err error
+
+	if latest, _, err = selfupdate.DetectLatest("kool-dev/kool"); err != nil {
+		isNewVersion = false
+	}
+
+	if latest.Version.Equals(current) {
+		isNewVersion = false
+	} else {
+		isNewVersion = true
+	}
+
+	ch <- isNewVersion
 }
