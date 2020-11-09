@@ -19,8 +19,10 @@ type Parser interface {
 	Exists(string) bool
 	GetLanguages() []string
 	GetPresets(string) []string
+	GetPresetContents(string) map[string]string
 	LookUpFiles(string) []string
-	WriteFiles(string) (string, error)
+	WriteFile(string, string) (string, error)
+	GetPresetMetaValue(string,string) string
 }
 
 // Exists check if preset exists
@@ -82,43 +84,64 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 	return
 }
 
-// WriteFiles write preset files
-func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) {
-	presetFiles := p.Presets[preset]
+// WriteFile write preset file
+func (p *DefaultParser) WriteFile(fileName string, fileContent string) (fileError string, err error) {
+	var (
+		file  *os.File
+		lines int
+	)
 
-	for fileName, fileContent := range presetFiles {
-		if strings.HasPrefix(fileName, "preset_") {
-			continue
-		}
+	file, err = os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 
-		var (
-			file  *os.File
-			lines int
-		)
-		file, err = os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+	if err != nil {
+		fileError = fileName
+		return
+	}
 
-		if err != nil {
-			fileError = fileName
+	defer file.Close()
+
+	if lines, err = file.Write([]byte(fileContent)); err != nil {
+		fileError = fileName
+		return
+	}
+
+	if len([]byte(fileContent)) != lines {
+		fileError = fileName
+		err = ErrPresetWriteAllBytes
+		return
+	}
+
+	if err = file.Sync(); err != nil {
+		fileError = fileName
+		return
+	}
+
+	return
+}
+
+// GetPresetMetaValue get preset meta key value
+func (p *DefaultParser) GetPresetMetaValue(preset string, key string) (value string) {
+	presetData := p.Presets[preset]
+
+	for dataKey, dataContent := range presetData {
+		if dataKey == "preset_" + key {
+			value = dataContent
 			return
 		}
+	}
 
-		if lines, err = file.Write([]byte(fileContent)); err != nil {
-			fileError = fileName
-			return
+	return
+}
+
+// GetPresetContents get preset file contents
+func (p *DefaultParser) GetPresetContents(preset string) (contents map[string]string) {
+	presetData := p.Presets[preset]
+
+	contents = make(map[string]string)
+	for dataKey, dataContent := range presetData {
+		if !strings.HasPrefix(dataKey, "preset_") {
+			contents[dataKey] = dataContent
 		}
-
-		if len([]byte(fileContent)) != lines {
-			fileError = fileName
-			err = ErrPresetWriteAllBytes
-			return
-		}
-
-		if err = file.Sync(); err != nil {
-			fileError = fileName
-			return
-		}
-
-		file.Close()
 	}
 
 	return

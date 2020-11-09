@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"strings"
 	"errors"
 	"fmt"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 
+	"gopkg.in/yaml.v2"
 	"github.com/spf13/cobra"
 )
 
@@ -48,10 +50,13 @@ func NewKoolPreset() *KoolPreset {
 
 // Execute runs the preset logic with incoming arguments.
 func (p *KoolPreset) Execute(args []string) (err error) {
-	var fileError, preset, language string
+	var (
+		fileError, preset, language, database string
+		defaultCompose bool
+	)
 
 	if len(args) == 0 {
-		if !p.terminal.IsTerminal(p.GetReader(), p.GetWriter()) {
+		if !p.IsTerminal() {
 			err = fmt.Errorf("the input device is not a TTY; for non-tty environments, please specify a preset argument")
 			return
 		}
@@ -63,8 +68,19 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		if preset, err = p.promptSelect.Ask("What preset do you want to use", p.parser.GetPresets(language)); err != nil {
 			return
 		}
+
+		if askDatabase := p.parser.GetPresetMetaValue(preset, "ask_database"); askDatabase != "" {
+			dbOptions := strings.Split(askDatabase, ",")
+
+			if database, err = p.promptSelect.Ask("What database do you want to use", dbOptions); err != nil {
+				return
+			}
+		}
+
+		defaultCompose = false
 	} else {
 		preset = args[0]
+		defaultCompose = true
 	}
 
 	if !p.parser.Exists(preset) {
@@ -86,9 +102,57 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		}
 	}
 
-	if fileError, err = p.parser.WriteFiles(preset); err != nil {
-		err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
-		return
+	files := p.parser.GetPresetContents(preset)
+
+	templates := presets.GetTemplates()
+
+	for fileName, fileContent := range files {
+		if fileName == "docker-compose.yml" && !defaultCompose {
+			var dockerCompose, dockerComposeServices, appTempl, databaseTempl, cacheTempl yaml.MapSlice
+
+			dockerCompose = append(dockerCompose, yaml.MapItem{Key: "version", Value: "3.7"})
+
+			if appTempl, err = parseYml(templates["app"]["php74.yml"]); err != nil {
+				err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+				return
+			}
+
+			dockerComposeServices = append(dockerComposeServices, yaml.MapItem{Key: "app", Value: appTempl})
+
+			if database != "" {
+				databaseKey := strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(database, " ", ""), ".", "")) + ".yml"
+
+				if databaseTempl, err = parseYml(templates["database"][databaseKey]); err != nil {
+					err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+					return
+				}
+
+				dockerComposeServices = append(dockerComposeServices, yaml.MapItem{Key: "database", Value: databaseTempl})
+			}
+
+			if cacheTempl, err = parseYml(templates["cache"]["redis6.yml"]); err != nil {
+				err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+				return
+			}
+
+			dockerComposeServices = append(dockerComposeServices, yaml.MapItem{Key: "cache", Value: cacheTempl})
+
+			dockerCompose = append(dockerCompose, yaml.MapItem{Key: "services", Value: dockerComposeServices})
+
+			var parsedBytes []byte
+
+			if parsedBytes, err = yaml.Marshal(dockerCompose); err != nil {
+				err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+				return
+			}
+
+			fileContent = string(parsedBytes)
+		}
+
+		if fileError, err = p.parser.WriteFile(fileName, fileContent); err != nil {
+			err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
+			return
+		}
 	}
 
 	p.Success("Preset ", preset, " initialized!")
@@ -121,4 +185,14 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 
 	presetCmd.Flags().BoolVarP(&preset.Flags.Override, "override", "", false, "Force replace local existing files with the preset files")
 	return
+}
+
+func parseYml(data string) (yaml.MapSlice, error) {
+	parsed := yaml.MapSlice{}
+
+	if err := yaml.Unmarshal([]byte(data), &parsed); err != nil {
+		return nil, err
+	}
+
+	return parsed, nil
 }

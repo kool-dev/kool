@@ -104,6 +104,8 @@ networks:
 /vendor
 `,
 		"preset_language": "php",
+		"preset_app_template": "php74.yml",
+		"preset_ask_database": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -502,6 +504,7 @@ networks:
 /vendor
 `,
 		"preset_language": "php",
+		"preset_app_image": "kooldev/php:7.4-nginx",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -581,6 +584,7 @@ networks:
 	}
 	presets["wordpress"] = map[string]string{
 		"preset_language": "php",
+		"preset_app_image": "kooldev/wordpress:7.4-nginx",
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -635,4 +639,76 @@ networks:
 `,
 	}
 	return presets
+}
+// GetTemplates get all templates
+func GetTemplates() map[string]map[string]string {
+	var templates = make(map[string]map[string]string)
+	templates["app"] = map[string]string{
+		"php74.yml": `image: {{.Image}}
+ports:
+  - "${KOOL_APP_PORT:-80}:80"
+environment:
+  ASUSER: "${KOOL_ASUSER:-0}"
+  UID: "${UID:-0}"
+volumes:
+  - .:/app:delegated
+networks:
+  - kool_local
+  - kool_global
+
+`,
+	}
+	templates["cache"] = map[string]string{
+		"redis6.yml": `image: redis:6-alpine
+volumes:
+  - cache:/data:delegated
+networks:
+  - kool_local
+`,
+	}
+	templates["database"] = map[string]string{
+		"mysql57.yml": `image: mysql:5.7
+ports:
+  - "${KOOL_DATABASE_PORT:-3306}:3306"
+environment:
+  MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+  MYSQL_DATABASE: "${DB_DATABASE:-database}"
+  MYSQL_USER: "${DB_USERNAME:-user}"
+  MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+volumes:
+ - db:/var/lib/mysql:delegated
+networks:
+ - kool_local
+`,
+		"mysql8.yml": `image: mysql:8.0
+command: --default-authentication-plugin=mysql_native_password
+ports:
+  - "${KOOL_DATABASE_PORT:-3306}:3306"
+environment:
+  MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+  MYSQL_DATABASE: "${DB_DATABASE:-database}"
+  MYSQL_USER: "${DB_USERNAME:-user}"
+  MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+volumes:
+ - db:/var/lib/mysql:delegated
+networks:
+ - kool_local
+`,
+		"prostgresql.yml": `image: postgres
+ports:
+  - "${KOOL_DATABASE_PORT:-3306}:3306"
+environment:
+  POSTGRES_DB: "${DB_DATABASE:-database}"
+  POSTGRES_USER: "${DB_USERNAME:-user}"
+  POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
+  POSTGRES_HOST_AUTH_METHOD: "trust"
+volumes:
+ - db:/var/lib/postgresql:data:delegated
+networks:
+ - kool_local
+`,
+	}
+	return templates
 }
