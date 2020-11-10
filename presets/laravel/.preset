@@ -1,3 +1,4 @@
 language=php
 app_template=php74.yml
 ask_database=MySQL 8.0,MySQL 5.7,ProstgreSQL,none
+ask_cache=Redis 6.0,Memcached 1.6,none

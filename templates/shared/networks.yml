@@ -1,0 +1,4 @@
+kool_local:
+kool_global:
+  external: true
+  name: "${KOOL_GLOBAL_NETWORK:-kool_global}"

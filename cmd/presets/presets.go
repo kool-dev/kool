@@ -106,6 +106,7 @@ networks:
 		"preset_language": "php",
 		"preset_app_template": "php74.yml",
 		"preset_ask_database": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
+		"preset_ask_cache": "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -504,7 +505,6 @@ networks:
 /vendor
 `,
 		"preset_language": "php",
-		"preset_app_image": "kooldev/php:7.4-nginx",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -584,7 +584,6 @@ networks:
 	}
 	presets["wordpress"] = map[string]string{
 		"preset_language": "php",
-		"preset_app_image": "kooldev/wordpress:7.4-nginx",
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -644,7 +643,7 @@ networks:
 func GetTemplates() map[string]map[string]string {
 	var templates = make(map[string]map[string]string)
 	templates["app"] = map[string]string{
-		"php74.yml": `image: {{.Image}}
+		"php74.yml": `image: kooldev/php:7.4-nginx
 ports:
   - "${KOOL_APP_PORT:-80}:80"
 environment:
@@ -659,7 +658,13 @@ networks:
 `,
 	}
 	templates["cache"] = map[string]string{
-		"redis6.yml": `image: redis:6-alpine
+		"memcached16.yml": `image: memcached:1.6-alpine
+volumes:
+  - cache:/data:delegated
+networks:
+  - kool_local
+`,
+		"redis60.yml": `image: redis:6-alpine
 volumes:
   - cache:/data:delegated
 networks:
@@ -681,7 +686,7 @@ volumes:
 networks:
  - kool_local
 `,
-		"mysql8.yml": `image: mysql:8.0
+		"mysql80.yml": `image: mysql:8.0
 command: --default-authentication-plugin=mysql_native_password
 ports:
   - "${KOOL_DATABASE_PORT:-3306}:3306"
@@ -708,6 +713,13 @@ volumes:
  - db:/var/lib/postgresql:data:delegated
 networks:
  - kool_local
+`,
+	}
+	templates["shared"] = map[string]string{
+		"networks.yml": `kool_local:
+kool_global:
+  external: true
+  name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
 `,
 	}
 	return templates
