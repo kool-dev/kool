@@ -104,9 +104,8 @@ networks:
 /vendor
 `,
 		"preset_language": "php",
-		"preset_app_template": "php74.yml",
-		"preset_ask_database": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
-		"preset_ask_cache": "Redis 6.0,Memcached 1.6,none",
+		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
+		"preset_cache_options": "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -642,21 +641,6 @@ networks:
 // GetTemplates get all templates
 func GetTemplates() map[string]map[string]string {
 	var templates = make(map[string]map[string]string)
-	templates["app"] = map[string]string{
-		"php74.yml": `image: kooldev/php:7.4-nginx
-ports:
-  - "${KOOL_APP_PORT:-80}:80"
-environment:
-  ASUSER: "${KOOL_ASUSER:-0}"
-  UID: "${UID:-0}"
-volumes:
-  - .:/app:delegated
-networks:
-  - kool_local
-  - kool_global
-
-`,
-	}
 	templates["cache"] = map[string]string{
 		"memcached16.yml": `image: memcached:1.6-alpine
 volumes:
@@ -710,16 +694,9 @@ environment:
   POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
   POSTGRES_HOST_AUTH_METHOD: "trust"
 volumes:
- - db:/var/lib/postgresql:data:delegated
+ - db:/var/lib/postgresql/data:delegated
 networks:
  - kool_local
-`,
-	}
-	templates["shared"] = map[string]string{
-		"networks.yml": `kool_local:
-kool_global:
-  external: true
-  name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
 `,
 	}
 	return templates

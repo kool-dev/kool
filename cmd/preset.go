@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"strings"
 	"errors"
 	"fmt"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
+	"strings"
 
-	"gopkg.in/yaml.v2"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // KoolPresetFlags holds the flags for the preset command
@@ -52,7 +52,7 @@ func NewKoolPreset() *KoolPreset {
 func (p *KoolPreset) Execute(args []string) (err error) {
 	var (
 		fileError, preset, language, database, cache string
-		defaultCompose bool
+		useDefaultCompose                               bool
 	)
 
 	if len(args) == 0 {
@@ -68,32 +68,33 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		if preset, err = p.promptSelect.Ask("What preset do you want to use", p.parser.GetPresets(language)); err != nil {
 			return
 		}
-
-		if askDatabase := p.parser.GetPresetMetaValue(preset, "ask_database"); askDatabase != "" {
-			dbOptions := strings.Split(askDatabase, ",")
-
-			if database, err = p.promptSelect.Ask("What database service do you want to use", dbOptions); err != nil {
-				return
-			}
-		}
-
-		if askCache := p.parser.GetPresetMetaValue(preset, "ask_cache"); askCache != "" {
-			cacheOptions := strings.Split(askCache, ",")
-
-			if cache, err = p.promptSelect.Ask("What cache service do you want to use", cacheOptions); err != nil {
-				return
-			}
-		}
-
-		defaultCompose = false
 	} else {
 		preset = args[0]
-		defaultCompose = true
 	}
 
 	if !p.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
 		return
+	}
+
+	useDefaultCompose = true
+
+	if dbOptionsStr := p.parser.GetPresetKeyContent(preset, "preset_database_options"); dbOptionsStr != "" && p.IsTerminal() {
+		useDefaultCompose = false
+		dbOptions := strings.Split(dbOptionsStr, ",")
+
+		if database, err = p.promptSelect.Ask("What database service do you want to use", dbOptions); err != nil {
+			return
+		}
+	}
+
+	if cacheOptionsStr := p.parser.GetPresetKeyContent(preset, "preset_cache_options"); cacheOptionsStr != "" && p.IsTerminal() {
+		useDefaultCompose = false
+		cacheOptions := strings.Split(cacheOptionsStr, ",")
+
+		if cache, err = p.promptSelect.Ask("What cache service do you want to use", cacheOptions); err != nil {
+			return
+		}
 	}
 
 	p.Println("Preset", preset, "is initializing!")
@@ -110,69 +111,58 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		}
 	}
 
-	files := p.parser.GetPresetContents(preset)
+	presetKeys := p.parser.GetPresetKeys(preset)
 
 	templates := presets.GetTemplates()
 
-	for fileName, fileContent := range files {
-		if fileName == "docker-compose.yml" && !defaultCompose {
-			var compose, composeServices, composeVolumes yaml.MapSlice
+	for _, presetKey := range presetKeys {
+		if strings.HasPrefix(presetKey, "preset_") {
+			continue
+		}
 
-			compose = append(compose, yaml.MapItem{Key: "version", Value: "3.7"})
+		var content string
 
-			appKey := p.parser.GetPresetMetaValue(preset, "app_template")
+		if presetKey == "docker-compose.yml" && !useDefaultCompose {
+			var compose yaml.MapSlice
 
-			if err = appendYml(&composeServices, "app", templates["app"][appKey]); err != nil {
-				err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+			defaultCompose := p.parser.GetPresetKeyContent(preset, presetKey)
+
+			if compose, err = parseYml(defaultCompose); err != nil {
+				err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 				return
 			}
 
-			if database != "" && database != "none" {
+			if database != "" {
 				databaseKey := formatTemplateKey(database)
 
-				if err = appendYml(&composeServices, "database", templates["database"][databaseKey]); err != nil {
-					err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+				if compose, err = replaceComposeService(compose, "database", templates["database"][databaseKey]); err != nil {
+					err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 					return
 				}
-
-				composeVolumes = append(composeVolumes, yaml.MapItem{Key: "db"})
 			}
 
-			if cache != "" && cache != "none" {
+			if cache != "" {
 				cacheKey := formatTemplateKey(cache)
 
-				if err = appendYml(&composeServices, "cache", templates["cache"][cacheKey]); err != nil {
-					err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+				if compose, err = replaceComposeService(compose, "cache", templates["cache"][cacheKey]); err != nil {
+					err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 					return
 				}
-
-				composeVolumes = append(composeVolumes, yaml.MapItem{Key: "cache"})
-			}
-
-			if len(composeServices) > 0 {
-				compose = append(compose, yaml.MapItem{Key: "services", Value: composeServices})
-			}
-
-			if len(composeVolumes) > 0 {
-				compose = append(compose, yaml.MapItem{Key: "volumes", Value: composeVolumes})
-			}
-
-			if err = appendYml(&compose, "networks", templates["shared"]["networks.yml"]); err != nil {
-				err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
-				return
 			}
 
 			var parsedBytes []byte
 
 			if parsedBytes, err = yaml.Marshal(compose); err != nil {
-				err = fmt.Errorf("Failed to write preset file %s: %v", fileName, err)
+				err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 				return
 			}
 
-			fileContent = string(parsedBytes)
+			content = string(parsedBytes)
+		} else {
+			content = p.parser.GetPresetKeyContent(preset, presetKey)
 		}
 
-		if fileError, err = p.parser.WriteFile(fileName, fileContent); err != nil {
+		if fileError, err = p.parser.WriteFile(presetKey, content); err != nil {
 			err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
 			return
 		}
@@ -227,13 +217,24 @@ func formatTemplateKey(key string) (formattedKey string) {
 	return
 }
 
-func appendYml(services *yaml.MapSlice, name string, content string) (err error) {
-	var template yaml.MapSlice
+func replaceComposeService(compose yaml.MapSlice, name string, content string) (yaml.MapSlice, error) {
+	var err error
+	for sectionKey, section := range compose {
+		if section.Key == "services" {
+			for serviceKey, service := range section.Value.(yaml.MapSlice) {
+				if service.Key == name {
+					var template yaml.MapSlice
 
-	if template, err = parseYml(content); err != nil {
-		return
+					if template, err = parseYml(content); err != nil {
+						return compose, err
+					}
+
+					compose[sectionKey].Value.(yaml.MapSlice)[serviceKey].Value = template
+					return compose, nil
+				}
+			}
+		}
 	}
 
-	*services = append(*services, yaml.MapItem{Key: name, Value: template})
-	return
+	return compose, nil
 }

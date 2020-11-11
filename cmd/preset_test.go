@@ -87,7 +87,7 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call parser.LookUpFiles")
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledWriteFiles {
+	if !f.parser.(*presets.FakeParser).CalledWriteFile {
 		t.Error("did not call parser.WriteFiles")
 	}
 

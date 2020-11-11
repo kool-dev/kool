@@ -24,9 +24,9 @@ func TestFakeParser(t *testing.T) {
 
 	f.MockFileError = "kool.yml"
 	f.MockError = errors.New("error")
-	fileError, err := f.WriteFiles("preset")
+	fileError, err := f.WriteFile("filename", "filecontent")
 
-	if !f.CalledWriteFiles || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
+	if !f.CalledWriteFile || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
 		t.Error("failed to use mocked WriteFiles function on FakeParser")
 	}
 
@@ -42,5 +42,19 @@ func TestFakeParser(t *testing.T) {
 
 	if !f.CalledGetLanguages || len(languages) != 1 || languages[0] != "php" {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
+	}
+
+	f.MockPresetKeys = []string{"key"}
+	keys := f.GetPresetKeys("preset")
+
+	if !f.CalledGetPresetKeys || len(keys) != 1 || keys[0] != "key" {
+		t.Error("failed to use mocked GetPresetKeys function on FakeParser")
+	}
+
+	f.MockPresetKeyContent = "content"
+	content := f.GetPresetKeyContent("preset", "key")
+
+	if !f.CalledGetPresetKeyContent || content != "content" {
+		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
 	}
 }

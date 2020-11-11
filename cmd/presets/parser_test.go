@@ -129,3 +129,31 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 		t.Errorf("expecting to find only 'kool.yml', found %v", foundFiles)
 	}
 }
+
+func TestGetPresetKeysAndContents(t *testing.T) {
+	presets := make(map[string]map[string]string)
+
+	preset := make(map[string]string)
+
+	preset["key1"] = "value1"
+	preset["key2"] = "value2"
+	preset["key3"] = "value3"
+
+	presets["preset"] = preset
+
+	p := &DefaultParser{
+		Presets: presets,
+	}
+
+	keys := p.GetPresetKeys("preset")
+
+	if len(keys) != 3 || keys[0] != "key1" || keys[1] != "key2" || keys[2] != "key3" {
+		t.Errorf("expecting to find keys '[key1 key2 key3]', found %v", keys)
+	}
+
+	content := p.GetPresetKeyContent("preset", "key2")
+
+	if content != "value2" {
+		t.Errorf("expecting to find value 'value2', found %s", content)
+	}
+}

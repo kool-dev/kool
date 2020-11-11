@@ -2,14 +2,16 @@ package presets
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists, CalledLookUpFiles, CalledWriteFiles, CalledGetPresets, CalledGetLanguages bool
+	CalledExists, CalledLookUpFiles, CalledWriteFile, CalledGetPresets, CalledGetLanguages, CalledGetPresetKeys, CalledGetPresetKeyContent bool
 
-	MockExists     bool
-	MockFoundFiles []string
-	MockFileError  string
-	MockError      error
-	MockLanguages  []string
-	MockPresets    []string
+	MockExists           bool
+	MockFoundFiles       []string
+	MockFileError        string
+	MockError            error
+	MockLanguages        []string
+	MockPresets          []string
+	MockPresetKeys       []string
+	MockPresetKeyContent string
 }
 
 // Exists check if preset exists
@@ -40,10 +42,24 @@ func (f *FakeParser) LookUpFiles(preset string) (foundFiles []string) {
 	return
 }
 
-// WriteFiles write preset files
-func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
-	f.CalledWriteFiles = true
+// WriteFile write preset files
+func (f *FakeParser) WriteFile(fileName string, fileContent string) (fileError string, err error) {
+	f.CalledWriteFile = true
 	fileError = f.MockFileError
 	err = f.MockError
+	return
+}
+
+// GetPresetKeys get preset file contents
+func (f *FakeParser) GetPresetKeys(preset string) (keys []string) {
+	f.CalledGetPresetKeys = true
+	keys = f.MockPresetKeys
+	return
+}
+
+// GetPresetKeyContent get preset key value
+func (f *FakeParser) GetPresetKeyContent(preset string, key string) (value string) {
+	f.CalledGetPresetKeyContent = true
+	value = f.MockPresetKeyContent
 	return
 }

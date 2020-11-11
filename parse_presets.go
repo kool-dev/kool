@@ -20,8 +20,8 @@ const presetsTemplate string = `package presets
 func main() {
 	var (
 		folders []os.FileInfo
-		files []os.FileInfo
-		err error
+		files   []os.FileInfo
+		err     error
 	)
 	presets, err := os.Create("cmd/presets/presets.go")
 

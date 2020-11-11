@@ -19,10 +19,10 @@ type Parser interface {
 	Exists(string) bool
 	GetLanguages() []string
 	GetPresets(string) []string
-	GetPresetContents(string) map[string]string
 	LookUpFiles(string) []string
 	WriteFile(string, string) (string, error)
-	GetPresetMetaValue(string,string) string
+	GetPresetKeys(string) []string
+	GetPresetKeyContent(string, string) string
 }
 
 // Exists check if preset exists
@@ -119,28 +119,27 @@ func (p *DefaultParser) WriteFile(fileName string, fileContent string) (fileErro
 	return
 }
 
-// GetPresetMetaValue get preset meta key value
-func (p *DefaultParser) GetPresetMetaValue(preset string, key string) (value string) {
+// GetPresetKeys get preset file contents
+func (p *DefaultParser) GetPresetKeys(preset string) (keys []string) {
 	presetData := p.Presets[preset]
 
-	for dataKey, dataContent := range presetData {
-		if dataKey == "preset_" + key {
-			value = dataContent
-			return
-		}
+	for dataKey := range presetData {
+		keys = append(keys, dataKey)
 	}
+
+	sort.Strings(keys)
 
 	return
 }
 
-// GetPresetContents get preset file contents
-func (p *DefaultParser) GetPresetContents(preset string) (contents map[string]string) {
+// GetPresetKeyContent get preset key value
+func (p *DefaultParser) GetPresetKeyContent(preset string, key string) (value string) {
 	presetData := p.Presets[preset]
 
-	contents = make(map[string]string)
 	for dataKey, dataContent := range presetData {
-		if !strings.HasPrefix(dataKey, "preset_") {
-			contents[dataKey] = dataContent
+		if dataKey == key {
+			value = dataContent
+			return
 		}
 	}
 
