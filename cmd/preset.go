@@ -133,20 +133,30 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 			}
 
 			if database != "" {
-				databaseKey := formatTemplateKey(database)
+				if database == "none" {
+					compose = removeComposeService(compose, "database")
+					compose = removeComposeVolume(compose, "db")
+				} else {
+					databaseKey := formatTemplateKey(database)
 
-				if compose, err = replaceComposeService(compose, "database", templates["database"][databaseKey]); err != nil {
-					err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
-					return
+					if compose, err = replaceComposeService(compose, "database", templates["database"][databaseKey]); err != nil {
+						err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
+						return
+					}
 				}
 			}
 
 			if cache != "" {
-				cacheKey := formatTemplateKey(cache)
+				if cache == "none" {
+					compose = removeComposeService(compose, "cache")
+					compose = removeComposeVolume(compose, "cache")
+				} else {
+					cacheKey := formatTemplateKey(cache)
 
-				if compose, err = replaceComposeService(compose, "cache", templates["cache"][cacheKey]); err != nil {
-					err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
-					return
+					if compose, err = replaceComposeService(compose, "cache", templates["cache"][cacheKey]); err != nil {
+						err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
+						return
+					}
 				}
 			}
 
@@ -237,4 +247,44 @@ func replaceComposeService(compose yaml.MapSlice, name string, content string) (
 	}
 
 	return compose, nil
+}
+
+func removeComposeService(compose yaml.MapSlice, name string) (finalCompose yaml.MapSlice) {
+	for _, section := range compose {
+		if section.Key != "services" {
+			finalCompose = append(finalCompose, section)
+			continue
+		}
+
+		var finalServices yaml.MapSlice
+		for _, service := range section.Value.(yaml.MapSlice) {
+			if service.Key != name {
+				finalServices = append(finalServices, service)
+			}
+		}
+
+		finalCompose = append(finalCompose, yaml.MapItem{Key: "services", Value: finalServices})
+	}
+
+	return
+}
+
+func removeComposeVolume(compose yaml.MapSlice, name string) (finalCompose yaml.MapSlice) {
+	for _, section := range compose {
+		if section.Key != "volumes" {
+			finalCompose = append(finalCompose, section)
+			continue
+		}
+
+		var finalVolumes yaml.MapSlice
+		for _, volume := range section.Value.(yaml.MapSlice) {
+			if volume.Key != name {
+				finalVolumes = append(finalVolumes, volume)
+			}
+		}
+
+		finalCompose = append(finalCompose, yaml.MapItem{Key: "volumes", Value: finalVolumes})
+	}
+
+	return
 }
