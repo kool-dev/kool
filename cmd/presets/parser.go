@@ -17,6 +17,7 @@ type DefaultParser struct {
 // Parser holds presets parsing logic
 type Parser interface {
 	Exists(string) bool
+	GetCreateCommand(string) (string, error)
 	GetLanguages() []string
 	GetPresets(string) []string
 	LookUpFiles(string) []string
@@ -26,6 +27,29 @@ type Parser interface {
 // Exists check if preset exists
 func (p *DefaultParser) Exists(preset string) (exists bool) {
 	_, exists = p.Presets[preset]
+	return
+}
+
+// ErrPresetNotFound error throwed when did not find the preset
+var ErrPresetNotFound = errors.New("preset not found")
+
+// ErrCreateCommandtNotFoundOrEmpty error throwed when did not find the preset create command or it's empty
+var ErrCreateCommandtNotFoundOrEmpty = errors.New("create command not found or empty")
+
+// GetCreateCommand gets the command to create a new project
+func (p *DefaultParser) GetCreateCommand(preset string) (cmd string, err error) {
+	if !p.Exists(preset) {
+		err = ErrPresetNotFound
+		return
+	}
+
+	cmd = p.Presets[preset]["preset_create"]
+
+	if cmd == "" {
+		err = ErrCreateCommandtNotFoundOrEmpty
+		return
+	}
+
 	return
 }
 

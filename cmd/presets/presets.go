@@ -9,6 +9,7 @@ func GetAll() map[string]map[string]string {
 		".dockerignore": `/node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kooldev/node:14-adonis adonis new",
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
 COPY . /app
@@ -104,6 +105,7 @@ networks:
 /vendor
 `,
 		"preset_language": "php",
+		"preset_create":   "kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -193,6 +195,7 @@ networks:
 		".dockerignore": `/node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kooldev/node:14-nest nest new",
 		"Dockerfile.build": `FROM kooldev/node:14-nest AS build
 
 COPY . /app
@@ -286,6 +289,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kooldev/node:14 yarn create next-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -339,6 +343,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kooldev/node:14 yarn create next-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -389,6 +394,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kooldev/node:14 yarn create nuxt-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -447,6 +453,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kooldev/node:14 yarn create nuxt-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -502,6 +509,7 @@ networks:
 /vendor
 `,
 		"preset_language": "php",
+		"preset_create":   "kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app

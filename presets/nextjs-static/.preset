@@ -1,1 +1,2 @@
 language=javascript
+create=kooldev/node:14 yarn create next-app
