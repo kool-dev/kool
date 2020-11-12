@@ -7,6 +7,6 @@ environment:
   POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
   POSTGRES_HOST_AUTH_METHOD: "trust"
 volumes:
- - db:/var/lib/postgresql/data:delegated
+ - database:/var/lib/postgresql/data:delegated
 networks:
  - kool_local
