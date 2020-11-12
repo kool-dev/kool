@@ -14,7 +14,7 @@ func newFakeKoolPreset() *KoolPreset {
 		*newFakeKoolService(),
 		&KoolPresetFlags{false},
 		&presets.FakeParser{},
-		compose.NewParser(),
+		&compose.FakeParser{},
 		&shell.FakeTerminalChecker{},
 		&shell.FakePromptSelect{},
 	}
@@ -43,6 +43,10 @@ func TestNewKoolPreset(t *testing.T) {
 
 	if _, ok := k.presetsParser.(*presets.DefaultParser); !ok {
 		t.Errorf("unexpected presets.Parser on default KoolPreset instance")
+	}
+
+	if _, ok := k.composeParser.(*compose.DefaultParser); !ok {
+		t.Errorf("unexpected compose.Parser on default KoolPreset instance")
 	}
 
 	if _, ok := k.promptSelect.(*shell.DefaultPromptSelect); !ok {
