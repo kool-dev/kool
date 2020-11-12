@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"testing"
@@ -13,6 +14,7 @@ func newFakeKoolPreset() *KoolPreset {
 		*newFakeKoolService(),
 		&KoolPresetFlags{false},
 		&presets.FakeParser{},
+		compose.NewParser(),
 		&shell.FakeTerminalChecker{},
 		&shell.FakePromptSelect{},
 	}
@@ -39,7 +41,7 @@ func TestNewKoolPreset(t *testing.T) {
 		t.Errorf("bad default value for Override flag on default KoolPreset instance")
 	}
 
-	if _, ok := k.parser.(*presets.DefaultParser); !ok {
+	if _, ok := k.presetsParser.(*presets.DefaultParser); !ok {
 		t.Errorf("unexpected presets.Parser on default KoolPreset instance")
 	}
 
@@ -54,7 +56,7 @@ func TestNewKoolPreset(t *testing.T) {
 
 func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.parser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 	cmd := NewPresetCommand(f)
 
@@ -68,7 +70,7 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call SetWriter")
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledExists {
+	if !f.presetsParser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
 	}
 
@@ -83,11 +85,11 @@ func TestPresetCommand(t *testing.T) {
 		t.Errorf("Expecting message '%s', got '%s'", expected, output)
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledLookUpFiles {
+	if !f.presetsParser.(*presets.FakeParser).CalledLookUpFiles {
 		t.Error("did not call parser.LookUpFiles")
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledWriteFile {
+	if !f.presetsParser.(*presets.FakeParser).CalledWriteFile {
 		t.Error("did not call parser.WriteFiles")
 	}
 
@@ -114,7 +116,7 @@ func TestInvalidScriptPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledExists {
+	if !f.presetsParser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
 	}
 
@@ -136,8 +138,8 @@ func TestInvalidScriptPresetCommand(t *testing.T) {
 
 func TestExistingFilesPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.parser.(*presets.FakeParser).MockExists = true
-	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
 	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 	cmd := NewPresetCommand(f)
 
@@ -165,8 +167,8 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 
 func TestOverrideFilesPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.parser.(*presets.FakeParser).MockExists = true
-	f.parser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
 	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
@@ -177,7 +179,7 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if f.parser.(*presets.FakeParser).CalledLookUpFiles {
+	if f.presetsParser.(*presets.FakeParser).CalledLookUpFiles {
 		t.Error("unexpected existing files checking")
 	}
 
@@ -196,8 +198,8 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 
 func TestWriteErrorPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.parser.(*presets.FakeParser).MockExists = true
-	f.parser.(*presets.FakeParser).MockError = errors.New("write error")
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockError = errors.New("write error")
 	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
@@ -232,9 +234,9 @@ func TestNoArgsPresetCommand(t *testing.T) {
 	mockAnswer["What preset do you want to use"] = "laravel"
 
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = mockAnswer
-	f.parser.(*presets.FakeParser).MockLanguages = []string{"php"}
-	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
-	f.parser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
+	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
+	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = true
 
 	cmd := NewPresetCommand(f)
@@ -257,8 +259,8 @@ func TestNoArgsPresetCommand(t *testing.T) {
 
 func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.parser.(*presets.FakeParser).MockLanguages = []string{"php"}
-	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
+	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
+	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 
 	mockError := make(map[string]error)
 	mockError["What language do you want to use"] = errors.New("error prompt select language")
@@ -294,8 +296,8 @@ func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 
 func TestFailingPresetNoArgsPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.parser.(*presets.FakeParser).MockLanguages = []string{"php"}
-	f.parser.(*presets.FakeParser).MockPresets = []string{"laravel"}
+	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
+	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 
 	mockAnswer := make(map[string]string)
 	mockAnswer["What language do you want to use"] = "php"

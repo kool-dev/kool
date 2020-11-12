@@ -3,12 +3,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 // KoolPresetFlags holds the flags for the preset command
@@ -19,10 +19,11 @@ type KoolPresetFlags struct {
 // KoolPreset holds handlers and functions to implement the preset command logic
 type KoolPreset struct {
 	DefaultKoolService
-	Flags        *KoolPresetFlags
-	parser       presets.Parser
-	terminal     shell.TerminalChecker
-	promptSelect shell.PromptSelect
+	Flags         *KoolPresetFlags
+	presetsParser presets.Parser
+	composeParser compose.Parser
+	terminal      shell.TerminalChecker
+	promptSelect  shell.PromptSelect
 }
 
 // ErrPresetFilesAlreadyExists error for existing presets files
@@ -43,6 +44,7 @@ func NewKoolPreset() *KoolPreset {
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
 		&presets.DefaultParser{Presets: presets.GetAll()},
+		compose.NewParser(),
 		shell.NewTerminalChecker(),
 		shell.NewPromptSelect(),
 	}
@@ -51,9 +53,12 @@ func NewKoolPreset() *KoolPreset {
 // Execute runs the preset logic with incoming arguments.
 func (p *KoolPreset) Execute(args []string) (err error) {
 	var (
-		fileError, preset, language, database, cache string
-		useDefaultCompose                               bool
+		fileError, preset, language string
+		useDefaultCompose                            bool
+		servicesOptions                              map[string]string
 	)
+
+	servicesOptions = make(map[string]string)
 
 	if len(args) == 0 {
 		if !p.IsTerminal() {
@@ -61,38 +66,38 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 			return
 		}
 
-		if language, err = p.promptSelect.Ask("What language do you want to use", p.parser.GetLanguages()); err != nil {
+		if language, err = p.promptSelect.Ask("What language do you want to use", p.presetsParser.GetLanguages()); err != nil {
 			return
 		}
 
-		if preset, err = p.promptSelect.Ask("What preset do you want to use", p.parser.GetPresets(language)); err != nil {
+		if preset, err = p.promptSelect.Ask("What preset do you want to use", p.presetsParser.GetPresets(language)); err != nil {
 			return
 		}
 	} else {
 		preset = args[0]
 	}
 
-	if !p.parser.Exists(preset) {
+	if !p.presetsParser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
 		return
 	}
 
 	useDefaultCompose = true
 
-	if dbOptionsStr := p.parser.GetPresetKeyContent(preset, "preset_database_options"); dbOptionsStr != "" && p.IsTerminal() {
+	if dbOptionsStr := p.presetsParser.GetPresetKeyContent(preset, "preset_database_options"); dbOptionsStr != "" && p.IsTerminal() {
 		useDefaultCompose = false
 		dbOptions := strings.Split(dbOptionsStr, ",")
 
-		if database, err = p.promptSelect.Ask("What database service do you want to use", dbOptions); err != nil {
+		if servicesOptions["database"], err = p.promptSelect.Ask("What database service do you want to use", dbOptions); err != nil {
 			return
 		}
 	}
 
-	if cacheOptionsStr := p.parser.GetPresetKeyContent(preset, "preset_cache_options"); cacheOptionsStr != "" && p.IsTerminal() {
+	if cacheOptionsStr := p.presetsParser.GetPresetKeyContent(preset, "preset_cache_options"); cacheOptionsStr != "" && p.IsTerminal() {
 		useDefaultCompose = false
 		cacheOptions := strings.Split(cacheOptionsStr, ",")
 
-		if cache, err = p.promptSelect.Ask("What cache service do you want to use", cacheOptions); err != nil {
+		if servicesOptions["cache"], err = p.promptSelect.Ask("What cache service do you want to use", cacheOptions); err != nil {
 			return
 		}
 	}
@@ -100,7 +105,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 	p.Println("Preset", preset, "is initializing!")
 
 	if !p.Flags.Override {
-		existingFiles := p.parser.LookUpFiles(preset)
+		existingFiles := p.presetsParser.LookUpFiles(preset)
 		for _, fileName := range existingFiles {
 			p.Warning("Preset file ", fileName, " already exists.")
 		}
@@ -111,7 +116,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		}
 	}
 
-	presetKeys := p.parser.GetPresetKeys(preset)
+	presetKeys := p.presetsParser.GetPresetKeys(preset)
 
 	templates := presets.GetTemplates()
 
@@ -123,56 +128,41 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		var content string
 
 		if presetKey == "docker-compose.yml" && !useDefaultCompose {
-			var compose yaml.MapSlice
+			defaultCompose := p.presetsParser.GetPresetKeyContent(preset, presetKey)
 
-			defaultCompose := p.parser.GetPresetKeyContent(preset, presetKey)
-
-			if compose, err = parseYml(defaultCompose); err != nil {
+			if err = p.composeParser.Load(defaultCompose); err != nil {
 				err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 				return
 			}
 
-			if database != "" {
-				if database == "none" {
-					compose = removeComposeService(compose, "database")
-					compose = removeComposeVolume(compose, "db")
-				} else {
-					databaseKey := formatTemplateKey(database)
+			for serviceKey, serviceOption := range servicesOptions {
+				if serviceOption == "" {
+					continue
+				}
 
-					if compose, err = replaceComposeService(compose, "database", templates["database"][databaseKey]); err != nil {
+				if serviceOption == "none" {
+					p.composeParser.RemoveService(serviceKey)
+					p.composeParser.RemoveVolume(serviceKey)
+				} else {
+					key := formatTemplateKey(serviceOption)
+					service := templates[serviceKey][key]
+
+					if err = p.composeParser.SetService(serviceKey, service); err != nil {
 						err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 						return
 					}
 				}
 			}
 
-			if cache != "" {
-				if cache == "none" {
-					compose = removeComposeService(compose, "cache")
-					compose = removeComposeVolume(compose, "cache")
-				} else {
-					cacheKey := formatTemplateKey(cache)
-
-					if compose, err = replaceComposeService(compose, "cache", templates["cache"][cacheKey]); err != nil {
-						err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
-						return
-					}
-				}
-			}
-
-			var parsedBytes []byte
-
-			if parsedBytes, err = yaml.Marshal(compose); err != nil {
+			if content, err = p.composeParser.String(); err != nil {
 				err = fmt.Errorf("Failed to write preset file %s: %v", presetKey, err)
 				return
 			}
-
-			content = string(parsedBytes)
 		} else {
-			content = p.parser.GetPresetKeyContent(preset, presetKey)
+			content = p.presetsParser.GetPresetKeyContent(preset, presetKey)
 		}
 
-		if fileError, err = p.parser.WriteFile(presetKey, content); err != nil {
+		if fileError, err = p.presetsParser.WriteFile(presetKey, content); err != nil {
 			err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
 			return
 		}
@@ -210,81 +200,9 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 	return
 }
 
-func parseYml(data string) (yaml.MapSlice, error) {
-	parsed := yaml.MapSlice{}
-
-	if err := yaml.Unmarshal([]byte(data), &parsed); err != nil {
-		return nil, err
-	}
-
-	return parsed, nil
-}
-
 func formatTemplateKey(key string) (formattedKey string) {
 	formattedKey = strings.ReplaceAll(key, " ", "")
 	formattedKey = strings.ReplaceAll(formattedKey, ".", "")
 	formattedKey = strings.ToLower(formattedKey) + ".yml"
-	return
-}
-
-func replaceComposeService(compose yaml.MapSlice, name string, content string) (yaml.MapSlice, error) {
-	var err error
-	for sectionKey, section := range compose {
-		if section.Key == "services" {
-			for serviceKey, service := range section.Value.(yaml.MapSlice) {
-				if service.Key == name {
-					var template yaml.MapSlice
-
-					if template, err = parseYml(content); err != nil {
-						return compose, err
-					}
-
-					compose[sectionKey].Value.(yaml.MapSlice)[serviceKey].Value = template
-					return compose, nil
-				}
-			}
-		}
-	}
-
-	return compose, nil
-}
-
-func removeComposeService(compose yaml.MapSlice, name string) (finalCompose yaml.MapSlice) {
-	for _, section := range compose {
-		if section.Key != "services" {
-			finalCompose = append(finalCompose, section)
-			continue
-		}
-
-		var finalServices yaml.MapSlice
-		for _, service := range section.Value.(yaml.MapSlice) {
-			if service.Key != name {
-				finalServices = append(finalServices, service)
-			}
-		}
-
-		finalCompose = append(finalCompose, yaml.MapItem{Key: "services", Value: finalServices})
-	}
-
-	return
-}
-
-func removeComposeVolume(compose yaml.MapSlice, name string) (finalCompose yaml.MapSlice) {
-	for _, section := range compose {
-		if section.Key != "volumes" {
-			finalCompose = append(finalCompose, section)
-			continue
-		}
-
-		var finalVolumes yaml.MapSlice
-		for _, volume := range section.Value.(yaml.MapSlice) {
-			if volume.Key != name {
-				finalVolumes = append(finalVolumes, volume)
-			}
-		}
-
-		finalCompose = append(finalCompose, yaml.MapItem{Key: "volumes", Value: finalVolumes})
-	}
-
 	return
 }
