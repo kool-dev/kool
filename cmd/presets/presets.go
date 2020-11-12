@@ -51,7 +51,7 @@ services:
 #       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
-#      - db:/var/lib/mysql:delegated
+#      - database:/var/lib/mysql:delegated
 #     networks:
 #      - kool_local
 #   cache:
@@ -60,7 +60,7 @@ services:
 #      - cache:/data:delegated
 #
 # volumes:
-#   db:
+#   database:
 #   cache:
 
 networks:
@@ -103,9 +103,9 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"preset_language": "php",
+		"preset_language":         "php",
 		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
-		"preset_cache_options": "Redis 6.0,Memcached 1.6,none",
+		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -147,7 +147,7 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:delegated
+     - database:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
@@ -158,7 +158,7 @@ services:
      - kool_local
 
 volumes:
-  db:
+  database:
   cache:
 
 networks:
@@ -236,7 +236,7 @@ services:
 #       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
-#      - db:/var/lib/mysql:delegated
+#      - database:/var/lib/mysql:delegated
 #     networks:
 #      - kool_local
 #   cache:
@@ -257,7 +257,7 @@ services:
 #      - kool_local
 #
 # volumes:
-#   db:
+#   database:
 #   cache:
 #   mongo:
 
@@ -545,7 +545,7 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:delegated
+     - database:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
@@ -556,7 +556,7 @@ services:
      - kool_local
 
 volumes:
-  db:
+  database:
   cache:
 
 networks:
@@ -609,7 +609,7 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:delegated
+     - database:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
@@ -620,7 +620,7 @@ services:
      - kool_local
 
 volumes:
-  db:
+  database:
   cache:
 
 networks:
@@ -638,6 +638,7 @@ networks:
 	}
 	return presets
 }
+
 // GetTemplates get all templates
 func GetTemplates() map[string]map[string]string {
 	var templates = make(map[string]map[string]string)
@@ -666,7 +667,7 @@ environment:
   MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
   MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 volumes:
- - db:/var/lib/mysql:delegated
+ - database:/var/lib/mysql:delegated
 networks:
  - kool_local
 `,
@@ -681,7 +682,7 @@ environment:
   MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
   MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 volumes:
- - db:/var/lib/mysql:delegated
+ - database:/var/lib/mysql:delegated
 networks:
  - kool_local
 `,
@@ -694,7 +695,7 @@ environment:
   POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
   POSTGRES_HOST_AUTH_METHOD: "trust"
 volumes:
- - db:/var/lib/postgresql/data:delegated
+ - database:/var/lib/postgresql/data:delegated
 networks:
  - kool_local
 `,

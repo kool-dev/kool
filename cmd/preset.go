@@ -54,8 +54,8 @@ func NewKoolPreset() *KoolPreset {
 func (p *KoolPreset) Execute(args []string) (err error) {
 	var (
 		fileError, preset, language string
-		useDefaultCompose                            bool
-		servicesOptions                              map[string]string
+		useDefaultCompose           bool
+		servicesOptions             map[string]string
 	)
 
 	servicesOptions = make(map[string]string)
