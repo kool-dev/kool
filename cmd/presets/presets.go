@@ -104,6 +104,7 @@ networks:
 /vendor
 `,
 		"preset_language":         "php",
+		"preset_ask_services":     "database,cache",
 		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
 		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer

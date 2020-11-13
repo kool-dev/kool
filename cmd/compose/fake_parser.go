@@ -3,8 +3,8 @@ package compose
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
 	CalledLoad, CalledSetService, CalledRemoveService, CalledRemoveVolume, CalledString bool
-	MockLoadError, MockSetServiceError, MockStringError error
-	MockString string
+	MockLoadError, MockSetServiceError, MockStringError                                 error
+	MockString                                                                          string
 }
 
 // Load implements fake Load behavior

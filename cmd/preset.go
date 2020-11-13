@@ -43,7 +43,7 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
-		&presets.DefaultParser{Presets: presets.GetAll()},
+		&presets.DefaultParser{Presets: presets.GetAll(), Templates: presets.GetTemplates()},
 		compose.NewParser(),
 		shell.NewTerminalChecker(),
 		shell.NewPromptSelect(),
@@ -57,8 +57,6 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		useDefaultCompose           bool
 		servicesOptions             map[string]string
 	)
-
-	servicesOptions = make(map[string]string)
 
 	if len(args) == 0 {
 		if !p.IsTerminal() {
@@ -82,23 +80,24 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		return
 	}
 
+	servicesOptions = make(map[string]string)
 	useDefaultCompose = true
 
-	if dbOptionsStr := p.presetsParser.GetPresetKeyContent(preset, "preset_database_options"); dbOptionsStr != "" && p.IsTerminal() {
-		useDefaultCompose = false
-		dbOptions := strings.Split(dbOptionsStr, ",")
+	if servicesToAskStr := p.presetsParser.GetPresetKeyContent(preset, "preset_ask_services"); servicesToAskStr != "" && p.IsTerminal() {
+		servicesToAsk := strings.Split(servicesToAskStr, ",")
 
-		if servicesOptions["database"], err = p.promptSelect.Ask("What database service do you want to use", dbOptions); err != nil {
-			return
-		}
-	}
+		for _, serviceName := range servicesToAsk {
+			optionsKey := fmt.Sprintf("preset_%s_options", serviceName)
+			question := fmt.Sprintf("What %s service do you want to use", serviceName)
 
-	if cacheOptionsStr := p.presetsParser.GetPresetKeyContent(preset, "preset_cache_options"); cacheOptionsStr != "" && p.IsTerminal() {
-		useDefaultCompose = false
-		cacheOptions := strings.Split(cacheOptionsStr, ",")
+			if optionsStr := p.presetsParser.GetPresetKeyContent(preset, optionsKey); optionsStr != "" {
+				options := strings.Split(optionsStr, ",")
 
-		if servicesOptions["cache"], err = p.promptSelect.Ask("What cache service do you want to use", cacheOptions); err != nil {
-			return
+				if servicesOptions[serviceName], err = p.promptSelect.Ask(question, options); err != nil {
+					return
+				}
+				useDefaultCompose = false
+			}
 		}
 	}
 
@@ -118,7 +117,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 
 	presetKeys := p.presetsParser.GetPresetKeys(preset)
 
-	templates := presets.GetTemplates()
+	templates := p.presetsParser.GetTemplates()
 
 	for _, presetKey := range presetKeys {
 		if strings.HasPrefix(presetKey, "preset_") {

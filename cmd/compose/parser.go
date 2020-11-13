@@ -28,14 +28,14 @@ func (p *DefaultParser) Load(compose string) (err error) {
 }
 
 // SetService set docker-compose service
-func (p *DefaultParser) SetService(service string, content string) (err error) {
+func (p *DefaultParser) SetService(serviceName string, serviceContent string) (err error) {
 	for sectionKey, section := range p.yamlData {
 		if section.Key == "services" {
 			for serviceKey, service := range section.Value.(yaml.MapSlice) {
-				if service.Key == service {
+				if service.Key == serviceName {
 					var template yaml.MapSlice
 
-					if template, err = parseYaml(content); err != nil {
+					if template, err = parseYaml(serviceContent); err != nil {
 						return
 					}
 

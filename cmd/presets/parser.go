@@ -11,7 +11,8 @@ var osStat func(string) (os.FileInfo, error) = os.Stat
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
-	Presets map[string]map[string]string
+	Presets   map[string]map[string]string
+	Templates map[string]map[string]string
 }
 
 // Parser holds presets parsing logic
@@ -23,6 +24,7 @@ type Parser interface {
 	WriteFile(string, string) (string, error)
 	GetPresetKeys(string) []string
 	GetPresetKeyContent(string, string) string
+	GetTemplates() map[string]map[string]string
 }
 
 // Exists check if preset exists
@@ -144,4 +146,9 @@ func (p *DefaultParser) GetPresetKeyContent(preset string, key string) (value st
 	}
 
 	return
+}
+
+// GetTemplates get all templates
+func (p *DefaultParser) GetTemplates() map[string]map[string]string {
+	return p.Templates
 }

@@ -12,6 +12,7 @@ type FakeParser struct {
 	MockPresets          []string
 	MockPresetKeys       []string
 	MockPresetKeyContent string
+	MockTemplates        map[string]map[string]string
 }
 
 // Exists check if preset exists
@@ -61,5 +62,14 @@ func (f *FakeParser) GetPresetKeys(preset string) (keys []string) {
 func (f *FakeParser) GetPresetKeyContent(preset string, key string) (value string) {
 	f.CalledGetPresetKeyContent = true
 	value = f.MockPresetKeyContent
+	return
+}
+
+// GetTemplates get all templates
+func (f *FakeParser) GetTemplates() (templates map[string]map[string]string) {
+	if f.MockTemplates == nil {
+		f.MockTemplates = make(map[string]map[string]string)
+	}
+	templates = f.MockTemplates
 	return
 }
