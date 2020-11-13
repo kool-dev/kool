@@ -5,7 +5,6 @@ import (
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/environment"
-	"kool-dev/kool/cmd/updater"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +24,7 @@ func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
 		Use:                   "start [SERVICE]",
 		Short:                 "Start the specified Kool environment containers. If no service is specified, start all.",
-		Run:                   DefaultCommandRunFunction(start),
+		Run:                   DefaultCommandRunFunction(UpdateWrapper(start)),
 		DisableFlagsInUseLine: true,
 	}
 }
@@ -48,17 +47,6 @@ func init() {
 
 // Execute runs the start logic with incoming arguments.
 func (s *KoolStart) Execute(args []string) (err error) {
-
-	ch := make(chan bool)
-	go updater.CheckForUpdates(updater.GetCurrentVersion(), ch)
-
-	select {
-		case update := <-ch:
-			if update {
-				defer s.out.Warning("Theres a new Kool Version available! Run kool self-update to update!")
-			}
-	}
-	close(ch)
 	if err = s.check.Check(); err != nil {
 		return
 	}
