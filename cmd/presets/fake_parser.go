@@ -2,7 +2,14 @@ package presets
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists, CalledLookUpFiles, CalledWriteFile, CalledGetPresets, CalledGetLanguages, CalledGetPresetKeys, CalledGetPresetKeyContent bool
+	CalledExists              bool
+	CalledLookUpFiles         bool
+	CalledWriteFile           map[string]map[string]bool
+	CalledGetPresets          bool
+	CalledGetLanguages        bool
+	CalledGetPresetKeys       bool
+	CalledGetPresetKeyContent map[string]map[string]bool
+	CalledGetTemplates        bool
 
 	MockExists           bool
 	MockFoundFiles       []string
@@ -45,7 +52,15 @@ func (f *FakeParser) LookUpFiles(preset string) (foundFiles []string) {
 
 // WriteFile write preset files
 func (f *FakeParser) WriteFile(fileName string, fileContent string) (fileError string, err error) {
-	f.CalledWriteFile = true
+	if f.CalledWriteFile == nil {
+		f.CalledWriteFile = make(map[string]map[string]bool)
+	}
+
+	if _, ok := f.CalledWriteFile[fileName]; !ok {
+		f.CalledWriteFile[fileName] = make(map[string]bool)
+	}
+
+	f.CalledWriteFile[fileName][fileContent] = true
 	fileError = f.MockFileError
 	err = f.MockError
 	return
@@ -60,13 +75,22 @@ func (f *FakeParser) GetPresetKeys(preset string) (keys []string) {
 
 // GetPresetKeyContent get preset key value
 func (f *FakeParser) GetPresetKeyContent(preset string, key string) (value string) {
-	f.CalledGetPresetKeyContent = true
+	if f.CalledGetPresetKeyContent == nil {
+		f.CalledGetPresetKeyContent = make(map[string]map[string]bool)
+	}
+
+	if _, ok := f.CalledGetPresetKeyContent[preset]; !ok {
+		f.CalledGetPresetKeyContent[preset] = make(map[string]bool)
+	}
+
+	f.CalledGetPresetKeyContent[preset][key] = true
 	value = f.MockPresetKeyContent
 	return
 }
 
 // GetTemplates get all templates
 func (f *FakeParser) GetTemplates() (templates map[string]map[string]string) {
+	f.CalledGetTemplates = true
 	if f.MockTemplates == nil {
 		f.MockTemplates = make(map[string]map[string]string)
 	}

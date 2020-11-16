@@ -26,7 +26,7 @@ func TestFakeParser(t *testing.T) {
 	f.MockError = errors.New("error")
 	fileError, err := f.WriteFile("filename", "filecontent")
 
-	if !f.CalledWriteFile || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
+	if !f.CalledWriteFile["filename"]["filecontent"] || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
 		t.Error("failed to use mocked WriteFiles function on FakeParser")
 	}
 
@@ -54,7 +54,7 @@ func TestFakeParser(t *testing.T) {
 	f.MockPresetKeyContent = "content"
 	content := f.GetPresetKeyContent("preset", "key")
 
-	if !f.CalledGetPresetKeyContent || content != "content" {
+	if !f.CalledGetPresetKeyContent["preset"]["key"] || content != "content" {
 		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
 	}
 }

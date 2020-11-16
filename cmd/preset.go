@@ -22,7 +22,6 @@ type KoolPreset struct {
 	Flags         *KoolPresetFlags
 	presetsParser presets.Parser
 	composeParser compose.Parser
-	terminal      shell.TerminalChecker
 	promptSelect  shell.PromptSelect
 }
 
@@ -45,7 +44,6 @@ func NewKoolPreset() *KoolPreset {
 		&KoolPresetFlags{false},
 		&presets.DefaultParser{Presets: presets.GetAll(), Templates: presets.GetTemplates()},
 		compose.NewParser(),
-		shell.NewTerminalChecker(),
 		shell.NewPromptSelect(),
 	}
 }
