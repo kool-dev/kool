@@ -58,6 +58,12 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
 	}
 
+	f.MockTemplates = nil
+	_ = f.GetTemplates()
+	if !f.CalledGetTemplates {
+		t.Error("failed to use mocked GetTemplates function on FakeParser")
+	}
+
 	f.MockTemplates = map[string]map[string]string{
 		"service": map[string]string{
 			"serviceType": "serviceContent",
