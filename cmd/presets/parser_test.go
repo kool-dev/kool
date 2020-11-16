@@ -101,6 +101,48 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 	}
 }
 
+func TestGetCreateCommandParser(t *testing.T) {
+	presets := make(map[string]map[string]string)
+
+	laravelPreset := make(map[string]string)
+
+	laravelPreset["preset_create"] = "command"
+	laravelPreset["kool.yml"] = ""
+
+	presets["laravel"] = laravelPreset
+
+	p := &DefaultParser{
+		Presets: presets,
+	}
+
+	laravelCmd, _ := p.GetCreateCommand("laravel")
+
+	if laravelCmd != laravelPreset["preset_create"] {
+		t.Error("failed to get command")
+	}
+}
+
+func TestFailGetCreateCommandParser(t *testing.T) {
+	presets := make(map[string]map[string]string)
+
+	laravelPreset := make(map[string]string)
+
+	laravelPreset["preset_create"] = ""
+	laravelPreset["kool.yml"] = ""
+
+	presets["laravel"] = laravelPreset
+
+	p := &DefaultParser{
+		Presets: presets,
+	}
+
+	_, err := p.GetCreateCommand("laravel")
+
+	if err != ErrCreateCommandtNotFoundOrEmpty {
+		t.Errorf("failed, expected to get error %v got %v", ErrCreateCommandtNotFoundOrEmpty, err.Error())
+	}
+}
+
 func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	originalStat := osStat
 

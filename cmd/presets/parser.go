@@ -30,19 +30,11 @@ func (p *DefaultParser) Exists(preset string) (exists bool) {
 	return
 }
 
-// ErrPresetNotFound error throwed when did not find the preset
-var ErrPresetNotFound = errors.New("preset not found")
-
 // ErrCreateCommandtNotFoundOrEmpty error throwed when did not find the preset create command or it's empty
 var ErrCreateCommandtNotFoundOrEmpty = errors.New("create command not found or empty")
 
 // GetCreateCommand gets the command to create a new project
 func (p *DefaultParser) GetCreateCommand(preset string) (cmd string, err error) {
-	if !p.Exists(preset) {
-		err = ErrPresetNotFound
-		return
-	}
-
 	cmd = p.Presets[preset]["preset_create"]
 
 	if cmd == "" {

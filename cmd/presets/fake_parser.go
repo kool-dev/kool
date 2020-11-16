@@ -2,20 +2,28 @@ package presets
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists, CalledLookUpFiles, CalledWriteFiles, CalledGetPresets, CalledGetLanguages bool
+	CalledExists, CalledLookUpFiles, CalledWriteFiles, CalledGetCreateCommand, CalledGetPresets, CalledGetLanguages bool
 
-	MockExists     bool
-	MockFoundFiles []string
-	MockFileError  string
-	MockError      error
-	MockLanguages  []string
-	MockPresets    []string
+	MockExists        bool
+	MockFoundFiles    []string
+	MockFileError     string
+	MockError         error
+	MockCreateCommand string
+	MockLanguages     []string
+	MockPresets       []string
 }
 
 // Exists check if preset exists
 func (f *FakeParser) Exists(preset string) (exists bool) {
 	f.CalledExists = true
 	exists = f.MockExists
+	return
+}
+
+// GetCreateCommand gets the command to create a new project
+func (f *FakeParser) GetCreateCommand(preset string) (cmd string, err error) {
+	f.CalledGetCreateCommand = true
+	cmd = f.MockCreateCommand
 	return
 }
 

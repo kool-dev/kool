@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"strings"
@@ -39,7 +40,14 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		c.koolDocker.AppendArgs("-T")
 	}
 
-	createCmd, err := c.parser.GetCreateCommand(args[0])
+	preset := args[0]
+
+	if !c.parser.Exists(preset) {
+		err = fmt.Errorf("Unknown preset %s", preset)
+		return
+	}
+
+	createCmd, err := c.parser.GetCreateCommand(preset)
 
 	if err != nil {
 		return
