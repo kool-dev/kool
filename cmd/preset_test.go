@@ -510,7 +510,7 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	}
 
 	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["docker-compose.yml"]; !ok || !val {
-		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'larave' and key 'docker-compose.yml'")
+		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'laravel' and key 'docker-compose.yml'")
 	}
 
 	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; !ok || !val {
@@ -555,7 +555,7 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	}
 
 	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["docker-compose.yml"]; !ok || !val {
-		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'larave' and key 'docker-compose.yml'")
+		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'laravel' and key 'docker-compose.yml'")
 	}
 
 	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; !ok || !val {
@@ -576,5 +576,31 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 
 	if !f.composeParser.(*compose.FakeParser).CalledString {
 		t.Error("failed calling compose.String to database mysql service")
+	}
+}
+
+func TestSkipInvalidPresetKeyPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"preset_key"}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"laravel"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["preset_key"]; ok && val {
+		t.Error("should not CalledAsk presetsParser.GetPresetKeyContent for preset 'laravel' and key 'preset_key'")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; ok && val {
+		t.Error("should not call compose.Load")
+	}
+
+	if f.composeParser.(*compose.FakeParser).CalledString {
+		t.Error("should not call compose.String")
 	}
 }
