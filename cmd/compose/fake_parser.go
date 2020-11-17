@@ -6,6 +6,9 @@ type FakeParser struct {
 	CalledSetService                        map[string]map[string]bool
 	CalledRemoveService, CalledRemoveVolume map[string]bool
 	CalledString                            bool
+	MockLoadError                           error
+	MockSetServiceError                     error
+	MockStringError                         error
 }
 
 // Load implements fake Load behavior
@@ -15,6 +18,7 @@ func (f *FakeParser) Load(compose string) (err error) {
 	}
 
 	f.CalledLoad[compose] = true
+	err = f.MockLoadError
 	return
 }
 
@@ -29,6 +33,7 @@ func (f *FakeParser) SetService(service string, content string) (err error) {
 	}
 
 	f.CalledSetService[service][content] = true
+	err = f.MockSetServiceError
 	return
 }
 
@@ -53,5 +58,6 @@ func (f *FakeParser) RemoveVolume(volume string) {
 // String implements fake String behavior
 func (f *FakeParser) String() (content string, err error) {
 	f.CalledString = true
+	err = f.MockStringError
 	return
 }
