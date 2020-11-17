@@ -87,14 +87,14 @@ func removeSubItem(originalCompose yaml.MapSlice, item string, subItem string) (
 			continue
 		}
 
-		var services yaml.MapSlice
-		for _, service := range section.Value.(yaml.MapSlice) {
-			if service.Key != subItem {
-				services = append(services, service)
+		var sectionItems yaml.MapSlice
+		for _, sectionItem := range section.Value.(yaml.MapSlice) {
+			if sectionItem.Key != subItem {
+				sectionItems = append(sectionItems, sectionItem)
 			}
 		}
 
-		compose = append(compose, yaml.MapItem{Key: "services", Value: services})
+		compose = append(compose, yaml.MapItem{Key: item, Value: sectionItems})
 	}
 
 	return
