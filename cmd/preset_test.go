@@ -9,6 +9,70 @@ import (
 	"testing"
 )
 
+const defaultCompose string = `version: "3.7"
+services:
+  app:
+    image: kooldev/php:7.4-nginx
+    ports:
+     - "${KOOL_APP_PORT:-80}:80"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+     - .:/app:delegated
+    #  - $HOME/.ssh:/home/kool/.ssh:delegated
+    networks:
+     - kool_local
+     - kool_global
+  database:
+    image: mysql:8.0 # can change to: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password # remove this line if you change to: mysql:5.7
+    ports:
+     - "${KOOL_DATABASE_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE:-database}"
+      MYSQL_USER: "${DB_USERNAME:-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+     - database:/var/lib/mysql:delegated
+    networks:
+     - kool_local
+  cache:
+    image: redis:6-alpine
+    volumes:
+     - cache:/data:delegated
+    networks:
+     - kool_local
+
+volumes:
+  database:
+  cache:
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`
+
+const mysqlTemplate string = `image: mysql:8.0
+command: --default-authentication-plugin=mysql_native_password
+ports:
+  - "${KOOL_DATABASE_PORT:-3306}:3306"
+environment:
+  MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
+  MYSQL_DATABASE: "${DB_DATABASE:-database}"
+  MYSQL_USER: "${DB_USERNAME:-user}"
+  MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+volumes:
+ - database:/var/lib/mysql:delegated
+networks:
+ - kool_local
+ `
+
 func newFakeKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newFakeKoolService(),
@@ -61,7 +125,11 @@ func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"kool.yml"}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = "kool.yml content"
+	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
+		"laravel": map[string]string{
+			"kool.yml": "kool.yml content",
+		},
+	}
 
 	cmd := NewPresetCommand(f)
 
@@ -218,7 +286,11 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"kool.yml"}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = "kool.yml content"
+	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
+		"laravel": map[string]string{
+			"kool.yml": "kool.yml content",
+		},
+	}
 	f.presetsParser.(*presets.FakeParser).MockError = errors.New("write error")
 
 	cmd := NewPresetCommand(f)
@@ -406,5 +478,46 @@ func TestNonTTYPresetCommand(t *testing.T) {
 		t.Error("expecting an error, got none")
 	} else if err.Error() != "the input device is not a TTY; for non-tty environments, please specify a preset argument" {
 		t.Errorf("expecting error 'the input device is not a TTY; for non-tty environments, please specify a preset argument', got %v", err)
+	}
+}
+
+func TestCustomDockerComposePresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
+		"laravel": map[string]string{
+			"preset_ask_services":     "database",
+			"preset_database_options": "mysql,postgresql",
+			"docker-compose.yml":      defaultCompose,
+		},
+	}
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What database service do you want to use": "mysql",
+	}
+	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"database": map[string]string{
+			"mysql.yml": mysqlTemplate,
+		},
+	}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"laravel"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["docker-compose.yml"]; !ok || !val {
+		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'larave' and key 'docker-compose.yml'")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; !ok || !val {
+		t.Error("failed calling compose.Load")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"][mysqlTemplate]; !ok || !val {
+		t.Error("failed calling compose.SetService to database mysql service")
 	}
 }

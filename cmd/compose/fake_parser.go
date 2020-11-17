@@ -2,22 +2,32 @@ package compose
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledLoad, CalledSetService, CalledRemoveService, CalledRemoveVolume, CalledString bool
-	MockLoadError, MockSetServiceError, MockStringError                                 error
-	MockString                                                                          string
+	CalledLoad                                            map[string]bool
+	CalledSetService                                      map[string]map[string]bool
+	CalledRemoveService, CalledRemoveVolume, CalledString bool
 }
 
 // Load implements fake Load behavior
 func (f *FakeParser) Load(compose string) (err error) {
-	f.CalledLoad = true
-	err = f.MockLoadError
+	if f.CalledLoad == nil {
+		f.CalledLoad = make(map[string]bool)
+	}
+
+	f.CalledLoad[compose] = true
 	return
 }
 
 // SetService implements fake SetService behavior
 func (f *FakeParser) SetService(service string, content string) (err error) {
-	f.CalledSetService = true
-	err = f.MockSetServiceError
+	if f.CalledSetService == nil {
+		f.CalledSetService = make(map[string]map[string]bool)
+	}
+
+	if f.CalledSetService[service] == nil {
+		f.CalledSetService[service] = make(map[string]bool)
+	}
+
+	f.CalledSetService[service][content] = true
 	return
 }
 
@@ -34,7 +44,5 @@ func (f *FakeParser) RemoveVolume(volume string) {
 // String implements fake String behavior
 func (f *FakeParser) String() (content string, err error) {
 	f.CalledString = true
-	err = f.MockStringError
-	content = f.MockString
 	return
 }

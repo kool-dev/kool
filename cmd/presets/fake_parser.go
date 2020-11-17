@@ -18,7 +18,7 @@ type FakeParser struct {
 	MockLanguages        []string
 	MockPresets          []string
 	MockPresetKeys       []string
-	MockPresetKeyContent string
+	MockPresetKeyContent map[string]map[string]string
 	MockTemplates        map[string]map[string]string
 }
 
@@ -84,7 +84,7 @@ func (f *FakeParser) GetPresetKeyContent(preset string, key string) (value strin
 	}
 
 	f.CalledGetPresetKeyContent[preset][key] = true
-	value = f.MockPresetKeyContent
+	value = f.MockPresetKeyContent[preset][key]
 	return
 }
 
