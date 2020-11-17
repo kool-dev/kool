@@ -133,10 +133,6 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 			}
 
 			for serviceKey, serviceOption := range servicesOptions {
-				if serviceOption == "" {
-					continue
-				}
-
 				if serviceOption == "none" {
 					p.composeParser.RemoveService(serviceKey)
 					p.composeParser.RemoveVolume(serviceKey)

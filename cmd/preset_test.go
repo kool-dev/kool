@@ -520,4 +520,61 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"][mysqlTemplate]; !ok || !val {
 		t.Error("failed calling compose.SetService to database mysql service")
 	}
+
+	if !f.composeParser.(*compose.FakeParser).CalledString {
+		t.Error("failed calling compose.String to database mysql service")
+	}
+}
+
+func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
+		"laravel": map[string]string{
+			"preset_ask_services":     "database",
+			"preset_database_options": "mysql,postgresql,none",
+			"docker-compose.yml":      defaultCompose,
+		},
+	}
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What database service do you want to use": "none",
+	}
+	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"database": map[string]string{
+			"mysql.yml": mysqlTemplate,
+		},
+	}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"laravel"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["docker-compose.yml"]; !ok || !val {
+		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'larave' and key 'docker-compose.yml'")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; !ok || !val {
+		t.Error("failed calling compose.Load")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledRemoveService["database"]; !ok || !val {
+		t.Error("failed calling compose.RemoveService to database service")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledRemoveVolume["database"]; !ok || !val {
+		t.Error("failed calling compose.RemoveService to database service")
+	}
+
+	if _, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"][mysqlTemplate]; ok {
+		t.Error("should not call compose.SetService to database service")
+	}
+
+	if !f.composeParser.(*compose.FakeParser).CalledString {
+		t.Error("failed calling compose.String to database mysql service")
+	}
 }
