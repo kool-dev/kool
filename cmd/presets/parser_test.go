@@ -2,6 +2,7 @@ package presets
 
 import (
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -30,6 +31,15 @@ func TestExistsParser(t *testing.T) {
 }
 
 func TestGetAllParser(t *testing.T) {
+	var allPresets []string
+	p := &DefaultParser{}
+
+	allPresets = p.GetPresets("")
+
+	if len(allPresets) != 0 {
+		t.Error("presets should be empty")
+	}
+
 	presets := make(map[string]map[string]string)
 	laravelPreset := make(map[string]string)
 	symfonyPreset := make(map[string]string)
@@ -40,11 +50,9 @@ func TestGetAllParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p.Presets = presets
 
-	allPresets := p.GetPresets("")
+	allPresets = p.GetPresets("")
 
 	if len(allPresets) != 2 || allPresets[0] != "laravel" || allPresets[1] != "symfony" {
 		t.Error("failed to get all presets")
@@ -52,6 +60,15 @@ func TestGetAllParser(t *testing.T) {
 }
 
 func TestGetLanguagesParser(t *testing.T) {
+	var allLanguages []string
+	p := &DefaultParser{}
+
+	allLanguages = p.GetLanguages()
+
+	if len(allLanguages) != 0 {
+		t.Error("languages should be empty")
+	}
+
 	presets := make(map[string]map[string]string)
 
 	laravelPreset := make(map[string]string)
@@ -65,11 +82,9 @@ func TestGetLanguagesParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p.Presets = presets
 
-	allLanguages := p.GetLanguages()
+	allLanguages = p.GetLanguages()
 
 	if len(allLanguages) != 1 || allLanguages[0] != "php" {
 		t.Error("failed to get languages")
@@ -155,5 +170,34 @@ func TestGetPresetKeysAndContents(t *testing.T) {
 
 	if content != "value2" {
 		t.Errorf("expecting to find value 'value2', found %s", content)
+	}
+}
+
+func TestGetTemplates(t *testing.T) {
+	var allTemplates map[string]map[string]string
+	p := &DefaultParser{}
+
+	allTemplates = p.GetTemplates()
+
+	if allTemplates != nil {
+		t.Error("templates should be empty")
+	}
+
+	templates := make(map[string]map[string]string)
+
+	template := make(map[string]string)
+
+	template["key1"] = "value1"
+	template["key2"] = "value2"
+	template["key3"] = "value3"
+
+	templates["template"] = template
+
+	p.Templates = templates
+
+	allTemplates = p.GetTemplates()
+
+	if !reflect.DeepEqual(allTemplates, templates) {
+		t.Error("failed to get all presets")
 	}
 }
