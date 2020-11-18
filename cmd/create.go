@@ -68,10 +68,6 @@ func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 
 	err = c.KoolPreset.Execute([]string{preset})
 
-	if err != nil {
-		return
-	}
-
 	return
 }
 
