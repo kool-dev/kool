@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"testing"
@@ -12,7 +11,7 @@ func newFakeKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newFakeKoolService(),
 		&presets.FakeParser{},
-		&builder.FakeCommand{},
+		*newFakeKoolDocker(),
 	}
 }
 
@@ -33,10 +32,6 @@ func TestNewKoolCreate(t *testing.T) {
 
 	if _, ok := k.parser.(*presets.DefaultParser); !ok {
 		t.Errorf("unexpected presets.Parser on default KoolCreate instance")
-	}
-
-	if _, ok := k.koolDocker.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected builder.Command on default KoolDocker instance")
 	}
 }
 

@@ -43,4 +43,11 @@ func TestFakeParser(t *testing.T) {
 	if !f.CalledGetLanguages || len(languages) != 1 || languages[0] != "php" {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
+
+	f.MockCreateCommand = "create"
+	createCommand, _ := f.GetCreateCommand("")
+
+	if !f.CalledGetCreateCommand || createCommand == "" || createCommand != "create" {
+		t.Error("failed to use mocked GetCreateCommand function on FakeParser")
+	}
 }

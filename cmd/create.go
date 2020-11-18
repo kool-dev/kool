@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"strings"
 
@@ -12,8 +11,8 @@ import (
 // KoolCreate holds handlers and functions to implement the preset command logic
 type KoolCreate struct {
 	DefaultKoolService
-	parser     presets.Parser
-	koolDocker builder.Command
+	parser presets.Parser
+	KoolDocker
 }
 
 func init() {
@@ -30,17 +29,13 @@ func NewKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newDefaultKoolService(),
 		&presets.DefaultParser{Presets: presets.GetAll()},
-		builder.NewCommand("kool", "docker"),
+		*NewKoolDocker(),
 	}
 }
 
 // Execute runs the exec logic with incoming arguments.
-func (c *KoolCreate) Execute(args []string) (err error) {
-	if !c.IsTerminal() {
-		c.koolDocker.AppendArgs("-T")
-	}
-
-	preset := args[0]
+func (c *KoolCreate) Execute(originalArgs []string) (err error) {
+	preset := originalArgs[0]
 
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
@@ -53,9 +48,9 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		return
 	}
 
-	c.koolDocker.AppendArgs(strings.Fields(createCmd)...)
+	args := append(strings.Fields(createCmd), originalArgs[1:]...)
 
-	err = c.koolDocker.Interactive(args[1:]...)
+	c.KoolDocker.Execute(args)
 
 	return
 }
