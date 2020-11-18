@@ -1,6 +1,8 @@
 package compose
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -110,7 +112,7 @@ func TestStringDefaultParser(t *testing.T) {
 	}
 }
 
-func TestRemoveService(t *testing.T) {
+func TestRemoveServiceDefaultParser(t *testing.T) {
 	p := NewParser()
 
 	_ = p.Load(composeFile)
@@ -127,7 +129,7 @@ func TestRemoveService(t *testing.T) {
 	}
 }
 
-func TestRemoveVolume(t *testing.T) {
+func TestRemoveVolumeDefaultParser(t *testing.T) {
 	p := NewParser()
 
 	_ = p.Load(composeFile)
@@ -144,7 +146,7 @@ func TestRemoveVolume(t *testing.T) {
 	}
 }
 
-func TestSetService(t *testing.T) {
+func TestSetServiceDefaultParser(t *testing.T) {
 	p := NewParser()
 
 	_ = p.Load(composeFile)
@@ -160,6 +162,51 @@ func TestSetService(t *testing.T) {
 
 	if !reflect.DeepEqual(yamlData, parsed) {
 		t.Error("failed setting docker compose file service")
+	}
+}
+
+func TestErrorSetServiceDefaultParser(t *testing.T) {
+	p := NewParser()
+	_ = p.Load(composeFile)
+
+	originalYamlUnmarshalFn := yamlUnmarshalFn
+	defer func() {
+		yamlUnmarshalFn = originalYamlUnmarshalFn
+	}()
+
+	yamlUnmarshalFn = func(in []byte, out interface{}) error {
+		fmt.Println("unmarshal")
+		return errors.New("yaml unmarshal error")
+	}
+
+	err := p.SetService("service", newComposeService)
+
+	if err == nil {
+		t.Error("expecting error 'yaml unmarshal error', got none")
+	} else if err.Error() != "yaml unmarshal error" {
+		t.Errorf("expecting error 'yaml unmarshal error', got %v", err)
+	}
+}
+
+func TestErrorStringDefaultParser(t *testing.T) {
+	p := NewParser()
+	_ = p.Load(composeFile)
+
+	originalYamlMarshalFn := yamlMarshalFn
+	defer func() {
+		yamlMarshalFn = originalYamlMarshalFn
+	}()
+
+	yamlMarshalFn = func(in interface{}) ([]byte, error) {
+		return nil, errors.New("yaml marshal error")
+	}
+
+	_, err := p.String()
+
+	if err == nil {
+		t.Error("expecting error 'yaml marshal error', got none")
+	} else if err.Error() != "yaml marshal error" {
+		t.Errorf("expecting error 'yaml marshal error', got %v", err)
 	}
 }
 

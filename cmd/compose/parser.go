@@ -2,6 +2,9 @@ package compose
 
 import "gopkg.in/yaml.v2"
 
+type yamlUnmarshalFnType func([]byte, interface{}) error
+type yamlMarshalFnType func(interface{}) ([]byte, error)
+
 // Parser holds logic for handling docker-compose
 type Parser interface {
 	Load(string) error
@@ -15,6 +18,11 @@ type Parser interface {
 type DefaultParser struct {
 	yamlData yaml.MapSlice
 }
+
+var (
+	yamlUnmarshalFn yamlUnmarshalFnType = yaml.Unmarshal
+	yamlMarshalFn   yamlMarshalFnType   = yaml.Marshal
+)
 
 // NewParser creates new docker-compose parser
 func NewParser() Parser {
@@ -62,7 +70,7 @@ func (p *DefaultParser) RemoveVolume(volume string) {
 func (p *DefaultParser) String() (content string, err error) {
 	var parsedBytes []byte
 
-	if parsedBytes, err = yaml.Marshal(p.yamlData); err != nil {
+	if parsedBytes, err = yamlMarshalFn(p.yamlData); err != nil {
 		return
 	}
 
@@ -73,7 +81,7 @@ func (p *DefaultParser) String() (content string, err error) {
 func parseYaml(content string) (yaml.MapSlice, error) {
 	parsed := yaml.MapSlice{}
 
-	if err := yaml.Unmarshal([]byte(content), &parsed); err != nil {
+	if err := yamlUnmarshalFn([]byte(content), &parsed); err != nil {
 		return nil, err
 	}
 
