@@ -1,6 +1,9 @@
 package compose
 
-import "gopkg.in/yaml.v2"
+import (
+	"fmt"
+	"gopkg.in/yaml.v2"
+)
 
 type yamlUnmarshalFnType func([]byte, interface{}) error
 type yamlMarshalFnType func(interface{}) ([]byte, error)
@@ -53,7 +56,8 @@ func (p *DefaultParser) SetService(serviceName string, serviceContent string) (e
 			}
 		}
 	}
-	return
+
+	return fmt.Errorf("service %s not found", serviceName)
 }
 
 // RemoveService remove a docker-compose service

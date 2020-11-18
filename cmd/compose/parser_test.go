@@ -188,6 +188,19 @@ func TestErrorSetServiceDefaultParser(t *testing.T) {
 	}
 }
 
+func TestNotFoundSetServiceDefaultParser(t *testing.T) {
+	p := NewParser()
+	_ = p.Load(composeFile)
+
+	err := p.SetService("service_not_exists", newComposeService)
+
+	if err == nil {
+		t.Error("expecting error 'service service_not_exists not found', got none")
+	} else if err.Error() != "service service_not_exists not found" {
+		t.Errorf("expecting error 'service service_not_exists not found', got %v", err)
+	}
+}
+
 func TestErrorStringDefaultParser(t *testing.T) {
 	p := NewParser()
 	_ = p.Load(composeFile)
