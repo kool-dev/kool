@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"kool-dev/kool/cmd/presets"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ type KoolCreate struct {
 	DefaultKoolService
 	parser presets.Parser
 	KoolDocker
+	KoolPreset
 }
 
 func init() {
@@ -30,12 +32,14 @@ func NewKoolCreate() *KoolCreate {
 		*newDefaultKoolService(),
 		&presets.DefaultParser{Presets: presets.GetAll()},
 		*NewKoolDocker(),
+		*NewKoolPreset(),
 	}
 }
 
 // Execute runs the exec logic with incoming arguments.
 func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 	preset := originalArgs[0]
+	dir := originalArgs[1]
 
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
@@ -50,7 +54,23 @@ func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 
 	args := append(strings.Fields(createCmd), originalArgs[1:]...)
 
-	c.KoolDocker.Execute(args)
+	err = c.KoolDocker.Execute(args)
+
+	if err != nil {
+		return
+	}
+
+	err = os.Chdir(dir)
+
+	if err != nil {
+		return
+	}
+
+	err = c.KoolPreset.Execute([]string{preset})
+
+	if err != nil {
+		return
+	}
 
 	return
 }

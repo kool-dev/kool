@@ -12,6 +12,7 @@ func newFakeKoolCreate() *KoolCreate {
 		*newFakeKoolService(),
 		&presets.FakeParser{},
 		*newFakeKoolDocker(),
+		*newFakeKoolPreset(),
 	}
 }
 
