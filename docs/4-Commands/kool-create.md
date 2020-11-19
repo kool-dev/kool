@@ -1,16 +1,15 @@
-## kool init
+## kool create
 
-[DEPRECATED] Proxies preset command
+Create a new project using preset
 
 ```
-kool init [PRESET] [flags]
+kool create [preset] [project] [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help       help for init
-      --override   Force replace local existing files with the preset files
+  -h, --help   help for create
 ```
 
 ### Options inherited from parent commands
