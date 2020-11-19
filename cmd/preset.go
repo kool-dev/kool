@@ -42,7 +42,7 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
-		&presets.DefaultParser{Presets: presets.GetAll(), Templates: presets.GetTemplates()},
+		presets.NewParser(presets.GetAll(), presets.GetTemplates()),
 		compose.NewParser(),
 		shell.NewPromptSelect(),
 	}

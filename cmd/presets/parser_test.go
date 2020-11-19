@@ -4,6 +4,8 @@ import (
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/spf13/afero"
 )
 
 func TestExistsParser(t *testing.T) {
@@ -13,9 +15,7 @@ func TestExistsParser(t *testing.T) {
 	laravelPreset["kool.yml"] = ""
 	presets["laravel"] = laravelPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := NewParser(presets, nil)
 
 	exists := p.Exists("laravel")
 
@@ -32,7 +32,7 @@ func TestExistsParser(t *testing.T) {
 
 func TestGetAllParser(t *testing.T) {
 	var allPresets []string
-	p := &DefaultParser{}
+	p := NewParser(nil, nil)
 
 	allPresets = p.GetPresets("")
 
@@ -50,7 +50,7 @@ func TestGetAllParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p.Presets = presets
+	p = NewParser(presets, nil)
 
 	allPresets = p.GetPresets("")
 
@@ -61,7 +61,7 @@ func TestGetAllParser(t *testing.T) {
 
 func TestGetLanguagesParser(t *testing.T) {
 	var allLanguages []string
-	p := &DefaultParser{}
+	p := NewParser(nil, nil)
 
 	allLanguages = p.GetLanguages()
 
@@ -82,7 +82,7 @@ func TestGetLanguagesParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p.Presets = presets
+	p = NewParser(presets, nil)
 
 	allLanguages = p.GetLanguages()
 
@@ -105,9 +105,7 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 	presets["php_language"] = phpPreset
 	presets["javascript_language"] = jsPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := NewParser(presets, nil)
 
 	phpPresets := p.GetPresets("php")
 
@@ -117,14 +115,6 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 }
 
 func TestIgnorePresetMetaKeysParser(t *testing.T) {
-	originalStat := osStat
-
-	defer func() { osStat = originalStat }()
-
-	osStat = func(name string) (os.FileInfo, error) {
-		return nil, nil
-	}
-
 	presets := make(map[string]map[string]string)
 
 	testingPreset := make(map[string]string)
@@ -134,9 +124,10 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 
 	presets["preset"] = testingPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	fs := afero.NewMemMapFs()
+	_ = afero.WriteFile(fs, "kool.yml", []byte("scripts"), os.ModePerm)
+
+	p := NewParserFS(presets, nil, fs)
 
 	foundFiles := p.LookUpFiles("preset")
 
@@ -145,7 +136,7 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	}
 }
 
-func TestGetPresetKeysAndContents(t *testing.T) {
+func TestGetPresetKeysAndContentsParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
 
 	preset := make(map[string]string)
@@ -156,9 +147,7 @@ func TestGetPresetKeysAndContents(t *testing.T) {
 
 	presets["preset"] = preset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := NewParser(presets, nil)
 
 	keys := p.GetPresetKeys("preset")
 
@@ -173,9 +162,9 @@ func TestGetPresetKeysAndContents(t *testing.T) {
 	}
 }
 
-func TestGetTemplates(t *testing.T) {
+func TestGetTemplatesParser(t *testing.T) {
 	var allTemplates map[string]map[string]string
-	p := &DefaultParser{}
+	p := NewParser(nil, nil)
 
 	allTemplates = p.GetTemplates()
 
@@ -193,11 +182,25 @@ func TestGetTemplates(t *testing.T) {
 
 	templates["template"] = template
 
-	p.Templates = templates
+	p = NewParser(nil, templates)
 
 	allTemplates = p.GetTemplates()
 
 	if !reflect.DeepEqual(allTemplates, templates) {
 		t.Error("failed to get all presets")
+	}
+}
+
+func TestWriteFileParser(t *testing.T) {
+	fs := afero.NewMemMapFs()
+
+	p := NewParserFS(nil, nil, fs)
+
+	if _, err := p.WriteFile("kool.yml", "scripts"); err != nil {
+		t.Errorf("unexpected error writing file, err: %v", err)
+	}
+
+	if _, err := fs.Stat("kool.yml"); os.IsNotExist(err) {
+		t.Error("could not write the file 'kool.yml'")
 	}
 }

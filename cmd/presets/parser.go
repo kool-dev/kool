@@ -5,14 +5,15 @@ import (
 	"os"
 	"sort"
 	"strings"
-)
 
-var osStat func(string) (os.FileInfo, error) = os.Stat
+	"github.com/spf13/afero"
+)
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
 	Presets   map[string]map[string]string
 	Templates map[string]map[string]string
+	fs        afero.Fs
 }
 
 // Parser holds presets parsing logic
@@ -25,6 +26,24 @@ type Parser interface {
 	GetPresetKeys(string) []string
 	GetPresetKeyContent(string, string) string
 	GetTemplates() map[string]map[string]string
+}
+
+// NewParser creates a new preset default parser
+func NewParser(presets map[string]map[string]string, templates map[string]map[string]string) Parser {
+	return &DefaultParser{
+		Presets:   presets,
+		Templates: templates,
+		fs:        afero.NewOsFs(),
+	}
+}
+
+// NewParserFS creates a new preset default parser with file system
+func NewParserFS(presets map[string]map[string]string, templates map[string]map[string]string, fs afero.Fs) Parser {
+	return &DefaultParser{
+		Presets:   presets,
+		Templates: templates,
+		fs:        fs,
+	}
 }
 
 // Exists check if preset exists
@@ -79,7 +98,7 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 			continue
 		}
 
-		if _, err := osStat(fileName); !os.IsNotExist(err) {
+		if _, err := p.fs.Stat(fileName); !os.IsNotExist(err) {
 			foundFiles = append(foundFiles, fileName)
 		}
 	}
@@ -89,11 +108,11 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 // WriteFile write preset file
 func (p *DefaultParser) WriteFile(fileName string, fileContent string) (fileError string, err error) {
 	var (
-		file  *os.File
+		file  afero.File
 		lines int
 	)
 
-	file, err = os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+	file, err = p.fs.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 
 	if err != nil {
 		fileError = fileName
