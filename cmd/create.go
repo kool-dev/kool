@@ -26,7 +26,7 @@ func init() {
 	rootCmd.AddCommand(createCmd)
 }
 
-// NewKoolCreate creates a new handler for exec logic
+// NewKoolCreate creates a new handler for create logic
 func NewKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newDefaultKoolService(),
@@ -36,7 +36,7 @@ func NewKoolCreate() *KoolCreate {
 	}
 }
 
-// Execute runs the exec logic with incoming arguments.
+// Execute runs the create logic with incoming arguments.
 func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 	preset := originalArgs[0]
 	dir := originalArgs[1]
@@ -60,11 +60,7 @@ func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 		return
 	}
 
-	err = os.Chdir(dir)
-
-	if err != nil {
-		return
-	}
+	_ = os.Chdir(dir)
 
 	err = c.KoolPreset.Execute([]string{preset})
 

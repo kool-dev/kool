@@ -36,6 +36,28 @@ func TestNewKoolCreate(t *testing.T) {
 	}
 }
 
+func TestNewKoolCreateCommand(t *testing.T) {
+	f := newFakeKoolCreate()
+
+	f.parser.(*presets.FakeParser).MockExists = true
+	f.KoolPreset.parser.(*presets.FakeParser).MockExists = true
+
+	cmd := NewCreateCommand(f)
+	cmd.SetArgs([]string{"laravel", "my-app"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing create command; error: %v", err)
+	}
+
+	if !f.parser.(*presets.FakeParser).CalledExists {
+		t.Error("did not call parser.Exists")
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
+		t.Error("did not call SetWriter")
+	}
+}
+
 func TestInvalidPresetCreateCommand(t *testing.T) {
 	f := newFakeKoolCreate()
 	cmd := NewCreateCommand(f)
@@ -68,8 +90,8 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 
 func TestNoArgsNewCreateCommand(t *testing.T) {
 	f := newFakeKoolCreate()
-	cmd := NewCreateCommand(f)
 
+	cmd := NewCreateCommand(f)
 	cmd.SetOut(bytes.NewBufferString(""))
 
 	if err := cmd.Execute(); err == nil {
