@@ -70,7 +70,7 @@ Out current presets:
 - [Laravel](docs/2-Presets/Laravel.md)
 - [Symfony](docs/2-Presets/Symfony.md)
 - [Wordpress](docs/2-Presets/Wordpress.md)
-- [Adonis](docs/2-resets/Adonis.md)
+- [Adonis](docs/2-Presets/Adonis.md)
 - [NestJS](docs/2-Presets/NestJS.md)
 - [NextJS](docs/2-Presets/NextJS.md)
 - [NuxtJS](docs/2-Presets/NuxtJS.md)
