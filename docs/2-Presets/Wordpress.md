@@ -17,7 +17,7 @@ Go to the project folder and run:
 $ kool preset wordpress
 ```
 
-**kool init** creates configuration files in order to enable you to configure and extend its behaviour.
+**kool preset** creates configuration files in order to enable you to configure and extend its behaviour.
 
 The **wordpress** preset uses **mysql** and **redis** out of the box. You can review and change that at **docker-compose.yml**.
 
