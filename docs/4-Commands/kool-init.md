@@ -1,6 +1,6 @@
 ## kool init
 
-[DEPRECATED] Proxies preset command
+[DEPRECATED] Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
 
 ```
 kool init [PRESET] [flags]
