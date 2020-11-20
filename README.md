@@ -45,7 +45,7 @@ It is easy to get started leveraging `kool`. Provided you have all requirements 
 
 ```console
 $ cd my-laravel-project/
-$ kool init laravel
+$ kool preset laravel
 $ # make sure your `.env` points to the proper database and Redis hosts (`database` and `cache`)
 $ kool start
 $ kool run reset
