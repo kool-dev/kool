@@ -105,7 +105,7 @@ networks:
 `,
 		"preset_language":         "php",
 		"preset_ask_services":     "database,cache",
-		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL,none",
+		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
 		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
@@ -504,7 +504,10 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"preset_language": "php",
+		"preset_language":         "php",
+		"preset_ask_services":     "database,cache",
+		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
+		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -583,7 +586,10 @@ networks:
 `,
 	}
 	presets["wordpress"] = map[string]string{
-		"preset_language": "php",
+		"preset_language":         "php",
+		"preset_ask_services":     "database,cache",
+		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
+		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -687,7 +693,7 @@ volumes:
 networks:
  - kool_local
 `,
-		"prostgresql.yml": `image: postgres
+		"prostgresql130.yml": `image: postgres:13-alpine
 ports:
   - "${KOOL_DATABASE_PORT:-3306}:3306"
 environment:

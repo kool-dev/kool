@@ -1,4 +1,4 @@
-image: postgres
+image: postgres:13-alpine
 ports:
   - "${KOOL_DATABASE_PORT:-3306}:3306"
 environment:
