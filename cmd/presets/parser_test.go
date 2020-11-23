@@ -2,6 +2,7 @@ package presets
 
 import (
 	"os"
+	"reflect"
 	"testing"
 )
 
@@ -12,9 +13,8 @@ func TestExistsParser(t *testing.T) {
 	laravelPreset["kool.yml"] = ""
 	presets["laravel"] = laravelPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	exists := p.Exists("laravel")
 
@@ -40,9 +40,8 @@ func TestGetAllParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	allPresets := p.GetPresets("")
 
@@ -65,9 +64,8 @@ func TestGetLanguagesParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	allLanguages := p.GetLanguages()
 
@@ -90,9 +88,8 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 	presets["php_language"] = phpPreset
 	presets["javascript_language"] = jsPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	phpPresets := p.GetPresets("php")
 
@@ -111,9 +108,8 @@ func TestGetCreateCommandParser(t *testing.T) {
 
 	presets["laravel"] = laravelPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	laravelCmd, _ := p.GetCreateCommand("laravel")
 
@@ -132,9 +128,8 @@ func TestFailGetCreateCommandParser(t *testing.T) {
 
 	presets["laravel"] = laravelPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	_, err := p.GetCreateCommand("laravel")
 
@@ -161,13 +156,25 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 
 	presets["preset"] = testingPreset
 
-	p := &DefaultParser{
-		Presets: presets,
-	}
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
 
 	foundFiles := p.LookUpFiles("preset")
 
 	if len(foundFiles) != 1 || foundFiles[0] != "kool.yml" {
 		t.Errorf("expecting to find only 'kool.yml', found %v", foundFiles)
+	}
+}
+
+func TestLoadPresetsParser(t *testing.T) {
+	presets := map[string]map[string]string{
+		"laravel": {"preset_create": "command"},
+	}
+
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
+
+	if ok := reflect.DeepEqual(p.Presets, presets); !ok {
+		t.Error("did not load the presets correctly")
 	}
 }

@@ -40,7 +40,7 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
-		&presets.DefaultParser{Presets: presets.GetAll()},
+		&presets.DefaultParser{},
 		shell.NewTerminalChecker(),
 		shell.NewPromptSelect(),
 	}
@@ -66,6 +66,8 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 	} else {
 		preset = args[0]
 	}
+
+	p.parser.LoadPresets(presets.GetAll())
 
 	if !p.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)

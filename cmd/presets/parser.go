@@ -22,6 +22,7 @@ type Parser interface {
 	GetPresets(string) []string
 	LookUpFiles(string) []string
 	WriteFiles(string) (string, error)
+	LoadPresets(map[string]map[string]string)
 }
 
 // Exists check if preset exists
@@ -39,7 +40,6 @@ func (p *DefaultParser) GetCreateCommand(preset string) (cmd string, err error) 
 
 	if cmd == "" {
 		err = ErrCreateCommandtNotFoundOrEmpty
-		return
 	}
 
 	return
@@ -137,5 +137,11 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 		file.Close()
 	}
 
+	return
+}
+
+// LoadPresets loads the presets
+func (p *DefaultParser) LoadPresets(allPresets map[string]map[string]string) {
+	p.Presets = allPresets
 	return
 }

@@ -30,7 +30,7 @@ func init() {
 func NewKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newDefaultKoolService(),
-		&presets.DefaultParser{Presets: presets.GetAll()},
+		&presets.DefaultParser{},
 		*NewKoolDocker(),
 		*NewKoolPreset(),
 	}
@@ -40,6 +40,8 @@ func NewKoolCreate() *KoolCreate {
 func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 	preset := originalArgs[0]
 	dir := originalArgs[1]
+
+	c.parser.LoadPresets(presets.GetAll())
 
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
@@ -72,7 +74,7 @@ func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 	createCmd = &cobra.Command{
 		Use:   "create [preset] [project]",
 		Short: "Create a new project using preset",
-		Args:  cobra.MinimumNArgs(2),
+		Args:  cobra.ExactArgs(2),
 		Run:   DefaultCommandRunFunction(create),
 	}
 

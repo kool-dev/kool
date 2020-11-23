@@ -49,6 +49,10 @@ func TestNewKoolCreateCommand(t *testing.T) {
 		t.Errorf("unexpected error executing create command; error: %v", err)
 	}
 
+	if !f.parser.(*presets.FakeParser).CalledLoadPresets {
+		t.Error("did not call parser.LoadPresets")
+	}
+
 	if !f.parser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
 	}
@@ -66,6 +70,10 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.parser.(*presets.FakeParser).CalledLoadPresets {
+		t.Error("did not call parser.LoadPresets")
 	}
 
 	if !f.parser.(*presets.FakeParser).CalledExists {
