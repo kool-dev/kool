@@ -143,5 +143,4 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 // LoadPresets loads the presets
 func (p *DefaultParser) LoadPresets(allPresets map[string]map[string]string) {
 	p.Presets = allPresets
-	return
 }

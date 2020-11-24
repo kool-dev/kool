@@ -61,5 +61,4 @@ func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
 func (f *FakeParser) LoadPresets(presets map[string]map[string]string) {
 	f.CalledLoadPresets = true
 	f.MockAllPresets = presets
-	return
 }
