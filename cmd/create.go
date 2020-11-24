@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -12,8 +12,8 @@ import (
 // KoolCreate holds handlers and functions to implement the preset command logic
 type KoolCreate struct {
 	DefaultKoolService
-	parser presets.Parser
-	KoolDocker
+	parser        presets.Parser
+	createCommand builder.Command
 	KoolPreset
 }
 
@@ -31,7 +31,7 @@ func NewKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newDefaultKoolService(),
 		&presets.DefaultParser{},
-		*NewKoolDocker(),
+		&builder.DefaultCommand{},
 		*NewKoolPreset(),
 	}
 }
@@ -54,9 +54,13 @@ func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 		return
 	}
 
-	args := append(strings.Fields(createCmd), originalArgs[1:]...)
+	err = c.createCommand.Parse(createCmd)
 
-	err = c.KoolDocker.Execute(args)
+	if err != nil {
+		return
+	}
+
+	err = c.createCommand.Interactive(dir)
 
 	if err != nil {
 		return

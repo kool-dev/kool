@@ -1,2 +1,2 @@
 language=javascript
-create=kooldev/node:14 yarn create nuxt-app
+create=kool docker kooldev/node:14 yarn create nuxt-app

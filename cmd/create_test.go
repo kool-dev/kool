@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"testing"
@@ -11,7 +12,7 @@ func newFakeKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newFakeKoolService(),
 		&presets.FakeParser{},
-		*newFakeKoolDocker(),
+		&builder.FakeCommand{},
 		*newFakeKoolPreset(),
 	}
 }
@@ -31,6 +32,10 @@ func TestNewKoolCreate(t *testing.T) {
 		t.Errorf("unexpected shell.InputReader on default KoolCreate instance")
 	}
 
+	if _, ok := k.createCommand.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Command on default KoolCreate instance")
+	}
+
 	if _, ok := k.parser.(*presets.DefaultParser); !ok {
 		t.Errorf("unexpected presets.Parser on default KoolCreate instance")
 	}
@@ -41,6 +46,7 @@ func TestNewKoolCreateCommand(t *testing.T) {
 
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.KoolPreset.parser.(*presets.FakeParser).MockExists = true
+	f.parser.(*presets.FakeParser).MockCreateCommand = "kool docker create command"
 
 	cmd := NewCreateCommand(f)
 	cmd.SetArgs([]string{"laravel", "my-app"})
@@ -55,6 +61,18 @@ func TestNewKoolCreateCommand(t *testing.T) {
 
 	if !f.parser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
+	}
+
+	if !f.parser.(*presets.FakeParser).CalledGetCreateCommand {
+		t.Error("did not call parser.GetCreateCommand")
+	}
+
+	if !f.createCommand.(*builder.FakeCommand).CalledParseCommand {
+		t.Error("did not call Parse on KoolCreate.createCommand Command")
+	}
+
+	if !f.createCommand.(*builder.FakeCommand).CalledInteractive {
+		t.Error("did not call Interactive on KoolCreate.createCommand Command")
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {

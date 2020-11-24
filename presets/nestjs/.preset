@@ -1,2 +1,2 @@
 language=javascript
-create=kooldev/node:14-nest nest new
+create=kool docker kooldev/node:14-nest nest new
