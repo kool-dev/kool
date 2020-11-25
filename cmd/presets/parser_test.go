@@ -15,7 +15,8 @@ func TestExistsParser(t *testing.T) {
 	laravelPreset["kool.yml"] = ""
 	presets["laravel"] = laravelPreset
 
-	p := NewParser(presets, nil)
+	p := NewParser()
+	p.LoadPresets(presets)
 
 	exists := p.Exists("laravel")
 
@@ -32,7 +33,7 @@ func TestExistsParser(t *testing.T) {
 
 func TestGetAllParser(t *testing.T) {
 	var allPresets []string
-	p := NewParser(nil, nil)
+	p := NewParser()
 
 	allPresets = p.GetPresets("")
 
@@ -50,7 +51,7 @@ func TestGetAllParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p = NewParser(presets, nil)
+	p.LoadPresets(presets)
 
 	allPresets = p.GetPresets("")
 
@@ -61,7 +62,7 @@ func TestGetAllParser(t *testing.T) {
 
 func TestGetLanguagesParser(t *testing.T) {
 	var allLanguages []string
-	p := NewParser(nil, nil)
+	p := NewParser()
 
 	allLanguages = p.GetLanguages()
 
@@ -82,7 +83,7 @@ func TestGetLanguagesParser(t *testing.T) {
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
-	p = NewParser(presets, nil)
+	p.LoadPresets(presets)
 
 	allLanguages = p.GetLanguages()
 
@@ -105,12 +106,53 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 	presets["php_language"] = phpPreset
 	presets["javascript_language"] = jsPreset
 
-	p := NewParser(presets, nil)
+	p := NewParser()
+	p.LoadPresets(presets)
 
 	phpPresets := p.GetPresets("php")
 
 	if len(phpPresets) != 1 || phpPresets[0] != "php_language" {
 		t.Error("failed to get preset by language")
+	}
+}
+
+func TestGetCreateCommandParser(t *testing.T) {
+	presets := make(map[string]map[string]string)
+
+	laravelPreset := make(map[string]string)
+
+	laravelPreset["preset_create"] = "command"
+	laravelPreset["kool.yml"] = ""
+
+	presets["laravel"] = laravelPreset
+
+	p := NewParser()
+	p.LoadPresets(presets)
+
+	laravelCmd, _ := p.GetCreateCommand("laravel")
+
+	if laravelCmd != laravelPreset["preset_create"] {
+		t.Error("failed to get command")
+	}
+}
+
+func TestFailGetCreateCommandParser(t *testing.T) {
+	presets := make(map[string]map[string]string)
+
+	laravelPreset := make(map[string]string)
+
+	laravelPreset["preset_create"] = ""
+	laravelPreset["kool.yml"] = ""
+
+	presets["laravel"] = laravelPreset
+
+	p := NewParser()
+	p.LoadPresets(presets)
+
+	_, err := p.GetCreateCommand("laravel")
+
+	if err != ErrCreateCommandtNotFoundOrEmpty {
+		t.Errorf("failed, expected to get error %v got %v", ErrCreateCommandtNotFoundOrEmpty, err.Error())
 	}
 }
 
@@ -127,7 +169,8 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	_ = afero.WriteFile(fs, "kool.yml", []byte("scripts"), os.ModePerm)
 
-	p := NewParserFS(presets, nil, fs)
+	p := NewParserFS(fs)
+	p.LoadPresets(presets)
 
 	foundFiles := p.LookUpFiles("preset")
 
@@ -147,7 +190,8 @@ func TestGetPresetKeysAndContentsParser(t *testing.T) {
 
 	presets["preset"] = preset
 
-	p := NewParser(presets, nil)
+	p := NewParser()
+	p.LoadPresets(presets)
 
 	keys := p.GetPresetKeys("preset")
 
@@ -164,7 +208,7 @@ func TestGetPresetKeysAndContentsParser(t *testing.T) {
 
 func TestGetTemplatesParser(t *testing.T) {
 	var allTemplates map[string]map[string]string
-	p := NewParser(nil, nil)
+	p := NewParser()
 
 	allTemplates = p.GetTemplates()
 
@@ -182,7 +226,7 @@ func TestGetTemplatesParser(t *testing.T) {
 
 	templates["template"] = template
 
-	p = NewParser(nil, templates)
+	p.LoadTemplates(templates)
 
 	allTemplates = p.GetTemplates()
 
@@ -194,7 +238,7 @@ func TestGetTemplatesParser(t *testing.T) {
 func TestWriteFileParser(t *testing.T) {
 	fs := afero.NewMemMapFs()
 
-	p := NewParserFS(nil, nil, fs)
+	p := NewParserFS(fs)
 
 	if _, err := p.WriteFile("kool.yml", "scripts"); err != nil {
 		t.Errorf("unexpected error writing file, err: %v", err)
@@ -202,5 +246,31 @@ func TestWriteFileParser(t *testing.T) {
 
 	if _, err := fs.Stat("kool.yml"); os.IsNotExist(err) {
 		t.Error("could not write the file 'kool.yml'")
+	}
+}
+
+func TestLoadPresetsParser(t *testing.T) {
+	presets := map[string]map[string]string{
+		"laravel": {"preset_create": "command"},
+	}
+
+	p := &DefaultParser{}
+	p.LoadPresets(presets)
+
+	if ok := reflect.DeepEqual(p.Presets, presets); !ok {
+		t.Error("did not load the presets correctly")
+	}
+}
+
+func TestLoadTemplatesParser(t *testing.T) {
+	templates := map[string]map[string]string{
+		"service": {"serviceKey": "content"},
+	}
+
+	p := &DefaultParser{}
+	p.LoadTemplates(templates)
+
+	if ok := reflect.DeepEqual(p.Templates, templates); !ok {
+		t.Error("did not load the templates correctly")
 	}
 }

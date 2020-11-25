@@ -29,10 +29,16 @@ type Runner interface {
 	LookPath() error
 }
 
-// Command interface comprehends bot Runner and Builder interfaces
+// Parser holds available methods for parse commands
+type Parser interface {
+	Parse(string) error
+}
+
+// Command interface comprehends bot Runner, Builder, Parser interfaces
 type Command interface {
 	Builder
 	Runner
+	Parser
 }
 
 // NewCommand Create a new command.
@@ -51,7 +57,6 @@ func ParseCommand(line string) (command *DefaultCommand, err error) {
 	}
 
 	command = &DefaultCommand{parsed[0], parsed[1:]}
-
 	return
 }
 
@@ -92,5 +97,14 @@ func (c *DefaultCommand) Exec(args ...string) (outStr string, err error) {
 	}
 
 	outStr, err = shell.Exec(c.command, finalArgs...)
+	return
+}
+
+// Parse calls the ParseCommand function
+func (c *DefaultCommand) Parse(line string) (err error) {
+	if parsed, err := ParseCommand(line); err == nil {
+		*c = *parsed
+	}
+
 	return
 }

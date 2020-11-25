@@ -19,9 +19,12 @@ type DefaultParser struct {
 // Parser holds presets parsing logic
 type Parser interface {
 	Exists(string) bool
+	GetCreateCommand(string) (string, error)
 	GetLanguages() []string
 	GetPresets(string) []string
 	LookUpFiles(string) []string
+	LoadPresets(map[string]map[string]string)
+	LoadTemplates(map[string]map[string]string)
 	WriteFile(string, string) (string, error)
 	GetPresetKeys(string) []string
 	GetPresetKeyContent(string, string) string
@@ -29,26 +32,36 @@ type Parser interface {
 }
 
 // NewParser creates a new preset default parser
-func NewParser(presets map[string]map[string]string, templates map[string]map[string]string) Parser {
+func NewParser() Parser {
 	return &DefaultParser{
-		Presets:   presets,
-		Templates: templates,
-		fs:        afero.NewOsFs(),
+		fs: afero.NewOsFs(),
 	}
 }
 
 // NewParserFS creates a new preset default parser with file system
-func NewParserFS(presets map[string]map[string]string, templates map[string]map[string]string, fs afero.Fs) Parser {
+func NewParserFS(fs afero.Fs) Parser {
 	return &DefaultParser{
-		Presets:   presets,
-		Templates: templates,
-		fs:        fs,
+		fs: fs,
 	}
 }
 
 // Exists check if preset exists
 func (p *DefaultParser) Exists(preset string) (exists bool) {
 	_, exists = p.Presets[preset]
+	return
+}
+
+// ErrCreateCommandtNotFoundOrEmpty error throwed when did not find the preset create command or it's empty
+var ErrCreateCommandtNotFoundOrEmpty = errors.New("create command not found or empty")
+
+// GetCreateCommand gets the command to create a new project
+func (p *DefaultParser) GetCreateCommand(preset string) (cmd string, err error) {
+	cmd = p.Presets[preset]["preset_create"]
+
+	if cmd == "" {
+		err = ErrCreateCommandtNotFoundOrEmpty
+	}
+
 	return
 }
 
@@ -170,4 +183,14 @@ func (p *DefaultParser) GetPresetKeyContent(preset string, key string) (value st
 // GetTemplates get all templates
 func (p *DefaultParser) GetTemplates() map[string]map[string]string {
 	return p.Templates
+}
+
+// LoadPresets loads the presets
+func (p *DefaultParser) LoadPresets(allPresets map[string]map[string]string) {
+	p.Presets = allPresets
+}
+
+// LoadTemplates loads the templates
+func (p *DefaultParser) LoadTemplates(allTemplates map[string]map[string]string) {
+	p.Templates = allTemplates
 }

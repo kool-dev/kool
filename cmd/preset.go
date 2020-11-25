@@ -42,7 +42,7 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
-		presets.NewParser(presets.GetAll(), presets.GetTemplates()),
+		&presets.DefaultParser{},
 		compose.NewParser(),
 		shell.NewPromptSelect(),
 	}
@@ -72,6 +72,8 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 	} else {
 		preset = args[0]
 	}
+
+	p.presetsParser.LoadPresets(presets.GetAll())
 
 	if !p.presetsParser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)

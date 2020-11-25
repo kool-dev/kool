@@ -2,6 +2,7 @@ package presets
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 )
 
@@ -78,5 +79,24 @@ func TestFakeParser(t *testing.T) {
 
 	if val, ok := templates["service"]["serviceType"]; !ok || val != "serviceContent" {
 		t.Error("failed to use mocked GetTemplates function on FakeParser")
+	}
+
+	f.MockCreateCommand = "create"
+	createCommand, _ := f.GetCreateCommand("")
+
+	if !f.CalledGetCreateCommand || createCommand == "" || createCommand != "create" {
+		t.Error("failed to use mocked GetCreateCommand function on FakeParser")
+	}
+
+	allTemplates := map[string]map[string]string{
+		"service": map[string]string{
+			"serviceType": "serviceContent",
+		},
+	}
+
+	f.LoadTemplates(allTemplates)
+
+	if !f.CalledLoadTemplates || !reflect.DeepEqual(allTemplates, f.MockAllTemplates) {
+		t.Error("failed to use mocked LoadTemplates function on FakeParser")
 	}
 }

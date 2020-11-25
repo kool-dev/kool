@@ -10,22 +10,35 @@ type FakeParser struct {
 	CalledGetPresetKeys       bool
 	CalledGetPresetKeyContent map[string]map[string]bool
 	CalledGetTemplates        bool
+	CalledGetCreateCommand    bool
+	CalledLoadPresets         bool
+	CalledLoadTemplates       bool
 
 	MockExists           bool
 	MockFoundFiles       []string
 	MockFileError        string
 	MockError            error
+	MockCreateCommand    string
 	MockLanguages        []string
 	MockPresets          []string
 	MockPresetKeys       []string
 	MockPresetKeyContent map[string]map[string]string
 	MockTemplates        map[string]map[string]string
+	MockAllPresets       map[string]map[string]string
+	MockAllTemplates     map[string]map[string]string
 }
 
 // Exists check if preset exists
 func (f *FakeParser) Exists(preset string) (exists bool) {
 	f.CalledExists = true
 	exists = f.MockExists
+	return
+}
+
+// GetCreateCommand gets the command to create a new project
+func (f *FakeParser) GetCreateCommand(preset string) (cmd string, err error) {
+	f.CalledGetCreateCommand = true
+	cmd = f.MockCreateCommand
 	return
 }
 
@@ -96,4 +109,16 @@ func (f *FakeParser) GetTemplates() (templates map[string]map[string]string) {
 	}
 	templates = f.MockTemplates
 	return
+}
+
+//LoadPresets loads all presets
+func (f *FakeParser) LoadPresets(presets map[string]map[string]string) {
+	f.CalledLoadPresets = true
+	f.MockAllPresets = presets
+}
+
+//LoadTemplates loads all templates
+func (f *FakeParser) LoadTemplates(templates map[string]map[string]string) {
+	f.CalledLoadTemplates = true
+	f.MockAllTemplates = templates
 }

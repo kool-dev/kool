@@ -9,6 +9,7 @@ func GetAll() map[string]map[string]string {
 		".dockerignore": `/node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kool docker kooldev/node:14-adonis adonis new",
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
 COPY . /app
@@ -104,6 +105,7 @@ networks:
 /vendor
 `,
 		"preset_language":         "php",
+		"preset_create":           "kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel",
 		"preset_ask_services":     "database,cache",
 		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
 		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
@@ -196,6 +198,7 @@ networks:
 		".dockerignore": `/node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kool docker kooldev/node:14-nest nest new",
 		"Dockerfile.build": `FROM kooldev/node:14-nest AS build
 
 COPY . /app
@@ -289,6 +292,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kool docker kooldev/node:14 yarn create next-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -342,6 +346,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kool docker kooldev/node:14 yarn create next-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -392,6 +397,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kool docker kooldev/node:14 yarn create nuxt-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -450,6 +456,7 @@ networks:
 /node_modules
 `,
 		"preset_language": "javascript",
+		"preset_create":   "kool docker kooldev/node:14 yarn create nuxt-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -505,6 +512,7 @@ networks:
 /vendor
 `,
 		"preset_language":         "php",
+		"preset_create":           "kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton",
 		"preset_ask_services":     "database,cache",
 		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
 		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
