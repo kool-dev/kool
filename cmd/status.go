@@ -20,9 +20,9 @@ type KoolStatus struct {
 	net        network.Handler
 	envStorage environment.EnvStorage
 
-	getServicesRunner          builder.Runner
-	getServiceIDRunner         builder.Runner
-	getServiceStatusPortRunner builder.Runner
+	getServicesRunner          builder.Command
+	getServiceIDRunner         builder.Command
+	getServiceStatusPortRunner builder.Command
 
 	table shell.TableWriter
 }
@@ -44,10 +44,11 @@ func init() {
 
 // NewKoolStatus creates a new handler for status logic
 func NewKoolStatus() *KoolStatus {
+	defaultKoolService := newDefaultKoolService()
 	return &KoolStatus{
-		*newDefaultKoolService(),
-		checker.NewChecker(),
-		network.NewHandler(),
+		*defaultKoolService,
+		checker.NewChecker(defaultKoolService.shell),
+		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker-compose", "ps", "--services"),
 		builder.NewCommand("docker-compose", "ps", "-q"),
@@ -89,7 +90,7 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 
 			ss := &statusService{service: service}
 
-			if serviceID, err = s.getServiceIDRunner.Exec(service); err != nil {
+			if serviceID, err = s.Exec(s.getServiceIDRunner, service); err != nil {
 				ss.err = err
 			} else if serviceID != "" {
 				status, port = s.getStatusPort(serviceID)
@@ -142,7 +143,7 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 func (s *KoolStatus) getServices() (services []string, err error) {
 	var output string
 
-	if output, err = s.getServicesRunner.Exec(); err != nil {
+	if output, err = s.Exec(s.getServicesRunner); err != nil {
 		return
 	}
 
@@ -159,7 +160,7 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string) {
 	var output string
 
-	if output, _ = s.getServiceStatusPortRunner.Exec("--filter", "ID="+serviceID); output == "" {
+	if output, _ = s.Exec(s.getServiceStatusPortRunner, "--filter", "ID="+serviceID); output == "" {
 		return
 	}
 

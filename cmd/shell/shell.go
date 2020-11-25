@@ -2,6 +2,8 @@ package shell
 
 import (
 	"fmt"
+	"io"
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
 	"log"
 	"os"
@@ -11,26 +13,87 @@ import (
 	"syscall"
 )
 
-var (
-	lookedUp map[string]bool
-)
+// DefaultShell holds data for handling a shell
+type DefaultShell struct {
+	inStream  io.Reader
+	outStream io.Writer
+	errStream io.Writer
+	lookedUp  map[string]bool
+}
+
+// Shell implements functions for handling a shell
+type Shell interface {
+	InStream() io.Reader
+	SetInStream(io.Reader)
+	OutStream() io.Writer
+	SetOutStream(io.Writer)
+	ErrStream() io.Writer
+	SetErrStream(io.Writer)
+	Exec(builder.Command, ...string) (string, error)
+	Interactive(builder.Command, ...string) error
+	LookPath(builder.Command) error
+}
+
+// NewShell creates a new shell
+func NewShell() Shell {
+	return &DefaultShell{
+		inStream:  os.Stdin,
+		outStream: os.Stdout,
+		errStream: os.Stderr,
+	}
+}
+
+// InStream get input stream
+func (s *DefaultShell) InStream() io.Reader {
+	return s.inStream
+}
+
+// SetInStream set input stream
+func (s *DefaultShell) SetInStream(inStream io.Reader) {
+	s.inStream = inStream
+}
+
+// OutStream get output stream
+func (s *DefaultShell) OutStream() io.Writer {
+	return s.outStream
+}
+
+// SetOutStream set output stream
+func (s *DefaultShell) SetOutStream(outStream io.Writer) {
+	s.outStream = outStream
+}
+
+// ErrStream get error stream
+func (s *DefaultShell) ErrStream() io.Writer {
+	return s.errStream
+}
+
+// SetErrStream set error stream
+func (s *DefaultShell) SetErrStream(errStream io.Writer) {
+	s.errStream = errStream
+}
 
 // Exec will execute the given command silently and return the combined
 // error/standard output, and an error if any.
-func Exec(exe string, args ...string) (outStr string, err error) {
+func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
 	var (
-		cmd *exec.Cmd
-		out []byte
+		cmd  *exec.Cmd
+		out  []byte
+		args []string = command.Args()
+		exe  string   = command.Cmd()
 	)
 
 	if exe == "docker-compose" {
 		args = append(dockerComposeDefaultArgs(), args...)
 	}
 
+	if len(extraArgs) > 0 {
+		args = append(args, extraArgs...)
+	}
+
 	cmd = exec.Command(exe, args...)
 	cmd.Env = os.Environ()
-	cmd.Stdin = os.Stdin
-
+	cmd.Stdin = s.InStream()
 	out, err = cmd.CombinedOutput()
 	outStr = strings.TrimSpace(string(out))
 	return
@@ -38,17 +101,24 @@ func Exec(exe string, args ...string) (outStr string, err error) {
 
 // Interactive runs the given command proxying current Stdin/Stdout/Stderr
 // which makes it interactive for running even something like `bash`.
-func Interactive(exe string, args ...string) (err error) {
+func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string) (err error) {
 	var (
 		cmd            *exec.Cmd
 		parsedRedirect *DefaultParsedRedirect
 		outputWriter   OutputWriter
+		exe            string   = command.Cmd()
+		args           []string = command.Args()
 	)
 
 	outputWriter = NewOutputWriter()
+	outputWriter.SetWriter(s.OutStream())
 
 	if exe == "docker-compose" {
 		args = append(dockerComposeDefaultArgs(), args...)
+	}
+
+	if len(extraArgs) > 0 {
+		args = append(args, extraArgs...)
 	}
 
 	if environment.NewEnvStorage().IsTrue("KOOL_VERBOSE") {
@@ -57,7 +127,7 @@ func Interactive(exe string, args ...string) (err error) {
 
 	// soon should refactor this onto a struct with methods
 	// so we can remove this too long list of returned values.
-	if parsedRedirect, err = parseRedirects(args); err != nil {
+	if parsedRedirect, err = parseRedirects(args, s); err != nil {
 		return
 	}
 
@@ -65,7 +135,7 @@ func Interactive(exe string, args ...string) (err error) {
 
 	cmd = parsedRedirect.CreateCommand(exe)
 
-	if err = lookPath(exe); err != nil {
+	if err = s.LookPath(command); err != nil {
 		outputWriter.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
 		os.Exit(2)
 	}
@@ -109,17 +179,38 @@ func Interactive(exe string, args ...string) (err error) {
 	}
 }
 
-func lookPath(exe string) (err error) {
-	if lookedUp == nil {
-		lookedUp = make(map[string]bool)
+// LookPath returns if the command exists
+func (s *DefaultShell) LookPath(command builder.Command) (err error) {
+	var exe string = command.Cmd()
+
+	if s.lookedUp == nil {
+		s.lookedUp = make(map[string]bool)
 	}
 
-	if exe != "kool" && !lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
+	if exe != "kool" && !s.lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
 		// non-kool and non-absolute/relative path... let's look it up
 		_, err = exec.LookPath(exe)
 
-		lookedUp[exe] = true
+		s.lookedUp[exe] = true
 	}
+	return
+}
+
+// Exec will execute the given command silently and return the combined
+// error/standard output, and an error if any.
+func Exec(exe string, args ...string) (outStr string, err error) {
+	command := builder.NewCommand(exe, args...)
+	s := NewShell()
+	outStr, err = s.Exec(command)
+	return
+}
+
+// Interactive runs the given command proxying current Stdin/Stdout/Stderr
+// which makes it interactive for running even something like `bash`.
+func Interactive(exe string, args ...string) (err error) {
+	command := builder.NewCommand(exe, args...)
+	s := NewShell()
+	err = s.Interactive(command)
 	return
 }
 

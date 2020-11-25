@@ -62,7 +62,7 @@ func (e *KoolExec) Execute(args []string) (err error) {
 		e.composeExec.AppendArgs("--detach")
 	}
 
-	err = e.composeExec.Interactive(args...)
+	err = e.Interactive(e.composeExec, args...)
 	return
 }
 

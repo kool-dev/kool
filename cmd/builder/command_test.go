@@ -1,10 +1,8 @@
 package builder
 
 import (
-	"bytes"
-	"io"
 	"os"
-	"strings"
+	"reflect"
 	"testing"
 )
 
@@ -83,124 +81,24 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestLookPath(t *testing.T) {
-	cmd := NewCommand("go", "version")
+func TestCmd(t *testing.T) {
+	cmd := NewCommand("echo", "x1", "x2")
 
-	if err := cmd.LookPath(); err != nil {
-		t.Errorf("LookPath failed; expected no errors, got '%v'", err)
+	cmdString := cmd.Cmd()
+	expected := "echo"
+
+	if cmdString != expected {
+		t.Errorf("Failed to get the command executable; expected '%s', got '%s'", expected, cmdString)
 	}
 }
 
-func TestInvalidLookPath(t *testing.T) {
-	cmd := NewCommand("fakeCommand", "version")
+func TestArgs(t *testing.T) {
+	cmd := NewCommand("echo", "x1", "x2")
 
-	if err := cmd.LookPath(); err == nil {
-		t.Error("LookPath failed; expected an error, got none.")
-	}
-}
+	cmdArgs := cmd.Args()
+	expected := []string{"x1", "x2"}
 
-func TestExec(t *testing.T) {
-	cmd := NewCommand("echo", "x")
-
-	output, err := cmd.Exec()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output = strings.TrimSpace(output)
-
-	if output != "x" {
-		t.Errorf("Exec failed; expected output 'x', got '%s'", output)
-	}
-}
-
-func TestExecArgs(t *testing.T) {
-	cmd := NewCommand("echo")
-
-	output, err := cmd.Exec("x")
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output = strings.TrimSpace(output)
-
-	if output != "x" {
-		t.Errorf("Exec failed; expected output 'x', got '%s'", output)
-	}
-}
-
-func TestInteractive(t *testing.T) {
-	r, w, err := os.Pipe()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	originalOutput := os.Stdout
-	os.Stdout = w
-
-	defer func(originalOutput *os.File) {
-		os.Stdout = originalOutput
-	}(originalOutput)
-
-	cmd := NewCommand("echo", "x")
-	err = cmd.Interactive()
-
-	w.Close()
-
-	if err != nil {
-		t.Errorf("Interactive failed; expected no errors 'x', got '%v'", err)
-	}
-
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, r)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := strings.TrimSpace(buf.String())
-
-	if output != "x" {
-		t.Errorf("Interactive failed; expected output 'x', got '%s'", output)
-	}
-}
-
-func TestInteractiveArgs(t *testing.T) {
-	r, w, err := os.Pipe()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	originalOutput := os.Stdout
-	os.Stdout = w
-
-	defer func(originalOutput *os.File) {
-		os.Stdout = originalOutput
-	}(originalOutput)
-
-	cmd := NewCommand("echo")
-	err = cmd.Interactive("x")
-
-	w.Close()
-
-	if err != nil {
-		t.Errorf("Interactive failed; expected no errors 'x', got '%v'", err)
-	}
-
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, r)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := strings.TrimSpace(buf.String())
-
-	if output != "x" {
-		t.Errorf("Interactive failed; expected output 'x', got '%s'", output)
+	if !reflect.DeepEqual(cmdArgs, expected) {
+		t.Errorf("Failed to get the command executable; expected '%s', got '%s'", expected, cmdArgs)
 	}
 }

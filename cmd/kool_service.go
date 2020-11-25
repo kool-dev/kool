@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"io"
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 )
 
@@ -15,6 +16,7 @@ type KoolService interface {
 	shell.Exiter
 	shell.OutputWriter
 	shell.InputReader
+	shell.Shell
 }
 
 // DefaultKoolService holds handlers and functions shared by all
@@ -24,6 +26,7 @@ type DefaultKoolService struct {
 	out    shell.OutputWriter
 	in     shell.InputReader
 	term   shell.TerminalChecker
+	shell  shell.Shell
 }
 
 func newDefaultKoolService() *DefaultKoolService {
@@ -32,6 +35,7 @@ func newDefaultKoolService() *DefaultKoolService {
 		shell.NewOutputWriter(),
 		shell.NewInputReader(),
 		shell.NewTerminalChecker(),
+		shell.NewShell(),
 	}
 }
 
@@ -90,4 +94,52 @@ func (k *DefaultKoolService) Success(out ...interface{}) {
 // IsTerminal checks if input/output is a terminal
 func (k *DefaultKoolService) IsTerminal() bool {
 	return k.term.IsTerminal(k.GetReader(), k.GetWriter())
+}
+
+// InStream proxies the call to the given Shell
+func (k *DefaultKoolService) InStream() io.Reader {
+	return k.shell.InStream()
+}
+
+// SetInStream proxies the call to the given Shell
+func (k *DefaultKoolService) SetInStream(inStream io.Reader) {
+	k.shell.SetInStream(inStream)
+}
+
+// OutStream proxies the call to the given Shell
+func (k *DefaultKoolService) OutStream() io.Writer {
+	return k.shell.OutStream()
+}
+
+// SetOutStream proxies the call to the given Shell
+func (k *DefaultKoolService) SetOutStream(outStream io.Writer) {
+	k.shell.SetOutStream(outStream)
+}
+
+// ErrStream proxies the call to the given Shell
+func (k *DefaultKoolService) ErrStream() io.Writer {
+	return k.shell.ErrStream()
+}
+
+// SetErrStream proxies the call to the given Shell
+func (k *DefaultKoolService) SetErrStream(errStream io.Writer) {
+	k.shell.SetErrStream(errStream)
+}
+
+// Exec proxies the call to the given Shell
+func (k *DefaultKoolService) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
+	outStr, err = k.shell.Exec(command, extraArgs...)
+	return
+}
+
+// Interactive proxies the call to the given Shell
+func (k *DefaultKoolService) Interactive(command builder.Command, extraArgs ...string) (err error) {
+	err = k.shell.Interactive(command, extraArgs...)
+	return
+}
+
+// LookPath proxies the call to the given Shell
+func (k *DefaultKoolService) LookPath(command builder.Command) (err error) {
+	err = k.shell.LookPath(command)
+	return
 }

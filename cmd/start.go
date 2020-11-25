@@ -16,7 +16,7 @@ type KoolStart struct {
 	check      checker.Checker
 	net        network.Handler
 	envStorage environment.EnvStorage
-	start      builder.Runner
+	start      builder.Command
 }
 
 // NewStartCommand initializes new kool start command
@@ -32,10 +32,11 @@ func NewStartCommand(start *KoolStart) *cobra.Command {
 // NewKoolStart creates a new pointer with default KoolStart service
 // dependencies.
 func NewKoolStart() *KoolStart {
+	defaultKoolService := newDefaultKoolService()
 	return &KoolStart{
-		*newDefaultKoolService(),
-		checker.NewChecker(),
-		network.NewHandler(),
+		*defaultKoolService,
+		checker.NewChecker(defaultKoolService.shell),
+		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
 	}
@@ -55,6 +56,6 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 
-	err = s.start.Interactive(args...)
+	err = s.Interactive(s.start, args...)
 	return
 }
