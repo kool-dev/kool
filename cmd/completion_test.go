@@ -16,6 +16,7 @@ func newFakeKoolCompletion() *KoolCompletion {
 			&shell.DefaultOutputWriter{},
 			&shell.FakeInputReader{},
 			&shell.FakeTerminalChecker{MockIsTerminal: true},
+			shell.NewShell(),
 		},
 		rootCmd,
 	}

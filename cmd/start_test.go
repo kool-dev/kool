@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"io/ioutil"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"strings"
@@ -12,71 +15,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type FakeStartDependenciesChecker struct {
-	called bool
-}
-
-func (c *FakeStartDependenciesChecker) Check() (err error) {
-	c.called = true
-	return
-}
-
-type FakeStartFailedDependenciesChecker struct{}
-
-func (c *FakeStartFailedDependenciesChecker) Check() (err error) {
-	err = errors.New("dependencies")
-	return
-}
-
-type FakeStartNetworkHandler struct{}
-
-func (c *FakeStartNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
-	return
-}
-
-type FakeStartFailedNetworkHandler struct{}
-
-func (c *FakeStartFailedNetworkHandler) HandleGlobalNetwork(networkName string) (err error) {
-	err = errors.New("network")
-	return
-}
-
-type FakeStartRunner struct{}
-
-var startedServices []string
-
-func (c *FakeStartRunner) LookPath() (err error) {
-	return
-}
-
-func (c *FakeStartRunner) Interactive(args ...string) (err error) {
-	startedServices = []string{}
-	if len(args) > 0 {
-		startedServices = args
-	}
-	return
-}
-
-func (c *FakeStartRunner) Exec(args ...string) (outStr string, err error) {
-	return
-}
-
-type FakeFailedStartRunner struct {
-	FakeStartRunner
-}
-
-func (c *FakeFailedStartRunner) Interactive(args ...string) (err error) {
-	err = errors.New("")
-	return
-}
-
 func TestStartAllCommand(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
-		&FakeStartDependenciesChecker{},
-		&FakeStartNetworkHandler{},
+		&checker.FakeChecker{},
+		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
-		&FakeStartRunner{},
+		&builder.FakeCommand{MockCmd: "start"},
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -93,18 +38,20 @@ func TestStartAllCommand(t *testing.T) {
 		t.Errorf("did not expect KoolStart service to have exit code different than 0; got '%d", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 
-	if len(startedServices) > 0 {
-		t.Errorf("Expected no arguments, got '%v'", startedServices)
+	interactiveArgs, ok := koolStart.shell.(*shell.FakeShell).ArgsInteractive["start"]
+
+	if ok && len(interactiveArgs) > 0 {
+		t.Errorf("Expected no arguments, got '%v'", interactiveArgs)
 	}
 }
 
 func TestStartServicesCommand(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
-		&FakeStartDependenciesChecker{},
-		&FakeStartNetworkHandler{},
+		&checker.FakeChecker{},
+		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
-		&FakeStartRunner{},
+		&builder.FakeCommand{MockCmd: "start"},
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -118,6 +65,10 @@ func TestStartServicesCommand(t *testing.T) {
 	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
 		t.Errorf("did not expect KoolStart to exit with error, got %d", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
+	var startedServices []string
+	if interactiveArgs, ok := koolStart.shell.(*shell.FakeShell).ArgsInteractive["start"]; ok {
+		startedServices = interactiveArgs
+	}
 
 	if !startedServicesAreEqual(startedServices, expected) {
 		t.Errorf("Expect to start '%v', got '%v'", expected, startedServices)
@@ -127,10 +78,10 @@ func TestStartServicesCommand(t *testing.T) {
 func TestFailedDependenciesStartCommand(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
-		&FakeStartFailedDependenciesChecker{},
-		&FakeStartNetworkHandler{},
+		&checker.FakeChecker{MockError: errors.New("dependencies")},
+		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
-		&FakeStartRunner{},
+		&builder.FakeCommand{MockCmd: "start"},
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -149,10 +100,10 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 func TestFailedNetworkStartCommand(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
-		&FakeStartDependenciesChecker{},
-		&FakeStartFailedNetworkHandler{},
+		&checker.FakeChecker{},
+		&network.FakeHandler{MockError: errors.New("network")},
 		environment.NewFakeEnvStorage(),
-		&FakeStartRunner{},
+		&builder.FakeCommand{MockCmd: "start"},
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -171,12 +122,13 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 func TestStartWithError(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
-		&FakeStartDependenciesChecker{},
-		&FakeStartNetworkHandler{},
+		&checker.FakeChecker{},
+		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
-		&FakeFailedStartRunner{},
+		&builder.FakeCommand{MockCmd: "start"},
 	}
 
+	koolStart.shell.(*shell.FakeShell).MockInteractiveError = errors.New("start")
 	cmd := NewStartCommand(koolStart)
 
 	_, err := execStartCommand(cmd)

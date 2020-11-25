@@ -12,8 +12,8 @@ func newFakeKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newFakeKoolService(),
 		&KoolLogsFlags{25, false},
-		&builder.FakeCommand{MockExecOut: "app"},
-		&builder.FakeCommand{},
+		&builder.FakeCommand{MockCmd: "list", MockExecOut: "app"},
+		&builder.FakeCommand{MockCmd: "logs"},
 	}
 }
 
@@ -21,8 +21,8 @@ func newFakeFailedKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newFakeKoolService(),
 		&KoolLogsFlags{25, false},
-		&builder.FakeCommand{MockExecOut: "app"},
-		&builder.FakeCommand{MockError: errors.New("error logs")},
+		&builder.FakeCommand{MockCmd: "list", MockExecOut: "app"},
+		&builder.FakeCommand{MockCmd: "logs", MockError: errors.New("error logs")},
 	}
 }
 
@@ -154,8 +154,8 @@ func TestNewLogsServiceCommand(t *testing.T) {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
 	}
 
-	args := f.logs.(*builder.FakeCommand).ArgsInteractive
-	if len(args) != 1 || args[0] != "app" {
+	args, ok := f.shell.(*shell.FakeShell).ArgsInteractive["logs"]
+	if !ok || len(args) != 1 || args[0] != "app" {
 		t.Errorf("bad arguments to KoolLogs.logs Command when executing it")
 	}
 }
@@ -197,7 +197,7 @@ func TestNoContainersNewLogsCommand(t *testing.T) {
 		t.Errorf("expecting warning '%s', got '%s'", expectedWarning, gotWarning)
 	}
 
-	if f.logs.(*builder.FakeCommand).CalledInteractive {
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["logs"]; val && ok {
 		t.Error("should not call docker-compose logs if there are no containers")
 	}
 }

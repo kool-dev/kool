@@ -47,6 +47,7 @@ func TestNewKoolCreateCommand(t *testing.T) {
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.KoolPreset.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockCreateCommand = "kool docker create command"
+	f.createCommand.(*builder.FakeCommand).MockCmd = "create"
 
 	cmd := NewCreateCommand(f)
 	cmd.SetArgs([]string{"laravel", "my-app"})
@@ -71,12 +72,8 @@ func TestNewKoolCreateCommand(t *testing.T) {
 		t.Error("did not call Parse on KoolCreate.createCommand Command")
 	}
 
-	if !f.createCommand.(*builder.FakeCommand).CalledInteractive {
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["create"]; !val || !ok {
 		t.Error("did not call Interactive on KoolCreate.createCommand Command")
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Error("did not call SetWriter")
 	}
 }
 

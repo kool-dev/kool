@@ -114,6 +114,7 @@ func (k *DefaultKoolService) OutStream() io.Writer {
 // SetOutStream proxies the call to the given Shell
 func (k *DefaultKoolService) SetOutStream(outStream io.Writer) {
 	k.shell.SetOutStream(outStream)
+	k.out.SetWriter(outStream)
 }
 
 // ErrStream proxies the call to the given Shell

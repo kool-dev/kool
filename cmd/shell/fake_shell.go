@@ -16,6 +16,9 @@ type FakeShell struct {
 	CalledExec         map[string]bool
 	CalledInteractive  map[string]bool
 	CalledLookPath     map[string]bool
+	ArgsInteractive    map[string][]string
+
+	MockInteractiveError error
 }
 
 // InStream get input stream
@@ -69,8 +72,13 @@ func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (e
 		f.CalledInteractive = make(map[string]bool)
 	}
 
+	if f.ArgsInteractive == nil {
+		f.ArgsInteractive = make(map[string][]string)
+	}
+
 	f.CalledInteractive[command.Cmd()] = true
-	return
+	f.ArgsInteractive[command.Cmd()] = extraArgs
+	return f.MockInteractiveError
 }
 
 // LookPath returns if the command exists

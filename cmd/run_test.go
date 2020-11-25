@@ -41,7 +41,7 @@ func TestNewKoolRun(t *testing.T) {
 }
 
 func TestNewRunCommand(t *testing.T) {
-	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}}
+	fakeParsedCommands := []builder.Command{&builder.FakeCommand{MockCmd: "cmd1"}}
 
 	f := newFakeKoolRun(fakeParsedCommands, nil)
 	cmd := NewRunCommand(f)
@@ -79,7 +79,7 @@ func TestNewRunCommand(t *testing.T) {
 			t.Errorf("unexpected AppendArgs call by parsed command")
 		}
 
-		if !command.(*builder.FakeCommand).CalledInteractive {
+		if val, ok := f.shell.(*shell.FakeShell).CalledInteractive[command.Cmd()]; !ok || !val {
 			t.Errorf("parsed command did not call Interactive")
 		}
 	}

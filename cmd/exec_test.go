@@ -14,7 +14,7 @@ func newFakeKoolExec() *KoolExec {
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{},
+		&builder.FakeCommand{MockCmd: "exec"},
 	}
 }
 
@@ -23,7 +23,7 @@ func newFailedFakeKoolExec() *KoolExec {
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockError: errors.New("error exec")},
+		&builder.FakeCommand{MockCmd: "exec", MockError: errors.New("error exec")},
 	}
 }
 
@@ -77,13 +77,13 @@ func TestNewExecCommand(t *testing.T) {
 		t.Error("did not call SetWriter")
 	}
 
-	if !f.composeExec.(*builder.FakeCommand).CalledInteractive {
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["exec"]; !ok || !val {
 		t.Error("did not call Interactive on KoolExec.composeExec Command")
 	}
 
-	interactiveArgs := f.composeExec.(*builder.FakeCommand).ArgsInteractive
+	interactiveArgs, ok := f.shell.(*shell.FakeShell).ArgsInteractive["exec"]
 
-	if len(interactiveArgs) != 2 || interactiveArgs[0] != "service" || interactiveArgs[1] != "command" {
+	if !ok || len(interactiveArgs) != 2 || interactiveArgs[0] != "service" || interactiveArgs[1] != "command" {
 		t.Error("bad arguments to Interactive on KoolExec.composeExec Command")
 	}
 }

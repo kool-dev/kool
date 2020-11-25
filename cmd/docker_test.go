@@ -15,7 +15,7 @@ func newFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{},
+		&builder.FakeCommand{MockCmd: "docker"},
 	}
 }
 
@@ -24,7 +24,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockError: errors.New("error docker")},
+		&builder.FakeCommand{MockCmd: "docker", MockError: errors.New("error docker")},
 	}
 }
 
@@ -94,13 +94,13 @@ func TestNewDockerCommand(t *testing.T) {
 		t.Errorf("bad arguments to KoolDocker.dockerRun Command with default flags")
 	}
 
-	if !f.dockerRun.(*builder.FakeCommand).CalledInteractive {
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["docker"]; !ok || !val {
 		t.Errorf("did not call Interactive on KoolDocker.dockerRun Command")
 	}
 
-	interactiveArgs := f.dockerRun.(*builder.FakeCommand).ArgsInteractive
+	interactiveArgs, ok := f.shell.(*shell.FakeShell).ArgsInteractive["docker"]
 
-	if len(interactiveArgs) != 1 || interactiveArgs[0] != "image" {
+	if !ok || len(interactiveArgs) != 1 || interactiveArgs[0] != "image" {
 		t.Errorf("bad arguments to Interactive on KoolDocker.dockerRun Command")
 	}
 }
@@ -223,9 +223,9 @@ func TestImageCommandsNewDockerCommand(t *testing.T) {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
 	}
 
-	interactiveArgs := f.dockerRun.(*builder.FakeCommand).ArgsInteractive
+	interactiveArgs, ok := f.shell.(*shell.FakeShell).ArgsInteractive["docker"]
 
-	if len(interactiveArgs) != 3 || interactiveArgs[0] != "image" || interactiveArgs[1] != "command1" || interactiveArgs[2] != "command2" {
+	if !ok || len(interactiveArgs) != 3 || interactiveArgs[0] != "image" || interactiveArgs[1] != "command1" || interactiveArgs[2] != "command2" {
 		t.Errorf("bad arguments to Interactive on KoolDocker.dockerRun Command")
 	}
 }

@@ -14,6 +14,7 @@ func newFakeKoolService() *DefaultKoolService {
 		&shell.FakeOutputWriter{},
 		&shell.FakeInputReader{},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
+		&shell.FakeShell{},
 	}
 }
 

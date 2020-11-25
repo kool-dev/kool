@@ -35,12 +35,12 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		return t.Execute(args)
 	}
 
-	originalWriter := t.GetWriter()
+	originalWriter := t.OutStream()
 	t.taskOut.SetWriter(originalWriter)
 	pipeReader, pipeWriter := io.Pipe()
 
-	t.SetWriter(pipeWriter)
-	defer t.SetWriter(originalWriter)
+	t.SetOutStream(pipeWriter)
+	defer t.SetOutStream(originalWriter)
 
 	startMessage := fmt.Sprintf("%s ...", t.message)
 	t.taskOut.Println(startMessage)

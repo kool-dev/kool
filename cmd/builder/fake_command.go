@@ -2,11 +2,11 @@ package builder
 
 // FakeCommand implements the Command interface and is used for mocking on testing scenarios
 type FakeCommand struct {
-	ArgsAppend       []string
-	CalledAppendArgs bool
-	CalledString     bool
-	CalledCmd        bool
-	CalledArgs       bool
+	ArgsAppend         []string
+	CalledAppendArgs   bool
+	CalledString       bool
+	CalledCmd          bool
+	CalledArgs         bool
 	CalledParseCommand bool
 
 	MockCmd           string
