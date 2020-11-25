@@ -16,10 +16,16 @@ type DefaultCommand struct {
 
 // Command holds available methods for building commands.
 type Command interface {
+	Parser
 	AppendArgs(...string)
 	String() string
 	Args() []string
 	Cmd() string
+}
+
+// Parser holds available methods for parse commands
+type Parser interface {
+	Parse(string) error
 }
 
 // NewCommand Create a new command.
@@ -38,7 +44,6 @@ func ParseCommand(line string) (command *DefaultCommand, err error) {
 	}
 
 	command = &DefaultCommand{parsed[0], parsed[1:]}
-
 	return
 }
 
@@ -60,4 +65,13 @@ func (c *DefaultCommand) Args() []string {
 // Cmd returns the command executable
 func (c *DefaultCommand) Cmd() string {
 	return c.command
+}
+
+// Parse calls the ParseCommand function
+func (c *DefaultCommand) Parse(line string) (err error) {
+	if parsed, err := ParseCommand(line); err == nil {
+		*c = *parsed
+	}
+
+	return
 }

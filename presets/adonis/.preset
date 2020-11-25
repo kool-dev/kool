@@ -1,1 +1,2 @@
 language=javascript
+create=kool docker kooldev/node:14-adonis adonis new

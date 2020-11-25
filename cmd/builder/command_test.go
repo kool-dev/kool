@@ -102,3 +102,19 @@ func TestArgs(t *testing.T) {
 		t.Errorf("Failed to get the command executable; expected '%s', got '%s'", expected, cmdArgs)
 	}
 }
+
+func TestParse(t *testing.T) {
+	line := "echo 'xxx'"
+
+	cmd := NewCommand("")
+	err := cmd.Parse(line)
+
+	if err != nil {
+		t.Errorf("failed to parse proper command line onto Command; error: %s", err)
+		return
+	}
+
+	if len(cmd.args) != 1 || cmd.command != "echo" || cmd.args[0] != "xxx" {
+		t.Errorf("ParseCommand failed; given %s got %v", line, cmd.String())
+	}
+}

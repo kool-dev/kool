@@ -7,6 +7,7 @@ type FakeCommand struct {
 	CalledString     bool
 	CalledCmd        bool
 	CalledArgs       bool
+	CalledParseCommand bool
 
 	MockCmd           string
 	MockExecOut       string
@@ -36,4 +37,11 @@ func (f *FakeCommand) Args() []string {
 func (f *FakeCommand) Cmd() string {
 	f.CalledCmd = true
 	return f.MockCmd
+}
+
+// Parse call the ParseCommand function
+func (f *FakeCommand) Parse(line string) (err error) {
+	f.CalledParseCommand = true
+	err = f.MockError
+	return
 }
