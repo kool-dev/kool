@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"errors"
 	"os"
 	"reflect"
 	"testing"
@@ -116,5 +117,25 @@ func TestParse(t *testing.T) {
 
 	if len(cmd.args) != 1 || cmd.command != "echo" || cmd.args[0] != "xxx" {
 		t.Errorf("ParseCommand failed; given %s got %v", line, cmd.String())
+	}
+}
+
+func TestErrorParseCommand(t *testing.T) {
+	originalSplitFn := splitFn
+
+	splitFn = func(s string) ([]string, error) {
+		return []string{}, errors.New("split error")
+	}
+
+	defer func() {
+		splitFn = originalSplitFn
+	}()
+
+	_, err := ParseCommand("echo x1")
+
+	if err == nil {
+		t.Error("expecting error 'split error', got none")
+	} else if err.Error() != "split error" {
+		t.Errorf("expecting error 'split error', got %v", err)
 	}
 }

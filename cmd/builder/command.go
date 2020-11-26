@@ -8,6 +8,10 @@ import (
 	"github.com/google/shlex"
 )
 
+type splitFnType func(string) ([]string, error)
+
+var splitFn splitFnType = shlex.Split
+
 // DefaultCommand holds data and logic for an executable command.
 type DefaultCommand struct {
 	command string
@@ -39,7 +43,7 @@ func NewCommand(command string, args ...string) *DefaultCommand {
 func ParseCommand(line string) (command *DefaultCommand, err error) {
 	var parsed []string
 
-	if parsed, err = shlex.Split(os.ExpandEnv(line)); err != nil {
+	if parsed, err = splitFn(os.ExpandEnv(line)); err != nil {
 		return
 	}
 
