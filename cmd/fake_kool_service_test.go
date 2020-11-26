@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"kool-dev/kool/cmd/builder"
 	"testing"
 )
 
@@ -63,5 +64,59 @@ func TestFakeKoolService(t *testing.T) {
 
 	if !f.CalledIsTerminal {
 		t.Errorf("failed to assert calling method IsTerminal on FakeKoolService")
+	}
+
+	f.InStream()
+
+	if !f.CalledInStream {
+		t.Errorf("failed to assert calling method InStream on FakeKoolService")
+	}
+
+	f.OutStream()
+
+	if !f.CalledOutStream {
+		t.Errorf("failed to assert calling method OutStream on FakeKoolService")
+	}
+
+	f.ErrStream()
+
+	if !f.CalledErrStream {
+		t.Errorf("failed to assert calling method ErrStream on FakeKoolService")
+	}
+
+	f.SetInStream(nil)
+
+	if !f.CalledSetInStream {
+		t.Errorf("failed to assert calling method SetInStream on FakeKoolService")
+	}
+
+	f.SetOutStream(nil)
+
+	if !f.CalledSetOutStream {
+		t.Errorf("failed to assert calling method SetOutStream on FakeKoolService")
+	}
+
+	f.SetErrStream(nil)
+
+	if !f.CalledSetErrStream {
+		t.Errorf("failed to assert calling method SetErrStream on FakeKoolService")
+	}
+
+	_, _ = f.Exec(&builder.FakeCommand{}, "extraArg")
+
+	if !f.CalledExec {
+		t.Errorf("failed to assert calling method Exec on FakeKoolService")
+	}
+
+	_ = f.Interactive(&builder.FakeCommand{}, "extraArg")
+
+	if !f.CalledInteractive {
+		t.Errorf("failed to assert calling method Interactive on FakeKoolService")
+	}
+
+	_ = f.LookPath(&builder.FakeCommand{})
+
+	if !f.CalledLookPath {
+		t.Errorf("failed to assert calling method LookPath on FakeKoolService")
 	}
 }

@@ -74,54 +74,52 @@ func (f *FakeKoolService) IsTerminal() (isTerminal bool) {
 	return
 }
 
-// InStream get input stream
+// InStream mocks the function for testing
 func (f *FakeKoolService) InStream() (inStream io.Reader) {
 	f.CalledInStream = true
 	return
 }
 
-// SetInStream set input stream
+// SetInStream mocks the function for testing
 func (f *FakeKoolService) SetInStream(inStream io.Reader) {
 	f.CalledSetInStream = true
 }
 
-// OutStream get output stream
+// OutStream mocks the function for testing
 func (f *FakeKoolService) OutStream() (outStream io.Writer) {
 	f.CalledOutStream = true
 	return
 }
 
-// SetOutStream set output stream
+// SetOutStream mocks the function for testing
 func (f *FakeKoolService) SetOutStream(outStream io.Writer) {
 	f.CalledSetOutStream = true
 }
 
-// ErrStream get error stream
+// ErrStream mocks the function for testing
 func (f *FakeKoolService) ErrStream() (errStream io.Writer) {
 	f.CalledErrStream = true
 	return
 }
 
-// SetErrStream set error stream
+// SetErrStream mocks the function for testing
 func (f *FakeKoolService) SetErrStream(errStream io.Writer) {
 	f.CalledSetErrStream = true
 }
 
-// Exec will execute the given command silently and return the combined
-// error/standard output, and an error if any.
+// Exec mocks the function for testing
 func (f *FakeKoolService) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
 	f.CalledExec = true
 	return
 }
 
-// Interactive runs the given command proxying current Stdin/Stdout/Stderr
-// which makes it interactive for running even something like `bash`.
+// Interactive mocks the function for testing
 func (f *FakeKoolService) Interactive(command builder.Command, extraArgs ...string) (err error) {
 	f.CalledInteractive = true
 	return
 }
 
-// LookPath returns if the command exists
+// LookPath mocks the function for testing
 func (f *FakeKoolService) LookPath(command builder.Command) (err error) {
 	f.CalledLookPath = true
 	return
