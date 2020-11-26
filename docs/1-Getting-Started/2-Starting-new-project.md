@@ -5,6 +5,15 @@ Check presets for how to create other types of projects.
 To make things easier we will use **kool** to install it for you.
 
 ```bash
+kool create laravel my-project
+
+cd my-project
+```
+- **kool create** already executes **kool preset** internally so you can skip the command in the next step
+
+Or
+
+```bash
 kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel my-project
 
 cd my-project
@@ -18,7 +27,7 @@ Go to the project folder and run:
 $ kool preset laravel
 ```
 
-**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool preset** basically creates a few configuration files in order to enable you to configure / extend it. You don't need to execute it whether you chose kool create command to start the new project.
 
 By default laravel preset comes with **mysql** and **redis** configured, you can review how is configured at **docker-compose.yml**.
 
