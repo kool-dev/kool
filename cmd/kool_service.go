@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
+	"os/exec"
+	"syscall"
 )
 
 // KoolService interface holds the contract for a
@@ -107,6 +110,18 @@ func (k *DefaultKoolService) Exec(command builder.Command, extraArgs ...string) 
 // Interactive proxies the call to the given Shell
 func (k *DefaultKoolService) Interactive(command builder.Command, extraArgs ...string) (err error) {
 	err = k.shell.Interactive(command, extraArgs...)
+
+	if err == shell.ErrLookPath {
+		k.Error(fmt.Errorf("failed to run %s error: %v", command.String(), err))
+		k.Exit(2)
+	}
+
+	// Subprocess exited. Get the return code, if we can
+	if exitError, ok := err.(*exec.ExitError); ok {
+		waitStatus := exitError.Sys().(syscall.WaitStatus)
+		k.Exit(waitStatus.ExitStatus())
+	}
+
 	return
 }
 

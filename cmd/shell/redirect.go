@@ -46,7 +46,7 @@ func (p *DefaultParsedRedirect) Close() {
 
 // CreateCommand creates a new *exec.Command for given executable
 func (p *DefaultParsedRedirect) CreateCommand(executable string) (cmd *exec.Cmd) {
-	cmd = exec.Command(executable, p.args...)
+	cmd = execCmdFn(executable, p.args...)
 	cmd.Env = os.Environ()
 	cmd.Stdout = p.shell.OutStream()
 	cmd.Stderr = p.shell.ErrStream()

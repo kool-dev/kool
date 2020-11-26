@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"kool-dev/kool/cmd/builder"
@@ -10,17 +11,24 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/gookit/color"
 )
 
+type execCmdFnType func(string, ...string) *exec.Cmd
+type execLookPathFnType func(string) (string, error)
+
+var execCmdFn execCmdFnType = exec.Command
+var execLookPathFn execLookPathFnType = exec.LookPath
+var ErrLookPath = errors.New("command not found")
+
 // DefaultShell holds data for handling a shell
 type DefaultShell struct {
-	inStream  io.Reader
-	outStream io.Writer
-	errStream io.Writer
-	lookedUp  map[string]bool
+	inStream   io.Reader
+	outStream  io.Writer
+	errStream  io.Writer
+	lookedUp   map[string]bool
+	envStorage environment.EnvStorage
 }
 
 // Shell implements functions for handling a shell
@@ -44,9 +52,10 @@ type Shell interface {
 // NewShell creates a new shell
 func NewShell() Shell {
 	return &DefaultShell{
-		inStream:  os.Stdin,
-		outStream: os.Stdout,
-		errStream: os.Stderr,
+		inStream:   os.Stdin,
+		outStream:  os.Stdout,
+		errStream:  os.Stderr,
+		envStorage: environment.NewEnvStorage(),
 	}
 }
 
@@ -91,14 +100,14 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	)
 
 	if exe == "docker-compose" {
-		args = append(dockerComposeDefaultArgs(), args...)
+		args = append(s.dockerComposeDefaultArgs(), args...)
 	}
 
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
 	}
 
-	cmd = exec.Command(exe, args...)
+	cmd = execCmdFn(exe, args...)
 	cmd.Env = os.Environ()
 	cmd.Stdin = s.InStream()
 	out, err = cmd.CombinedOutput()
@@ -117,14 +126,14 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	)
 
 	if exe == "docker-compose" {
-		args = append(dockerComposeDefaultArgs(), args...)
+		args = append(s.dockerComposeDefaultArgs(), args...)
 	}
 
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
 	}
 
-	if environment.NewEnvStorage().IsTrue("KOOL_VERBOSE") {
+	if s.envStorage.IsTrue("KOOL_VERBOSE") {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
@@ -139,8 +148,8 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	cmd = parsedRedirect.CreateCommand(exe)
 
 	if err = s.LookPath(command); err != nil {
-		s.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
-		os.Exit(2)
+		err = ErrLookPath
+		return
 	}
 
 	err = cmd.Start()
@@ -161,12 +170,6 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	for {
 		select {
 		case err = <-waitCh:
-			// Subprocess exited. Get the return code, if we can
-			var waitStatus syscall.WaitStatus
-			if exitError, ok := err.(*exec.ExitError); ok {
-				waitStatus = exitError.Sys().(syscall.WaitStatus)
-				os.Exit(waitStatus.ExitStatus())
-			}
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -192,7 +195,7 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 
 	if exe != "kool" && !s.lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
 		// non-kool and non-absolute/relative path... let's look it up
-		_, err = exec.LookPath(exe)
+		_, err = execLookPathFn(exe)
 
 		s.lookedUp[exe] = true
 	}
@@ -269,6 +272,6 @@ func Success(out ...interface{}) {
 	NewShell().Success(out)
 }
 
-func dockerComposeDefaultArgs() []string {
-	return []string{"-p", environment.NewEnvStorage().Get("KOOL_NAME")}
+func (s *DefaultShell) dockerComposeDefaultArgs() []string {
+	return []string{"-p", s.envStorage.Get("KOOL_NAME")}
 }

@@ -6,7 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/environment"
 	"os"
+	"os/exec"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -102,6 +105,46 @@ func TestExecDefaultShell(t *testing.T) {
 	}
 }
 
+func TestExecDockerComposeDefaultShell(t *testing.T) {
+	s := &DefaultShell{
+		inStream:   os.Stdin,
+		outStream:  ioutil.Discard,
+		errStream:  os.Stderr,
+		envStorage: environment.NewFakeEnvStorage(),
+	}
+
+	s.envStorage.Set("KOOL_NAME", "kool_test")
+
+	command := &builder.FakeCommand{MockCmd: "docker-compose"}
+	command.AppendArgs("ps")
+
+	var (
+		exeTest  string
+		argsTest []string
+	)
+
+	originalExecCmdFn := execCmdFn
+	execCmdFn = func(exe string, args ...string) *exec.Cmd {
+		exeTest = exe
+		argsTest = args
+		return exec.Command("echo", "x1")
+	}
+	defer func() {
+		execCmdFn = originalExecCmdFn
+	}()
+
+	_, _ = s.Exec(command, "extraArg")
+
+	if exeTest != "docker-compose" {
+		t.Errorf("expecting to run 'docker-compose', got '%s'", exeTest)
+	}
+
+	expectedArgs := []string{"-p", "kool_test", "ps", "extraArg"}
+	if !reflect.DeepEqual(argsTest, expectedArgs) {
+		t.Errorf("expecting args '%v', got '%v'", expectedArgs, argsTest)
+	}
+}
+
 func TestExec(t *testing.T) {
 	output, err := Exec("echo", "x")
 
@@ -141,6 +184,56 @@ func TestInteractiveDefaultShell(t *testing.T) {
 	}
 }
 
+func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
+	s := &DefaultShell{
+		inStream:   os.Stdin,
+		outStream:  ioutil.Discard,
+		errStream:  os.Stderr,
+		envStorage: environment.NewFakeEnvStorage(),
+	}
+
+	s.envStorage.Set("KOOL_NAME", "kool_test")
+
+	command := &builder.FakeCommand{MockCmd: "docker-compose"}
+	command.AppendArgs("ps")
+
+	var (
+		exeTest  string
+		argsTest []string
+	)
+
+	originalExecCmdFn := execCmdFn
+	execCmdFn = func(exe string, args ...string) *exec.Cmd {
+		exeTest = exe
+		argsTest = args
+		return exec.Command("echo", "x1")
+	}
+
+	originalExecLookPath := execLookPathFn
+	execLookPathFn = func(exe string) (string, error) {
+		return "", nil
+	}
+	defer func() {
+		execCmdFn = originalExecCmdFn
+		execLookPathFn = originalExecLookPath
+	}()
+
+	err := s.Interactive(command, "extraArg")
+
+	if err != nil {
+		t.Errorf("Interactive failed on *DefaultShell; expected no errors 'x', got '%v'", err)
+	}
+
+	if exeTest != "docker-compose" {
+		t.Errorf("expecting to run 'docker-compose', got '%s'", exeTest)
+	}
+
+	expectedArgs := []string{"-p", "kool_test", "ps", "extraArg"}
+	if !reflect.DeepEqual(argsTest, expectedArgs) {
+		t.Errorf("expecting args '%v', got '%v'", expectedArgs, argsTest)
+	}
+}
+
 func TestInteractive(t *testing.T) {
 	r, w, _ := os.Pipe()
 
@@ -165,6 +258,29 @@ func TestInteractive(t *testing.T) {
 
 	if output != "x" {
 		t.Errorf("Interactive failed on *DefaultShell; expected output 'x', got '%s'", output)
+	}
+}
+
+func TestInteractiveLookPathErrorDefaultShell(t *testing.T) {
+	s := NewShell()
+	s.SetOutStream(ioutil.Discard)
+
+	originalExecLookPath := execLookPathFn
+	execLookPathFn = func(exe string) (string, error) {
+		return "", errors.New("error")
+	}
+	defer func() {
+		execLookPathFn = originalExecLookPath
+	}()
+
+	command := builder.NewCommand("echo", "x")
+
+	err := s.Interactive(command)
+
+	if err == nil {
+		t.Errorf("expecting error %v, got none", ErrLookPath)
+	} else if err != ErrLookPath {
+		t.Errorf("expecting error %v, got %v", ErrLookPath, err)
 	}
 }
 
