@@ -20,6 +20,7 @@ func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err erro
 	}
 
 	selfUpdate.out.(*shell.FakeOutputWriter).MockWriter = ioutil.Discard
+	selfUpdate.shell.(*shell.FakeShell).MockOutStream = ioutil.Discard
 	return selfUpdate
 }
 
@@ -49,10 +50,6 @@ func TestNewSelfUpdateCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing self-update command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Errorf("did not call SetWriter")
 	}
 
 	if !f.updater.(*updater.FakeUpdater).CalledGetCurrentVersion {

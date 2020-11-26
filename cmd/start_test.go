@@ -125,10 +125,9 @@ func TestStartWithError(t *testing.T) {
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
+		&builder.FakeCommand{MockCmd: "start", MockError: errors.New("start")},
 	}
 
-	koolStart.shell.(*shell.FakeShell).MockInteractiveError = errors.New("start")
 	cmd := NewStartCommand(koolStart)
 
 	_, err := execStartCommand(cmd)

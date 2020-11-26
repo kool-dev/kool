@@ -37,10 +37,10 @@ type ParsedRedirect interface {
 // Close closes reader and writer if necessary
 func (p *DefaultParsedRedirect) Close() {
 	if p.closeStdin {
-		p.shell.InStream().(*os.File).Close()
+		p.shell.InStream().(io.WriteCloser).Close()
 	}
 	if p.closeStdout {
-		p.shell.OutStream().(*os.File).Close()
+		p.shell.OutStream().(io.WriteCloser).Close()
 	}
 }
 

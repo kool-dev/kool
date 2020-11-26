@@ -2,7 +2,6 @@ package checker
 
 import (
 	"errors"
-	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"testing"
@@ -22,8 +21,7 @@ func TestDockerNotInstalled(t *testing.T) {
 	dockerCmd := &builder.FakeCommand{MockLookPathError: errors.New("not installed")}
 	dockerComposeCmd := &builder.FakeCommand{}
 
-	s := shell.NewShell()
-	s.SetOutStream(ioutil.Discard)
+	s := &shell.FakeShell{}
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 
@@ -45,8 +43,7 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 	dockerCmd := &builder.FakeCommand{}
 	dockerComposeCmd := &builder.FakeCommand{MockLookPathError: errors.New("not installed")}
 
-	s := shell.NewShell()
-	s.SetOutStream(ioutil.Discard)
+	s := &shell.FakeShell{}
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 
@@ -65,11 +62,10 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 func TestDockerNotRunning(t *testing.T) {
 	var c Checker
 
-	dockerCmd := &builder.FakeCommand{MockError: errors.New("not running")}
+	dockerCmd := &builder.FakeCommand{MockExecError: errors.New("not running")}
 	dockerComposeCmd := &builder.FakeCommand{}
 
-	s := shell.NewShell()
-	s.SetOutStream(ioutil.Discard)
+	s := &shell.FakeShell{}
 
 	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 

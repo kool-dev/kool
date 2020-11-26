@@ -36,10 +36,10 @@ func newKoolServiceTest() *DefaultKoolService {
 		shell.NewOutputWriter(),
 		&shell.FakeInputReader{},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
-		&shell.FakeShell{},
+		shell.NewShell(),
 	}
 	buf := bytes.NewBufferString("")
-	service.SetWriter(buf)
+	service.SetOutStream(buf)
 	return service
 }
 

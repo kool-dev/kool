@@ -9,10 +9,12 @@ type FakeCommand struct {
 	CalledArgs         bool
 	CalledParseCommand bool
 
-	MockCmd           string
-	MockExecOut       string
-	MockError         error
-	MockLookPathError error
+	MockCmd              string
+	MockExecOut          string
+	MockError            error
+	MockLookPathError    error
+	MockExecError        error
+	MockInteractiveError error
 }
 
 // AppendArgs mocked function for testing

@@ -18,13 +18,15 @@ type FakeShell struct {
 	CalledLookPath     map[string]bool
 	ArgsInteractive    map[string][]string
 
-	MockInteractiveError error
+	MockOutStream io.Writer
+	MockErrStream io.Writer
+	MockInStream  io.Reader
 }
 
 // InStream get input stream
 func (f *FakeShell) InStream() (inStream io.Reader) {
 	f.CalledInStream = true
-	return
+	return f.MockInStream
 }
 
 // SetInStream set input stream
@@ -35,7 +37,7 @@ func (f *FakeShell) SetInStream(inStream io.Reader) {
 // OutStream get output stream
 func (f *FakeShell) OutStream() (outStream io.Writer) {
 	f.CalledOutStream = true
-	return
+	return f.MockOutStream
 }
 
 // SetOutStream set output stream
@@ -46,7 +48,7 @@ func (f *FakeShell) SetOutStream(outStream io.Writer) {
 // ErrStream get error stream
 func (f *FakeShell) ErrStream() (errStream io.Writer) {
 	f.CalledErrStream = true
-	return
+	return f.MockErrStream
 }
 
 // SetErrStream set error stream
@@ -62,6 +64,11 @@ func (f *FakeShell) Exec(command builder.Command, extraArgs ...string) (outStr s
 	}
 
 	f.CalledExec[command.Cmd()] = true
+
+	if _, ok := command.(*builder.FakeCommand); ok {
+		err = command.(*builder.FakeCommand).MockExecError
+		outStr = command.(*builder.FakeCommand).MockExecOut
+	}
 	return
 }
 
@@ -78,7 +85,12 @@ func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (e
 
 	f.CalledInteractive[command.Cmd()] = true
 	f.ArgsInteractive[command.Cmd()] = extraArgs
-	return f.MockInteractiveError
+
+	if _, ok := command.(*builder.FakeCommand); ok {
+		err = command.(*builder.FakeCommand).MockError
+	}
+
+	return
 }
 
 // LookPath returns if the command exists
@@ -88,5 +100,10 @@ func (f *FakeShell) LookPath(command builder.Command) (err error) {
 	}
 
 	f.CalledLookPath[command.Cmd()] = true
+
+	if _, ok := command.(*builder.FakeCommand); ok {
+		err = command.(*builder.FakeCommand).MockLookPathError
+	}
+
 	return
 }

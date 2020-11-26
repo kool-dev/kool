@@ -204,7 +204,7 @@ func TestNoContainersNewLogsCommand(t *testing.T) {
 
 func TestFailingNoContainersNewLogsCommand(t *testing.T) {
 	f := newFakeKoolLogs()
-	f.list.(*builder.FakeCommand).MockError = errors.New("error list")
+	f.list.(*builder.FakeCommand).MockExecError = errors.New("error list")
 
 	cmd := NewLogsCommand(f)
 
