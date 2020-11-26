@@ -41,7 +41,18 @@ Download and run the latest installer from our releases artifacts [here](https:/
 
 ## Getting started
 
-It is easy to get started leveraging `kool`. Provided you have all requirements (Docker and Docker Compose), to get started in an existing Laravel project you only need to:
+It is easy to get started leveraging `kool`. Provided you have all requirements (Docker and Docker Compose).
+
+To create a new Laravel project you only need to:
+
+```console
+$ kool create laravel my-laravel-project
+$ cd my-laravel-project/
+$ # make sure your `.env` points to the proper database and Redis hosts (`database` and `cache`)
+$ kool start
+```
+
+To get started in an existing Laravel project you only need to:
 
 ```console
 $ cd my-laravel-project/
