@@ -23,7 +23,7 @@ func newFailedFakeKoolExec() *KoolExec {
 		*newFakeKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "exec", MockError: errors.New("error exec")},
+		&builder.FakeCommand{MockCmd: "exec", MockInteractiveError: errors.New("error exec")},
 	}
 }
 

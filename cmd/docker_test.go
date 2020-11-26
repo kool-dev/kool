@@ -24,7 +24,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "docker", MockError: errors.New("error docker")},
+		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
 }
 

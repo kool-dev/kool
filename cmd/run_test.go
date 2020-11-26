@@ -154,7 +154,7 @@ func TestNewRunCommandExtraArgsError(t *testing.T) {
 }
 
 func TestNewRunCommandErrorInteractive(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{MockError: errors.New("interactive error")}}, nil)
+	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{MockInteractiveError: errors.New("interactive error")}}, nil)
 	cmd := NewRunCommand(f)
 
 	cmd.SetArgs([]string{"script"})

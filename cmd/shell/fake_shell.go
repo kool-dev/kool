@@ -95,7 +95,7 @@ func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (e
 	f.ArgsInteractive[command.Cmd()] = extraArgs
 
 	if _, ok := command.(*builder.FakeCommand); ok {
-		err = command.(*builder.FakeCommand).MockError
+		err = command.(*builder.FakeCommand).MockInteractiveError
 	}
 
 	return
