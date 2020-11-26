@@ -162,7 +162,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockError = errors.New("")
+	f.getServicesRunner.(*builder.FakeCommand).MockExecError = errors.New("")
 
 	cmd := NewStatusCommand(f)
 
