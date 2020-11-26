@@ -34,8 +34,8 @@ func TestNewKoolSelfUpdate(t *testing.T) {
 		t.Errorf("unexpected shell.Exiter on default KoolSelfUpdate instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on KoolSelfUpdate KoolRun instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on KoolSelfUpdate KoolRun instance")
 	}
 
 	if _, ok := k.updater.(*updater.DefaultUpdater); !ok {

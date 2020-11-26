@@ -11,7 +11,6 @@ import (
 func newFakeKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
 		&shell.FakeExiter{},
-		&shell.FakeInputReader{},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		&shell.FakeShell{},
 	}
@@ -85,17 +84,5 @@ func TestKoolServiceProxies(t *testing.T) {
 	expectedFOutput := "testing format"
 	if fOutput := k.shell.(*shell.FakeShell).FOutput; fOutput != expectedFOutput {
 		t.Errorf("Printf did not proxy the proper output on DefaultKoolService; expected '%s', got %s", expectedFOutput, fOutput)
-	}
-
-	k.SetReader(nil)
-
-	if !k.in.(*shell.FakeInputReader).CalledSetReader {
-		t.Error("SetReader was not proxied by DefaultKoolService")
-	}
-
-	k.GetReader()
-
-	if !k.in.(*shell.FakeInputReader).CalledGetReader {
-		t.Error("GetReader was not proxied by DefaultKoolService")
 	}
 }

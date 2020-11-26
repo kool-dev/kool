@@ -39,8 +39,8 @@ func TestNewKoolDocker(t *testing.T) {
 		t.Errorf("unexpected shell.Exiter on default KoolDocker instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolDocker instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolDocker instance")
 	}
 
 	if k.Flags == nil {

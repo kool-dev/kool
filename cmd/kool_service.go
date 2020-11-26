@@ -14,7 +14,6 @@ type KoolService interface {
 	IsTerminal() bool
 
 	shell.Exiter
-	shell.InputReader
 	shell.Shell
 }
 
@@ -22,7 +21,6 @@ type KoolService interface {
 // services, meant to be used on commands when executing the services.
 type DefaultKoolService struct {
 	exiter shell.Exiter
-	in     shell.InputReader
 	term   shell.TerminalChecker
 	shell  shell.Shell
 }
@@ -30,7 +28,6 @@ type DefaultKoolService struct {
 func newDefaultKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
 		shell.NewExiter(),
-		shell.NewInputReader(),
 		shell.NewTerminalChecker(),
 		shell.NewShell(),
 	}
@@ -39,17 +36,6 @@ func newDefaultKoolService() *DefaultKoolService {
 // Exit proxies the call the given Exiter
 func (k *DefaultKoolService) Exit(code int) {
 	k.exiter.Exit(code)
-}
-
-// GetReader proxies the call to the given InputReader
-func (k *DefaultKoolService) GetReader() (r io.Reader) {
-	r = k.in.GetReader()
-	return
-}
-
-// SetReader proxies the call to the given InputReader
-func (k *DefaultKoolService) SetReader(r io.Reader) {
-	k.in.SetReader(r)
 }
 
 // Println proxies the call to the given Shell

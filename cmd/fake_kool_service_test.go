@@ -21,18 +21,6 @@ func TestFakeKoolService(t *testing.T) {
 		t.Errorf("failed to assert calling method Exit on FakeKoolService")
 	}
 
-	f.SetReader(nil)
-
-	if !f.CalledSetReader {
-		t.Errorf("failed to assert calling method SetReader on FakeKoolService")
-	}
-
-	f.GetReader()
-
-	if !f.CalledGetReader {
-		t.Errorf("failed to assert calling method GetReader on FakeKoolService")
-	}
-
 	f.Println()
 
 	if !f.CalledPrintln {

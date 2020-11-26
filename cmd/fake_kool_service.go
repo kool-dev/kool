@@ -11,8 +11,6 @@ type FakeKoolService struct {
 	ExitCode           int
 	CalledExecute      bool
 	CalledExit         bool
-	CalledGetReader    bool
-	CalledSetReader    bool
 	CalledPrintln      bool
 	CalledPrintf       bool
 	CalledError        bool
@@ -43,17 +41,6 @@ func (f *FakeKoolService) Execute(args []string) (err error) {
 func (f *FakeKoolService) Exit(code int) {
 	f.CalledExit = true
 	f.ExitCode = code
-}
-
-// GetReader mocks the function for testing
-func (f *FakeKoolService) GetReader() (r io.Reader) {
-	f.CalledGetReader = true
-	return
-}
-
-// SetReader mocks the function for testing
-func (f *FakeKoolService) SetReader(r io.Reader) {
-	f.CalledSetReader = true
 }
 
 // Println mocks the function for testing

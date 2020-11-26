@@ -31,8 +31,8 @@ func TestNewKoolRun(t *testing.T) {
 		t.Errorf("unexpected shell.Exiter on default KoolRun instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolRun instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolRun instance")
 	}
 
 	if _, ok := k.parser.(*parser.DefaultParser); !ok {
