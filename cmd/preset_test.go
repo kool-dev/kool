@@ -21,8 +21,8 @@ func newFakeKoolPreset() *KoolPreset {
 func TestNewKoolPreset(t *testing.T) {
 	k := NewKoolPreset()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolPreset instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolPreset instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -64,20 +64,16 @@ func TestPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Error("did not call SetWriter")
-	}
-
 	if !f.parser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledPrintln {
+	if !f.shell.(*shell.FakeShell).CalledPrintln {
 		t.Error("did not call Println")
 	}
 
 	expected := "Preset laravel is initializing!"
-	output := f.out.(*shell.FakeOutputWriter).OutLines[0]
+	output := f.shell.(*shell.FakeShell).OutLines[0]
 
 	if expected != output {
 		t.Errorf("Expecting message '%s', got '%s'", expected, output)
@@ -91,12 +87,12 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call parser.WriteFiles")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledSuccess {
+	if !f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Error("did not call Success")
 	}
 
 	expected = "Preset laravel initialized!"
-	output = fmt.Sprint(f.out.(*shell.FakeOutputWriter).SuccessOutput...)
+	output = fmt.Sprint(f.shell.(*shell.FakeShell).SuccessOutput...)
 
 	if expected != output {
 		t.Errorf("Expecting success message '%s', got '%s'", expected, output)
@@ -118,12 +114,12 @@ func TestInvalidScriptPresetCommand(t *testing.T) {
 		t.Error("did not call parser.Exists")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
 	expected := "Unknown preset invalid"
-	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if expected != output {
 		t.Errorf("expecting error '%s', got '%s'", expected, output)
@@ -147,12 +143,12 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if !f.shell.(*shell.FakeShell).CalledWarning {
 		t.Error("did not call Warning")
 	}
 
 	expected := "Some preset files already exist. In case you wanna override them, use --override."
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
+	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("expecting message '%s', got '%s'", expected, output)
@@ -181,7 +177,7 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 		t.Error("unexpected existing files checking")
 	}
 
-	if f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if f.shell.(*shell.FakeShell).CalledWarning {
 		t.Error("unexpected existing files Warning")
 	}
 
@@ -189,7 +185,7 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 		t.Error("unexpected program Exit")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledSuccess {
+	if !f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Error("did not call Success")
 	}
 }
@@ -208,12 +204,12 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
 	expected := "Failed to write preset file : write error"
-	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if output != expected {
 		t.Errorf("expecting error '%s', got '%s'", expected, output)
@@ -248,7 +244,7 @@ func TestNoArgsPresetCommand(t *testing.T) {
 	}
 
 	expected := "Preset laravel is initializing!"
-	output := f.out.(*shell.FakeOutputWriter).OutLines[0]
+	output := f.shell.(*shell.FakeShell).OutLines[0]
 
 	if expected != output {
 		t.Errorf("Expecting message '%s', got '%s'", expected, output)
@@ -276,12 +272,12 @@ func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 		t.Error("did not call Ask on PromptSelect")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
 	expected := "error prompt select language"
-	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if output != expected {
 		t.Errorf("expecting error '%s', got '%s'", expected, output)
@@ -318,12 +314,12 @@ func TestFailingPresetNoArgsPresetCommand(t *testing.T) {
 		t.Error("did not call Ask on PromptSelect")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
 	expected := "error prompt select preset"
-	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if output != expected {
 		t.Errorf("expecting error '%s', got '%s'", expected, output)
@@ -349,12 +345,12 @@ func TestCancellingPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if !f.shell.(*shell.FakeShell).CalledWarning {
 		t.Error("did not call Warning")
 	}
 
 	expected := "Operation Cancelled\n"
-	output := fmt.Sprintln(f.out.(*shell.FakeOutputWriter).WarningOutput...)
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("expecting warning '%s', got '%s'", expected, output)
@@ -371,7 +367,7 @@ func TestCancellingPresetCommand(t *testing.T) {
 
 func TestNonTTYPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.terminal.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
 
 	cmd := NewPresetCommand(f)
 
@@ -379,11 +375,11 @@ func TestNonTTYPresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
-	err := f.out.(*shell.FakeOutputWriter).Err
+	err := f.shell.(*shell.FakeShell).Err
 
 	if err == nil {
 		t.Error("expecting an error, got none")

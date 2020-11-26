@@ -33,7 +33,6 @@ func (t *koolTaskServiceTest) Execute(args []string) error {
 func newKoolServiceTest() *DefaultKoolService {
 	service := &DefaultKoolService{
 		&shell.FakeExiter{},
-		shell.NewOutputWriter(),
 		&shell.FakeInputReader{},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		shell.NewShell(),
@@ -62,7 +61,7 @@ func newKoolTaskServiceTestWithOutput() *koolTaskServiceTest {
 }
 
 func newKoolTaskTest(message string, service KoolService) *DefaultKoolTask {
-	return &DefaultKoolTask{service, message, &shell.FakeOutputWriter{}}
+	return &DefaultKoolTask{service, message, &shell.FakeShell{}}
 }
 
 func TestNewKoolTask(t *testing.T) {
@@ -75,8 +74,8 @@ func TestNewKoolTask(t *testing.T) {
 		t.Errorf("expecting message 'testing' on KoolTask, got '%s'", message)
 	}
 
-	if _, ok := task.taskOut.(*shell.DefaultOutputWriter); !ok {
-		t.Error("unexpected shell.OutputWriter on KoolTask.taskOut")
+	if _, ok := task.taskShell.(*shell.DefaultShell); !ok {
+		t.Error("unexpected shell.Shell on KoolTask.taskShell")
 	}
 }
 
@@ -94,7 +93,7 @@ func TestRunNewKoolTask(t *testing.T) {
 		t.Error("did not call Execute on task KoolService")
 	}
 
-	outputLines := task.taskOut.(*shell.FakeOutputWriter).OutLines
+	outputLines := task.taskShell.(*shell.FakeShell).OutLines
 
 	if len(outputLines) >= 1 && outputLines[0] != "testing ..." {
 		t.Errorf("expecting message 'testing ...', got %s", outputLines[0])
@@ -119,7 +118,7 @@ func TestRunFailingNewKoolTask(t *testing.T) {
 		t.Errorf("expecting Run to return the error '%v', got '%v'", service.MockError, err)
 	}
 
-	outputLines := task.taskOut.(*shell.FakeOutputWriter).OutLines
+	outputLines := task.taskShell.(*shell.FakeShell).OutLines
 
 	expected := fmt.Sprintf("... %s", color.New(color.Red).Sprint("error"))
 	if len(outputLines) >= 3 && outputLines[2] != expected {
@@ -134,7 +133,7 @@ func TestRunNonTtyNewKoolTask(t *testing.T) {
 
 	_ = task.Run([]string{})
 
-	if outputLines := task.taskOut.(*shell.FakeOutputWriter).OutLines; len(outputLines) > 0 {
+	if outputLines := task.taskShell.(*shell.FakeShell).OutLines; len(outputLines) > 0 {
 		t.Error("should not print out task output")
 	}
 }
@@ -142,11 +141,11 @@ func TestRunNonTtyNewKoolTask(t *testing.T) {
 func TestRunOutputNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTestWithOutput()
 	task := newKoolTaskTest("testing", service)
-	task.taskOut = shell.NewOutputWriter()
+	task.taskShell = shell.NewShell()
 
 	_ = task.Run([]string{})
 
-	bufBytes, err := ioutil.ReadAll(task.taskOut.GetWriter().(io.Reader))
+	bufBytes, err := ioutil.ReadAll(task.taskShell.OutStream().(io.Reader))
 
 	if err != nil {
 		t.Fatal(err)

@@ -14,7 +14,6 @@ type KoolService interface {
 	IsTerminal() bool
 
 	shell.Exiter
-	shell.OutputWriter
 	shell.InputReader
 	shell.Shell
 }
@@ -23,7 +22,6 @@ type KoolService interface {
 // services, meant to be used on commands when executing the services.
 type DefaultKoolService struct {
 	exiter shell.Exiter
-	out    shell.OutputWriter
 	in     shell.InputReader
 	term   shell.TerminalChecker
 	shell  shell.Shell
@@ -32,7 +30,6 @@ type DefaultKoolService struct {
 func newDefaultKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
 		shell.NewExiter(),
-		shell.NewOutputWriter(),
 		shell.NewInputReader(),
 		shell.NewTerminalChecker(),
 		shell.NewShell(),
@@ -42,17 +39,6 @@ func newDefaultKoolService() *DefaultKoolService {
 // Exit proxies the call the given Exiter
 func (k *DefaultKoolService) Exit(code int) {
 	k.exiter.Exit(code)
-}
-
-// GetWriter proxies the call to the given OutputWriter
-func (k *DefaultKoolService) GetWriter() (w io.Writer) {
-	w = k.out.GetWriter()
-	return
-}
-
-// SetWriter proxies the call to the given OutputWriter
-func (k *DefaultKoolService) SetWriter(w io.Writer) {
-	k.out.SetWriter(w)
 }
 
 // GetReader proxies the call to the given InputReader
@@ -66,34 +52,34 @@ func (k *DefaultKoolService) SetReader(r io.Reader) {
 	k.in.SetReader(r)
 }
 
-// Println proxies the call to the given OutputWriter
+// Println proxies the call to the given Shell
 func (k *DefaultKoolService) Println(out ...interface{}) {
-	k.out.Println(out...)
+	k.shell.Println(out...)
 }
 
-// Printf proxies the call to the given OutputWriter
+// Printf proxies the call to the given Shell
 func (k *DefaultKoolService) Printf(format string, a ...interface{}) {
-	k.out.Printf(format, a...)
+	k.shell.Printf(format, a...)
 }
 
-// Error proxies the call to the given OutputWriter
+// Error proxies the call to the given Shell
 func (k *DefaultKoolService) Error(err error) {
-	k.out.Error(err)
+	k.shell.Error(err)
 }
 
-// Warning proxies the call to the given OutputWriter
+// Warning proxies the call to the given Shell
 func (k *DefaultKoolService) Warning(out ...interface{}) {
-	k.out.Warning(out...)
+	k.shell.Warning(out...)
 }
 
-// Success proxies the call to the given OutputWriter
+// Success proxies the call to the given Shell
 func (k *DefaultKoolService) Success(out ...interface{}) {
-	k.out.Success(out...)
+	k.shell.Success(out...)
 }
 
 // IsTerminal checks if input/output is a terminal
 func (k *DefaultKoolService) IsTerminal() bool {
-	return k.term.IsTerminal(k.GetReader(), k.GetWriter())
+	return k.term.IsTerminal(k.InStream(), k.OutStream())
 }
 
 // InStream proxies the call to the given Shell
@@ -114,7 +100,6 @@ func (k *DefaultKoolService) OutStream() io.Writer {
 // SetOutStream proxies the call to the given Shell
 func (k *DefaultKoolService) SetOutStream(outStream io.Writer) {
 	k.shell.SetOutStream(outStream)
-	k.out.SetWriter(outStream)
 }
 
 // ErrStream proxies the call to the given Shell

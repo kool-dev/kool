@@ -51,7 +51,7 @@ func (tgz *TarGz) CompressFiles(files []string) (tmpfile string, err error) {
 
 		fi, err = os.Stat(file)
 		if addErr := tgz.add(file, fi, err); err != nil {
-			shell.NewOutputWriter().Error(fmt.Errorf("failed to add file into archive: %v", addErr))
+			shell.Error(fmt.Errorf("failed to add file into archive: %v", addErr))
 		}
 	}
 

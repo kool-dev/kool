@@ -13,7 +13,6 @@ func newFakeKoolCompletion() *KoolCompletion {
 	return &KoolCompletion{
 		DefaultKoolService{
 			&shell.FakeExiter{},
-			&shell.DefaultOutputWriter{},
 			&shell.FakeInputReader{},
 			&shell.FakeTerminalChecker{MockIsTerminal: true},
 			shell.NewShell(),
@@ -74,8 +73,8 @@ func expectedCompletionOutput(shellType string) (expected string, err error) {
 func TestNewKoolCompletion(t *testing.T) {
 	k := NewKoolCompletion()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Error("unexpected shell.OutputWriter on default KoolCompletion instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Error("unexpected shell.Shell on default KoolCompletion instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {

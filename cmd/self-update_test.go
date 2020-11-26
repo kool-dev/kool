@@ -19,7 +19,6 @@ func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err erro
 		},
 	}
 
-	selfUpdate.out.(*shell.FakeOutputWriter).MockWriter = ioutil.Discard
 	selfUpdate.shell.(*shell.FakeShell).MockOutStream = ioutil.Discard
 	return selfUpdate
 }
@@ -27,8 +26,8 @@ func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err erro
 func TestNewKoolSelfUpdate(t *testing.T) {
 	k := NewKoolSelfUpdate()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on KoolSelfUpdate KoolRun instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on KoolSelfUpdate KoolRun instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -60,13 +59,13 @@ func TestNewSelfUpdateCommand(t *testing.T) {
 		t.Errorf("did not call Update")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledSuccess {
+	if !f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Errorf("did not call Success for updating successfully")
 	}
 
 	expected := "Successfully updated to version 1.0.0"
 
-	if output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).SuccessOutput...); output != expected {
+	if output := fmt.Sprint(f.shell.(*shell.FakeShell).SuccessOutput...); output != expected {
 		t.Errorf("expecting success message '%s', got '%s'", expected, output)
 	}
 }
@@ -79,17 +78,17 @@ func TestNewSelfUpdateUpToDateCommand(t *testing.T) {
 		t.Errorf("unexpected error executing self-update command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if !f.shell.(*shell.FakeShell).CalledWarning {
 		t.Errorf("did not call Warning for already having latest version")
 	}
 
-	if f.out.(*shell.FakeOutputWriter).CalledSuccess {
+	if f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Errorf("unexpected update successful message when already having latest version")
 	}
 
 	expected := "You already have the latest version 1.0.0"
 
-	if output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...); output != expected {
+	if output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...); output != expected {
 		t.Errorf("expecting warning message '%s', got '%s'", expected, output)
 	}
 }
@@ -102,21 +101,21 @@ func TestNewSelfUpdateErrorCommand(t *testing.T) {
 		t.Errorf("unexpected error executing self-update command; error: %v", err)
 	}
 
-	if f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if f.shell.(*shell.FakeShell).CalledWarning {
 		t.Errorf("unexpected warning message for failed update")
 	}
 
-	if f.out.(*shell.FakeOutputWriter).CalledSuccess {
+	if f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Errorf("unexpected update successful message for failed update")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Errorf("did not call Error for failed update")
 	}
 
 	expected := "kool self-update failed: error"
 
-	if output := f.out.(*shell.FakeOutputWriter).Err.Error(); output != expected {
+	if output := f.shell.(*shell.FakeShell).Err.Error(); output != expected {
 		t.Errorf("expecting error message '%s', got '%s'", expected, output)
 	}
 

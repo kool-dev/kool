@@ -20,8 +20,8 @@ func newFakeKoolCreate() *KoolCreate {
 func TestNewKoolCreate(t *testing.T) {
 	k := NewKoolCreate()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolCreate instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolCreate instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -95,12 +95,12 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 		t.Error("did not call parser.Exists")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
 	expected := "Unknown preset invalid"
-	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if expected != output {
 		t.Errorf("expecting error '%s', got '%s'", expected, output)

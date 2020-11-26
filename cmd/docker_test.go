@@ -31,8 +31,8 @@ func newFailedFakeKoolDocker() *KoolDocker {
 func TestNewKoolDocker(t *testing.T) {
 	k := NewKoolDocker()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolDocker instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolDocker instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -78,10 +78,6 @@ func TestNewDockerCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Errorf("did not call SetWriter")
 	}
 
 	if !f.dockerRun.(*builder.FakeCommand).CalledAppendArgs {
@@ -245,7 +241,7 @@ func TestFailingNewDockerCommand(t *testing.T) {
 		t.Error("expecting command to exit due to an error.")
 	}
 
-	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error docker" {
+	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error docker" {
 		t.Errorf("expecting error 'error docker', got '%s'", err.Error())
 	}
 }

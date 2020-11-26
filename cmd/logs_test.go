@@ -29,8 +29,8 @@ func newFakeFailedKoolLogs() *KoolLogs {
 func TestNewKoolLogs(t *testing.T) {
 	k := NewKoolLogs()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolLogs instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolLogs instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -68,10 +68,6 @@ func TestNewLogsCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Errorf("did not call SetWriter")
 	}
 
 	if !f.logs.(*builder.FakeCommand).CalledAppendArgs {
@@ -172,7 +168,7 @@ func TestFailingNewLogsCommand(t *testing.T) {
 		t.Error("expecting command to exit due to an error.")
 	}
 
-	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error logs" {
+	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error logs" {
 		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
 	}
 }
@@ -187,13 +183,13 @@ func TestNoContainersNewLogsCommand(t *testing.T) {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if !f.shell.(*shell.FakeShell).CalledWarning {
 		t.Error("did not call Warning")
 	}
 
 	expectedWarning := "There are no containers"
 
-	if gotWarning := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...); gotWarning != expectedWarning {
+	if gotWarning := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...); gotWarning != expectedWarning {
 		t.Errorf("expecting warning '%s', got '%s'", expectedWarning, gotWarning)
 	}
 
@@ -216,7 +212,7 @@ func TestFailingNoContainersNewLogsCommand(t *testing.T) {
 		t.Error("expecting command to exit due to an error.")
 	}
 
-	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error list" {
+	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error list" {
 		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
 	}
 }

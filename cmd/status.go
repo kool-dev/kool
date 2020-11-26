@@ -121,7 +121,7 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		i++
 	}
 
-	s.table.SetWriter(s.GetWriter())
+	s.table.SetWriter(s.OutStream())
 	s.table.AppendHeader("Service", "Running", "Ports", "State")
 
 	sort.SliceStable(status, func(i, j int) bool {

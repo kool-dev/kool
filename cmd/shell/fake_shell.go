@@ -1,8 +1,10 @@
 package shell
 
 import (
+	"fmt"
 	"io"
 	"kool-dev/kool/cmd/builder"
+	"strings"
 )
 
 // FakeShell fake shell data
@@ -18,46 +20,53 @@ type FakeShell struct {
 	CalledLookPath     map[string]bool
 	ArgsInteractive    map[string][]string
 
+	Err           error
+	OutLines      []string
+	WarningOutput []interface{}
+	SuccessOutput []interface{}
+	FOutput       string
+
+	CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess bool
+
 	MockOutStream io.Writer
 	MockErrStream io.Writer
 	MockInStream  io.Reader
 }
 
-// InStream get input stream
+// InStream is a mocked testing function
 func (f *FakeShell) InStream() (inStream io.Reader) {
 	f.CalledInStream = true
 	return f.MockInStream
 }
 
-// SetInStream set input stream
+// SetInStream is a mocked testing function
 func (f *FakeShell) SetInStream(inStream io.Reader) {
 	f.CalledSetInStream = true
 }
 
-// OutStream get output stream
+// OutStream is a mocked testing function
 func (f *FakeShell) OutStream() (outStream io.Writer) {
 	f.CalledOutStream = true
 	return f.MockOutStream
 }
 
-// SetOutStream set output stream
+// SetOutStream is a mocked testing function
 func (f *FakeShell) SetOutStream(outStream io.Writer) {
 	f.CalledSetOutStream = true
 }
 
-// ErrStream get error stream
+// ErrStream is a mocked testing function
 func (f *FakeShell) ErrStream() (errStream io.Writer) {
 	f.CalledErrStream = true
 	return f.MockErrStream
 }
 
-// SetErrStream set error stream
+// SetErrStream is a mocked testing function
 func (f *FakeShell) SetErrStream(errStream io.Writer) {
 	f.CalledSetErrStream = true
 }
 
-// Exec will execute the given command silently and return the combined
-// error/standard output, and an error if any.
+// Exec is a mocked testing function
 func (f *FakeShell) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
 	if f.CalledExec == nil {
 		f.CalledExec = make(map[string]bool)
@@ -72,8 +81,7 @@ func (f *FakeShell) Exec(command builder.Command, extraArgs ...string) (outStr s
 	return
 }
 
-// Interactive runs the given command proxying current Stdin/Stdout/Stderr
-// which makes it interactive for running even something like `bash`.
+// Interactive is a mocked testing function
 func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (err error) {
 	if f.CalledInteractive == nil {
 		f.CalledInteractive = make(map[string]bool)
@@ -93,7 +101,7 @@ func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (e
 	return
 }
 
-// LookPath returns if the command exists
+// LookPath is a mocked testing function
 func (f *FakeShell) LookPath(command builder.Command) (err error) {
 	if f.CalledLookPath == nil {
 		f.CalledLookPath = make(map[string]bool)
@@ -106,4 +114,34 @@ func (f *FakeShell) LookPath(command builder.Command) (err error) {
 	}
 
 	return
+}
+
+// Println is a mocked testing function
+func (f *FakeShell) Println(out ...interface{}) {
+	f.CalledPrintln = true
+	f.OutLines = append(f.OutLines, strings.TrimSpace(fmt.Sprintln(out...)))
+}
+
+// Printf is a mocked testing function
+func (f *FakeShell) Printf(format string, a ...interface{}) {
+	f.CalledPrintf = true
+	f.FOutput = fmt.Sprintf(format, a...)
+}
+
+// Error is a mocked testing function
+func (f *FakeShell) Error(err error) {
+	f.Err = err
+	f.CalledError = true
+}
+
+// Warning is a mocked testing function
+func (f *FakeShell) Warning(out ...interface{}) {
+	f.CalledWarning = true
+	f.WarningOutput = out
+}
+
+// Success is a mocked testing function
+func (f *FakeShell) Success(out ...interface{}) {
+	f.CalledSuccess = true
+	f.SuccessOutput = out
 }

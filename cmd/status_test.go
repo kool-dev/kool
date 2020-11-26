@@ -37,8 +37,8 @@ func newFakeKoolStatus() *KoolStatus {
 func TestNewKoolStatus(t *testing.T) {
 	k := NewKoolStatus()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolStatus instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolStatus instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -152,7 +152,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 
 	expected := "No services found."
 
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
+	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -172,7 +172,7 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 
 	expected := "No services found."
 
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
+	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)

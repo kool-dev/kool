@@ -30,8 +30,8 @@ func newFailedFakeKoolExec() *KoolExec {
 func TestNewKoolExec(t *testing.T) {
 	k := NewKoolExec()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolExec instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolExec instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
@@ -71,10 +71,6 @@ func TestNewExecCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing exec command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Error("did not call SetWriter")
 	}
 
 	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["exec"]; !ok || !val {
@@ -178,7 +174,7 @@ func TestFailingNewExecCommand(t *testing.T) {
 		t.Error("expecting command to exit due to an error.")
 	}
 
-	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error exec" {
+	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error exec" {
 		t.Errorf("expecting error 'error exec', got '%s'", err.Error())
 	}
 }

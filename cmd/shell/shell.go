@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/gookit/color"
 )
 
 // DefaultShell holds data for handling a shell
@@ -32,6 +34,11 @@ type Shell interface {
 	Exec(builder.Command, ...string) (string, error)
 	Interactive(builder.Command, ...string) error
 	LookPath(builder.Command) error
+	Println(...interface{})
+	Printf(string, ...interface{})
+	Error(error)
+	Warning(...interface{})
+	Success(...interface{})
 }
 
 // NewShell creates a new shell
@@ -105,13 +112,9 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	var (
 		cmd            *exec.Cmd
 		parsedRedirect *DefaultParsedRedirect
-		outputWriter   OutputWriter
 		exe            string   = command.Cmd()
 		args           []string = command.Args()
 	)
-
-	outputWriter = NewOutputWriter()
-	outputWriter.SetWriter(s.OutStream())
 
 	if exe == "docker-compose" {
 		args = append(dockerComposeDefaultArgs(), args...)
@@ -136,7 +139,7 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	cmd = parsedRedirect.CreateCommand(exe)
 
 	if err = s.LookPath(command); err != nil {
-		outputWriter.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
+		s.Error(fmt.Errorf("failed to run %s error: %v", cmd.String(), err))
 		os.Exit(2)
 	}
 
@@ -172,7 +175,7 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 			if err := cmd.Process.Signal(sig); err != nil {
 				// check if it is something we should care about
 				if err.Error() != "os: process already finished" {
-					outputWriter.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
+					s.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
 				}
 			}
 		}
@@ -196,6 +199,33 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 	return
 }
 
+// Println execs Println on writer
+func (s *DefaultShell) Println(out ...interface{}) {
+	fmt.Fprintln(s.OutStream(), out...)
+}
+
+// Printf execs Printf on writer
+func (s *DefaultShell) Printf(format string, a ...interface{}) {
+	fmt.Fprintf(s.OutStream(), format, a...)
+}
+
+// Error error output
+func (s *DefaultShell) Error(err error) {
+	fmt.Fprintf(s.OutStream(), "%v\n", color.New(color.BgRed, color.FgWhite).Sprintf("error: %v", err))
+}
+
+// Warning warning message
+func (s *DefaultShell) Warning(out ...interface{}) {
+	warningMessage := color.New(color.Yellow).Sprint(out...)
+	fmt.Fprintln(s.OutStream(), warningMessage)
+}
+
+// Success success message
+func (s *DefaultShell) Success(out ...interface{}) {
+	successMessage := color.New(color.Green).Sprint(out...)
+	fmt.Fprintln(s.OutStream(), successMessage)
+}
+
 // Exec will execute the given command silently and return the combined
 // error/standard output, and an error if any.
 func Exec(exe string, args ...string) (outStr string, err error) {
@@ -212,6 +242,31 @@ func Interactive(exe string, args ...string) (err error) {
 	s := NewShell()
 	err = s.Interactive(command)
 	return
+}
+
+// Println execs Println on writer
+func Println(out ...interface{}) {
+	NewShell().Println(out)
+}
+
+// Printf execs Printf on writer
+func Printf(format string, a ...interface{}) {
+	NewShell().Printf(format, a)
+}
+
+// Error error output
+func Error(err error) {
+	NewShell().Error(err)
+}
+
+// Warning warning message
+func Warning(out ...interface{}) {
+	NewShell().Warning(out)
+}
+
+// Success success message
+func Success(out ...interface{}) {
+	NewShell().Success(out)
 }
 
 func dockerComposeDefaultArgs() []string {
