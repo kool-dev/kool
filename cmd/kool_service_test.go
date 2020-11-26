@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
@@ -84,5 +85,59 @@ func TestKoolServiceProxies(t *testing.T) {
 	expectedFOutput := "testing format"
 	if fOutput := k.shell.(*shell.FakeShell).FOutput; fOutput != expectedFOutput {
 		t.Errorf("Printf did not proxy the proper output on DefaultKoolService; expected '%s', got %s", expectedFOutput, fOutput)
+	}
+
+	k.InStream()
+
+	if !k.shell.(*shell.FakeShell).CalledInStream {
+		t.Errorf("failed to assert calling method InStream on FakeKoolService")
+	}
+
+	k.OutStream()
+
+	if !k.shell.(*shell.FakeShell).CalledOutStream {
+		t.Errorf("failed to assert calling method OutStream on FakeKoolService")
+	}
+
+	k.ErrStream()
+
+	if !k.shell.(*shell.FakeShell).CalledErrStream {
+		t.Errorf("failed to assert calling method ErrStream on FakeKoolService")
+	}
+
+	k.SetInStream(nil)
+
+	if !k.shell.(*shell.FakeShell).CalledSetInStream {
+		t.Errorf("failed to assert calling method SetInStream on FakeKoolService")
+	}
+
+	k.SetOutStream(nil)
+
+	if !k.shell.(*shell.FakeShell).CalledSetOutStream {
+		t.Errorf("failed to assert calling method SetOutStream on FakeKoolService")
+	}
+
+	k.SetErrStream(nil)
+
+	if !k.shell.(*shell.FakeShell).CalledSetErrStream {
+		t.Errorf("failed to assert calling method SetErrStream on FakeKoolService")
+	}
+
+	_, _ = k.Exec(&builder.FakeCommand{MockCmd: "cmd"}, "extraArg")
+
+	if val, ok := k.shell.(*shell.FakeShell).CalledExec["cmd"]; !val || !ok {
+		t.Errorf("failed to assert calling method Exec on FakeKoolService")
+	}
+
+	_ = k.Interactive(&builder.FakeCommand{MockCmd: "cmd"}, "extraArg")
+
+	if val, ok := k.shell.(*shell.FakeShell).CalledInteractive["cmd"]; !val || !ok {
+		t.Errorf("failed to assert calling method Interactive on FakeKoolService")
+	}
+
+	_ = k.LookPath(&builder.FakeCommand{MockCmd: "cmd"})
+
+	if val, ok := k.shell.(*shell.FakeShell).CalledLookPath["cmd"]; !val || !ok {
+		t.Errorf("failed to assert calling method LookPath on FakeKoolService")
 	}
 }
