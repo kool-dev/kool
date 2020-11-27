@@ -24,3 +24,4 @@ scripts:
   parse-presets:
     - rm -f cmd/presets/presets.go
     - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_presets.go
+    - kool run fmt

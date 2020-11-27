@@ -3,6 +3,15 @@
 To make things easier we will use **kool** to install it for you.
 
 ```bash
+kool create adonis my-project
+
+cd my-project
+```
+- **kool create** already executes **kool preset** internally so you can skip the command in the next step
+
+Or
+
+```bash
 kool docker kooldev/node:14-adonis adonis new my-project
 
 cd my-project
@@ -16,7 +25,7 @@ Go to the project folder and run:
 $ kool preset adonis
 ```
 
-**kool preset** basically creates a few configuration files in order to enable you to configure / extend it.
+**kool preset** basically creates a few configuration files in order to enable you to configure / extend it. You don't need to execute it whether you chose kool create command to start the new project.
 
 By default adonis preset comes with **mysql** and **redis** pre-configured, to enable you can uncomment it at **docker-compose.yml** file.
 
