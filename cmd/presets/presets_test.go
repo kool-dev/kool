@@ -68,3 +68,22 @@ func TestLanguageMetadataFile(t *testing.T) {
 		}
 	}
 }
+
+func TestPresetsTemplates(t *testing.T) {
+	for serviceType, services := range GetTemplates() {
+		for _, service := range services {
+			var (
+				parsed        yaml.MapSlice
+				templateBytes []byte
+			)
+
+			if templateBytes = []byte(service); len(templateBytes) == 0 {
+				t.Errorf("failed on reading template %s from %s service", service, serviceType)
+			}
+
+			if err := yaml.Unmarshal(templateBytes, &parsed); err != nil {
+				t.Errorf("failed on parsing %s from %s service", service, serviceType)
+			}
+		}
+	}
+}
