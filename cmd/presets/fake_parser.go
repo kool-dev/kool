@@ -10,15 +10,15 @@ type FakeParser struct {
 	CalledGetPresetKeys       bool
 	CalledGetPresetKeyContent map[string]map[string]bool
 	CalledGetTemplates        bool
-	CalledGetCreateCommand    bool
 	CalledLoadPresets         bool
 	CalledLoadTemplates       bool
+	CalledLoadConfigs         bool
+	CalledGetConfig           map[string]bool
 
 	MockExists           bool
 	MockFoundFiles       []string
 	MockFileError        string
 	MockError            error
-	MockCreateCommand    string
 	MockLanguages        []string
 	MockPresets          []string
 	MockPresetKeys       []string
@@ -26,19 +26,15 @@ type FakeParser struct {
 	MockTemplates        map[string]map[string]string
 	MockAllPresets       map[string]map[string]string
 	MockAllTemplates     map[string]map[string]string
+	MockAllConfigs       map[string]string
+	MockConfig           map[string]*PresetConfig
+	MockGetConfigError   map[string]error
 }
 
 // Exists check if preset exists
 func (f *FakeParser) Exists(preset string) (exists bool) {
 	f.CalledExists = true
 	exists = f.MockExists
-	return
-}
-
-// GetCreateCommand gets the command to create a new project
-func (f *FakeParser) GetCreateCommand(preset string) (cmd string, err error) {
-	f.CalledGetCreateCommand = true
-	cmd = f.MockCreateCommand
 	return
 }
 
@@ -121,4 +117,36 @@ func (f *FakeParser) LoadPresets(presets map[string]map[string]string) {
 func (f *FakeParser) LoadTemplates(templates map[string]map[string]string) {
 	f.CalledLoadTemplates = true
 	f.MockAllTemplates = templates
+}
+
+// LoadConfigs load the configs
+func (f *FakeParser) LoadConfigs(configs map[string]string) {
+	f.CalledLoadConfigs = true
+	f.MockAllConfigs = configs
+}
+
+// GetConfig get preset config
+func (f *FakeParser) GetConfig(preset string) (config *PresetConfig, err error) {
+	if f.CalledGetConfig == nil {
+		f.CalledGetConfig = make(map[string]bool)
+	}
+
+	if f.MockConfig == nil {
+		f.MockConfig = make(map[string]*PresetConfig)
+	}
+
+	if f.MockGetConfigError == nil {
+		f.MockGetConfigError = make(map[string]error)
+	}
+
+	f.CalledGetConfig[preset] = true
+	if val, ok := f.MockConfig[preset]; ok {
+		config = val
+	}
+
+	if val, ok := f.MockGetConfigError[preset]; ok {
+		err = val
+	}
+
+	return
 }

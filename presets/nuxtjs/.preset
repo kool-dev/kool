@@ -1,2 +1,0 @@
-language=javascript
-create=kool docker kooldev/node:14 yarn create nuxt-app

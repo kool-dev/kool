@@ -42,7 +42,7 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
-		&presets.DefaultParser{},
+		presets.NewParser(),
 		compose.NewParser(),
 		shell.NewPromptSelect(),
 	}
@@ -54,7 +54,12 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		fileError, preset, language string
 		useDefaultCompose           bool
 		servicesOptions             map[string]string
+		presetConfig                *presets.PresetConfig
 	)
+
+	p.presetsParser.LoadPresets(presets.GetAll())
+	p.presetsParser.LoadTemplates(presets.GetTemplates())
+	p.presetsParser.LoadConfigs(presets.GetConfigs())
 
 	if len(args) == 0 {
 		if !p.IsTerminal() {
@@ -73,31 +78,25 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		preset = args[0]
 	}
 
-	p.presetsParser.LoadPresets(presets.GetAll())
-
 	if !p.presetsParser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
+		return
+	}
+
+	if presetConfig, err = p.presetsParser.GetConfig(preset); err != nil || presetConfig == nil {
+		err = fmt.Errorf("error parsing preset config; err: %v", err)
 		return
 	}
 
 	servicesOptions = make(map[string]string)
 	useDefaultCompose = true
 
-	if servicesToAskStr := p.presetsParser.GetPresetKeyContent(preset, "preset_ask_services"); servicesToAskStr != "" && p.IsTerminal() {
-		servicesToAsk := strings.Split(servicesToAskStr, ",")
-
-		for _, serviceName := range servicesToAsk {
-			optionsKey := fmt.Sprintf("preset_%s_options", serviceName)
-			question := fmt.Sprintf("What %s service do you want to use", serviceName)
-
-			if optionsStr := p.presetsParser.GetPresetKeyContent(preset, optionsKey); optionsStr != "" {
-				options := strings.Split(optionsStr, ",")
-
-				if servicesOptions[serviceName], err = p.promptSelect.Ask(question, options); err != nil {
-					return
-				}
-				useDefaultCompose = false
+	if servicesToAsk := presetConfig.Questions; len(servicesToAsk) > 0 && p.IsTerminal() {
+		for serviceName, question := range servicesToAsk {
+			if servicesOptions[serviceName], err = p.promptSelect.Ask(question.Message, question.Options); err != nil {
+				return
 			}
+			useDefaultCompose = false
 		}
 	}
 
@@ -120,10 +119,6 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 	templates := p.presetsParser.GetTemplates()
 
 	for _, presetKey := range presetKeys {
-		if strings.HasPrefix(presetKey, "preset_") {
-			continue
-		}
-
 		var content string
 
 		if presetKey == "docker-compose.yml" && !useDefaultCompose {

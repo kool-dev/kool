@@ -75,15 +75,22 @@ func TestGetLanguagesParser(t *testing.T) {
 	laravelPreset := make(map[string]string)
 	symfonyPreset := make(map[string]string)
 
-	laravelPreset["preset_language"] = "php"
 	laravelPreset["kool.yml"] = ""
-	symfonyPreset["preset_language"] = "php"
 	symfonyPreset["kool.yml"] = ""
 
 	presets["laravel"] = laravelPreset
 	presets["symfony"] = symfonyPreset
 
 	p.LoadPresets(presets)
+
+	configs := make(map[string]string)
+
+	phpConfig := "language: php"
+
+	configs["laravel"] = phpConfig
+	configs["symfony"] = phpConfig
+
+	p.LoadConfigs(configs)
 
 	allLanguages = p.GetLanguages()
 
@@ -98,16 +105,20 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 	phpPreset := make(map[string]string)
 	jsPreset := make(map[string]string)
 
-	phpPreset["preset_language"] = "php"
 	phpPreset["kool.yml"] = ""
-	jsPreset["preset_language"] = "javascript"
 	jsPreset["kool.yml"] = ""
 
 	presets["php_language"] = phpPreset
 	presets["javascript_language"] = jsPreset
 
+	configs := make(map[string]string)
+
+	configs["php_language"] = "language: php"
+	configs["javascript_language"] = "language: javascript"
+
 	p := NewParser()
 	p.LoadPresets(presets)
+	p.LoadConfigs(configs)
 
 	phpPresets := p.GetPresets("php")
 
@@ -116,55 +127,18 @@ func TestGetPresetByLanguageParser(t *testing.T) {
 	}
 }
 
-func TestGetCreateCommandParser(t *testing.T) {
-	presets := make(map[string]map[string]string)
-
-	laravelPreset := make(map[string]string)
-
-	laravelPreset["preset_create"] = "command"
-	laravelPreset["kool.yml"] = ""
-
-	presets["laravel"] = laravelPreset
-
-	p := NewParser()
-	p.LoadPresets(presets)
-
-	laravelCmd, _ := p.GetCreateCommand("laravel")
-
-	if laravelCmd != laravelPreset["preset_create"] {
-		t.Error("failed to get command")
-	}
-}
-
-func TestFailGetCreateCommandParser(t *testing.T) {
-	presets := make(map[string]map[string]string)
-
-	laravelPreset := make(map[string]string)
-
-	laravelPreset["preset_create"] = ""
-	laravelPreset["kool.yml"] = ""
-
-	presets["laravel"] = laravelPreset
-
-	p := NewParser()
-	p.LoadPresets(presets)
-
-	_, err := p.GetCreateCommand("laravel")
-
-	if err != ErrCreateCommandtNotFoundOrEmpty {
-		t.Errorf("failed, expected to get error %v got %v", ErrCreateCommandtNotFoundOrEmpty, err.Error())
-	}
-}
-
 func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
 
 	testingPreset := make(map[string]string)
 
-	testingPreset["preset_language"] = "php"
 	testingPreset["kool.yml"] = ""
 
 	presets["preset"] = testingPreset
+
+	configs := make(map[string]string)
+
+	configs["preset"] = "language: php"
 
 	fs := afero.NewMemMapFs()
 	_ = afero.WriteFile(fs, "kool.yml", []byte("scripts"), os.ModePerm)
@@ -251,7 +225,7 @@ func TestWriteFileParser(t *testing.T) {
 
 func TestLoadPresetsParser(t *testing.T) {
 	presets := map[string]map[string]string{
-		"laravel": {"preset_create": "command"},
+		"laravel": {"file": "content"},
 	}
 
 	p := &DefaultParser{}
@@ -272,5 +246,61 @@ func TestLoadTemplatesParser(t *testing.T) {
 
 	if ok := reflect.DeepEqual(p.Templates, templates); !ok {
 		t.Error("did not load the templates correctly")
+	}
+}
+
+func TestLoadConfigsParser(t *testing.T) {
+	configs := map[string]string{
+		"preset": "preset_config",
+	}
+
+	p := &DefaultParser{}
+	p.LoadConfigs(configs)
+
+	if ok := reflect.DeepEqual(p.Configs, configs); !ok {
+		t.Error("did not load the configs correctly")
+	}
+}
+
+func TestGetConfigParser(t *testing.T) {
+	configs := map[string]string{
+		"preset": `language: php
+commands:
+  create:
+    - command
+questions:
+  question1:
+    message: message?
+    options:
+      - option1
+`,
+	}
+
+	p := &DefaultParser{}
+	p.LoadConfigs(configs)
+
+	cfg, err := p.GetConfig("preset")
+
+	if err != nil {
+		t.Errorf("unexpected error getting config, err: %v", err)
+	}
+
+	if cfg == nil {
+		t.Error("unexpected empty preset configuration")
+		return
+	}
+
+	if cfg.Language != "php" {
+		t.Error("failed getting language preset configuration")
+	}
+
+	createCmds, createCmdsExists := cfg.Commands["create"]
+	if !createCmdsExists || len(createCmds) != 1 || createCmds[0] != "command" {
+		t.Error("failed getting create commands preset configuration")
+	}
+
+	questions1, question1Exists := cfg.Questions["question1"]
+	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0] != "option1" {
+		t.Error("failed getting questions preset configuration")
 	}
 }

@@ -130,6 +130,9 @@ func TestPresetCommand(t *testing.T) {
 			"kool.yml": "kool.yml content",
 		},
 	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 
 	cmd := NewPresetCommand(f)
 
@@ -147,8 +150,12 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call parser.Exists")
 	}
 
-	if !f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["preset_ask_services"] {
-		t.Error("did not call parser.GetPresetKeyContent for preset 'laravel' and meta 'preset_ask_services'")
+	if !f.presetsParser.(*presets.FakeParser).CalledLoadTemplates {
+		t.Error("did not call parser.LoadTemplates")
+	}
+
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetConfig["laravel"]; !ok || !val {
+		t.Error("did not call parser.GetConfig for preset 'laravel'")
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledPrintln {
@@ -228,6 +235,9 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
@@ -256,6 +266,9 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 
 	cmd := NewPresetCommand(f)
 
@@ -292,6 +305,9 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 		},
 	}
 	f.presetsParser.(*presets.FakeParser).MockError = errors.New("write error")
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 
 	cmd := NewPresetCommand(f)
 
@@ -328,6 +344,9 @@ func TestNoArgsPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.presetsParser.(*presets.FakeParser).MockExists = true
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 
 	cmd := NewPresetCommand(f)
 
@@ -351,6 +370,9 @@ func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 
 	mockError := make(map[string]error)
 	mockError["What language do you want to use"] = errors.New("error prompt select language")
@@ -387,6 +409,9 @@ func TestFailingPresetNoArgsPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{},
+	}
 
 	mockAnswer := make(map[string]string)
 	mockAnswer["What language do you want to use"] = "php"
@@ -484,11 +509,21 @@ func TestNonTTYPresetCommand(t *testing.T) {
 func TestCustomDockerComposePresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	config := &presets.PresetConfig{
+		Questions: map[string]presets.PresetConfigQuestion{
+			"database": presets.PresetConfigQuestion{
+				Message: "What database service do you want to use",
+				Options: []string{"mysql", "postgresql"},
+			},
+		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
+	}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
-			"preset_ask_services":     "database",
-			"preset_database_options": "mysql,postgresql",
-			"docker-compose.yml":      defaultCompose,
+			"docker-compose.yml": defaultCompose,
 		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
@@ -529,11 +564,21 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	config := &presets.PresetConfig{
+		Questions: map[string]presets.PresetConfigQuestion{
+			"database": presets.PresetConfigQuestion{
+				Message: "What database service do you want to use",
+				Options: []string{"mysql", "postgresql", "none"},
+			},
+		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
+	}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
-			"preset_ask_services":     "database",
-			"preset_database_options": "mysql,postgresql,none",
-			"docker-compose.yml":      defaultCompose,
+			"docker-compose.yml": defaultCompose,
 		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
@@ -609,11 +654,17 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
 	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"preset_ask_services":     "database",
-			"preset_database_options": "mysql,postgresql",
+
+	config := &presets.PresetConfig{
+		Questions: map[string]presets.PresetConfigQuestion{
+			"database": presets.PresetConfigQuestion{
+				Message: "What database service do you want to use",
+				Options: []string{"mysql", "postgresql"},
+			},
 		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
 	}
 
 	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
@@ -645,11 +696,21 @@ func TestErrorLoadComposePresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
 	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	config := &presets.PresetConfig{
+		Questions: map[string]presets.PresetConfigQuestion{
+			"database": presets.PresetConfigQuestion{
+				Message: "What database service do you want to use",
+				Options: []string{"mysql", "postgresql"},
+			},
+		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
+	}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
-			"preset_ask_services":     "database",
-			"preset_database_options": "mysql,postgresql",
-			"docker-compose.yml":      defaultCompose,
+			"docker-compose.yml": defaultCompose,
 		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
@@ -683,11 +744,21 @@ func TestErrorSetComposeServicePresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
 	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	config := &presets.PresetConfig{
+		Questions: map[string]presets.PresetConfigQuestion{
+			"database": presets.PresetConfigQuestion{
+				Message: "What database service do you want to use",
+				Options: []string{"mysql", "postgresql"},
+			},
+		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
+	}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
-			"preset_ask_services":     "database",
-			"preset_database_options": "mysql,postgresql",
-			"docker-compose.yml":      defaultCompose,
+			"docker-compose.yml": defaultCompose,
 		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
@@ -727,11 +798,21 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
 	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	config := &presets.PresetConfig{
+		Questions: map[string]presets.PresetConfigQuestion{
+			"database": presets.PresetConfigQuestion{
+				Message: "What database service do you want to use",
+				Options: []string{"mysql", "postgresql"},
+			},
+		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
+	}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
-			"preset_ask_services":     "database",
-			"preset_database_options": "mysql,postgresql",
-			"docker-compose.yml":      defaultCompose,
+			"docker-compose.yml": defaultCompose,
 		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{

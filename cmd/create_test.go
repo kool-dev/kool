@@ -46,7 +46,14 @@ func TestNewKoolCreateCommand(t *testing.T) {
 
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.KoolPreset.presetsParser.(*presets.FakeParser).MockExists = true
-	f.parser.(*presets.FakeParser).MockCreateCommand = "kool docker create command"
+	f.parser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{
+			Commands: map[string][]string{
+				"create": []string{"kool docker create command"},
+			},
+		},
+	}
+	f.KoolPreset.presetsParser.(*presets.FakeParser).MockConfig = f.parser.(*presets.FakeParser).MockConfig
 
 	cmd := NewCreateCommand(f)
 	cmd.SetArgs([]string{"laravel", "my-app"})
@@ -63,8 +70,8 @@ func TestNewKoolCreateCommand(t *testing.T) {
 		t.Error("did not call parser.Exists")
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledGetCreateCommand {
-		t.Error("did not call parser.GetCreateCommand")
+	if val, ok := f.parser.(*presets.FakeParser).CalledGetConfig["laravel"]; !ok || !val {
+		t.Error("did not call parser.GetConfig for preset 'laravel'")
 	}
 
 	if !f.createCommand.(*builder.FakeCommand).CalledParseCommand {

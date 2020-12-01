@@ -1,4 +1,0 @@
-language=php
-ask_services=database,cache
-database_options=MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none
-cache_options=Redis 6.0,Memcached 1.6,none

@@ -2,33 +2,49 @@ package presets
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"sort"
-	"strings"
 
 	"github.com/spf13/afero"
+	"gopkg.in/yaml.v2"
 )
+
+// PresetConfigQuestion preset config question
+type PresetConfigQuestion struct {
+	Message string   `yaml:"message"`
+	Options []string `yaml:"options"`
+}
+
+// PresetConfig preset config
+type PresetConfig struct {
+	Language  string              `yaml:"language"`
+	Commands  map[string][]string `yaml:"commands"`
+	Questions map[string]PresetConfigQuestion
+}
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
 	Presets   map[string]map[string]string
 	Templates map[string]map[string]string
+	Configs   map[string]string
 	fs        afero.Fs
 }
 
 // Parser holds presets parsing logic
 type Parser interface {
 	Exists(string) bool
-	GetCreateCommand(string) (string, error)
 	GetLanguages() []string
 	GetPresets(string) []string
 	LookUpFiles(string) []string
 	LoadPresets(map[string]map[string]string)
 	LoadTemplates(map[string]map[string]string)
+	LoadConfigs(map[string]string)
 	WriteFile(string, string) (string, error)
 	GetPresetKeys(string) []string
 	GetPresetKeyContent(string, string) string
 	GetTemplates() map[string]map[string]string
+	GetConfig(string) (*PresetConfig, error)
 }
 
 // NewParser creates a new preset default parser
@@ -51,20 +67,6 @@ func (p *DefaultParser) Exists(preset string) (exists bool) {
 	return
 }
 
-// ErrCreateCommandtNotFoundOrEmpty error throwed when did not find the preset create command or it's empty
-var ErrCreateCommandtNotFoundOrEmpty = errors.New("create command not found or empty")
-
-// GetCreateCommand gets the command to create a new project
-func (p *DefaultParser) GetCreateCommand(preset string) (cmd string, err error) {
-	cmd = p.Presets[preset]["preset_create"]
-
-	if cmd == "" {
-		err = ErrCreateCommandtNotFoundOrEmpty
-	}
-
-	return
-}
-
 // GetLanguages get all presets languages
 func (p *DefaultParser) GetLanguages() (languages []string) {
 	if len(p.Presets) == 0 {
@@ -72,10 +74,13 @@ func (p *DefaultParser) GetLanguages() (languages []string) {
 	}
 
 	var lookedLangs map[string]bool = make(map[string]bool)
-	for _, content := range p.Presets {
-		if presetLang, ok := content["preset_language"]; ok && !lookedLangs[presetLang] {
-			languages = append(languages, presetLang)
-			lookedLangs[presetLang] = true
+
+	for preset := range p.Presets {
+		config, err := p.GetConfig(preset)
+
+		if err == nil && config != nil && config.Language != "" && !lookedLangs[config.Language] {
+			languages = append(languages, config.Language)
+			lookedLangs[config.Language] = true
 		}
 	}
 	sort.Strings(languages)
@@ -88,11 +93,13 @@ func (p *DefaultParser) GetPresets(language string) (presets []string) {
 		return
 	}
 
-	for key, content := range p.Presets {
-		if language == "" {
-			presets = append(presets, key)
-		} else if presetLang, ok := content["preset_language"]; ok && presetLang == language {
-			presets = append(presets, key)
+	for preset := range p.Presets {
+		config, err := p.GetConfig(preset)
+
+		if err != nil || config == nil {
+			presets = append(presets, preset)
+		} else if config.Language == language {
+			presets = append(presets, preset)
 		}
 	}
 	sort.Strings(presets)
@@ -107,10 +114,6 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 	presetFiles := p.Presets[preset]
 
 	for fileName := range presetFiles {
-		if strings.HasPrefix(fileName, "preset_") {
-			continue
-		}
-
 		if _, err := p.fs.Stat(fileName); !os.IsNotExist(err) {
 			foundFiles = append(foundFiles, fileName)
 		}
@@ -193,4 +196,26 @@ func (p *DefaultParser) LoadPresets(allPresets map[string]map[string]string) {
 // LoadTemplates loads the templates
 func (p *DefaultParser) LoadTemplates(allTemplates map[string]map[string]string) {
 	p.Templates = allTemplates
+}
+
+// LoadConfigs load the configs
+func (p *DefaultParser) LoadConfigs(allConfigs map[string]string) {
+	p.Configs = allConfigs
+}
+
+// GetConfig get preset config
+func (p *DefaultParser) GetConfig(preset string) (config *PresetConfig, err error) {
+	var (
+		configValue string
+		hasConfig   bool
+	)
+
+	if configValue, hasConfig = p.Configs[preset]; !hasConfig {
+		err = fmt.Errorf("configuration for preset %s not found", preset)
+		return
+	}
+
+	config = new(PresetConfig)
+	err = yaml.Unmarshal([]byte(configValue), config)
+	return
 }
