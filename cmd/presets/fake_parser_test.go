@@ -81,6 +81,18 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked GetTemplates function on FakeParser")
 	}
 
+	allPresets := map[string]map[string]string{
+		"preset": map[string]string{
+			"file": "file content",
+		},
+	}
+
+	f.LoadPresets(allPresets)
+
+	if !f.CalledLoadPresets || !reflect.DeepEqual(allPresets, f.MockAllPresets) {
+		t.Error("failed to use mocked LoadTemplates function on FakeParser")
+	}
+
 	allTemplates := map[string]map[string]string{
 		"service": map[string]string{
 			"serviceType": "serviceContent",
@@ -103,6 +115,12 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked LoadTemplates function on FakeParser")
 	}
 
+	config, configErr := f.GetConfig("nonConfiguredPreset")
+
+	if !f.CalledGetConfig["nonConfiguredPreset"] || config != nil || configErr != nil {
+		t.Error("failed to use mocked GetConfig function on FakeParser")
+	}
+
 	f.MockConfig = map[string]*PresetConfig{
 		"preset": new(PresetConfig),
 	}
@@ -111,7 +129,7 @@ func TestFakeParser(t *testing.T) {
 		"preset": errors.New("error get config"),
 	}
 
-	config, configErr := f.GetConfig("preset")
+	config, configErr = f.GetConfig("preset")
 
 	if !f.CalledGetConfig["preset"] || config != f.MockConfig["preset"] || configErr != f.MockGetConfigError["preset"] {
 		t.Error("failed to use mocked GetConfig function on FakeParser")

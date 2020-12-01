@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
@@ -94,7 +96,7 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 	cmd.SetArgs([]string{"invalid", "my-app"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
+		t.Errorf("unexpected error executing create command; error: %v", err)
 	}
 
 	if !f.parser.(*presets.FakeParser).CalledLoadPresets {
@@ -129,5 +131,72 @@ func TestNoArgsNewCreateCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err == nil {
 		t.Error("expecting no arguments error executing create command")
+	}
+}
+
+func TestErrorConfigCreateCommand(t *testing.T) {
+	f := newFakeKoolCreate()
+
+	f.parser.(*presets.FakeParser).MockExists = true
+	getConfigError := errors.New("get config error")
+	f.parser.(*presets.FakeParser).MockGetConfigError = map[string]error{
+		"laravel": getConfigError,
+	}
+
+	cmd := NewCreateCommand(f)
+
+	cmd.SetArgs([]string{"laravel", "my-app"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing create command; error: %v", err)
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("did not call Error")
+	}
+
+	expected := fmt.Sprintf("error parsing preset config; err: %v", getConfigError)
+	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+
+	if expected != output {
+		t.Errorf("expecting error '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+}
+
+func TestNoCreateCommandsCreateCommand(t *testing.T) {
+	f := newFakeKoolCreate()
+
+	f.parser.(*presets.FakeParser).MockExists = true
+	f.parser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": &presets.PresetConfig{
+			Commands: make(map[string][]string),
+		},
+	}
+
+	cmd := NewCreateCommand(f)
+
+	cmd.SetArgs([]string{"laravel", "my-app"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing create command; error: %v", err)
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("did not call Error")
+	}
+
+	expected := "No create commands were found for preset laravel"
+	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+
+	if expected != output {
+		t.Errorf("expecting error '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
 	}
 }
