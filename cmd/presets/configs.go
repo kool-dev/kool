@@ -20,16 +20,16 @@ questions:
   database:
     message: What database service do you want to use
     options:
-      - MySQL 8.0
-      - MySQL 5.7
-      - ProstgreSQL 13.0
-      - none
+      mysql8: MySQL 8.0
+      mysql57: MySQL 5.7
+      prostgresql13: ProstgreSQL 13.0
+      none: none
   cache:
     message: What cache service do you want to use
     options:
-      - Redis 6.0
-      - Memcached 1.6
-      - none
+      redis6: Redis 6.0
+      memcached16: Memcached 1.6
+      none: none
 
 `
 	configs["nestjs"] = `language: javascript
@@ -70,16 +70,16 @@ questions:
   database:
     message: What database service do you want to use
     options:
-      - MySQL 8.0
-      - MySQL 5.7
-      - ProstgreSQL 13.0
-      - none
+      mysql8: MySQL 8.0
+      mysql57: MySQL 5.7
+      prostgresql13: ProstgreSQL 13.0
+      none: none
   cache:
     message: What cache service do you want to use
     options:
-      - Redis 6.0
-      - Memcached 1.6
-      - none
+      redis6: Redis 6.0
+      memcached16: Memcached 1.6
+      none: none
 
 `
 	configs["wordpress"] = `language: php
@@ -90,16 +90,16 @@ questions:
   database:
     message: What database service do you want to use
     options:
-      - MySQL 8.0
-      - MySQL 5.7
-      - ProstgreSQL 13.0
-      - none
+      mysql8: MySQL 8.0
+      mysql57: MySQL 5.7
+      prostgresql13: ProstgreSQL 13.0
+      none: none
   cache:
     message: What cache service do you want to use
     options:
-      - Redis 6.0
-      - Memcached 1.6
-      - none
+      redis6: Redis 6.0
+      memcached16: Memcached 1.6
+      none: none
 
 `
 	return configs

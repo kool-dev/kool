@@ -153,7 +153,7 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	}
 }
 
-func TestGetPresetKeysAndContentsParser(t *testing.T) {
+func TestGetPresetKeyContentParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
 
 	preset := make(map[string]string)
@@ -166,12 +166,6 @@ func TestGetPresetKeysAndContentsParser(t *testing.T) {
 
 	p := NewParser()
 	p.LoadPresets(presets)
-
-	keys := p.GetPresetKeys("preset")
-
-	if len(keys) != 3 || keys[0] != "key1" || keys[1] != "key2" || keys[2] != "key3" {
-		t.Errorf("expecting to find keys '[key1 key2 key3]', found %v", keys)
-	}
 
 	content := p.GetPresetKeyContent("preset", "key2")
 
@@ -209,12 +203,20 @@ func TestGetTemplatesParser(t *testing.T) {
 	}
 }
 
-func TestWriteFileParser(t *testing.T) {
+func TestWriteFilesParser(t *testing.T) {
 	fs := afero.NewMemMapFs()
 
 	p := NewParserFS(fs)
 
-	if _, err := p.WriteFile("kool.yml", "scripts"); err != nil {
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	if _, err := p.WriteFiles("preset"); err != nil {
 		t.Errorf("unexpected error writing file, err: %v", err)
 	}
 
@@ -272,7 +274,7 @@ questions:
   question1:
     message: message?
     options:
-      - option1
+      option1Key: option1Value
 `,
 	}
 
@@ -300,7 +302,7 @@ questions:
 	}
 
 	questions1, question1Exists := cfg.Questions["question1"]
-	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0] != "option1" {
+	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0].Key != "option1Key" || questions1.Options[0].Value != "option1Value" {
 		t.Error("failed getting questions preset configuration")
 	}
 }

@@ -12,8 +12,8 @@ import (
 
 // PresetConfigQuestion preset config question
 type PresetConfigQuestion struct {
-	Message string   `yaml:"message"`
-	Options []string `yaml:"options"`
+	Message string        `yaml:"message"`
+	Options yaml.MapSlice `yaml:"options"`
 }
 
 // PresetConfig preset config
@@ -40,9 +40,9 @@ type Parser interface {
 	LoadPresets(map[string]map[string]string)
 	LoadTemplates(map[string]map[string]string)
 	LoadConfigs(map[string]string)
-	WriteFile(string, string) (string, error)
-	GetPresetKeys(string) []string
+	WriteFiles(string) (string, error)
 	GetPresetKeyContent(string, string) string
+	SetPresetKeyContent(string, string, string)
 	GetTemplates() map[string]map[string]string
 	GetConfig(string) (*PresetConfig, error)
 }
@@ -121,66 +121,69 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 	return
 }
 
-// WriteFile write preset file
-func (p *DefaultParser) WriteFile(fileName string, fileContent string) (fileError string, err error) {
-	var (
-		file  afero.File
-		lines int
-	)
+// WriteFiles write preset files
+func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) {
+	presetFiles := p.Presets[preset]
 
-	file, err = p.fs.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+	for fileName, fileContent := range presetFiles {
+		var (
+			file  afero.File
+			lines int
+		)
 
-	if err != nil {
-		fileError = fileName
-		return
+		file, err = p.fs.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+
+		if err != nil {
+			fileError = fileName
+			return
+		}
+
+		if lines, err = file.Write([]byte(fileContent)); err != nil {
+			fileError = fileName
+			return
+		}
+
+		if len([]byte(fileContent)) != lines {
+			fileError = fileName
+			err = ErrPresetWriteAllBytes
+			return
+		}
+
+		if err = file.Sync(); err != nil {
+			fileError = fileName
+			return
+		}
+
+		file.Close()
 	}
-
-	defer file.Close()
-
-	if lines, err = file.Write([]byte(fileContent)); err != nil {
-		fileError = fileName
-		return
-	}
-
-	if len([]byte(fileContent)) != lines {
-		fileError = fileName
-		err = ErrPresetWriteAllBytes
-		return
-	}
-
-	if err = file.Sync(); err != nil {
-		fileError = fileName
-		return
-	}
-
-	return
-}
-
-// GetPresetKeys get preset file contents
-func (p *DefaultParser) GetPresetKeys(preset string) (keys []string) {
-	presetData := p.Presets[preset]
-
-	for dataKey := range presetData {
-		keys = append(keys, dataKey)
-	}
-
-	sort.Strings(keys)
 
 	return
 }
 
 // GetPresetKeyContent get preset key value
 func (p *DefaultParser) GetPresetKeyContent(preset string, key string) (value string) {
-	presetData := p.Presets[preset]
+	if _, presetFound := p.Presets[preset]; !presetFound {
+		return
+	}
 
-	for dataKey, dataContent := range presetData {
-		if dataKey == key {
-			value = dataContent
-			return
-		}
+	if dataContent, keyFound := p.Presets[preset][key]; keyFound {
+		value = dataContent
 	}
 
 	return
+}
+
+// SetPresetKeyContent set preset key value
+func (p *DefaultParser) SetPresetKeyContent(preset string, key string, content string) {
+	if _, found := p.Presets[preset]; !found {
+		return
+	}
+
+	if _, found := p.Presets[preset][key]; !found {
+		return
+	}
+
+	p.Presets[preset][key] = content
 }
 
 // GetTemplates get all templates

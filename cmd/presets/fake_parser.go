@@ -4,11 +4,11 @@ package presets
 type FakeParser struct {
 	CalledExists              bool
 	CalledLookUpFiles         bool
-	CalledWriteFile           map[string]map[string]bool
+	CalledWriteFiles          map[string]bool
 	CalledGetPresets          bool
 	CalledGetLanguages        bool
-	CalledGetPresetKeys       bool
 	CalledGetPresetKeyContent map[string]map[string]bool
+	CalledSetPresetKeyContent map[string]map[string]map[string]bool
 	CalledGetTemplates        bool
 	CalledLoadPresets         bool
 	CalledLoadTemplates       bool
@@ -21,7 +21,6 @@ type FakeParser struct {
 	MockError            error
 	MockLanguages        []string
 	MockPresets          []string
-	MockPresetKeys       []string
 	MockPresetKeyContent map[string]map[string]string
 	MockTemplates        map[string]map[string]string
 	MockAllPresets       map[string]map[string]string
@@ -59,26 +58,15 @@ func (f *FakeParser) LookUpFiles(preset string) (foundFiles []string) {
 	return
 }
 
-// WriteFile write preset files
-func (f *FakeParser) WriteFile(fileName string, fileContent string) (fileError string, err error) {
-	if f.CalledWriteFile == nil {
-		f.CalledWriteFile = make(map[string]map[string]bool)
+// WriteFiles write preset files
+func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
+	if f.CalledWriteFiles == nil {
+		f.CalledWriteFiles = make(map[string]bool)
 	}
 
-	if _, ok := f.CalledWriteFile[fileName]; !ok {
-		f.CalledWriteFile[fileName] = make(map[string]bool)
-	}
-
-	f.CalledWriteFile[fileName][fileContent] = true
+	f.CalledWriteFiles[preset] = true
 	fileError = f.MockFileError
 	err = f.MockError
-	return
-}
-
-// GetPresetKeys get preset file contents
-func (f *FakeParser) GetPresetKeys(preset string) (keys []string) {
-	f.CalledGetPresetKeys = true
-	keys = f.MockPresetKeys
 	return
 }
 
@@ -95,6 +83,23 @@ func (f *FakeParser) GetPresetKeyContent(preset string, key string) (value strin
 	f.CalledGetPresetKeyContent[preset][key] = true
 	value = f.MockPresetKeyContent[preset][key]
 	return
+}
+
+// SetPresetKeyContent set preset key value
+func (f *FakeParser) SetPresetKeyContent(preset string, key string, content string) {
+	if f.CalledSetPresetKeyContent == nil {
+		f.CalledSetPresetKeyContent = make(map[string]map[string]map[string]bool)
+	}
+
+	if _, ok := f.CalledSetPresetKeyContent[preset]; !ok {
+		f.CalledSetPresetKeyContent[preset] = make(map[string]map[string]bool)
+	}
+
+	if _, ok := f.CalledSetPresetKeyContent[preset][key]; !ok {
+		f.CalledSetPresetKeyContent[preset][key] = make(map[string]bool)
+	}
+
+	f.CalledSetPresetKeyContent[preset][key][content] = true
 }
 
 // GetTemplates get all templates

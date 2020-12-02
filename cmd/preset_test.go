@@ -7,6 +7,8 @@ import (
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 const defaultCompose string = `version: "3.7"
@@ -124,7 +126,6 @@ func TestNewKoolPreset(t *testing.T) {
 func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"kool.yml"}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
 			"kool.yml": "kool.yml content",
@@ -154,6 +155,14 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call parser.LoadTemplates")
 	}
 
+	if !f.presetsParser.(*presets.FakeParser).CalledLoadPresets {
+		t.Error("did not call parser.LoadPresets")
+	}
+
+	if !f.presetsParser.(*presets.FakeParser).CalledLoadConfigs {
+		t.Error("did not call parser.LoadConfigs")
+	}
+
 	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetConfig["laravel"]; !ok || !val {
 		t.Error("did not call parser.GetConfig for preset 'laravel'")
 	}
@@ -173,20 +182,12 @@ func TestPresetCommand(t *testing.T) {
 		t.Error("did not call parser.LookUpFiles")
 	}
 
-	if !f.presetsParser.(*presets.FakeParser).CalledGetPresetKeys {
-		t.Error("did not call parser.GetPresetKeys")
-	}
-
 	if !f.presetsParser.(*presets.FakeParser).CalledGetTemplates {
 		t.Error("did not call parser.GetTemplates")
 	}
 
-	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["kool.yml"]; !ok || !val {
-		t.Error("failed calling parser.GetPresetKeyContent for preset 'laravel' and file 'kool.yml'")
-	}
-
-	if val, ok := f.presetsParser.(*presets.FakeParser).CalledWriteFile["kool.yml"]["kool.yml content"]; !ok || !val {
-		t.Error("failed calling parser.WriteFile for file 'kool.yml' with the content 'kool.yml content'")
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledWriteFiles["laravel"]; !ok || !val {
+		t.Error("failed calling parser.WriteFiles for preset 'laravel'")
 	}
 
 	if !f.out.(*shell.FakeOutputWriter).CalledSuccess {
@@ -298,7 +299,6 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 func TestWriteErrorPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"kool.yml"}
 	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
 		"laravel": map[string]string{
 			"kool.yml": "kool.yml content",
@@ -514,7 +514,10 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: []string{"mysql", "postgresql"},
+				Options: yaml.MapSlice{
+					yaml.MapItem{Key: "mysql", Value: "mysql"},
+					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				},
 			},
 		},
 	}
@@ -529,7 +532,6 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "mysql",
 	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
 		"database": map[string]string{
 			"mysql.yml": mysqlTemplate,
@@ -569,7 +571,11 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: []string{"mysql", "postgresql", "none"},
+				Options: yaml.MapSlice{
+					yaml.MapItem{Key: "mysql", Value: "mysql"},
+					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+					yaml.MapItem{Key: "none", Value: "none"},
+				},
 			},
 		},
 	}
@@ -584,7 +590,6 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "none",
 	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
 		"database": map[string]string{
 			"mysql.yml": mysqlTemplate,
@@ -624,32 +629,6 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	}
 }
 
-func TestSkipInvalidPresetKeyPresetCommand(t *testing.T) {
-	f := newFakeKoolPreset()
-	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"preset_key"}
-
-	cmd := NewPresetCommand(f)
-
-	cmd.SetArgs([]string{"laravel"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["preset_key"]; ok && val {
-		t.Error("should not CalledAsk presetsParser.GetPresetKeyContent for preset 'laravel' and key 'preset_key'")
-	}
-
-	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; ok && val {
-		t.Error("should not call compose.Load")
-	}
-
-	if f.composeParser.(*compose.FakeParser).CalledString {
-		t.Error("should not call compose.String")
-	}
-}
-
 func TestErrorAskForServicePresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
@@ -659,7 +638,10 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: []string{"mysql", "postgresql"},
+				Options: yaml.MapSlice{
+					yaml.MapItem{Key: "mysql", Value: "mysql"},
+					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				},
 			},
 		},
 	}
@@ -701,7 +683,10 @@ func TestErrorLoadComposePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: []string{"mysql", "postgresql"},
+				Options: yaml.MapSlice{
+					yaml.MapItem{Key: "mysql", Value: "mysql"},
+					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				},
 			},
 		},
 	}
@@ -716,7 +701,6 @@ func TestErrorLoadComposePresetCommand(t *testing.T) {
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "mysql",
 	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
 	f.composeParser.(*compose.FakeParser).MockLoadError = errors.New("compose load error")
 
 	cmd := NewPresetCommand(f)
@@ -749,7 +733,10 @@ func TestErrorSetComposeServicePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: []string{"mysql", "postgresql"},
+				Options: yaml.MapSlice{
+					yaml.MapItem{Key: "mysql", Value: "mysql"},
+					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				},
 			},
 		},
 	}
@@ -764,7 +751,6 @@ func TestErrorSetComposeServicePresetCommand(t *testing.T) {
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "mysql",
 	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
 		"database": map[string]string{
 			"mysql.yml": mysqlTemplate,
@@ -803,7 +789,10 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: []string{"mysql", "postgresql"},
+				Options: yaml.MapSlice{
+					yaml.MapItem{Key: "mysql", Value: "mysql"},
+					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				},
 			},
 		},
 	}
@@ -818,7 +807,6 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "mysql",
 	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeys = []string{"docker-compose.yml"}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
 		"database": map[string]string{
 			"mysql.yml": mysqlTemplate,

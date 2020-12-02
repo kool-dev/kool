@@ -25,9 +25,9 @@ func TestFakeParser(t *testing.T) {
 
 	f.MockFileError = "kool.yml"
 	f.MockError = errors.New("error")
-	fileError, err := f.WriteFile("filename", "filecontent")
+	fileError, err := f.WriteFiles("preset")
 
-	if !f.CalledWriteFile["filename"]["filecontent"] || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
+	if !f.CalledWriteFiles["preset"] || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
 		t.Error("failed to use mocked WriteFiles function on FakeParser")
 	}
 
@@ -45,13 +45,6 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
 
-	f.MockPresetKeys = []string{"key"}
-	keys := f.GetPresetKeys("preset")
-
-	if !f.CalledGetPresetKeys || len(keys) != 1 || keys[0] != "key" {
-		t.Error("failed to use mocked GetPresetKeys function on FakeParser")
-	}
-
 	f.MockPresetKeyContent = map[string]map[string]string{
 		"preset": map[string]string{
 			"key": "content",
@@ -60,6 +53,12 @@ func TestFakeParser(t *testing.T) {
 	content := f.GetPresetKeyContent("preset", "key")
 
 	if !f.CalledGetPresetKeyContent["preset"]["key"] || content != "content" {
+		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
+	}
+
+	f.SetPresetKeyContent("preset", "key", "content")
+
+	if !f.CalledSetPresetKeyContent["preset"]["key"]["content"] {
 		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
 	}
 

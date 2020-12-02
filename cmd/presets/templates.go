@@ -12,7 +12,7 @@ volumes:
 networks:
   - kool_local
 `,
-		"redis60.yml": `image: redis:6-alpine
+		"redis6.yml": `image: redis:6-alpine
 volumes:
   - cache:/data:delegated
 networks:
@@ -34,7 +34,7 @@ volumes:
 networks:
  - kool_local
 `,
-		"mysql80.yml": `image: mysql:8.0
+		"mysql8.yml": `image: mysql:8.0
 command: --default-authentication-plugin=mysql_native_password
 ports:
   - "${KOOL_DATABASE_PORT:-3306}:3306"
@@ -49,7 +49,7 @@ volumes:
 networks:
  - kool_local
 `,
-		"prostgresql130.yml": `image: postgres:13-alpine
+		"prostgresql13.yml": `image: postgres:13-alpine
 ports:
   - "${KOOL_DATABASE_PORT:-3306}:3306"
 environment:
