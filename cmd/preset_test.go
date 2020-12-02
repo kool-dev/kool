@@ -835,3 +835,37 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 		t.Errorf("expecting error 'Failed to write preset file docker-compose.yml: compose string error', got %v", err)
 	}
 }
+
+func TestErrorGetConfigPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockGetConfigError = map[string]error{
+		"laravel": errors.New("get config error"),
+	}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"laravel"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.out.(*shell.FakeOutputWriter).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "error parsing preset config; err: get config error" {
+		t.Errorf("expecting error 'error parsing preset config; err: get config error', got %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Error")
+	}
+}

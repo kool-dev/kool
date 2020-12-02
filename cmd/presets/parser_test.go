@@ -172,6 +172,57 @@ func TestGetPresetKeyContentParser(t *testing.T) {
 	if content != "value2" {
 		t.Errorf("expecting to find value 'value2', found %s", content)
 	}
+
+	content = p.GetPresetKeyContent("invalid_preset", "key1")
+
+	if content != "" {
+		t.Errorf("expecting to find value 'value2', found %s", content)
+	}
+
+	content = p.GetPresetKeyContent("preset", "invalid_key1")
+
+	if content != "" {
+		t.Errorf("expecting to find value 'value2', found %s", content)
+	}
+}
+
+func TestSetPresetKeyContentParser(t *testing.T) {
+	presets := make(map[string]map[string]string)
+
+	preset := make(map[string]string)
+
+	preset["key1"] = "value1"
+	preset["key2"] = "value2"
+	preset["key3"] = "value3"
+
+	presets["preset"] = preset
+
+	p := NewParser()
+	p.LoadPresets(presets)
+
+	p.SetPresetKeyContent("preset", "key2", "value2Changed")
+
+	content := p.GetPresetKeyContent("preset", "key2")
+
+	if content != "value2Changed" {
+		t.Errorf("expecting to find value 'value2Changed', found %s", content)
+	}
+
+	p.SetPresetKeyContent("invalid_preset", "key1", "value1Changed")
+
+	content = p.GetPresetKeyContent("preset", "key1")
+
+	if content != "value1" {
+		t.Errorf("expecting to find value 'value1', found %s", content)
+	}
+
+	p.SetPresetKeyContent("preset", "invalid_key", "value1Changed")
+
+	content = p.GetPresetKeyContent("preset", "key1")
+
+	if content != "value1" {
+		t.Errorf("expecting to find value 'value1', found %s", content)
+	}
 }
 
 func TestGetTemplatesParser(t *testing.T) {
