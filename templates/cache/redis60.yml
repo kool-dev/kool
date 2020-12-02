@@ -1,0 +1,5 @@
+image: redis:6-alpine
+volumes:
+  - cache:/data:delegated
+networks:
+  - kool_local

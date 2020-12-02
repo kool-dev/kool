@@ -45,7 +45,7 @@ func TestNewKoolCreateCommand(t *testing.T) {
 	f := newFakeKoolCreate()
 
 	f.parser.(*presets.FakeParser).MockExists = true
-	f.KoolPreset.parser.(*presets.FakeParser).MockExists = true
+	f.KoolPreset.presetsParser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockCreateCommand = "kool docker create command"
 	f.createCommand.(*builder.FakeCommand).MockCmd = "create"
 

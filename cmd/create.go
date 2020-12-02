@@ -30,7 +30,7 @@ func init() {
 func NewKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newDefaultKoolService(),
-		&presets.DefaultParser{},
+		presets.NewParser(),
 		&builder.DefaultCommand{},
 		*NewKoolPreset(),
 	}

@@ -18,7 +18,11 @@ const presetsTemplate string = `package presets
 `
 
 func main() {
-	var err error
+	var (
+		folders []os.FileInfo
+		files   []os.FileInfo
+		err     error
+	)
 	presets, err := os.Create("cmd/presets/presets.go")
 
 	if err != nil {
@@ -27,7 +31,7 @@ func main() {
 
 	defer presets.Close()
 
-	folders, err := ioutil.ReadDir("presets")
+	folders, err = ioutil.ReadDir("presets")
 
 	if err != nil {
 		log.Fatal(err)
@@ -47,7 +51,7 @@ func main() {
 
 		presets.WriteString(fmt.Sprintf("\tpresets[\"%s\"] = map[string]string{\n", folder.Name()))
 
-		files, err := ioutil.ReadDir(filepath.Join("presets", folder.Name()))
+		files, err = ioutil.ReadDir(filepath.Join("presets", folder.Name()))
 
 		if err != nil {
 			log.Fatal(err)
@@ -91,6 +95,58 @@ func main() {
 	}
 
 	presets.WriteString("\treturn presets\n")
+	presets.WriteString("}\n")
+
+	presets.WriteString("// GetTemplates get all templates\n")
+	presets.WriteString("func GetTemplates() map[string]map[string]string {\n")
+	presets.WriteString("\tvar templates = make(map[string]map[string]string)\n")
+
+	folders, err = ioutil.ReadDir("templates")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, folder := range folders {
+		if !folder.IsDir() {
+			continue
+		}
+
+		fmt.Println("Found folder", folder.Name())
+
+		presets.WriteString(fmt.Sprintf("\ttemplates[\"%s\"] = map[string]string{\n", folder.Name()))
+
+		files, err = ioutil.ReadDir(filepath.Join("templates", folder.Name()))
+
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+
+			templFile, err := os.Open(filepath.Join("templates", folder.Name(), file.Name()))
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			filebytes, err := ioutil.ReadAll(templFile)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			filecontent := string(filebytes)
+
+			presets.WriteString(fmt.Sprintf("\t\t\"%s\": `%s`,\n", file.Name(), filecontent))
+			fmt.Println("Parsed file:", file.Name())
+
+			templFile.Close()
+		}
+
+		presets.WriteString("\t}\n")
+	}
+
+	presets.WriteString("\treturn templates\n")
 	presets.WriteString("}\n")
 
 	fmt.Println("Finished building cmd/presets/presets.go")
