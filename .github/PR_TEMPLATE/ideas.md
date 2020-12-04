@@ -34,7 +34,4 @@ So based on the initial discussion here, I would say we need to at least address
 
 checklist ->
 
-> I have commented the code I wrote
-> i have tested the code i am submiting
-> I understand that my request may be rejected, and will not take this personally.
-> if I found an issue, I have already open a issue or let the maintainers know, before submitting this PR
+>
