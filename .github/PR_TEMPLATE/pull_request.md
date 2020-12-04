@@ -6,14 +6,16 @@ labels: ""
 assignees: ""
 ---
 
-**TL;DR**
+## **TL;DR**
 
 Provide a short description on what you are implementing. Refference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
 
-[x] The code I am submitting is commented.
-[x] The code I am submitting is Tested.
-[x] I understand that my request may be rejected, and will not take this personally.
-[x] If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
+:speech_balloon: The code I am submitting is commented.
+:white_check_mark: The code I am submitting is Tested.
+:relieved: I understand that my request may be rejected, and will not take this personally.
+:cool: If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
+
+<hr>
 
 **Describe the update**
 
@@ -27,6 +29,13 @@ A clear explanation of what is being updated. Try to remember these points:
 **Kool version and environment**
 
 Please provide the version you are running (`kool -v`), which environment (OS, shell, docker, DinD), and also what environment variables you are using (`kool info`).
+
+E.g:.
+
+```bash
+~$ kool -v
+kool version 1.7.0
+```
 
 **Expected behavior**
 
