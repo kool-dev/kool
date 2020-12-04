@@ -6,14 +6,16 @@ labels: ""
 assignees: ""
 ---
 
-## **TL;DR**
-
-Provide a short description on what you are implementing. Refference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
+## **Acknowledgements**
 
 :speech_balloon: The code I am submitting is commented.
 :white_check_mark: The code I am submitting is Tested, and I will describe if there are any side effects **(including potential)**.
-:relieved: I understand that my request may be rejected, and will not take this personally.
+:relieved: I understand that my request may be rejected, and will **not** take this personally.
 :cool: If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
+
+## **TL;DR**
+
+Provide a short description on what you are implementing. Refference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
 
 <hr>
 
