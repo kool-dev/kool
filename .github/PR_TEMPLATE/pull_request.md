@@ -9,8 +9,11 @@ assignees: ""
 ## **Acknowledgements**
 
 :speech_balloon: The code I am submitting is commented.
+
 :white_check_mark: The code I am submitting is Tested, and I will describe if there are any side effects **(including potential)**.
+
 :relieved: I understand that my request may be rejected, and will **not** take this personally.
+
 :cool: If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
 
 ## **TL;DR**
