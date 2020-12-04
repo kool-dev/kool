@@ -5,6 +5,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"os"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -14,6 +15,7 @@ type Parser interface {
 	AddLookupPath(string) error
 	Parse(string) ([]builder.Command, error)
 	ParseAvailableScripts(string) ([]string, error)
+	LookUpVariables(string) ([]string)
 }
 
 // DefaultParser implements all default behavior for using kool.yml files.
@@ -127,6 +129,51 @@ func (p *DefaultParser) ParseAvailableScripts(filter string) (scripts []string, 
 	}
 
 	sort.Strings(scripts)
+
+	return
+}
+
+// LookUpVariables look for variables in the script
+func (p *DefaultParser) LookUpVariables(script string) (variables []string) {
+	var (
+		koolFile        string
+		parsedFile      *KoolYaml
+		found           bool
+		err             error
+	)
+
+	if len(p.targetFiles) == 0 {
+		return
+	}
+
+	r := regexp.MustCompile("\\${.*?}")
+
+	for _, koolFile = range p.targetFiles {
+		if parsedFile, err = ParseKoolYaml(koolFile); err != nil {
+			return
+		}
+
+		if found = parsedFile.HasScript(script); found {
+			if line, isSingle := parsedFile.Scripts[script].(string); isSingle {
+				variables = append(
+					variables,
+					r.FindAllString(line, -1)...,
+				)
+			} else if lines, isList := parsedFile.Scripts[script].([]interface{}); isList {
+				for _, line := range lines {
+					variables = append(
+						variables,
+						r.FindAllString(line.(string), -1)...,
+					)
+				}
+			}
+		}
+	}
+
+	for index := range variables {
+		variable := variables[index]
+		variables[index] = variable[2:len(variable) - 1]
+	}
 
 	return
 }

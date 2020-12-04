@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	"kool-dev/kool/cmd/shell"
 	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
@@ -17,6 +19,7 @@ type KoolRun struct {
 	parser     parser.Parser
 	envStorage environment.EnvStorage
 	commands   []builder.Command
+	promptInput shell.PromptInput
 }
 
 // ErrExtraArguments Extra arguments error
@@ -43,6 +46,7 @@ func NewKoolRun() *KoolRun {
 		parser.NewParser(),
 		environment.NewEnvStorage(),
 		[]builder.Command{},
+		shell.NewPromptInput(),
 	}
 }
 
@@ -58,8 +62,11 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	// look for kool.yml on kool folder within user home directory
 	_ = r.parser.AddLookupPath(path.Join(r.envStorage.Get("HOME"), "kool"))
 
-	script = originalArgs[0]
-	args = originalArgs[1:]
+	script, args = r.parserArgs(originalArgs)
+
+	if err = r.checkScriptVariables(script); err != nil {
+		return
+	}
 
 	if r.commands, err = r.parser.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
@@ -110,6 +117,45 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
+
+	return
+}
+
+func (r *KoolRun) parserArgs(originalArgs []string) (script string, args []string) {
+	script = originalArgs[0]
+
+	for _, arg := range originalArgs[1:] {
+		if strings.HasPrefix(arg, "--") && strings.Contains(arg, "=") {
+			splitted := strings.Split(arg[2:], "=")
+			r.envStorage.Set(splitted[0], splitted[1])
+		} else {
+			args = append(args, arg)
+		}
+	}
+
+	return
+}
+
+func (r *KoolRun) checkScriptVariables(script string) (err error) {
+	if !r.IsTerminal() {
+		return
+	}
+
+	variables := r.parser.LookUpVariables(script)
+
+	for _, varKey := range variables {
+		var varValue string
+		if r.envStorage.Has(varKey) {
+			continue
+		}
+
+		question := fmt.Sprintf("There is no value for variable '%s'. Please, type one:", varKey)
+		if varValue, err = r.promptInput.Ask(question); err != nil {
+			return
+		}
+
+		r.envStorage.Set(varKey, varValue)
+	}
 
 	return
 }

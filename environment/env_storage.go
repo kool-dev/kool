@@ -16,6 +16,7 @@ type EnvStorage interface {
 	Load(string) error
 	All() []string
 	IsTrue(string) bool
+	Has(string) bool
 }
 
 // NewEnvStorage creates a new Environment Storage instance
@@ -48,4 +49,10 @@ func (es *DefaultEnvStorage) All() []string {
 func (es *DefaultEnvStorage) IsTrue(key string) bool {
 	value := os.Getenv(key)
 	return value == "1" || value == "true"
+}
+
+// Has check if environment variable exists
+func (es *DefaultEnvStorage) Has(key string) (has bool) {
+	_, has = os.LookupEnv(key)
+	return
 }
