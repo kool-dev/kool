@@ -1,2 +1,4 @@
 scripts:
   testing: "echo testing"
+
+  variables: echo ${testing_var}

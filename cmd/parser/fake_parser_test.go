@@ -48,6 +48,13 @@ func TestFakeParser(t *testing.T) {
 	if len(scripts) != 0 {
 		t.Error("failed to use mocked ParseAvailableScripts function on FakeParser")
 	}
+
+	f.MockVariables = []string{"variable"}
+	variables := f.LookUpVariables("script")
+
+	if !f.CalledLookUpVariables || len(variables) != 1 || variables[0] != "variable" {
+		t.Error("failed to use mocked LookUpVariables function on FakeParser")
+	}
 }
 
 func TestFakeFailedParser(t *testing.T) {

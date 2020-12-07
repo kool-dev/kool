@@ -329,3 +329,89 @@ func TestNewRunCommandFailingCompletion(t *testing.T) {
 		t.Errorf("expecting no suggestion, got %v", scripts)
 	}
 }
+
+func TestNewRunCommandSetVariableArgument(t *testing.T) {
+	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{}}, nil)
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"script", "--foo=bar"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.parser.(*parser.FakeParser).CalledLookUpVariables {
+		t.Error("did not call LookUpVariables on parser.Parser")
+	}
+
+	if fooVal, hasFoo := f.envStorage.(*environment.FakeEnvStorage).Envs["foo"]; !hasFoo || fooVal != "bar" {
+		t.Error("failed to set the variable 'foo'")
+	}
+}
+
+func TestNewRunCommandAskForVariableValue(t *testing.T) {
+	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{}}, nil)
+	f.parser.(*parser.FakeParser).MockVariables = []string{"foo"}
+	f.promptInput.(*shell.FakePromptInput).MockAnswer = map[string]string{
+		"There is no value for variable 'foo'. Please, type one:": "bar",
+	}
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.promptInput.(*shell.FakePromptInput).CalledAsk {
+		t.Error("did not call Ask on shell.PromptInput")
+	}
+
+	if fooVal, hasFoo := f.envStorage.(*environment.FakeEnvStorage).Envs["foo"]; !hasFoo || fooVal != "bar" {
+		t.Error("failed to set the variable 'foo'")
+	}
+}
+
+func TestNewRunCommandErrorAskForVariableValue(t *testing.T) {
+	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{}}, nil)
+	f.parser.(*parser.FakeParser).MockVariables = []string{"foo"}
+	f.promptInput.(*shell.FakePromptInput).MockError = map[string]error{
+		"There is no value for variable 'foo'. Please, type one:": errors.New("error prompt input"),
+	}
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.out.(*shell.FakeOutputWriter).CalledError {
+		t.Error("did not call Error for prompt input error")
+	}
+
+	expectedError := "error prompt input"
+
+	if gotError := f.out.(*shell.FakeOutputWriter).Err.Error(); gotError != expectedError {
+		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("got a prompt input error, but command did not exit")
+	}
+}
+
+func TestNewRunCommandNonTtyAskForVariableValue(t *testing.T) {
+	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{}}, nil)
+	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if f.parser.(*parser.FakeParser).CalledLookUpVariables {
+		t.Error("should not call LookUpVariables on parser.Parser on Non-Tty environment")
+	}
+}
