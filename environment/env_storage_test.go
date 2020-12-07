@@ -85,3 +85,17 @@ func TestIsTrueNonBooleanStringEnvStorage(t *testing.T) {
 		t.Error("Environment variable non-boolean value should not be true.")
 	}
 }
+
+func TestHasEnvStorage(t *testing.T) {
+	e := NewEnvStorage()
+
+	os.Setenv("testing-key", "testing-value")
+
+	if hasKey := e.Has("testing-key"); !hasKey {
+		t.Error("Has should return true with key 'testing-key'")
+	}
+
+	if hasKey := e.Has("invalid-key"); hasKey {
+		t.Error("Has should return false with key 'invalid-key'")
+	}
+}
