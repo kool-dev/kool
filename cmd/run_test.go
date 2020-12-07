@@ -332,6 +332,8 @@ func TestNewRunCommandFailingCompletion(t *testing.T) {
 
 func TestNewRunCommandSetVariableArgument(t *testing.T) {
 	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{}}, nil)
+	f.parser.(*parser.FakeParser).MockVariables = []string{"foo"}
+
 	cmd := NewRunCommand(f)
 	cmd.SetArgs([]string{"script", "--foo=bar"})
 

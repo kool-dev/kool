@@ -98,7 +98,7 @@ func TestParserParseAvailableScripts(t *testing.T) {
 		t.Errorf("unexpected error; error: %s", err)
 	}
 
-	if len(scripts) != 2 || scripts[0] != "testing" || scripts[1] != "variables" {
+	if len(scripts) != 3 || scripts[0] != "multi-variables" || scripts[1] != "testing" || scripts[2] != "variables" {
 		t.Error("failed to get all scripts from kool.yml")
 	}
 }
@@ -150,6 +150,18 @@ func TestParserLookUpVariables(t *testing.T) {
 	}
 
 	if variables = p.LookUpVariables("variables"); len(variables) != 1 || variables[0] != "testing_var" {
+		t.Error("failed to get variables in a script")
+	}
+}
+
+func TestParserLookUpVariablesMulti(t *testing.T) {
+	var variables []string
+	p := NewParser()
+
+	workDir, _ := os.Getwd()
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+
+	if variables = p.LookUpVariables("multi-variables"); len(variables) != 2 || variables[0] != "testing_var1" || variables[1] != "testing_var2" {
 		t.Error("failed to get variables in a script")
 	}
 }

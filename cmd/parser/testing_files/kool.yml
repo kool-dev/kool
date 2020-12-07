@@ -2,3 +2,7 @@ scripts:
   testing: "echo testing"
 
   variables: echo ${testing_var}
+
+  multi-variables:
+    - echo ${testing_var1}
+    - echo ${testing_var2}
