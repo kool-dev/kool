@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"fmt"
-	"kool-dev/kool/cmd/shell"
 	"errors"
+	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"path"
 	"strings"
@@ -16,9 +16,9 @@ import (
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
-	parser     parser.Parser
-	envStorage environment.EnvStorage
-	commands   []builder.Command
+	parser      parser.Parser
+	envStorage  environment.EnvStorage
+	commands    []builder.Command
 	promptInput shell.PromptInput
 }
 

@@ -11,10 +11,12 @@ type FakeParser struct {
 	TargetFiles                    []string
 	CalledParse                    bool
 	CalledParseAvailableScripts    bool
+	CalledLookUpVariables          bool
 	MockParsedCommands             []builder.Command
 	MockParseError                 error
 	MockScripts                    []string
 	MockParseAvailableScriptsError error
+	MockVariables                  []string
 }
 
 // AddLookupPath implements fake AddLookupPath behavior
@@ -47,5 +49,12 @@ func (f *FakeParser) ParseAvailableScripts(filter string) (scripts []string, err
 	}
 
 	err = f.MockParseAvailableScriptsError
+	return
+}
+
+// LookUpVariables implements fake LookUpVariables behavior
+func (f *FakeParser) LookUpVariables(script string) (variables []string) {
+	f.CalledLookUpVariables = true
+	variables = f.MockVariables
 	return
 }

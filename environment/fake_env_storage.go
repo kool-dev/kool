@@ -48,3 +48,9 @@ func (f *FakeEnvStorage) IsTrue(key string) bool {
 	value := f.Envs[key]
 	return value == "1" || value == "true"
 }
+
+// Has check if environment variable exists
+func (f *FakeEnvStorage) Has(key string) (has bool) {
+	_, has = f.Envs[key]
+	return
+}

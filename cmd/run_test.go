@@ -17,6 +17,7 @@ func newFakeKoolRun(mockParsedCommands []builder.Command, mockParseError error) 
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
 		environment.NewFakeEnvStorage(),
 		[]builder.Command{},
+		&shell.FakePromptInput{},
 	}
 }
 
