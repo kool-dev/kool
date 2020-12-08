@@ -104,8 +104,12 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	runCmd = &cobra.Command{
 		Use:   "run [SCRIPT]",
 		Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
-		Args:  cobra.MinimumNArgs(1),
-		Run:   DefaultCommandRunFunction(run),
+		Long: `This command runs scripts defined at the kool.yaml files.
+You can specify only the script name or you can also add options
+after the script name, e.g. --foo=bar. These options define variables
+that can be referenced by the script.`,
+		Args: cobra.MinimumNArgs(1),
+		Run:  DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) != 0 {
 				return nil, cobra.ShellCompDirectiveNoFileComp
