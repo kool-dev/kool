@@ -383,13 +383,13 @@ func TestNewRunCommandErrorAskForVariableValue(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error for prompt input error")
 	}
 
 	expectedError := "error prompt input"
 
-	if gotError := f.out.(*shell.FakeOutputWriter).Err.Error(); gotError != expectedError {
+	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
 		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
 	}
 
