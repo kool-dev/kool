@@ -3,11 +3,12 @@ package checker
 import (
 	"errors"
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"testing"
 )
 
 func TestDefaultChecker(t *testing.T) {
-	var c Checker = NewChecker()
+	var c Checker = NewChecker(&shell.FakeShell{})
 
 	if _, assert := c.(*DefaultChecker); !assert {
 		t.Errorf("NewChecker() did not return a *DefaultChecker")
@@ -20,7 +21,9 @@ func TestDockerNotInstalled(t *testing.T) {
 	dockerCmd := &builder.FakeCommand{MockLookPathError: errors.New("not installed")}
 	dockerComposeCmd := &builder.FakeCommand{}
 
-	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
+	s := &shell.FakeShell{}
+
+	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 
 	err := c.Check()
 
@@ -40,7 +43,9 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 	dockerCmd := &builder.FakeCommand{}
 	dockerComposeCmd := &builder.FakeCommand{MockLookPathError: errors.New("not installed")}
 
-	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
+	s := &shell.FakeShell{}
+
+	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 
 	err := c.Check()
 
@@ -57,10 +62,12 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 func TestDockerNotRunning(t *testing.T) {
 	var c Checker
 
-	dockerCmd := &builder.FakeCommand{MockError: errors.New("not running")}
+	dockerCmd := &builder.FakeCommand{MockExecError: errors.New("not running")}
 	dockerComposeCmd := &builder.FakeCommand{}
 
-	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
+	s := &shell.FakeShell{}
+
+	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 
 	err := c.Check()
 
@@ -78,24 +85,29 @@ func TestCheckKoolDependencies(t *testing.T) {
 	var c Checker
 
 	dockerCmd := &builder.FakeCommand{}
-	dockerComposeCmd := &builder.FakeCommand{}
+	dockerCmd.MockCmd = "docker"
 
-	c = &DefaultChecker{dockerCmd, dockerComposeCmd}
+	dockerComposeCmd := &builder.FakeCommand{}
+	dockerComposeCmd.MockCmd = "docker-compose"
+
+	s := &shell.FakeShell{}
+
+	c = &DefaultChecker{dockerCmd, dockerComposeCmd, s}
 
 	if err := c.Check(); err != nil {
 		t.Errorf("Expected no errors, got %v.", err)
 		return
 	}
 
-	if !c.(*DefaultChecker).dockerCmd.(*builder.FakeCommand).CalledLookPath {
+	if val, ok := c.(*DefaultChecker).shell.(*shell.FakeShell).CalledLookPath["docker"]; !val || !ok {
 		t.Error("did not call LookPath for dockerCmd")
 	}
 
-	if !c.(*DefaultChecker).dockerComposeCmd.(*builder.FakeCommand).CalledLookPath {
+	if val, ok := c.(*DefaultChecker).shell.(*shell.FakeShell).CalledLookPath["docker-compose"]; !val || !ok {
 		t.Error("did not call LookPath for dockerComposeCmd")
 	}
 
-	if !c.(*DefaultChecker).dockerCmd.(*builder.FakeCommand).CalledExec {
+	if val, ok := c.(*DefaultChecker).shell.(*shell.FakeShell).CalledExec["docker"]; !val || !ok {
 		t.Error("did not call Exec for dockerCmd")
 	}
 }

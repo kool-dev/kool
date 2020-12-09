@@ -92,7 +92,7 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 			command.AppendArgs(args...)
 		}
 
-		if err = command.Interactive(); err != nil {
+		if err = r.Interactive(command); err != nil {
 			return
 		}
 	}

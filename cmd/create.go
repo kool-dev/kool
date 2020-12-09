@@ -60,7 +60,7 @@ func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 		return
 	}
 
-	err = c.createCommand.Interactive(dir)
+	err = c.Interactive(c.createCommand, dir)
 
 	if err != nil {
 		return

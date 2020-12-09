@@ -20,16 +20,16 @@ func newFakeKoolCreate() *KoolCreate {
 func TestNewKoolCreate(t *testing.T) {
 	k := NewKoolCreate()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolCreate instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolCreate instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
 		t.Errorf("unexpected shell.Exiter on default KoolCreate instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolCreate instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolCreate instance")
 	}
 
 	if _, ok := k.createCommand.(*builder.DefaultCommand); !ok {
@@ -47,6 +47,7 @@ func TestNewKoolCreateCommand(t *testing.T) {
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.KoolPreset.presetsParser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockCreateCommand = "kool docker create command"
+	f.createCommand.(*builder.FakeCommand).MockCmd = "create"
 
 	cmd := NewCreateCommand(f)
 	cmd.SetArgs([]string{"laravel", "my-app"})
@@ -71,12 +72,8 @@ func TestNewKoolCreateCommand(t *testing.T) {
 		t.Error("did not call Parse on KoolCreate.createCommand Command")
 	}
 
-	if !f.createCommand.(*builder.FakeCommand).CalledInteractive {
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["create"]; !val || !ok {
 		t.Error("did not call Interactive on KoolCreate.createCommand Command")
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Error("did not call SetWriter")
 	}
 }
 
@@ -98,12 +95,12 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 		t.Error("did not call parser.Exists")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error")
 	}
 
 	expected := "Unknown preset invalid"
-	output := f.out.(*shell.FakeOutputWriter).Err.Error()
+	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if expected != output {
 		t.Errorf("expecting error '%s', got '%s'", expected, output)

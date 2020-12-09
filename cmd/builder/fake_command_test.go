@@ -20,50 +20,21 @@ func TestFakeCommand(t *testing.T) {
 		t.Errorf("failed to use mocked String function on FakeCommand")
 	}
 
-	_ = f.LookPath()
+	f.MockCmd = "cmd"
 
-	if !f.CalledLookPath {
-		t.Errorf("failed to use mocked LookPath function on FakeCommand")
+	if cmd := f.Cmd(); !f.CalledCmd || cmd != "cmd" {
+		t.Errorf("failed to use mocked Cmd function on FakeCommand")
 	}
 
-	_ = f.Interactive("arg1", "arg2")
-
-	if !f.CalledInteractive || f.ArgsInteractive == nil || f.ArgsInteractive[0] != "arg1" || f.ArgsInteractive[1] != "arg2" {
-		t.Errorf("failed to use mocked Interactive function on FakeCommand")
+	if args := f.Args(); !f.CalledArgs || len(args) != 2 || args[0] != "arg1" || args[1] != "arg2" {
+		t.Errorf("failed to use mocked Args function on FakeCommand")
 	}
 
-	_, _ = f.Exec("arg1", "arg2")
+	f.MockError = errors.New("parse error")
 
-	if !f.CalledExec || f.ArgsExec == nil || f.ArgsExec[0] != "arg1" || f.ArgsExec[1] != "arg2" {
-		t.Errorf("failed to use mocked Exec function on FakeCommand")
-	}
-}
+	err := f.Parse("echo x1")
 
-func TestFakeFailedCommand(t *testing.T) {
-	mockErr := errors.New("error")
-	f := &FakeCommand{MockError: mockErr, MockLookPathError: mockErr}
-
-	if err := f.LookPath(); err == nil {
-		t.Errorf("failed to mock error calling LookPath function on FakeCommand")
-	}
-
-	if !f.CalledLookPath {
-		t.Errorf("failed to use mocked LookPath function on FakeCommand")
-	}
-
-	if err := f.Interactive("arg1", "arg2"); err == nil {
-		t.Errorf("failed to mock error calling Interactive function on FakeCommand")
-	}
-
-	if !f.CalledInteractive || f.ArgsInteractive == nil || f.ArgsInteractive[0] != "arg1" || f.ArgsInteractive[1] != "arg2" {
-		t.Errorf("failed to use mocked Interactive function on FakeCommand")
-	}
-
-	if _, err := f.Exec("arg1", "arg2"); err == nil {
-		t.Errorf("failed to mock error calling Exec function on FakeCommand")
-	}
-
-	if !f.CalledExec || f.ArgsExec == nil || f.ArgsExec[0] != "arg1" || f.ArgsExec[1] != "arg2" {
-		t.Errorf("failed to use mocked Exec function on FakeCommand")
+	if !f.CalledParseCommand || err == nil || err.Error() != "parse error" {
+		t.Errorf("failed to use mocked Parse function on FakeCommand")
 	}
 }
