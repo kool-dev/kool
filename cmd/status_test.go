@@ -12,16 +12,13 @@ import (
 	"testing"
 )
 
-// FakeChannelCommand fake command not setting fake variables
-// this way, it works inside go routines
-type FakeChannelCommand struct {
-	builder.FakeCommand
+type FakeRaceShell struct {
+	shell.FakeShell
 }
 
-// Exec will send the command to shell execution.
-func (f *FakeChannelCommand) Exec(args ...string) (outStr string, err error) {
-	outStr = "output"
-	return
+func (f *FakeRaceShell) Exec(command builder.Command, extraArgs ...string) (string, error) {
+	output := command.(*builder.FakeCommand).MockExecOut
+	return output, nil
 }
 
 func newFakeKoolStatus() *KoolStatus {
@@ -40,16 +37,16 @@ func newFakeKoolStatus() *KoolStatus {
 func TestNewKoolStatus(t *testing.T) {
 	k := NewKoolStatus()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolStatus instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolStatus instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
 		t.Errorf("unexpected shell.Exiter on default KoolStatus instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolStatus instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolStatus instance")
 	}
 
 	if _, ok := k.check.(*checker.DefaultChecker); !ok {
@@ -155,7 +152,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 
 	expected := "No services found."
 
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
+	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -165,7 +162,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockError = errors.New("")
+	f.getServicesRunner.(*builder.FakeCommand).MockExecError = errors.New("")
 
 	cmd := NewStatusCommand(f)
 
@@ -175,7 +172,7 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 
 	expected := "No services found."
 
-	output := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...)
+	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
@@ -216,7 +213,7 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
 	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
-	f.getServiceIDRunner.(*builder.FakeCommand).MockError = errors.New("")
+	f.getServiceIDRunner.(*builder.FakeCommand).MockExecError = errors.New("")
 
 	cmd := NewStatusCommand(f)
 
@@ -236,13 +233,16 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
-		&FakeChannelCommand{},
-		&FakeChannelCommand{},
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 		&shell.FakeTableWriter{},
 	}
 
+	f.shell = &FakeRaceShell{}
 	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = `cache
 app`
+	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "output"
+	f.getServiceStatusPortRunner.(*builder.FakeCommand).MockExecOut = "output"
 
 	cmd := NewStatusCommand(f)
 

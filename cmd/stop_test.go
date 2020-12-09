@@ -20,16 +20,16 @@ func newFakeKoolStop() *KoolStop {
 func TestNewKoolStop(t *testing.T) {
 	k := NewKoolStop()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolStop instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolStop instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
 		t.Errorf("unexpected shell.Exiter on default KoolStop instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolStop instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolStop instance")
 	}
 
 	if k.Flags == nil {
@@ -57,10 +57,6 @@ func TestNewStopCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing stop command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Errorf("did not call SetWriter")
 	}
 
 	if !f.check.(*checker.FakeChecker).CalledCheck {
@@ -105,7 +101,7 @@ func TestNewFailingDependenciesCheckStopCommand(t *testing.T) {
 		t.Error("did not exit command due to dependencies checking error")
 	}
 
-	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "check error" {
+	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "check error" {
 		t.Errorf("expecting error 'check error', got '%v'", err)
 	}
 }

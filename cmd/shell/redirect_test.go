@@ -24,8 +24,9 @@ func (f *fakeReaderWriterCloser) Write(p []byte) (n int, err error) {
 }
 
 func TestParseRedirectParseNoRedirects(t *testing.T) {
+	f := &FakeShell{}
 	// test no redirects
-	p, err := parseRedirects([]string{"foo", "bar"})
+	p, err := parseRedirects([]string{"foo", "bar"}, f)
 
 	if err != nil {
 		t.Errorf("unexpected error parsing redirects")
@@ -39,7 +40,10 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 	input := filepath.Join(t.TempDir(), "input")
 	file, _ := os.Create(input)
 	file.Close()
-	p, err = parseRedirects([]string{"foo", "<", input})
+
+	s := NewShell()
+	s.SetInStream(file)
+	p, err = parseRedirects([]string{"foo", "<", input}, s)
 
 	if err != nil {
 		t.Errorf("unexpected error parsing redirects")
@@ -55,7 +59,10 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 	output := filepath.Join(t.TempDir(), "output")
 	file, _ = os.Create(output)
 	file.Close()
-	p, err = parseRedirects([]string{"foo", ">", output})
+
+	s = NewShell()
+	s.SetOutStream(file)
+	p, err = parseRedirects([]string{"foo", ">", output}, s)
 
 	if err != nil {
 		t.Errorf("unexpected error parsing redirects")
@@ -70,8 +77,7 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 
 func TestParsedRedirectCreateCommand(t *testing.T) {
 	p := &DefaultParsedRedirect{
-		in:          &fakeReaderWriterCloser{},
-		out:         &fakeReaderWriterCloser{},
+		shell:       &FakeShell{},
 		args:        []string{"arg1", "arg2"},
 		closeStdin:  false,
 		closeStdout: false,
@@ -91,9 +97,12 @@ func TestParsedRedirectCreateCommand(t *testing.T) {
 }
 
 func TestParsedRedirectCloses(t *testing.T) {
+	s := NewShell()
+	s.SetInStream(&fakeReaderWriterCloser{})
+	s.SetOutStream(&fakeReaderWriterCloser{})
+
 	p := &DefaultParsedRedirect{
-		in:          &fakeReaderWriterCloser{},
-		out:         &fakeReaderWriterCloser{},
+		shell:       s,
 		closeStdin:  false,
 		closeStdout: false,
 	}
@@ -101,10 +110,10 @@ func TestParsedRedirectCloses(t *testing.T) {
 	// calls close - should not clode in/out
 	p.Close()
 
-	if p.in.(*fakeReaderWriterCloser).calledClose {
+	if s.InStream().(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not expect to call close on Stdin")
 	}
-	if p.out.(*fakeReaderWriterCloser).calledClose {
+	if s.OutStream().(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not expect to call close on Stdout")
 	}
 
@@ -114,10 +123,10 @@ func TestParsedRedirectCloses(t *testing.T) {
 	// calls close - should close in/out
 	p.Close()
 
-	if !p.in.(*fakeReaderWriterCloser).calledClose {
+	if !s.InStream().(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not get expected call to close on Stdin")
 	}
-	if !p.out.(*fakeReaderWriterCloser).calledClose {
+	if !s.OutStream().(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not get expected call to close on Stdout")
 	}
 }

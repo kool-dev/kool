@@ -20,13 +20,13 @@ type KoolTask interface {
 // DefaultKoolTask holds data for running kool service as a long task
 type DefaultKoolTask struct {
 	KoolService
-	message string
-	taskOut shell.OutputWriter
+	message   string
+	taskShell shell.Shell
 }
 
 // NewKoolTask creates a new kool task
 func NewKoolTask(message string, service KoolService) *DefaultKoolTask {
-	return &DefaultKoolTask{service, message, shell.NewOutputWriter()}
+	return &DefaultKoolTask{service, message, shell.NewShell()}
 }
 
 // Run runs task
@@ -35,16 +35,16 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		return t.Execute(args)
 	}
 
-	originalWriter := t.GetWriter()
-	t.taskOut.SetWriter(originalWriter)
+	originalOutput := t.OutStream()
+	t.taskShell.SetOutStream(originalOutput)
 	pipeReader, pipeWriter := io.Pipe()
 
-	t.SetWriter(pipeWriter)
-	defer t.SetWriter(originalWriter)
+	t.SetOutStream(pipeWriter)
+	defer t.SetOutStream(originalOutput)
 
 	startMessage := fmt.Sprintf("%s ...", t.message)
-	t.taskOut.Println(startMessage)
-	t.taskOut.Println(strings.Repeat("=", len(startMessage)))
+	t.taskShell.Println(startMessage)
+	t.taskShell.Println(strings.Repeat("=", len(startMessage)))
 
 	lines := make(chan string)
 
@@ -62,8 +62,8 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		statusMessage = fmt.Sprintf("... %s", color.New(color.Green).Sprint("done"))
 	}
 
-	t.taskOut.Printf("\r")
-	t.taskOut.Println(statusMessage)
+	t.taskShell.Printf("\r")
+	t.taskShell.Println(statusMessage)
 
 	return
 }
@@ -114,18 +114,18 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 			select {
 			case line, ok := <-lines:
 				if ok {
-					t.taskOut.Printf("\r")
-					t.taskOut.Println(">", line)
-					t.taskOut.Printf("... %s", currentSpin)
+					t.taskShell.Printf("\r")
+					t.taskShell.Println(">", line)
+					t.taskShell.Printf("... %s", currentSpin)
 				} else {
-					t.taskOut.Printf("\r")
-					t.taskOut.Printf("... %s", currentSpin)
+					t.taskShell.Printf("\r")
+					t.taskShell.Printf("... %s", currentSpin)
 					break OutputPrint
 				}
 			case <-time.After(100 * time.Millisecond):
 				spinPos = (spinPos + 1) % 4
 				currentSpin = spinChars[spinPos : spinPos+1]
-				t.taskOut.Printf("\r... %s", currentSpin)
+				t.taskShell.Printf("\r... %s", currentSpin)
 			}
 		}
 

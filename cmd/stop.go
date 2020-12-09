@@ -32,10 +32,11 @@ func init() {
 
 // NewKoolStop creates a new handler for stop logic with default dependencies
 func NewKoolStop() *KoolStop {
+	defaultKoolService := newDefaultKoolService()
 	return &KoolStop{
-		*newDefaultKoolService(),
+		*defaultKoolService,
 		&KoolStopFlags{false},
-		checker.NewChecker(),
+		checker.NewChecker(defaultKoolService.shell),
 		builder.NewCommand("docker-compose", "down"),
 	}
 }
@@ -50,7 +51,7 @@ func (s *KoolStop) Execute(args []string) (err error) {
 		s.doStop.AppendArgs("--volumes", "--remove-orphans")
 	}
 
-	err = s.doStop.Interactive()
+	err = s.Interactive(s.doStop)
 	return
 }
 

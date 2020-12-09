@@ -174,7 +174,9 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 		Short: "Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			preset.SetWriter(cmd.OutOrStdout())
+			preset.SetOutStream(cmd.OutOrStdout())
+			preset.SetInStream(cmd.InOrStdin())
+			preset.SetErrStream(cmd.ErrOrStderr())
 
 			if err := preset.Execute(args); err != nil {
 				if err.Error() == ErrPresetFilesAlreadyExists.Error() {
