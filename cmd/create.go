@@ -38,32 +38,41 @@ func NewKoolCreate() *KoolCreate {
 
 // Execute runs the create logic with incoming arguments.
 func (c *KoolCreate) Execute(originalArgs []string) (err error) {
+	var (
+		presetConfig *presets.PresetConfig
+		createCmds   []string
+		ok           bool
+	)
+
 	preset := originalArgs[0]
 	dir := originalArgs[1]
 
 	c.parser.LoadPresets(presets.GetAll())
+	c.parser.LoadConfigs(presets.GetConfigs())
 
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
 		return
 	}
 
-	createCmd, err := c.parser.GetCreateCommand(preset)
-
-	if err != nil {
+	if presetConfig, err = c.parser.GetConfig(preset); err != nil || presetConfig == nil {
+		err = fmt.Errorf("error parsing preset config; err: %v", err)
 		return
 	}
 
-	err = c.createCommand.Parse(createCmd)
-
-	if err != nil {
+	if createCmds, ok = presetConfig.Commands["create"]; !ok || len(createCmds) <= 0 {
+		err = fmt.Errorf("No create commands were found for preset %s", preset)
 		return
 	}
 
-	err = c.Interactive(c.createCommand, dir)
+	for _, createCmd := range createCmds {
+		if err = c.createCommand.Parse(createCmd); err != nil {
+			return
+		}
 
-	if err != nil {
-		return
+		if err = c.Interactive(c.createCommand, dir); err != nil {
+			return
+		}
 	}
 
 	_ = os.Chdir(dir)
