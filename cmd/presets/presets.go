@@ -8,8 +8,6 @@ func GetAll() map[string]map[string]string {
 	presets["adonis"] = map[string]string{
 		".dockerignore": `/node_modules
 `,
-		"preset_language": "javascript",
-		"preset_create":   "kool docker kooldev/node:14-adonis adonis new",
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
 COPY . /app
@@ -81,7 +79,6 @@ networks:
 `,
 	}
 	presets["golang-cli"] = map[string]string{
-		"preset_language": "golang",
 		"kool.yml": `scripts:
   # Helper for local development - compiling and installing locally
   dev:
@@ -104,11 +101,6 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"preset_language":         "php",
-		"preset_create":           "kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel",
-		"preset_ask_services":     "database,cache",
-		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
-		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -197,8 +189,6 @@ networks:
 	presets["nestjs"] = map[string]string{
 		".dockerignore": `/node_modules
 `,
-		"preset_language": "javascript",
-		"preset_create":   "kool docker kooldev/node:14-nest nest new",
 		"Dockerfile.build": `FROM kooldev/node:14-nest AS build
 
 COPY . /app
@@ -291,8 +281,6 @@ networks:
 /build
 /node_modules
 `,
-		"preset_language": "javascript",
-		"preset_create":   "kool docker kooldev/node:14 yarn create next-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -345,8 +333,6 @@ networks:
 /build
 /node_modules
 `,
-		"preset_language": "javascript",
-		"preset_create":   "kool docker kooldev/node:14 yarn create next-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -396,8 +382,6 @@ networks:
 /dist
 /node_modules
 `,
-		"preset_language": "javascript",
-		"preset_create":   "kool docker kooldev/node:14 yarn create nuxt-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -455,8 +439,6 @@ networks:
 /dist
 /node_modules
 `,
-		"preset_language": "javascript",
-		"preset_create":   "kool docker kooldev/node:14 yarn create nuxt-app",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -511,11 +493,6 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"preset_language":         "php",
-		"preset_create":           "kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton",
-		"preset_ask_services":     "database,cache",
-		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
-		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -594,10 +571,6 @@ networks:
 `,
 	}
 	presets["wordpress"] = map[string]string{
-		"preset_language":         "php",
-		"preset_ask_services":     "database,cache",
-		"preset_database_options": "MySQL 8.0,MySQL 5.7,ProstgreSQL 13.0,none",
-		"preset_cache_options":    "Redis 6.0,Memcached 1.6,none",
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -652,68 +625,4 @@ networks:
 `,
 	}
 	return presets
-}
-
-// GetTemplates get all templates
-func GetTemplates() map[string]map[string]string {
-	var templates = make(map[string]map[string]string)
-	templates["cache"] = map[string]string{
-		"memcached16.yml": `image: memcached:1.6-alpine
-volumes:
-  - cache:/data:delegated
-networks:
-  - kool_local
-`,
-		"redis60.yml": `image: redis:6-alpine
-volumes:
-  - cache:/data:delegated
-networks:
-  - kool_local
-`,
-	}
-	templates["database"] = map[string]string{
-		"mysql57.yml": `image: mysql:5.7
-ports:
-  - "${KOOL_DATABASE_PORT:-3306}:3306"
-environment:
-  MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
-  MYSQL_DATABASE: "${DB_DATABASE:-database}"
-  MYSQL_USER: "${DB_USERNAME:-user}"
-  MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
-  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-volumes:
- - database:/var/lib/mysql:delegated
-networks:
- - kool_local
-`,
-		"mysql80.yml": `image: mysql:8.0
-command: --default-authentication-plugin=mysql_native_password
-ports:
-  - "${KOOL_DATABASE_PORT:-3306}:3306"
-environment:
-  MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
-  MYSQL_DATABASE: "${DB_DATABASE:-database}"
-  MYSQL_USER: "${DB_USERNAME:-user}"
-  MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
-  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-volumes:
- - database:/var/lib/mysql:delegated
-networks:
- - kool_local
-`,
-		"prostgresql130.yml": `image: postgres:13-alpine
-ports:
-  - "${KOOL_DATABASE_PORT:-3306}:3306"
-environment:
-  POSTGRES_DB: "${DB_DATABASE:-database}"
-  POSTGRES_USER: "${DB_USERNAME:-user}"
-  POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
-  POSTGRES_HOST_AUTH_METHOD: "trust"
-volumes:
- - database:/var/lib/postgresql/data:delegated
-networks:
- - kool_local
-`,
-	}
-	return templates
 }

@@ -25,9 +25,9 @@ func TestFakeParser(t *testing.T) {
 
 	f.MockFileError = "kool.yml"
 	f.MockError = errors.New("error")
-	fileError, err := f.WriteFile("filename", "filecontent")
+	fileError, err := f.WriteFiles("preset")
 
-	if !f.CalledWriteFile["filename"]["filecontent"] || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
+	if !f.CalledWriteFiles["preset"] || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
 		t.Error("failed to use mocked WriteFiles function on FakeParser")
 	}
 
@@ -45,13 +45,6 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
 
-	f.MockPresetKeys = []string{"key"}
-	keys := f.GetPresetKeys("preset")
-
-	if !f.CalledGetPresetKeys || len(keys) != 1 || keys[0] != "key" {
-		t.Error("failed to use mocked GetPresetKeys function on FakeParser")
-	}
-
 	f.MockPresetKeyContent = map[string]map[string]string{
 		"preset": map[string]string{
 			"key": "content",
@@ -60,6 +53,12 @@ func TestFakeParser(t *testing.T) {
 	content := f.GetPresetKeyContent("preset", "key")
 
 	if !f.CalledGetPresetKeyContent["preset"]["key"] || content != "content" {
+		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
+	}
+
+	f.SetPresetKeyContent("preset", "key", "content")
+
+	if !f.CalledSetPresetKeyContent["preset"]["key"]["content"] {
 		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
 	}
 
@@ -81,11 +80,16 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked GetTemplates function on FakeParser")
 	}
 
-	f.MockCreateCommand = "create"
-	createCommand, _ := f.GetCreateCommand("")
+	allPresets := map[string]map[string]string{
+		"preset": map[string]string{
+			"file": "file content",
+		},
+	}
 
-	if !f.CalledGetCreateCommand || createCommand == "" || createCommand != "create" {
-		t.Error("failed to use mocked GetCreateCommand function on FakeParser")
+	f.LoadPresets(allPresets)
+
+	if !f.CalledLoadPresets || !reflect.DeepEqual(allPresets, f.MockAllPresets) {
+		t.Error("failed to use mocked LoadTemplates function on FakeParser")
 	}
 
 	allTemplates := map[string]map[string]string{
@@ -98,5 +102,35 @@ func TestFakeParser(t *testing.T) {
 
 	if !f.CalledLoadTemplates || !reflect.DeepEqual(allTemplates, f.MockAllTemplates) {
 		t.Error("failed to use mocked LoadTemplates function on FakeParser")
+	}
+
+	allConfigs := map[string]string{
+		"preset": "preset_config",
+	}
+
+	f.LoadConfigs(allConfigs)
+
+	if !f.CalledLoadConfigs || !reflect.DeepEqual(allConfigs, f.MockAllConfigs) {
+		t.Error("failed to use mocked LoadTemplates function on FakeParser")
+	}
+
+	config, configErr := f.GetConfig("nonConfiguredPreset")
+
+	if !f.CalledGetConfig["nonConfiguredPreset"] || config != nil || configErr != nil {
+		t.Error("failed to use mocked GetConfig function on FakeParser")
+	}
+
+	f.MockConfig = map[string]*PresetConfig{
+		"preset": new(PresetConfig),
+	}
+
+	f.MockGetConfigError = map[string]error{
+		"preset": errors.New("error get config"),
+	}
+
+	config, configErr = f.GetConfig("preset")
+
+	if !f.CalledGetConfig["preset"] || config != f.MockConfig["preset"] || configErr != f.MockGetConfigError["preset"] {
+		t.Error("failed to use mocked GetConfig function on FakeParser")
 	}
 }

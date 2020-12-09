@@ -52,38 +52,3 @@ func TestPresetsKoolFile(t *testing.T) {
 		}
 	}
 }
-
-func TestLanguageMetadataFile(t *testing.T) {
-	for preset, files := range GetAll() {
-		var (
-			language        string
-			hasLanguageData bool
-		)
-		if language, hasLanguageData = files["preset_language"]; !hasLanguageData {
-			t.Errorf("preset_language is missing from %s preset", preset)
-		}
-
-		if len(language) == 0 {
-			t.Errorf("preset_language is does not have value on %s preset", preset)
-		}
-	}
-}
-
-func TestPresetsTemplates(t *testing.T) {
-	for serviceType, services := range GetTemplates() {
-		for _, service := range services {
-			var (
-				parsed        yaml.MapSlice
-				templateBytes []byte
-			)
-
-			if templateBytes = []byte(service); len(templateBytes) == 0 {
-				t.Errorf("failed on reading template %s from %s service", service, serviceType)
-			}
-
-			if err := yaml.Unmarshal(templateBytes, &parsed); err != nil {
-				t.Errorf("failed on parsing %s from %s service", service, serviceType)
-			}
-		}
-	}
-}
