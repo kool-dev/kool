@@ -112,6 +112,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	case <-time.After(timeout):
 		{
 			shell.Error(fmt.Errorf("timeout waiting deploy to finish"))
+			os.Exit(2)
 			break
 		}
 	}
