@@ -18,14 +18,11 @@ import (
 
 func main() {
 	var (
-		err          error
-		koolOutput   *bytes.Buffer
-		cmdFile      *os.File
-		koolFile     *os.File
-		outputWriter shell.OutputWriter
+		err        error
+		koolOutput *bytes.Buffer
+		cmdFile    *os.File
+		koolFile   *os.File
 	)
-
-	outputWriter = shell.NewOutputWriter()
 
 	fmt.Println("Going to generate cobra docs in markdown...")
 
@@ -92,7 +89,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	outputWriter.Success("Success!")
+	shell.Success("Success!")
 }
 
 // CreateFile Create file to write markdown content

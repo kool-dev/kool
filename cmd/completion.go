@@ -29,13 +29,13 @@ func NewKoolCompletion() *KoolCompletion {
 func (c *KoolCompletion) Execute(args []string) (err error) {
 	switch args[0] {
 	case "bash":
-		err = c.rootCmd.GenBashCompletion(c.GetWriter())
+		err = c.rootCmd.GenBashCompletion(c.OutStream())
 	case "zsh":
-		err = c.rootCmd.GenZshCompletion(c.GetWriter())
+		err = c.rootCmd.GenZshCompletion(c.OutStream())
 	case "fish":
-		err = c.rootCmd.GenFishCompletion(c.GetWriter(), true)
+		err = c.rootCmd.GenFishCompletion(c.OutStream(), true)
 	case "powershell":
-		err = c.rootCmd.GenPowerShellCompletion(c.GetWriter())
+		err = c.rootCmd.GenPowerShellCompletion(c.OutStream())
 	}
 	return
 }

@@ -47,8 +47,9 @@ func RootCmd() *cobra.Command {
 func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 	return func(cmd *cobra.Command, args []string) {
 		for _, service := range services {
-			service.SetWriter(cmd.OutOrStdout())
-			service.SetReader(cmd.InOrStdin())
+			service.SetOutStream(cmd.OutOrStdout())
+			service.SetInStream(cmd.InOrStdin())
+			service.SetErrStream(cmd.ErrOrStderr())
 
 			if err := service.Execute(args); err != nil {
 				service.Error(err)
@@ -62,8 +63,9 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 func LongTaskCommandRunFunction(tasks ...KoolTask) CobraRunFN {
 	return func(cmd *cobra.Command, args []string) {
 		for _, task := range tasks {
-			task.SetWriter(cmd.OutOrStdout())
-			task.SetReader(cmd.InOrStdin())
+			task.SetOutStream(cmd.OutOrStdout())
+			task.SetInStream(cmd.InOrStdin())
+			task.SetErrStream(cmd.ErrOrStderr())
 
 			if err := task.Run(args); err != nil {
 				task.Error(err)

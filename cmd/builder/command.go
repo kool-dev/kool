@@ -2,13 +2,15 @@ package builder
 
 import (
 	"fmt"
-	"kool-dev/kool/cmd/shell"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/google/shlex"
 )
+
+type splitFnType func(string) ([]string, error)
+
+var splitFn splitFnType = shlex.Split
 
 // DefaultCommand holds data and logic for an executable command.
 type DefaultCommand struct {
@@ -16,29 +18,18 @@ type DefaultCommand struct {
 	args    []string
 }
 
-// Builder holds available methods for building commands.
-type Builder interface {
+// Command holds available methods for building commands.
+type Command interface {
+	Parser
 	AppendArgs(...string)
 	String() string
-}
-
-// Runner holds available methods for running commands.
-type Runner interface {
-	Interactive(...string) error
-	Exec(...string) (string, error)
-	LookPath() error
+	Args() []string
+	Cmd() string
 }
 
 // Parser holds available methods for parse commands
 type Parser interface {
 	Parse(string) error
-}
-
-// Command interface comprehends bot Runner, Builder, Parser interfaces
-type Command interface {
-	Builder
-	Runner
-	Parser
 }
 
 // NewCommand Create a new command.
@@ -52,7 +43,7 @@ func NewCommand(command string, args ...string) *DefaultCommand {
 func ParseCommand(line string) (command *DefaultCommand, err error) {
 	var parsed []string
 
-	if parsed, err = shlex.Split(os.ExpandEnv(line)); err != nil {
+	if parsed, err = splitFn(os.ExpandEnv(line)); err != nil {
 		return
 	}
 
@@ -70,34 +61,14 @@ func (c *DefaultCommand) String() string {
 	return strings.Trim(fmt.Sprintf("%s %s", c.command, strings.Join(c.args, " ")), " ")
 }
 
-// LookPath returns if the command exists
-func (c *DefaultCommand) LookPath() (err error) {
-	_, err = exec.LookPath(c.command)
-	return
+// Args returns the command arguments
+func (c *DefaultCommand) Args() []string {
+	return c.args
 }
 
-// Interactive will send the command to an interactive execution.
-func (c *DefaultCommand) Interactive(args ...string) (err error) {
-	var finalArgs []string = c.args
-
-	if len(args) > 0 {
-		finalArgs = append(finalArgs, args...)
-	}
-
-	err = shell.Interactive(c.command, finalArgs...)
-	return
-}
-
-// Exec will send the command to shell execution.
-func (c *DefaultCommand) Exec(args ...string) (outStr string, err error) {
-	var finalArgs []string = c.args
-
-	if len(args) > 0 {
-		finalArgs = append(finalArgs, args...)
-	}
-
-	outStr, err = shell.Exec(c.command, finalArgs...)
-	return
+// Cmd returns the command executable
+func (c *DefaultCommand) Cmd() string {
+	return c.command
 }
 
 // Parse calls the ParseCommand function

@@ -13,13 +13,18 @@ import (
 )
 
 func assertServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage string) {
-	if !service.CalledSetWriter {
-		errMessage = "did not call SetWriter on kool service"
+	if !service.CalledSetOutStream {
+		errMessage = "did not call SetOutStream on kool service"
 		return
 	}
 
-	if !service.CalledSetReader {
-		errMessage = "did not call SetReader on kool service"
+	if !service.CalledSetInStream {
+		errMessage = "did not call SetInStream on kool service"
+		return
+	}
+
+	if !service.CalledSetErrStream {
+		errMessage = "did not call SetErrStream on kool service"
 		return
 	}
 
@@ -32,13 +37,18 @@ func assertServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage
 }
 
 func assertFailingServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage string) {
-	if !service.CalledSetWriter {
-		errMessage = "did not call SetWriter on kool service"
+	if !service.CalledSetOutStream {
+		errMessage = "did not call SetOutStream on kool service"
 		return
 	}
 
-	if !service.CalledSetReader {
-		errMessage = "did not call SetReader on kool service"
+	if !service.CalledSetInStream {
+		errMessage = "did not call SetInStream on kool service"
+		return
+	}
+
+	if !service.CalledSetErrStream {
+		errMessage = "did not call SetErrStream on kool service"
 		return
 	}
 

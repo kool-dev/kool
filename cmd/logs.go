@@ -46,7 +46,7 @@ func NewKoolLogs() *KoolLogs {
 func (l *KoolLogs) Execute(args []string) (err error) {
 	var services string
 
-	if services, err = l.list.Exec(args...); err != nil {
+	if services, err = l.Exec(l.list, args...); err != nil {
 		return
 	}
 
@@ -65,7 +65,7 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 		l.logs.AppendArgs("--follow")
 	}
 
-	err = l.logs.Interactive(args...)
+	err = l.Interactive(l.logs, args...)
 	return
 }
 
