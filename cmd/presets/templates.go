@@ -49,7 +49,7 @@ volumes:
 networks:
  - kool_local
 `,
-		"prostgresql13.yml": `image: postgres:13-alpine
+		"postgresql13.yml": `image: postgres:13-alpine
 ports:
   - "${KOOL_DATABASE_PORT:-3306}:3306"
 environment:

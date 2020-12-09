@@ -22,7 +22,7 @@ questions:
     options:
       mysql8: MySQL 8.0
       mysql57: MySQL 5.7
-      prostgresql13: ProstgreSQL 13.0
+      postgresql13: PostgreSQL 13.0
       none: none
   cache:
     message: What cache service do you want to use
@@ -72,7 +72,7 @@ questions:
     options:
       mysql8: MySQL 8.0
       mysql57: MySQL 5.7
-      prostgresql13: ProstgreSQL 13.0
+      postgresql13: PostgreSQL 13.0
       none: none
   cache:
     message: What cache service do you want to use
@@ -92,7 +92,7 @@ questions:
     options:
       mysql8: MySQL 8.0
       mysql57: MySQL 5.7
-      prostgresql13: ProstgreSQL 13.0
+      postgresql13: PostgreSQL 13.0
       none: none
   cache:
     message: What cache service do you want to use
