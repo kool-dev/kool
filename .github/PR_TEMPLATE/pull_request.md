@@ -28,8 +28,6 @@ A clear explanation of what is being updated. Try to remember/respond to these p
 
 :cool: If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
 
-:hourglass: I will patiently wait my PR to be reviewed.
-
 -   _Why is this Important?_
 -   :warning: **Is this introducing a Breaking Change?**
 -   _Are there side effects ? (if so list them)_
