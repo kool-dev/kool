@@ -3,7 +3,8 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
 questions:
-  database:
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
       - name: MySQL 8.0
@@ -14,7 +15,8 @@ questions:
         template: postgresql13.yml
       - name: none
         template: none
-  cache:
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
       - name: Redis 6.0

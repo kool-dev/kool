@@ -7,7 +7,6 @@ type FakeParser struct {
 	CalledWriteFiles          map[string]bool
 	CalledGetPresets          bool
 	CalledGetLanguages        bool
-	CalledGetPresetKeyContent map[string]map[string]bool
 	CalledSetPresetKeyContent map[string]map[string]map[string]bool
 	CalledGetTemplates        bool
 	CalledLoadPresets         bool
@@ -15,19 +14,18 @@ type FakeParser struct {
 	CalledLoadConfigs         bool
 	CalledGetConfig           map[string]bool
 
-	MockExists           bool
-	MockFoundFiles       []string
-	MockFileError        string
-	MockError            error
-	MockLanguages        []string
-	MockPresets          []string
-	MockPresetKeyContent map[string]map[string]string
-	MockTemplates        map[string]map[string]string
-	MockAllPresets       map[string]map[string]string
-	MockAllTemplates     map[string]map[string]string
-	MockAllConfigs       map[string]string
-	MockConfig           map[string]*PresetConfig
-	MockGetConfigError   map[string]error
+	MockExists         bool
+	MockFoundFiles     []string
+	MockFileError      string
+	MockError          error
+	MockLanguages      []string
+	MockPresets        []string
+	MockTemplates      map[string]map[string]string
+	MockAllPresets     map[string]map[string]string
+	MockAllTemplates   map[string]map[string]string
+	MockAllConfigs     map[string]string
+	MockConfig         map[string]*PresetConfig
+	MockGetConfigError map[string]error
 }
 
 // Exists check if preset exists
@@ -67,21 +65,6 @@ func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
 	f.CalledWriteFiles[preset] = true
 	fileError = f.MockFileError
 	err = f.MockError
-	return
-}
-
-// GetPresetKeyContent get preset key value
-func (f *FakeParser) GetPresetKeyContent(preset string, key string) (value string) {
-	if f.CalledGetPresetKeyContent == nil {
-		f.CalledGetPresetKeyContent = make(map[string]map[string]bool)
-	}
-
-	if _, ok := f.CalledGetPresetKeyContent[preset]; !ok {
-		f.CalledGetPresetKeyContent[preset] = make(map[string]bool)
-	}
-
-	f.CalledGetPresetKeyContent[preset][key] = true
-	value = f.MockPresetKeyContent[preset][key]
 	return
 }
 

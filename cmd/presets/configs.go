@@ -17,14 +17,16 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
 questions:
-  app:
+  - key: app
+    default_answer: PHP 7.4
     message: What app service do you want to use
     options:
       - name: PHP 7.4
         template: php74.yml
       - name: PHP 8.0
         template: php8.yml
-  database:
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
       - name: MySQL 8.0
@@ -35,7 +37,8 @@ questions:
         template: postgresql13.yml
       - name: none
         template: none
-  cache:
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
       - name: Redis 6.0
@@ -80,14 +83,16 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton
 questions:
-  app:
+  - key: app
+    default_answer: PHP 7.4
     message: What app service do you want to use
     options:
       - name: PHP 7.4
         template: php74.yml
       - name: PHP 8.0
         template: php8.yml
-  database:
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
       - name: MySQL 8.0
@@ -98,7 +103,8 @@ questions:
         template: postgresql13.yml
       - name: none
         template: none
-  cache:
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
       - name: Redis 6.0
@@ -114,7 +120,8 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
 questions:
-  database:
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
       - name: MySQL 8.0
@@ -125,7 +132,8 @@ questions:
         template: postgresql13.yml
       - name: none
         template: none
-  cache:
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
       - name: Redis 6.0

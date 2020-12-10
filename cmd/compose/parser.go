@@ -1,25 +1,31 @@
 package compose
 
-import (
-	"fmt"
-	"gopkg.in/yaml.v2"
-)
+import "gopkg.in/yaml.v2"
 
 type yamlUnmarshalFnType func([]byte, interface{}) error
 type yamlMarshalFnType func(interface{}) ([]byte, error)
 
+// Compose represents a docker-compose file
+type Compose struct {
+	Version  string        `yaml:"version"`
+	Services yaml.MapSlice `yaml:"services"`
+	Volumes  yaml.MapSlice `yaml:"volumes,omitempty"`
+	Networks yaml.MapSlice `yaml:"networks,omitempty"`
+}
+
 // Parser holds logic for handling docker-compose
 type Parser interface {
-	Load(string) error
-	SetService(string, string) error
-	RemoveService(string)
-	RemoveVolume(string)
+	Parse(string) error
+	GetServices() yaml.MapSlice
+	SetService(string, interface{})
+	GetVolumes() yaml.MapSlice
+	SetVolume(string)
 	String() (string, error)
 }
 
 // DefaultParser holds data for docker-compose
 type DefaultParser struct {
-	yamlData yaml.MapSlice
+	compose *Compose
 }
 
 var (
@@ -29,85 +35,74 @@ var (
 
 // NewParser creates new docker-compose parser
 func NewParser() Parser {
-	return &DefaultParser{}
+	compose := &Compose{
+		Version: "3.7",
+		Networks: yaml.MapSlice{
+			yaml.MapItem{Key: "kool_local"},
+			yaml.MapItem{
+				Key: "kool_global",
+				Value: yaml.MapSlice{
+					yaml.MapItem{Key: "external", Value: true},
+					yaml.MapItem{Key: "name", Value: "${KOOL_GLOBAL_NETWORK:-kool_global}"},
+				},
+			},
+		},
+	}
+	return &DefaultParser{compose}
 }
 
-// Load loads docker-compose into Parser
-func (p *DefaultParser) Load(compose string) (err error) {
-	p.yamlData, err = parseYaml(compose)
+// Parse parse content to yaml
+func (p *DefaultParser) Parse(content string) (err error) {
+	err = yamlUnmarshalFn([]byte(content), &p.compose)
 	return
 }
 
+// GetServices get compose services
+func (p *DefaultParser) GetServices() yaml.MapSlice {
+	return p.compose.Services
+}
+
 // SetService set docker-compose service
-func (p *DefaultParser) SetService(serviceName string, serviceContent string) (err error) {
-	for sectionKey, section := range p.yamlData {
-		if section.Key == "services" {
-			for serviceKey, service := range section.Value.(yaml.MapSlice) {
-				if service.Key == serviceName {
-					var template yaml.MapSlice
-
-					if template, err = parseYaml(serviceContent); err != nil {
-						return
-					}
-
-					p.yamlData[sectionKey].Value.(yaml.MapSlice)[serviceKey].Value = template
-					return
-				}
-			}
+func (p *DefaultParser) SetService(serviceName string, serviceContent interface{}) {
+	for index, service := range p.compose.Services {
+		if service.Key == serviceName {
+			p.compose.Services[index].Value = serviceContent
+			return
 		}
 	}
 
-	return fmt.Errorf("service %s not found", serviceName)
+	p.compose.Services = append(p.compose.Services, yaml.MapItem{
+		Key:   serviceName,
+		Value: serviceContent,
+	})
 }
 
-// RemoveService remove a docker-compose service
-func (p *DefaultParser) RemoveService(service string) {
-	p.yamlData = removeSubItem(p.yamlData, "services", service)
+// GetVolumes get compose volumes
+func (p *DefaultParser) GetVolumes() yaml.MapSlice {
+	return p.compose.Volumes
 }
 
-// RemoveVolume remove a docker-compose volume
-func (p *DefaultParser) RemoveVolume(volume string) {
-	p.yamlData = removeSubItem(p.yamlData, "volumes", volume)
+// SetVolume remove a docker-compose volume
+func (p *DefaultParser) SetVolume(volume string) {
+	for _, volume := range p.compose.Volumes {
+		if volume.Key == volume {
+			return
+		}
+	}
+
+	p.compose.Volumes = append(p.compose.Volumes, yaml.MapItem{
+		Key: volume,
+	})
 }
 
 // String returns docker-compose as string
 func (p *DefaultParser) String() (content string, err error) {
 	var parsedBytes []byte
 
-	if parsedBytes, err = yamlMarshalFn(p.yamlData); err != nil {
+	if parsedBytes, err = yamlMarshalFn(p.compose); err != nil {
 		return
 	}
 
 	content = string(parsedBytes)
-	return
-}
-
-func parseYaml(content string) (yaml.MapSlice, error) {
-	parsed := yaml.MapSlice{}
-
-	if err := yamlUnmarshalFn([]byte(content), &parsed); err != nil {
-		return nil, err
-	}
-
-	return parsed, nil
-}
-
-func removeSubItem(originalCompose yaml.MapSlice, item string, subItem string) (compose yaml.MapSlice) {
-	for _, section := range originalCompose {
-		if section.Key != item {
-			compose = append(compose, section)
-			continue
-		}
-
-		var sectionItems yaml.MapSlice
-		for _, sectionItem := range section.Value.(yaml.MapSlice) {
-			if sectionItem.Key != subItem {
-				sectionItems = append(sectionItems, sectionItem)
-			}
-		}
-
-		compose = append(compose, yaml.MapItem{Key: item, Value: sectionItems})
-	}
-
 	return
 }

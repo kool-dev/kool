@@ -153,39 +153,6 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	}
 }
 
-func TestGetPresetKeyContentParser(t *testing.T) {
-	presets := make(map[string]map[string]string)
-
-	preset := make(map[string]string)
-
-	preset["key1"] = "value1"
-	preset["key2"] = "value2"
-	preset["key3"] = "value3"
-
-	presets["preset"] = preset
-
-	p := NewParser()
-	p.LoadPresets(presets)
-
-	content := p.GetPresetKeyContent("preset", "key2")
-
-	if content != "value2" {
-		t.Errorf("expecting to find value 'value2', found %s", content)
-	}
-
-	content = p.GetPresetKeyContent("invalid_preset", "key1")
-
-	if content != "" {
-		t.Errorf("expecting to find value 'value2', found %s", content)
-	}
-
-	content = p.GetPresetKeyContent("preset", "invalid_key1")
-
-	if content != "" {
-		t.Errorf("expecting to find value 'value2', found %s", content)
-	}
-}
-
 func TestSetPresetKeyContentParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
 
@@ -202,7 +169,7 @@ func TestSetPresetKeyContentParser(t *testing.T) {
 
 	p.SetPresetKeyContent("preset", "key2", "value2Changed")
 
-	content := p.GetPresetKeyContent("preset", "key2")
+	content := p.(*DefaultParser).Presets["preset"]["key2"]
 
 	if content != "value2Changed" {
 		t.Errorf("expecting to find value 'value2Changed', found %s", content)
@@ -210,7 +177,7 @@ func TestSetPresetKeyContentParser(t *testing.T) {
 
 	p.SetPresetKeyContent("invalid_preset", "key1", "value1Changed")
 
-	content = p.GetPresetKeyContent("preset", "key1")
+	content = p.(*DefaultParser).Presets["preset"]["key1"]
 
 	if content != "value1" {
 		t.Errorf("expecting to find value 'value1', found %s", content)
@@ -218,7 +185,7 @@ func TestSetPresetKeyContentParser(t *testing.T) {
 
 	p.SetPresetKeyContent("preset", "invalid_key", "value1Changed")
 
-	content = p.GetPresetKeyContent("preset", "key1")
+	content = p.(*DefaultParser).Presets["preset"]["key1"]
 
 	if content != "value1" {
 		t.Errorf("expecting to find value 'value1', found %s", content)
@@ -322,7 +289,7 @@ commands:
   create:
     - command
 questions:
-  question1:
+  - key: question1
     message: message?
     options:
       - name: option1
@@ -353,8 +320,8 @@ questions:
 		t.Error("failed getting create commands preset configuration")
 	}
 
-	questions1, question1Exists := cfg.Questions["question1"]
-	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0].Template != "option1.yml" || questions1.Options[0].Name != "option1" {
+	question1 := cfg.Questions[0]
+	if question1.Key != "question1" || question1.Message != "message?" || len(question1.Options) != 1 || question1.Options[0].Template != "option1.yml" || question1.Options[0].Name != "option1" {
 		t.Error("failed getting questions preset configuration")
 	}
 }
