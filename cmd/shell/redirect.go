@@ -24,8 +24,7 @@ const OutputRedirectAppend string = ">>"
 // DefaultParsedRedirect holds parsed redirect data
 type DefaultParsedRedirect struct {
 	args        []string
-	in          io.ReadCloser
-	out         io.WriteCloser
+	shell       Shell
 	closeStdin  bool
 	closeStdout bool
 }
@@ -38,31 +37,31 @@ type ParsedRedirect interface {
 // Close closes reader and writer if necessary
 func (p *DefaultParsedRedirect) Close() {
 	if p.closeStdin {
-		p.in.Close()
+		p.shell.InStream().(io.WriteCloser).Close()
 	}
 	if p.closeStdout {
-		p.out.Close()
+		p.shell.OutStream().(io.WriteCloser).Close()
 	}
 }
 
 // CreateCommand creates a new *exec.Command for given executable
 func (p *DefaultParsedRedirect) CreateCommand(executable string) (cmd *exec.Cmd) {
-	cmd = exec.Command(executable, p.args...)
+	cmd = execCmdFn(executable, p.args...)
 	cmd.Env = os.Environ()
-	cmd.Stdout = p.out
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = p.in
+	cmd.Stdout = p.shell.OutStream()
+	cmd.Stderr = p.shell.ErrStream()
+	cmd.Stdin = p.shell.InStream()
 	return
 }
 
-func parseRedirects(originalArgs []string) (parsed *DefaultParsedRedirect, err error) {
+func parseRedirects(originalArgs []string, originalShell Shell) (parsed *DefaultParsedRedirect, err error) {
 	var (
 		numArgs int
 		inFile  io.ReadCloser
 		outFile io.WriteCloser
 	)
 
-	parsed = &DefaultParsedRedirect{originalArgs, os.Stdin, os.Stdout, false, false}
+	parsed = &DefaultParsedRedirect{originalArgs, originalShell, false, false}
 
 	if numArgs = len(parsed.args); numArgs < 2 {
 		return
@@ -76,7 +75,7 @@ func parseRedirects(originalArgs []string) (parsed *DefaultParsedRedirect, err e
 			if inFile, err = os.OpenFile(parsed.args[numArgs-1], os.O_RDONLY, os.ModePerm); err != nil {
 				return
 			}
-			parsed.in = inFile
+			parsed.shell.SetInStream(inFile)
 			parsed.closeStdin = true
 		}
 	case OutputRedirect, OutputRedirectAppend:
@@ -91,7 +90,7 @@ func parseRedirects(originalArgs []string) (parsed *DefaultParsedRedirect, err e
 			if outFile, err = os.OpenFile(parsed.args[numArgs-1], mode, os.ModePerm); err != nil {
 				return
 			}
-			parsed.out = outFile
+			parsed.shell.SetOutStream(outFile)
 			parsed.closeStdout = true
 		}
 	}

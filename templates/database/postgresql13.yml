@@ -1,0 +1,12 @@
+image: postgres:13-alpine
+ports:
+  - "${KOOL_DATABASE_PORT:-3306}:3306"
+environment:
+  POSTGRES_DB: "${DB_DATABASE:-database}"
+  POSTGRES_USER: "${DB_USERNAME:-user}"
+  POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
+  POSTGRES_HOST_AUTH_METHOD: "trust"
+volumes:
+ - database:/var/lib/postgresql/data:delegated
+networks:
+ - kool_local

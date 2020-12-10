@@ -23,16 +23,16 @@ func newFakeKoolRun(mockParsedCommands []builder.Command, mockParseError error) 
 func TestNewKoolRun(t *testing.T) {
 	k := NewKoolRun()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolRun instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolRun instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
 		t.Errorf("unexpected shell.Exiter on default KoolRun instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolRun instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolRun instance")
 	}
 
 	if _, ok := k.parser.(*parser.DefaultParser); !ok {
@@ -41,7 +41,7 @@ func TestNewKoolRun(t *testing.T) {
 }
 
 func TestNewRunCommand(t *testing.T) {
-	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}}
+	fakeParsedCommands := []builder.Command{&builder.FakeCommand{MockCmd: "cmd1"}}
 
 	f := newFakeKoolRun(fakeParsedCommands, nil)
 	cmd := NewRunCommand(f)
@@ -50,10 +50,6 @@ func TestNewRunCommand(t *testing.T) {
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
-
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Errorf("did not call SetWriter")
 	}
 
 	if !f.parser.(*parser.FakeParser).CalledAddLookupPath {
@@ -79,7 +75,7 @@ func TestNewRunCommand(t *testing.T) {
 			t.Errorf("unexpected AppendArgs call by parsed command")
 		}
 
-		if !command.(*builder.FakeCommand).CalledInteractive {
+		if val, ok := f.shell.(*shell.FakeShell).CalledInteractive[command.Cmd()]; !ok || !val {
 			t.Errorf("parsed command did not call Interactive")
 		}
 	}
@@ -95,13 +91,13 @@ func TestNewRunCommandMultipleScriptsWarning(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledWarning {
+	if !f.shell.(*shell.FakeShell).CalledWarning {
 		t.Errorf("did not call Warning for multiple scripts")
 	}
 
 	expectedWarning := "Attention: the script was found in more than one kool.yml file"
 
-	if gotWarning := fmt.Sprint(f.out.(*shell.FakeOutputWriter).WarningOutput...); gotWarning != expectedWarning {
+	if gotWarning := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...); gotWarning != expectedWarning {
 		t.Errorf("expecting warning '%s', got '%s'", expectedWarning, gotWarning)
 	}
 }
@@ -116,13 +112,13 @@ func TestNewRunCommandParseError(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error for parse error")
 	}
 
 	expectedError := "parse error"
 
-	if gotError := f.out.(*shell.FakeOutputWriter).Err.Error(); gotError != expectedError {
+	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
 		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
 	}
 
@@ -142,13 +138,13 @@ func TestNewRunCommandExtraArgsError(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error for extra arguments")
 	}
 
 	expectedError := ErrExtraArguments.Error()
 
-	if gotError := f.out.(*shell.FakeOutputWriter).Err.Error(); gotError != expectedError {
+	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
 		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
 	}
 
@@ -158,7 +154,7 @@ func TestNewRunCommandExtraArgsError(t *testing.T) {
 }
 
 func TestNewRunCommandErrorInteractive(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{MockError: errors.New("interactive error")}}, nil)
+	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{MockInteractiveError: errors.New("interactive error")}}, nil)
 	cmd := NewRunCommand(f)
 
 	cmd.SetArgs([]string{"script"})
@@ -167,13 +163,13 @@ func TestNewRunCommandErrorInteractive(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error for parsed command failure")
 	}
 
 	expectedError := "interactive error"
 
-	if gotError := f.out.(*shell.FakeOutputWriter).Err.Error(); gotError != expectedError {
+	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
 		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
 	}
 
@@ -192,13 +188,13 @@ func TestNewRunCommandScriptNotFound(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledError {
+	if !f.shell.(*shell.FakeShell).CalledError {
 		t.Error("did not call Error for not found script error")
 	}
 
 	expectedError := ErrKoolScriptNotFound.Error()
 
-	if gotError := f.out.(*shell.FakeOutputWriter).Err.Error(); gotError != expectedError {
+	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
 		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
 	}
 
@@ -241,11 +237,11 @@ func TestNewRunCommandUsageTemplate(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledPrintln {
+	if !f.shell.(*shell.FakeShell).CalledPrintln {
 		t.Error("did not call Println for command usage")
 	}
 
-	usage := f.out.(*shell.FakeOutputWriter).OutLines[0]
+	usage := f.shell.(*shell.FakeShell).OutLines[0]
 
 	if !strings.Contains(usage, "testing_script") {
 		t.Error("did not find testing_script as available script on usage text")
@@ -267,13 +263,13 @@ func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
 		t.Errorf("unexpected error executing run command; error: %v", err)
 	}
 
-	output := f.out.(*shell.FakeOutputWriter).OutLines[0]
+	output := f.shell.(*shell.FakeShell).OutLines[0]
 
 	if strings.Contains(output, "testing_script") {
 		t.Error("should not find testing_script as available script on usage text due to error on parsing scripts")
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledPrintln {
+	if !f.shell.(*shell.FakeShell).CalledPrintln {
 		t.Error("did not call Println to output error on getting available scripts when KOOL_VERBOSE is true")
 	}
 

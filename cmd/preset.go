@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 
@@ -17,10 +18,10 @@ type KoolPresetFlags struct {
 // KoolPreset holds handlers and functions to implement the preset command logic
 type KoolPreset struct {
 	DefaultKoolService
-	Flags        *KoolPresetFlags
-	parser       presets.Parser
-	terminal     shell.TerminalChecker
-	promptSelect shell.PromptSelect
+	Flags         *KoolPresetFlags
+	presetsParser presets.Parser
+	composeParser compose.Parser
+	promptSelect  shell.PromptSelect
 }
 
 // ErrPresetFilesAlreadyExists error for existing presets files
@@ -40,53 +41,52 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
-		&presets.DefaultParser{Presets: presets.GetAll()},
-		shell.NewTerminalChecker(),
+		presets.NewParser(),
+		compose.NewParser(),
 		shell.NewPromptSelect(),
 	}
 }
 
 // Execute runs the preset logic with incoming arguments.
 func (p *KoolPreset) Execute(args []string) (err error) {
-	var fileError, preset, language string
+	var (
+		fileError, preset string
+		servicesTemplates map[string]string
+	)
 
-	if len(args) == 0 {
-		if !p.terminal.IsTerminal(p.GetReader(), p.GetWriter()) {
-			err = fmt.Errorf("the input device is not a TTY; for non-tty environments, please specify a preset argument")
-			return
-		}
+	p.loadParsers()
 
-		if language, err = p.promptSelect.Ask("What language do you want to use", p.parser.GetLanguages()); err != nil {
-			return
-		}
-
-		if preset, err = p.promptSelect.Ask("What preset do you want to use", p.parser.GetPresets(language)); err != nil {
-			return
-		}
-	} else {
-		preset = args[0]
+	if preset, err = p.getPresetArgOrAsk(args); err != nil {
+		return
 	}
 
-	if !p.parser.Exists(preset) {
+	if !p.presetsParser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
+		return
+	}
+
+	if servicesTemplates, err = p.getComposeServicesToCustomize(preset); err != nil {
 		return
 	}
 
 	p.Println("Preset", preset, "is initializing!")
 
 	if !p.Flags.Override {
-		existingFiles := p.parser.LookUpFiles(preset)
-		for _, fileName := range existingFiles {
-			p.Warning("Preset file ", fileName, " already exists.")
-		}
+		if existingFiles := p.presetsParser.LookUpFiles(preset); len(existingFiles) > 0 {
+			for _, fileName := range existingFiles {
+				p.Warning("Preset file ", fileName, " already exists.")
+			}
 
-		if len(existingFiles) > 0 {
 			err = ErrPresetFilesAlreadyExists
 			return
 		}
 	}
 
-	if fileError, err = p.parser.WriteFiles(preset); err != nil {
+	if err = p.customizeCompose(preset, servicesTemplates); err != nil {
+		return
+	}
+
+	if fileError, err = p.presetsParser.WriteFiles(preset); err != nil {
 		err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
 		return
 	}
@@ -102,7 +102,9 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 		Short: "Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.",
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			preset.SetWriter(cmd.OutOrStdout())
+			preset.SetOutStream(cmd.OutOrStdout())
+			preset.SetInStream(cmd.InOrStdin())
+			preset.SetErrStream(cmd.ErrOrStderr())
 
 			if err := preset.Execute(args); err != nil {
 				if err.Error() == ErrPresetFilesAlreadyExists.Error() {
@@ -120,5 +122,104 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 	}
 
 	presetCmd.Flags().BoolVarP(&preset.Flags.Override, "override", "", false, "Force replace local existing files with the preset files")
+	return
+}
+
+func (p *KoolPreset) loadParsers() {
+	p.presetsParser.LoadPresets(presets.GetAll())
+	p.presetsParser.LoadTemplates(presets.GetTemplates())
+	p.presetsParser.LoadConfigs(presets.GetConfigs())
+}
+
+func (p *KoolPreset) getPresetArgOrAsk(args []string) (preset string, err error) {
+	if len(args) == 0 {
+		if !p.IsTerminal() {
+			err = fmt.Errorf("the input device is not a TTY; for non-tty environments, please specify a preset argument")
+			return
+		}
+
+		var language string
+		if language, err = p.promptSelect.Ask("What language do you want to use", p.presetsParser.GetLanguages()); err != nil {
+			return
+		}
+
+		preset, err = p.promptSelect.Ask("What preset do you want to use", p.presetsParser.GetPresets(language))
+	} else {
+		preset = args[0]
+	}
+
+	return
+}
+
+func (p *KoolPreset) getComposeServicesToCustomize(preset string) (servicesTemplates map[string]string, err error) {
+	var presetConfig *presets.PresetConfig
+	servicesTemplates = make(map[string]string)
+
+	if presetConfig, err = p.presetsParser.GetConfig(preset); err != nil || presetConfig == nil {
+		err = fmt.Errorf("error parsing preset config; err: %v", err)
+		return
+	}
+
+	allTemplates := p.presetsParser.GetTemplates()
+
+	if servicesToAsk := presetConfig.Questions; len(servicesToAsk) > 0 && p.IsTerminal() {
+		for serviceName, question := range servicesToAsk {
+			var options []string
+			optionTemplate := make(map[string]string)
+
+			for _, option := range question.Options {
+				key := fmt.Sprintf("%v.yml", option.Key)
+				value := fmt.Sprintf("%v", option.Value)
+
+				options = append(options, value)
+				optionTemplate[value] = allTemplates[serviceName][key]
+			}
+
+			var selectedOption string
+			if selectedOption, err = p.promptSelect.Ask(question.Message, options); err != nil {
+				return
+			}
+
+			if selectedOption == "none" {
+				servicesTemplates[serviceName] = "none"
+			} else {
+				servicesTemplates[serviceName] = optionTemplate[selectedOption]
+			}
+		}
+	}
+
+	return
+}
+
+func (p *KoolPreset) customizeCompose(preset string, servicesTemplates map[string]string) (err error) {
+	if len(servicesTemplates) > 0 {
+		var newCompose string
+		defaultCompose := p.presetsParser.GetPresetKeyContent(preset, "docker-compose.yml")
+
+		if err = p.composeParser.Load(defaultCompose); err != nil {
+			err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
+			return
+		}
+
+		for serviceKey, serviceTemplate := range servicesTemplates {
+			if serviceTemplate == "none" {
+				p.composeParser.RemoveService(serviceKey)
+				p.composeParser.RemoveVolume(serviceKey)
+			} else {
+				if err = p.composeParser.SetService(serviceKey, serviceTemplate); err != nil {
+					err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
+					return
+				}
+			}
+		}
+
+		if newCompose, err = p.composeParser.String(); err != nil {
+			err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
+			return
+		}
+
+		p.presetsParser.SetPresetKeyContent(preset, "docker-compose.yml", newCompose)
+	}
+
 	return
 }

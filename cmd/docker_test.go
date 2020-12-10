@@ -15,7 +15,7 @@ func newFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{},
+		&builder.FakeCommand{MockCmd: "docker"},
 	}
 }
 
@@ -24,23 +24,23 @@ func newFailedFakeKoolDocker() *KoolDocker {
 		*newFakeKoolService(),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockError: errors.New("error docker")},
+		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
 }
 
 func TestNewKoolDocker(t *testing.T) {
 	k := NewKoolDocker()
 
-	if _, ok := k.DefaultKoolService.out.(*shell.DefaultOutputWriter); !ok {
-		t.Errorf("unexpected shell.OutputWriter on default KoolDocker instance")
+	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+		t.Errorf("unexpected shell.Shell on default KoolDocker instance")
 	}
 
 	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
 		t.Errorf("unexpected shell.Exiter on default KoolDocker instance")
 	}
 
-	if _, ok := k.DefaultKoolService.in.(*shell.DefaultInputReader); !ok {
-		t.Errorf("unexpected shell.InputReader on default KoolDocker instance")
+	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
+		t.Errorf("unexpected shell.TerminalChecker on default KoolDocker instance")
 	}
 
 	if k.Flags == nil {
@@ -80,10 +80,6 @@ func TestNewDockerCommand(t *testing.T) {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
 	}
 
-	if !f.out.(*shell.FakeOutputWriter).CalledSetWriter {
-		t.Errorf("did not call SetWriter")
-	}
-
 	if !f.dockerRun.(*builder.FakeCommand).CalledAppendArgs {
 		t.Errorf("did not call AppendArgs on KoolDocker.dockerRun Command")
 	}
@@ -94,13 +90,13 @@ func TestNewDockerCommand(t *testing.T) {
 		t.Errorf("bad arguments to KoolDocker.dockerRun Command with default flags")
 	}
 
-	if !f.dockerRun.(*builder.FakeCommand).CalledInteractive {
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["docker"]; !ok || !val {
 		t.Errorf("did not call Interactive on KoolDocker.dockerRun Command")
 	}
 
-	interactiveArgs := f.dockerRun.(*builder.FakeCommand).ArgsInteractive
+	interactiveArgs, ok := f.shell.(*shell.FakeShell).ArgsInteractive["docker"]
 
-	if len(interactiveArgs) != 1 || interactiveArgs[0] != "image" {
+	if !ok || len(interactiveArgs) != 1 || interactiveArgs[0] != "image" {
 		t.Errorf("bad arguments to Interactive on KoolDocker.dockerRun Command")
 	}
 }
@@ -223,9 +219,9 @@ func TestImageCommandsNewDockerCommand(t *testing.T) {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
 	}
 
-	interactiveArgs := f.dockerRun.(*builder.FakeCommand).ArgsInteractive
+	interactiveArgs, ok := f.shell.(*shell.FakeShell).ArgsInteractive["docker"]
 
-	if len(interactiveArgs) != 3 || interactiveArgs[0] != "image" || interactiveArgs[1] != "command1" || interactiveArgs[2] != "command2" {
+	if !ok || len(interactiveArgs) != 3 || interactiveArgs[0] != "image" || interactiveArgs[1] != "command1" || interactiveArgs[2] != "command2" {
 		t.Errorf("bad arguments to Interactive on KoolDocker.dockerRun Command")
 	}
 }
@@ -245,7 +241,7 @@ func TestFailingNewDockerCommand(t *testing.T) {
 		t.Error("expecting command to exit due to an error.")
 	}
 
-	if err := f.out.(*shell.FakeOutputWriter).Err; err.Error() != "error docker" {
+	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error docker" {
 		t.Errorf("expecting error 'error docker', got '%s'", err.Error())
 	}
 }

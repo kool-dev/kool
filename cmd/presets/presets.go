@@ -8,7 +8,6 @@ func GetAll() map[string]map[string]string {
 	presets["adonis"] = map[string]string{
 		".dockerignore": `/node_modules
 `,
-		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14-adonis AS build
 
 COPY . /app
@@ -51,7 +50,7 @@ services:
 #       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
-#      - db:/var/lib/mysql:delegated
+#      - database:/var/lib/mysql:delegated
 #     networks:
 #      - kool_local
 #   cache:
@@ -60,7 +59,7 @@ services:
 #      - cache:/data:delegated
 #
 # volumes:
-#   db:
+#   database:
 #   cache:
 
 networks:
@@ -80,7 +79,6 @@ networks:
 `,
 	}
 	presets["golang-cli"] = map[string]string{
-		"preset_language": "golang",
 		"kool.yml": `scripts:
   # Helper for local development - compiling and installing locally
   dev:
@@ -103,7 +101,6 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"preset_language": "php",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -145,7 +142,7 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:delegated
+     - database:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
@@ -156,7 +153,7 @@ services:
      - kool_local
 
 volumes:
-  db:
+  database:
   cache:
 
 networks:
@@ -192,7 +189,6 @@ networks:
 	presets["nestjs"] = map[string]string{
 		".dockerignore": `/node_modules
 `,
-		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14-nest AS build
 
 COPY . /app
@@ -234,7 +230,7 @@ services:
 #       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
-#      - db:/var/lib/mysql:delegated
+#      - database:/var/lib/mysql:delegated
 #     networks:
 #      - kool_local
 #   cache:
@@ -255,7 +251,7 @@ services:
 #      - kool_local
 #
 # volumes:
-#   db:
+#   database:
 #   cache:
 #   mongo:
 
@@ -285,7 +281,6 @@ networks:
 /build
 /node_modules
 `,
-		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -338,7 +333,6 @@ networks:
 /build
 /node_modules
 `,
-		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -388,7 +382,6 @@ networks:
 /dist
 /node_modules
 `,
-		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS build
 
 COPY . /app
@@ -446,7 +439,6 @@ networks:
 /dist
 /node_modules
 `,
-		"preset_language": "javascript",
 		"Dockerfile.build": `FROM kooldev/node:14 AS node
 
 COPY . /app
@@ -501,7 +493,6 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"preset_language": "php",
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
@@ -543,7 +534,7 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:delegated
+     - database:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
@@ -554,7 +545,7 @@ services:
      - kool_local
 
 volumes:
-  db:
+  database:
   cache:
 
 networks:
@@ -580,7 +571,6 @@ networks:
 `,
 	}
 	presets["wordpress"] = map[string]string{
-		"preset_language": "php",
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -607,7 +597,7 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-     - db:/var/lib/mysql:delegated
+     - database:/var/lib/mysql:delegated
     networks:
      - kool_local
   cache:
@@ -618,7 +608,7 @@ services:
      - kool_local
 
 volumes:
-  db:
+  database:
   cache:
 
 networks:

@@ -78,7 +78,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 		}
 	}
 
-	err = d.dockerRun.Interactive(args...)
+	err = d.Interactive(d.dockerRun, args...)
 	return
 }
 

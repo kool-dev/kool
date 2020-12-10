@@ -23,4 +23,9 @@ scripts:
   # Parsing the preset files onto Go code in an automated fashion.
   parse-presets:
     - rm -f cmd/presets/presets.go
+    - rm -f cmd/presets/templates.go
+    - rm -f cmd/presets/configs.go
     - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_presets.go
+    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_templates.go
+    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_presets_configs.go
+    - kool run fmt

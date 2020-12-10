@@ -25,7 +25,7 @@ services:
 #       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
 #       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
 #     volumes:
-#      - db:/var/lib/mysql:delegated
+#      - database:/var/lib/mysql:delegated
 #     networks:
 #      - kool_local
 #   cache:
@@ -46,7 +46,7 @@ services:
 #      - kool_local
 #
 # volumes:
-#   db:
+#   database:
 #   cache:
 #   mongo:
 

@@ -1,0 +1,5 @@
+image: memcached:1.6-alpine
+volumes:
+  - cache:/data:delegated
+networks:
+  - kool_local

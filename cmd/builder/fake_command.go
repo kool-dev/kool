@@ -2,18 +2,19 @@ package builder
 
 // FakeCommand implements the Command interface and is used for mocking on testing scenarios
 type FakeCommand struct {
-	ArgsAppend        []string
-	ArgsInteractive   []string
-	ArgsExec          []string
-	CalledAppendArgs  bool
-	CalledString      bool
-	CalledLookPath    bool
-	CalledInteractive bool
-	CalledExec        bool
+	ArgsAppend         []string
+	CalledAppendArgs   bool
+	CalledString       bool
+	CalledCmd          bool
+	CalledArgs         bool
+	CalledParseCommand bool
 
-	MockExecOut       string
-	MockError         error
-	MockLookPathError error
+	MockCmd              string
+	MockExecOut          string
+	MockError            error
+	MockLookPathError    error
+	MockExecError        error
+	MockInteractiveError error
 }
 
 // AppendArgs mocked function for testing
@@ -28,26 +29,21 @@ func (f *FakeCommand) String() string {
 	return ""
 }
 
-// LookPath returns if the command exists
-func (f *FakeCommand) LookPath() (err error) {
-	f.CalledLookPath = true
-	err = f.MockLookPathError
-	return
+// Args returns the command arguments
+func (f *FakeCommand) Args() []string {
+	f.CalledArgs = true
+	return f.ArgsAppend
 }
 
-// Interactive will send the command to an interactive execution.
-func (f *FakeCommand) Interactive(args ...string) (err error) {
-	f.CalledInteractive = true
-	f.ArgsInteractive = args
-	err = f.MockError
-	return
+// Cmd returns the command executable
+func (f *FakeCommand) Cmd() string {
+	f.CalledCmd = true
+	return f.MockCmd
 }
 
-// Exec will send the command to shell execution.
-func (f *FakeCommand) Exec(args ...string) (outStr string, err error) {
-	f.CalledExec = true
-	f.ArgsExec = args
-	outStr = f.MockExecOut
+// Parse call the ParseCommand function
+func (f *FakeCommand) Parse(line string) (err error) {
+	f.CalledParseCommand = true
 	err = f.MockError
 	return
 }

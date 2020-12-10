@@ -3,7 +3,7 @@
 If you want to create a project from scratch, just go to the directory you wanna have the new Wordpress install and run:
 
 ```bash
-$ kool init wordpress
+$ kool preset wordpress
 $ kool start
 ```
 
@@ -14,10 +14,10 @@ Upon first start, if the current working directory is not an existing Wordpress 
 Go to the project folder and run:
 
 ```bash
-$ kool init wordpress
+$ kool preset wordpress
 ```
 
-**kool init** creates configuration files in order to enable you to configure and extend its behaviour.
+**kool preset** creates configuration files in order to enable you to configure and extend its behaviour.
 
 The **wordpress** preset uses **mysql** and **redis** out of the box. You can review and change that at **docker-compose.yml**.
 

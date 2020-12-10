@@ -16,6 +16,8 @@ Complete documentation is available at https://kool.dev/docs
 ```
 
 ### SEE ALSO
+
+* [kool create](kool-create.md)	 - Create a new project using preset
 * [kool docker](kool-docker.md)	 - Creates a new container and runs the command in it.
 * [kool exec](kool-exec.md)	 - Execute a command within a running service container
 * [kool info](kool-info.md)	 - Prints out information about kool setup (like environment variables)

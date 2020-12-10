@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 const presetsTemplate string = `package presets
@@ -18,7 +17,14 @@ const presetsTemplate string = `package presets
 `
 
 func main() {
-	var err error
+	var (
+		folders []os.FileInfo
+		files   []os.FileInfo
+		err     error
+	)
+
+	fmt.Println("Started building cmd/presets/presets.go")
+
 	presets, err := os.Create("cmd/presets/presets.go")
 
 	if err != nil {
@@ -27,7 +33,7 @@ func main() {
 
 	defer presets.Close()
 
-	folders, err := ioutil.ReadDir("presets")
+	folders, err = ioutil.ReadDir("presets")
 
 	if err != nil {
 		log.Fatal(err)
@@ -47,14 +53,14 @@ func main() {
 
 		presets.WriteString(fmt.Sprintf("\tpresets[\"%s\"] = map[string]string{\n", folder.Name()))
 
-		files, err := ioutil.ReadDir(filepath.Join("presets", folder.Name()))
+		files, err = ioutil.ReadDir(filepath.Join("presets", folder.Name()))
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, file := range files {
-			if file.IsDir() {
+			if file.IsDir() || file.Name() == "preset-config.yml" {
 				continue
 			}
 
@@ -72,17 +78,8 @@ func main() {
 
 			filecontent := string(filebytes)
 
-			if file.Name() == ".preset" {
-				lines := strings.Split(strings.TrimSpace(filecontent), "\n")
-
-				for _, line := range lines {
-					metadata := strings.Split(line, "=")
-					presets.WriteString(fmt.Sprintf("\t\t\"preset_%s\": \"%s\",\n", metadata[0], metadata[1]))
-				}
-			} else {
-				presets.WriteString(fmt.Sprintf("\t\t\"%s\": `%s`,\n", file.Name(), filecontent))
-				fmt.Println("Parsed file:", file.Name())
-			}
+			presets.WriteString(fmt.Sprintf("\t\t\"%s\": `%s`,\n", file.Name(), filecontent))
+			fmt.Println("Parsed file:", file.Name())
 
 			presetFile.Close()
 		}
