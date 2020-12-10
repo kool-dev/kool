@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-echo -e "Hello! We are gonna install the \033[33mlatest stable\033[39m version of Kool!"
+echo -e "Hello, we are gonna install the \033[33mlatest stable\033[39m version of Kool!"
 
 DEFAULT_DOWNLOAD_URL="https://github.com/kool-dev/kool/releases/latest/download"
 if [ -z "${DOWNLOAD_URL:-}" ]; then
@@ -43,6 +43,15 @@ do_install () {
 	# TODO: fallback to wget if no curl available
 	rm -f /tmp/kool_binary
 	curl -fsSL "$DOWNLOAD_URL/kool-$PLAT-$ARCH" -o /tmp/kool_binary
+
+	# check for running kool process which would prevent
+	# replacing existing version under Linux.
+	if command_exists kool && ! is_darwin; then
+		running=$(ps aux | grep kool | grep -v grep | wc -l | awk '{ print $1 }')
+		if [ "$running" != "0" ]; then
+			echo -e "\033[31;31mThere is a kool process still running. You might need to stop them before we replace the current binary.\033[0m"
+		fi
+	fi
 
 	echo -e "Moving kool binary to $BIN_PATH..."
 	if [ -w $(dirname $BIN_PATH) ]; then
