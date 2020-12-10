@@ -6,7 +6,7 @@ labels: ""
 assignees: ""
 ---
 
-**This PR handles/relates to issue #number-of-the-issue-here (if you have no issue, please consider opening one for history tracking.**
+**This PR handles/relates to issue #number-of-the-issue-here (if you have no issue, please consider opening one for history tracking).**
 
 -   [ ] :beetle: Bug Fix
 -   [ ] :trophy: Feature
@@ -18,19 +18,17 @@ assignees: ""
 
 Provide a short description on what you are implementing. Reference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
 
-#### Acknowledgements
+<hr>
+
+#### Describe the update
+
+A clear explanation of what is being updated. Try to remember/respond to these points:
 
 :white_check_mark: I will make sure my PR **passes** all CI checks **(and is tested)**.
 
 :cool: If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
 
 :hourglass: I will patiently wait my PR to be reviewed.
-
-<hr>
-
-#### Describe the update
-
-A clear explanation of what is being updated. Try to remember/respond to these points:
 
 -   _Why is this Important?_
 -   :warning: **Is this introducing a Breaking Change?**
@@ -51,12 +49,10 @@ kool version 1.7.0
 
 #### Expected behavior
 
-A clear and concise description of what you expected to happen, followed by a description on implemented tests.
+How to test/verify the change.
 
-#### Screenshots(optional)
+#### Extra comments, screenshots, references or really anything relevant to this PR context
 
-If applicable, add screenshots to help explain your solution or upgrade. If you want to record your screen you can use [ShareX Opensource Screen Capture](https://getsharex.com), or other software of your choice. Remember to provide a private [YouTube](https://youtube.com) link for videos
+If applicable, add screenshots to help explain your solution or upgrade. If you want to record your screen you can use [ShareX Opensource Screen Capture](https://getsharex.com), or other software of your choice. Remember to provide a private [YouTube](https://youtube.com) link for videos.
 
-**Additional context**
-
-Add any other context that is relevant for this PR?. Please let us know here;
+Please let us know of any other context that is relevant for this PR .
