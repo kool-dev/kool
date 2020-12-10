@@ -33,7 +33,7 @@ Kool is powered by [Docker](https://docs.docker.com/get-docker/) and [Docker Com
 In order to obtain `kool` under **Linux** and **MacOS** run the following script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
+curl -fsSL https://kool.dev/install | bash
 ```
 
 #### For Windows
