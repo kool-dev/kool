@@ -6,30 +6,29 @@ labels: ""
 assignees: ""
 ---
 
-## **Acknowledgements**
+## TL;DR
 
-:speech_balloon: The code I am submitting is commented.
+Provide a short description on what you are implementing. Reference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
 
-:white_check_mark: The code I am submitting is Tested, and I will describe if there are any side effects **(including potential)**.
+## Acknowledgements
 
-:relieved: I understand that my request may be rejected, and will **not** take this personally.
+:white_check_mark: I will make sure my PR **passes** all CI checks **(and is tested)**.
 
 :cool: If I found an issue, I have already open a issue or alerted the maintainers, heterofore submitting this PR for review.
 
-## **TL;DR**
-
-Provide a short description on what you are implementing. Refference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
+:hourglass: I will patiently wait my PR to be reviewed.
 
 <hr>
 
 **Describe the update**
 
-A clear explanation of what is being updated. Try to remember these points:
+A clear explanation of what is being updated. Try to remember/respond to these points:
 
--   Why is this Important?
--   Are there side effects ? (if so list them)
--   Is there something relevant to a specific commit ?
--   Are you solving a issue? if so don't forget to note which and explain your solution process
+-   _Why is this Important?_
+-   :warning: **Is this introducing a Breaking Change?**
+-   _Are there side effects ? (if so list them)_
+-   _Is there something relevant to a specific commit ?_
+-   _Are you solving a issue? if so don't forget to note which and explain your solution process_
 
 **Kool version and environment**
 
