@@ -55,11 +55,11 @@ do_install () {
 
 	echo -e "Moving kool binary to $BIN_PATH..."
 	if [ -w $(dirname $BIN_PATH) ]; then
-		mv /tmp/kool_binary $BIN_PATH
+		mv -f /tmp/kool_binary $BIN_PATH
 		chmod +x $BIN_PATH
 	else
 		echo "(requires sudo)"
-		sudo mv /tmp/kool_binary $BIN_PATH
+		sudo mv -f /tmp/kool_binary $BIN_PATH
 		sudo chmod +x $BIN_PATH
 	fi
 
