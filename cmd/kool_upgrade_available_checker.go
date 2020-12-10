@@ -13,11 +13,11 @@ type UpdateAwareService struct {
 	updater updater.Updater
 }
 
-// UpdateWrapper wraps the service with checker logic
-func UpdateWrapper(service KoolService) *UpdateAwareService {
+// CheckNewVersion wraps the service with checker logic
+func CheckNewVersion(service KoolService, updater updater.Updater) *UpdateAwareService {
 	return &UpdateAwareService{
 		service,
-		&updater.DefaultUpdater{RootCommand: rootCmd},
+		updater,
 	}
 }
 
