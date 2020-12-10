@@ -12,8 +12,14 @@ import (
 
 // PresetConfigQuestion preset config question
 type PresetConfigQuestion struct {
-	Message string        `yaml:"message"`
-	Options yaml.MapSlice `yaml:"options"`
+	Message string                       `yaml:"message"`
+	Options []PresetConfigQuestionOption `yaml:"options"`
+}
+
+// PresetConfigQuestionOption preset config question option
+type PresetConfigQuestionOption struct {
+	Name     string `yaml:"name"`
+	Template string `yaml:"template"`
 }
 
 // PresetConfig preset config

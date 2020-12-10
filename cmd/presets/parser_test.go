@@ -325,7 +325,8 @@ questions:
   question1:
     message: message?
     options:
-      option1Key: option1Value
+      - name: option1
+        template: option1.yml
 `,
 	}
 
@@ -353,7 +354,7 @@ questions:
 	}
 
 	questions1, question1Exists := cfg.Questions["question1"]
-	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0].Key != "option1Key" || questions1.Options[0].Value != "option1Value" {
+	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0].Template != "option1.yml" || questions1.Options[0].Name != "option1" {
 		t.Error("failed getting questions preset configuration")
 	}
 }

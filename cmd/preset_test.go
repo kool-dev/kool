@@ -7,8 +7,6 @@ import (
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"testing"
-
-	"gopkg.in/yaml.v2"
 )
 
 const defaultCompose string = `version: "3.7"
@@ -510,9 +508,9 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
@@ -567,10 +565,10 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
-					yaml.MapItem{Key: "none", Value: "none"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
 				},
 			},
 		},
@@ -634,9 +632,9 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
@@ -679,9 +677,9 @@ func TestErrorLoadComposePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
@@ -729,9 +727,9 @@ func TestErrorSetComposeServicePresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
@@ -785,9 +783,9 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 		Questions: map[string]presets.PresetConfigQuestion{
 			"database": presets.PresetConfigQuestion{
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},

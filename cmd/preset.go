@@ -168,11 +168,8 @@ func (p *KoolPreset) getComposeServicesToCustomize(preset string) (servicesTempl
 			optionTemplate := make(map[string]string)
 
 			for _, option := range question.Options {
-				key := fmt.Sprintf("%v.yml", option.Key)
-				value := fmt.Sprintf("%v", option.Value)
-
-				options = append(options, value)
-				optionTemplate[value] = allTemplates[serviceName][key]
+				options = append(options, option.Name)
+				optionTemplate[option.Name] = allTemplates[serviceName][option.Template]
 			}
 
 			var selectedOption string
