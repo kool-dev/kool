@@ -10,7 +10,7 @@ assignees: ""
 
 -   [ ] :beetle: Bug Fix
 -   [ ] :trophy: Feature
--   [ ] :pencil: Refractor
+-   [ ] :pencil: Refactor
 -   [ ] :warning: Break Change
 -   [ ] :new: Other
 
