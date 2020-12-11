@@ -17,6 +17,7 @@ type TableWriter interface {
 	AppendHeader(...interface{})
 	AppendRow(...interface{})
 	Render()
+	SortBy(int)
 }
 
 // NewTableWriter creates a new table writer
@@ -42,4 +43,9 @@ func (t *DefaultTableWriter) AppendRow(columns ...interface{}) {
 // Render render the table
 func (t *DefaultTableWriter) Render() {
 	t.w.Render()
+}
+
+// SortBy sort table by column
+func (t *DefaultTableWriter) SortBy(column int) {
+	t.w.SortBy([]table.SortBy{table.SortBy{Number: column, Mode: table.Asc}})
 }

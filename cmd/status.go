@@ -6,8 +6,8 @@ import (
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
-	"sort"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ type KoolStatus struct {
 
 type statusService struct {
 	service, state, ports string
-	running               bool
+	running               string
 	err                   error
 }
 
@@ -59,85 +59,84 @@ func NewKoolStatus() *KoolStatus {
 
 // Execute runs the status logic with incoming arguments.
 func (s *KoolStatus) Execute(args []string) (err error) {
-	if err = s.check.Check(); err != nil {
+	var services []string
+
+	if err = s.checkDependencies(); err != nil {
 		return
 	}
 
-	if err = s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK")); err != nil {
-		return
-	}
-
-	services, err := s.getServices()
-
-	if err != nil {
-		s.Warning("No services found.")
-		return
-	}
-
-	if len(services) == 0 {
+	if services, err = s.getServices(); err != nil || len(services) == 0 {
 		s.Warning("No services found.")
 		return
 	}
 
 	chStatus := make(chan *statusService, len(services))
 
-	for _, service := range services {
-		go func(service string, ch chan *statusService) {
-			var (
-				status, port, serviceID string
-				err                     error
-			)
-
-			ss := &statusService{service: service}
-
-			if serviceID, err = s.Exec(s.getServiceIDRunner, service); err != nil {
-				ss.err = err
-			} else if serviceID != "" {
-				status, port = s.getStatusPort(serviceID)
-
-				ss.running = strings.HasPrefix(status, "Up")
-				ss.state = status
-				ss.ports = port
-			}
-
-			ch <- ss
-		}(service, chStatus)
-	}
-
-	var i, l int = 0, len(services)
-	status := make([]*statusService, l)
-	for ss := range chStatus {
-		status[i] = ss
-
-		if status[i].err != nil {
-			err = status[i].err
-			return
-		}
-
-		if i == l-1 {
-			close(chStatus)
-			break
-		}
-		i++
-	}
-
 	s.table.SetWriter(s.OutStream())
 	s.table.AppendHeader("Service", "Running", "Ports", "State")
 
-	sort.SliceStable(status, func(i, j int) bool {
-		return status[i].service < status[j].service
-	})
+	go func() {
+		var wg sync.WaitGroup
 
-	for _, st := range status {
-		running := "Not running"
-		if st.running {
-			running = "Running"
+		defer close(chStatus)
+
+		for _, service := range services {
+			wg.Add(1)
+			go s.getServiceInfo(service, chStatus, &wg)
 		}
-		s.table.AppendRow(st.service, running, st.ports, st.state)
+
+		wg.Wait()
+	}()
+
+	for ss := range chStatus {
+		if ss.err != nil {
+			err = ss.err
+			return
+		}
+
+		s.table.AppendRow(ss.service, ss.running, ss.ports, ss.state)
 	}
 
+	s.table.SortBy(1)
 	s.table.Render()
 	return
+}
+
+func (s *KoolStatus) checkDependencies() (err error) {
+	chErrDocker, chErrNetwork := s.checkDocker(), s.checkNetwork()
+	errDocker, errNetwork := <-chErrDocker, <-chErrNetwork
+
+	if errDocker != nil {
+		err = errDocker
+		return
+	}
+
+	if errNetwork != nil {
+		err = errNetwork
+		return
+	}
+
+	return
+}
+
+func (s *KoolStatus) checkDocker() <-chan error {
+	err := make(chan error)
+
+	go func() {
+		err <- s.check.Check()
+	}()
+
+	return err
+}
+
+func (s *KoolStatus) checkNetwork() <-chan error {
+	err := make(chan error)
+
+	go func() {
+		err <- s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK"))
+	}()
+
+	return err
 }
 
 func (s *KoolStatus) getServices() (services []string, err error) {
@@ -155,6 +154,32 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 	}
 
 	return
+}
+
+func (s *KoolStatus) getServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
+	var (
+		status, port, serviceID string
+		err                     error
+	)
+
+	defer wg.Done()
+
+	ss := &statusService{service: service}
+
+	if serviceID, err = s.Exec(s.getServiceIDRunner, service); err != nil {
+		ss.err = err
+	} else if serviceID != "" {
+		status, port = s.getStatusPort(serviceID)
+
+		ss.running = "Not running"
+		if strings.HasPrefix(status, "Up") {
+			ss.running = "Running"
+		}
+		ss.state = status
+		ss.ports = port
+	}
+
+	chStatus <- ss
 }
 
 func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string) {
