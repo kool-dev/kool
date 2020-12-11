@@ -4,6 +4,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
+	"kool-dev/kool/cmd/updater"
 	"kool-dev/kool/environment"
 
 	"github.com/spf13/cobra"
@@ -24,7 +25,7 @@ func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
 		Use:                   "start [SERVICE]",
 		Short:                 "Start the specified Kool environment containers. If no service is specified, start all.",
-		Run:                   DefaultCommandRunFunction(start),
+		Run:                   DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd})),
 		DisableFlagsInUseLine: true,
 	}
 }
