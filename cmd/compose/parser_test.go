@@ -145,6 +145,26 @@ func TestErrorStringDefaultParser(t *testing.T) {
 	}
 }
 
+func TestErrorParseDefaultParser(t *testing.T) {
+	originalYamlUnmarshalFn := yamlUnmarshalFn
+	defer func() {
+		yamlUnmarshalFn = originalYamlUnmarshalFn
+	}()
+
+	yamlUnmarshalFn = func(in []byte, out interface{}) error {
+		return errors.New("yaml unmarshal error")
+	}
+
+	p := NewParser()
+	err := p.Parse(composeFile)
+
+	if err == nil {
+		t.Error("expecting error 'yaml unmarshal error', got none")
+	} else if err.Error() != "yaml unmarshal error" {
+		t.Errorf("expecting error 'yaml unmarshal error', got %v", err)
+	}
+}
+
 func getYamlData(p *DefaultParser) *Compose {
 	parserStruct := reflect.ValueOf(p).Elem()
 	reflectYamlData := parserStruct.FieldByName("compose")
