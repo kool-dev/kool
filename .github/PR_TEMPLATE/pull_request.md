@@ -49,4 +49,4 @@ How to test/verify the change.
 
 If applicable, add screenshots to help explain your solution or upgrade. If you want to record your screen you can use [ShareX Opensource Screen Capture](https://getsharex.com), or other software of your choice. Remember to provide a private [YouTube](https://youtube.com) link for videos.
 
-Please let us know of any other context that is relevant for this PR .
+Please let us know of any other context that is relevant for this PR.
