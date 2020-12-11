@@ -84,9 +84,21 @@ func TestServicesDefaultParser(t *testing.T) {
 
 	p.SetService("app", appService)
 
-	getServices := p.GetServices()
+	if getServices := p.GetServices(); !reflect.DeepEqual(services, getServices) {
+		t.Error("failed handling services")
+	}
 
-	if !reflect.DeepEqual(services, getServices) {
+	appService = yaml.MapSlice{
+		yaml.MapItem{Key: "image", Value: "kooldev/image2"},
+	}
+
+	services = yaml.MapSlice{
+		yaml.MapItem{Key: "app", Value: appService},
+	}
+
+	p.SetService("app", appService)
+
+	if getServices := p.GetServices(); !reflect.DeepEqual(services, getServices) {
 		t.Error("failed handling services")
 	}
 }
@@ -100,9 +112,13 @@ func TestVolumesDefaultParser(t *testing.T) {
 
 	p.SetVolume("database")
 
-	getVolumes := p.GetVolumes()
+	if getVolumes := p.GetVolumes(); !reflect.DeepEqual(volumes, getVolumes) {
+		t.Error("failed handling volumes")
+	}
 
-	if !reflect.DeepEqual(volumes, getVolumes) {
+	p.SetVolume("database")
+
+	if getVolumes := p.GetVolumes(); !reflect.DeepEqual(volumes, getVolumes) {
 		t.Error("failed handling volumes")
 	}
 }

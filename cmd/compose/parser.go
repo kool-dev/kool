@@ -53,7 +53,12 @@ func NewParser() Parser {
 
 // Parse parse content to yaml
 func (p *DefaultParser) Parse(content string) (err error) {
-	err = yamlUnmarshalFn([]byte(content), &p.compose)
+	compose := new(Compose)
+	if err = yamlUnmarshalFn([]byte(content), &compose); err != nil {
+		return
+	}
+
+	p.compose = compose
 	return
 }
 
@@ -84,8 +89,8 @@ func (p *DefaultParser) GetVolumes() yaml.MapSlice {
 
 // SetVolume remove a docker-compose volume
 func (p *DefaultParser) SetVolume(volume string) {
-	for _, volume := range p.compose.Volumes {
-		if volume.Key == volume {
+	for _, v := range p.compose.Volumes {
+		if v.Key == volume {
 			return
 		}
 	}

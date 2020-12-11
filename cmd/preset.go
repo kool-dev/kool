@@ -19,10 +19,11 @@ type KoolPresetFlags struct {
 // KoolPreset holds handlers and functions to implement the preset command logic
 type KoolPreset struct {
 	DefaultKoolService
-	Flags         *KoolPresetFlags
-	presetsParser presets.Parser
-	composeParser compose.Parser
-	promptSelect  shell.PromptSelect
+	Flags          *KoolPresetFlags
+	presetsParser  presets.Parser
+	composeParser  compose.Parser
+	templateParser compose.Parser
+	promptSelect   shell.PromptSelect
 }
 
 // ErrPresetFilesAlreadyExists error for existing presets files
@@ -43,6 +44,7 @@ func NewKoolPreset() *KoolPreset {
 		*newDefaultKoolService(),
 		&KoolPresetFlags{false},
 		presets.NewParser(),
+		compose.NewParser(),
 		compose.NewParser(),
 		shell.NewPromptSelect(),
 	}
@@ -200,17 +202,16 @@ func (p *KoolPreset) customizeCompose(preset string, servicesTemplates map[strin
 		var newCompose string
 		for serviceKey, serviceTemplate := range servicesTemplates {
 			if serviceTemplate != "none" {
-				templateParser := compose.NewParser()
-				if err = templateParser.Parse(serviceTemplate); err != nil {
+				if err = p.templateParser.Parse(serviceTemplate); err != nil {
 					err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
 					return
 				}
 
-				for _, service := range templateParser.GetServices() {
+				for _, service := range p.templateParser.GetServices() {
 					p.composeParser.SetService(serviceKey, service.Value.(yaml.MapSlice))
 				}
 
-				for _, volume := range templateParser.GetVolumes() {
+				for _, volume := range p.templateParser.GetVolumes() {
 					p.composeParser.SetVolume(volume.Key.(string))
 				}
 			}
