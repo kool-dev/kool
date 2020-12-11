@@ -62,4 +62,6 @@ func (u *DefaultUpdater) CheckForUpdates(current semver.Version, ch chan bool) {
 	}
 
 	ch <- isNewVersion
+
+	close(ch)
 }

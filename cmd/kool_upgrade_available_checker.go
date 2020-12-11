@@ -46,7 +46,6 @@ func (u *UpdateAwareService) Execute(args []string) (err error) {
 	case <-time.After(300 * time.Millisecond):
 		break
 	}
-	close(ch)
 
 	return
 }
