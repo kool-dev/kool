@@ -412,7 +412,9 @@ func TestErrorFileWriteWriteFilesParser(t *testing.T) {
 	)
 
 	if fileError, err = p.WriteFiles("preset"); err == nil {
-		t.Error("expecting an error on WriteFiles, got none")
+		t.Errorf("expecting error '%v', got none", fs.MockWriteError)
+	} else if err != fs.MockWriteError {
+		t.Errorf("expecting error '%v', got '%v'", fs.MockWriteError, err)
 	}
 
 	if fileError != "kool.yml" {
@@ -453,7 +455,8 @@ func TestErrorLinesWriteWriteFilesParser(t *testing.T) {
 
 func TestErrorFileSyncWriteFilesParser(t *testing.T) {
 	fs := &fakeFs{
-		MockSyncError: errors.New("sync error"),
+		MockWriteLines: len([]byte("value1")),
+		MockSyncError:  errors.New("sync error"),
 	}
 
 	p := NewParserFS(fs)
@@ -472,7 +475,9 @@ func TestErrorFileSyncWriteFilesParser(t *testing.T) {
 	)
 
 	if fileError, err = p.WriteFiles("preset"); err == nil {
-		t.Error("expecting an error on WriteFiles, got none")
+		t.Errorf("expecting error '%v', got none", fs.MockSyncError)
+	} else if err != fs.MockSyncError {
+		t.Errorf("expecting error '%v', got '%v'", fs.MockSyncError, err)
 	}
 
 	if fileError != "kool.yml" {
