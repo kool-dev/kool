@@ -45,23 +45,20 @@ func (u *DefaultUpdater) Update(currentVersion semver.Version) (updatedVersion s
 }
 
 // CheckForUpdates checks if there is a new version
-func (u *DefaultUpdater) CheckForUpdates(current semver.Version, ch chan bool) {
+func (u *DefaultUpdater) CheckForUpdates(current semver.Version, chHasNewVersion chan bool) {
 	var (
 		latest       *selfupdate.Release
-		isNewVersion = false
 		err          error
 	)
 
 	if latest, _, err = selfupdate.DetectLatest("kool-dev/kool"); err != nil {
-		ch <- isNewVersion
+		chHasNewVersion <- false
 		return
 	}
 
 	if !latest.Version.Equals(current) {
-		isNewVersion = true
+		chHasNewVersion <- true
 	}
 
-	ch <- isNewVersion
-
-	close(ch)
+	close(chHasNewVersion)
 }
