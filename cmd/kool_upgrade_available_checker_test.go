@@ -1,4 +1,5 @@
 package cmd
+
 import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
@@ -11,13 +12,14 @@ import (
 	"fmt"
 	"testing"
 )
+
 func newFakeUpdateAwareService(start *KoolStart, koolFakeUpdater *updater.FakeUpdater) *UpdateAwareService {
 	return &UpdateAwareService{
 		start,
 		koolFakeUpdater,
 	}
 }
-func TestStartWithUpdaterWrapper(t *testing.T)  {
+func TestStartWithUpdaterWrapper(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
@@ -56,7 +58,7 @@ func TestStartWithUpdaterWrapper(t *testing.T)  {
 	}
 }
 
-func TestStartWithUpdaterWrapperError(t *testing.T)  {
+func TestStartWithUpdaterWrapperError(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
@@ -93,7 +95,7 @@ func TestStartWithUpdaterWrapperError(t *testing.T)  {
 	}
 }
 
-func TestStartWithUpdaterWrapperSameVersion(t *testing.T)  {
+func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
