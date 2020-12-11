@@ -6,9 +6,9 @@ import (
 
 // FakeUpdater implements all fake behaviors for self-update
 type FakeUpdater struct {
-	CalledGetCurrentVersion, CalledUpdate bool
-	MockCurrentVersion, MockLatestVersion string
-	MockError                             error
+	CalledGetCurrentVersion, CalledUpdate, CalledCheckForUpdates bool
+	MockCurrentVersion, MockLatestVersion                        string
+	MockError                                                    error
 }
 
 // GetCurrentVersion get mocked current version
@@ -23,4 +23,10 @@ func (u *FakeUpdater) Update(currentVersion semver.Version) (updatedVersion semv
 	err = u.MockError
 	u.CalledUpdate = true
 	return
+}
+
+// CheckForUpdates implements fake check
+func (u *FakeUpdater) CheckForUpdates(currentVersion semver.Version, ch chan bool) {
+	u.CalledCheckForUpdates = true
+	ch <- true
 }
