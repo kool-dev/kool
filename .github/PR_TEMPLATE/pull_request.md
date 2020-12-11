@@ -12,13 +12,14 @@ assignees: ""
 -   [ ] :trophy: Feature
 -   [ ] :pencil: Refactor
 -   [ ] :warning: Break Change
+-   [ ] :open_book: Documentation
 -   [ ] :new: Other
 
 #### TL;DR
 
 Provide a short description on what you are implementing. Reference errors, or anything that makes it very clear after a single read what is being changed. Focus on write less, while making yourself clear.
 
-<hr>
+---
 
 #### Describe the update
 
@@ -34,16 +35,11 @@ A clear explanation of what is being updated. Try to remember/respond to these p
 -   _Is there something relevant to a specific commit ?_
 -   _Are you solving a issue? if so don't forget to note which and explain your solution process_
 
-#### :dart: Kool Target version and environment
+#### :dart: Kool Target version:
 
-Please provide the version you are running (`kool -v`), which environment (OS, shell, docker, DinD), and also what environment variables you are using (`kool info`).
-
-E.g:.
-
-```bash
-~$ kool -v
-kool version 1.7.0
-```
+-   [ ] next **patch** release;
+-   [ ] next **minor** release;
+-   [ ] next **major** release;
 
 #### Expected behavior
 
