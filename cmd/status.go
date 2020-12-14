@@ -20,9 +20,9 @@ type KoolStatus struct {
 	net        network.Handler
 	envStorage environment.EnvStorage
 
-	getServicesRunner          builder.Command
-	getServiceIDRunner         builder.Command
-	getServiceStatusPortRunner builder.Command
+	getServicesCmd          builder.Command
+	getServiceIDCmd         builder.Command
+	getServiceStatusPortCmd builder.Command
 
 	table shell.TableWriter
 }
@@ -142,7 +142,7 @@ func (s *KoolStatus) checkNetwork() <-chan error {
 func (s *KoolStatus) getServices() (services []string, err error) {
 	var output string
 
-	if output, err = s.Exec(s.getServicesRunner); err != nil {
+	if output, err = s.Exec(s.getServicesCmd); err != nil {
 		return
 	}
 
@@ -166,7 +166,7 @@ func (s *KoolStatus) getServiceInfo(service string, chStatus chan *statusService
 
 	ss := &statusService{service: service}
 
-	if serviceID, err = s.Exec(s.getServiceIDRunner, service); err != nil {
+	if serviceID, err = s.Exec(s.getServiceIDCmd, service); err != nil {
 		ss.err = err
 	} else if serviceID != "" {
 		status, port = s.getStatusPort(serviceID)
@@ -185,7 +185,7 @@ func (s *KoolStatus) getServiceInfo(service string, chStatus chan *statusService
 func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string) {
 	var output string
 
-	if output, _ = s.Exec(s.getServiceStatusPortRunner, "--filter", "ID="+serviceID); output == "" {
+	if output, _ = s.Exec(s.getServiceStatusPortCmd, "--filter", "ID="+serviceID); output == "" {
 		return
 	}
 

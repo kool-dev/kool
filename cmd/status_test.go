@@ -57,16 +57,16 @@ func TestNewKoolStatus(t *testing.T) {
 		t.Errorf("unexpected network.Handler on default KoolStatus instance")
 	}
 
-	if _, ok := k.getServicesRunner.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected builder.Runner on default KoolStatus instance")
+	if _, ok := k.getServicesCmd.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Command on default KoolStatus instance")
 	}
 
-	if _, ok := k.getServiceIDRunner.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected builder.Runner on default KoolStatus instance")
+	if _, ok := k.getServiceIDCmd.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Command on default KoolStatus instance")
 	}
 
-	if _, ok := k.getServiceStatusPortRunner.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected builder.Runner on default KoolStatus instance")
+	if _, ok := k.getServiceStatusPortCmd.(*builder.DefaultCommand); !ok {
+		t.Errorf("unexpected builder.Command on default KoolStatus instance")
 	}
 
 	if _, ok := k.table.(*shell.DefaultTableWriter); !ok {
@@ -77,9 +77,9 @@ func TestNewKoolStatus(t *testing.T) {
 func TestStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
-	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "100"
-	f.getServiceStatusPortRunner.(*builder.FakeCommand).MockExecOut = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
 
 	cmd := NewStatusCommand(f)
 
@@ -100,9 +100,9 @@ app | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour`
 func TestNotRunningStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
-	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "100"
-	f.getServiceStatusPortRunner.(*builder.FakeCommand).MockExecOut = "Exited an hour ago"
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Exited an hour ago"
 
 	cmd := NewStatusCommand(f)
 
@@ -123,8 +123,8 @@ app | Not running |  | Exited an hour ago`
 func TestNoStatusPortStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
-	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
 
 	cmd := NewStatusCommand(f)
 
@@ -162,7 +162,7 @@ func TestNoServicesStatusCommand(t *testing.T) {
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockExecError = errors.New("")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecError = errors.New("")
 
 	cmd := NewStatusCommand(f)
 
@@ -212,8 +212,8 @@ func TestFailedNetworkStatusCommand(t *testing.T) {
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = "app"
-	f.getServiceIDRunner.(*builder.FakeCommand).MockExecError = errors.New("")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecError = errors.New("")
 
 	cmd := NewStatusCommand(f)
 
@@ -239,10 +239,10 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 	}
 
 	f.shell = &FakeRaceShell{}
-	f.getServicesRunner.(*builder.FakeCommand).MockExecOut = `cache
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = `cache
 app`
-	f.getServiceIDRunner.(*builder.FakeCommand).MockExecOut = "output"
-	f.getServiceStatusPortRunner.(*builder.FakeCommand).MockExecOut = "output"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "output"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "output"
 
 	cmd := NewStatusCommand(f)
 

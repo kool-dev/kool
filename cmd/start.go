@@ -49,14 +49,47 @@ func init() {
 
 // Execute runs the start logic with incoming arguments.
 func (s *KoolStart) Execute(args []string) (err error) {
-	if err = s.check.Check(); err != nil {
-		return
-	}
-
-	if err = s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK")); err != nil {
+	if err = s.checkDependencies(); err != nil {
 		return
 	}
 
 	err = s.Interactive(s.start, args...)
 	return
+}
+
+func (s *KoolStart) checkDependencies() (err error) {
+	chErrDocker, chErrNetwork := s.checkDocker(), s.checkNetwork()
+	errDocker, errNetwork := <-chErrDocker, <-chErrNetwork
+
+	if errDocker != nil {
+		err = errDocker
+		return
+	}
+
+	if errNetwork != nil {
+		err = errNetwork
+		return
+	}
+
+	return
+}
+
+func (s *KoolStart) checkDocker() <-chan error {
+	err := make(chan error)
+
+	go func() {
+		err <- s.check.Check()
+	}()
+
+	return err
+}
+
+func (s *KoolStart) checkNetwork() <-chan error {
+	err := make(chan error)
+
+	go func() {
+		err <- s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK"))
+	}()
+
+	return err
 }
