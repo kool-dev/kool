@@ -3,6 +3,7 @@ package shell
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -53,4 +54,11 @@ func (f *FakeTableWriter) Render() {
 
 		f.TableOut = f.TableOut + fmt.Sprintln(strings.Join(columnsStr, " | "))
 	}
+}
+
+// SortBy fake SortBy behavior
+func (f *FakeTableWriter) SortBy(column int) {
+	sort.SliceStable(f.Rows, func(i, j int) bool {
+		return f.Rows[i][column-1].(string) < f.Rows[j][column-1].(string)
+	})
 }

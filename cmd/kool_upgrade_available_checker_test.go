@@ -133,7 +133,7 @@ func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 	}
 }
 
-func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T)  {
+func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
 	koolStart := &KoolStart{
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
