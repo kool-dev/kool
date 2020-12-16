@@ -165,7 +165,7 @@ func (p *KoolPreset) getComposeServicesToCustomize(preset string) (servicesTempl
 
 	allTemplates := p.presetsParser.GetTemplates()
 
-	if servicesToAsk := presetConfig.Questions; len(servicesToAsk) > 0 && p.IsTerminal() {
+	if servicesToAsk := presetConfig.Questions; len(servicesToAsk) > 0 {
 		for _, question := range servicesToAsk {
 			var (
 				options        []string
