@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
+	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/cmd/templates"
 	"testing"
 )
 
@@ -36,7 +38,8 @@ func newFakeKoolPreset() *KoolPreset {
 		&KoolPresetFlags{false},
 		&presets.FakeParser{},
 		&compose.FakeParser{},
-		&compose.FakeParser{},
+		&templates.FakeParser{},
+		&parser.KoolYaml{},
 		&shell.FakePromptSelect{},
 	}
 }
@@ -73,6 +76,10 @@ func TestNewKoolPreset(t *testing.T) {
 
 	if _, ok := k.composeParser.(*compose.DefaultParser); !ok {
 		t.Errorf("unexpected compose.Parser on default KoolPreset instance")
+	}
+
+	if _, ok := k.templateParser.(*templates.DefaultParser); !ok {
+		t.Errorf("unexpected templates.Parser on default KoolPreset instance")
 	}
 
 	if _, ok := k.promptSelect.(*shell.DefaultPromptSelect); !ok {
@@ -458,13 +465,15 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -481,11 +490,11 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		},
 	}
 
-	f.templateParser.(*compose.FakeParser).MockGetServices = yaml.MapSlice{
+	f.templateParser.(*templates.FakeParser).MockGetServices = yaml.MapSlice{
 		yaml.MapItem{Key: "database", Value: parseMysqlTemplate()},
 	}
 
-	f.templateParser.(*compose.FakeParser).MockGetVolumes = yaml.MapSlice{
+	f.templateParser.(*templates.FakeParser).MockGetVolumes = yaml.MapSlice{
 		yaml.MapItem{Key: "database"},
 	}
 
@@ -497,11 +506,11 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if val, ok := f.templateParser.(*compose.FakeParser).CalledParse[mysqlTemplate]; !ok || !val {
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[mysqlTemplate]; !ok || !val {
 		t.Error("failed calling templateParser.Parse to database mysql service")
 	}
 
-	if !f.templateParser.(*compose.FakeParser).CalledGetServices {
+	if !f.templateParser.(*templates.FakeParser).CalledGetServices {
 		t.Error("failed calling templateParser.GetServices")
 	}
 
@@ -509,7 +518,7 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		t.Error("failed calling composeParser.SetService to database mysql service")
 	}
 
-	if !f.templateParser.(*compose.FakeParser).CalledGetVolumes {
+	if !f.templateParser.(*templates.FakeParser).CalledGetVolumes {
 		t.Error("failed calling templateParser.GetVolumes")
 	}
 
@@ -527,13 +536,15 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -550,7 +561,7 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 		},
 	}
 
-	f.templateParser.(*compose.FakeParser).MockParseError = errors.New("parse error")
+	f.templateParser.(*templates.FakeParser).MockParseError = errors.New("parse error")
 
 	cmd := NewPresetCommand(f)
 
@@ -584,14 +595,16 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
-					presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+						presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
+					},
 				},
 			},
 		},
@@ -616,11 +629,11 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if val, ok := f.templateParser.(*compose.FakeParser).CalledParse[mysqlTemplate]; ok && val {
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[mysqlTemplate]; ok && val {
 		t.Error("should not call templateParser.Parse to database mysql service")
 	}
 
-	if f.templateParser.(*compose.FakeParser).CalledGetServices {
+	if f.templateParser.(*templates.FakeParser).CalledGetServices {
 		t.Error("should not call templateParser.GetServices")
 	}
 
@@ -628,7 +641,7 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		t.Error("should not call composeParser.SetService to database service")
 	}
 
-	if f.templateParser.(*compose.FakeParser).CalledGetVolumes {
+	if f.templateParser.(*templates.FakeParser).CalledGetVolumes {
 		t.Error("should not call templateParser.GetVolumes")
 	}
 
@@ -647,13 +660,15 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -693,13 +708,15 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},

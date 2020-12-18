@@ -16,9 +16,7 @@ type Compose struct {
 // Parser holds logic for handling docker-compose
 type Parser interface {
 	Parse(string) error
-	GetServices() yaml.MapSlice
 	SetService(string, interface{})
-	GetVolumes() yaml.MapSlice
 	SetVolume(string)
 	String() (string, error)
 }
@@ -62,11 +60,6 @@ func (p *DefaultParser) Parse(content string) (err error) {
 	return
 }
 
-// GetServices get compose services
-func (p *DefaultParser) GetServices() yaml.MapSlice {
-	return p.compose.Services
-}
-
 // SetService set docker-compose service
 func (p *DefaultParser) SetService(serviceName string, serviceContent interface{}) {
 	for index, service := range p.compose.Services {
@@ -80,11 +73,6 @@ func (p *DefaultParser) SetService(serviceName string, serviceContent interface{
 		Key:   serviceName,
 		Value: serviceContent,
 	})
-}
-
-// GetVolumes get compose volumes
-func (p *DefaultParser) GetVolumes() yaml.MapSlice {
-	return p.compose.Volumes
 }
 
 // SetVolume remove a docker-compose volume

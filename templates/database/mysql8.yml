@@ -17,3 +17,6 @@ services:
 
 volumes:
   database:
+
+scripts:
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD

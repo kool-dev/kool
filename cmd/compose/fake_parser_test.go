@@ -2,8 +2,6 @@ package compose
 
 import (
 	"errors"
-	"gopkg.in/yaml.v2"
-	"reflect"
 	"testing"
 )
 
@@ -16,39 +14,19 @@ func TestFakeParser(t *testing.T) {
 	err = f.Parse("compose")
 
 	if err == nil {
-		t.Error("expecting error on Load, got none")
+		t.Error("expecting error on Parse, got none")
 	} else if err.Error() != "parse error" {
-		t.Errorf("expecting error 'parse error' on Load, got %v", err)
+		t.Errorf("expecting error 'parse error' on Parse, got %v", err)
 	}
 
 	if val, ok := f.CalledParse["compose"]; !ok || !val {
 		t.Error("failed calling Parse")
 	}
 
-	f.MockGetServices = yaml.MapSlice{
-		yaml.MapItem{Key: "serviceKey", Value: "serviceValue"},
-	}
-
-	services := f.GetServices()
-
-	if !f.CalledGetServices || !reflect.DeepEqual(services, f.MockGetServices) {
-		t.Error("failed calling GetServices")
-	}
-
 	f.SetService("service", "content")
 
 	if val, ok := f.CalledSetService["service"]; !ok || !val {
 		t.Error("failed calling SetService")
-	}
-
-	f.MockGetVolumes = yaml.MapSlice{
-		yaml.MapItem{Key: "volume"},
-	}
-
-	volumes := f.GetVolumes()
-
-	if !f.CalledGetVolumes || !reflect.DeepEqual(volumes, f.MockGetVolumes) {
-		t.Error("failed calling GetVolumes")
 	}
 
 	f.SetVolume("volume")

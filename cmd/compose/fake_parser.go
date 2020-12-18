@@ -1,21 +1,13 @@
 package compose
 
-import (
-	"gopkg.in/yaml.v2"
-)
-
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledParse       map[string]bool
-	CalledGetServices bool
-	CalledSetService  map[string]bool
-	CalledGetVolumes  bool
-	CalledSetVolume   map[string]bool
-	CalledString      bool
-	MockParseError    error
-	MockStringError   error
-	MockGetServices   yaml.MapSlice
-	MockGetVolumes    yaml.MapSlice
+	CalledParse      map[string]bool
+	CalledSetService map[string]bool
+	CalledSetVolume  map[string]bool
+	CalledString     bool
+	MockParseError   error
+	MockStringError  error
 }
 
 // Parse implements fake Parse behavior
@@ -29,12 +21,6 @@ func (f *FakeParser) Parse(content string) (err error) {
 	return
 }
 
-// GetServices implements fake GetServices behavior
-func (f *FakeParser) GetServices() yaml.MapSlice {
-	f.CalledGetServices = true
-	return f.MockGetServices
-}
-
 // SetService implements fake SetService behavior
 func (f *FakeParser) SetService(service string, content interface{}) {
 	if f.CalledSetService == nil {
@@ -42,12 +28,6 @@ func (f *FakeParser) SetService(service string, content interface{}) {
 	}
 
 	f.CalledSetService[service] = true
-}
-
-// GetVolumes implements fake GetVolumes behavior
-func (f *FakeParser) GetVolumes() yaml.MapSlice {
-	f.CalledGetVolumes = true
-	return f.MockGetVolumes
 }
 
 // SetVolume implements fake SetVolume behavior

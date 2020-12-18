@@ -1,0 +1,2 @@
+scripts:
+  composer: kool exec app composer2
