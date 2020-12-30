@@ -1,12 +1,49 @@
 package presets
 
 import (
+	"errors"
 	"os"
 	"reflect"
 	"testing"
 
 	"github.com/spf13/afero"
+	"github.com/spf13/afero/mem"
 )
+
+type fakeFs struct {
+	afero.MemMapFs
+	MockWriteError error
+	MockWriteLines int
+	MockSyncError  error
+}
+
+type fakeFile struct {
+	mem.File
+	MockWriteError error
+	MockWriteLines int
+	MockSyncError  error
+}
+
+func (f *fakeFs) OpenFile(name string, flag int, perm os.FileMode) (afero.File, error) {
+	file := &fakeFile{
+		MockWriteError: f.MockWriteError,
+		MockWriteLines: f.MockWriteLines,
+		MockSyncError:  f.MockSyncError,
+	}
+
+	return file, nil
+}
+
+func (f *fakeFile) Write(b []byte) (n int, err error) {
+	err = f.MockWriteError
+	n = f.MockWriteLines
+	return
+}
+
+func (f *fakeFile) Sync() (err error) {
+	err = f.MockSyncError
+	return
+}
 
 func TestExistsParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
@@ -153,39 +190,6 @@ func TestIgnorePresetMetaKeysParser(t *testing.T) {
 	}
 }
 
-func TestGetPresetKeyContentParser(t *testing.T) {
-	presets := make(map[string]map[string]string)
-
-	preset := make(map[string]string)
-
-	preset["key1"] = "value1"
-	preset["key2"] = "value2"
-	preset["key3"] = "value3"
-
-	presets["preset"] = preset
-
-	p := NewParser()
-	p.LoadPresets(presets)
-
-	content := p.GetPresetKeyContent("preset", "key2")
-
-	if content != "value2" {
-		t.Errorf("expecting to find value 'value2', found %s", content)
-	}
-
-	content = p.GetPresetKeyContent("invalid_preset", "key1")
-
-	if content != "" {
-		t.Errorf("expecting to find value 'value2', found %s", content)
-	}
-
-	content = p.GetPresetKeyContent("preset", "invalid_key1")
-
-	if content != "" {
-		t.Errorf("expecting to find value 'value2', found %s", content)
-	}
-}
-
 func TestSetPresetKeyContentParser(t *testing.T) {
 	presets := make(map[string]map[string]string)
 
@@ -202,7 +206,7 @@ func TestSetPresetKeyContentParser(t *testing.T) {
 
 	p.SetPresetKeyContent("preset", "key2", "value2Changed")
 
-	content := p.GetPresetKeyContent("preset", "key2")
+	content := p.(*DefaultParser).Presets["preset"]["key2"]
 
 	if content != "value2Changed" {
 		t.Errorf("expecting to find value 'value2Changed', found %s", content)
@@ -210,7 +214,7 @@ func TestSetPresetKeyContentParser(t *testing.T) {
 
 	p.SetPresetKeyContent("invalid_preset", "key1", "value1Changed")
 
-	content = p.GetPresetKeyContent("preset", "key1")
+	content = p.(*DefaultParser).Presets["preset"]["key1"]
 
 	if content != "value1" {
 		t.Errorf("expecting to find value 'value1', found %s", content)
@@ -218,7 +222,7 @@ func TestSetPresetKeyContentParser(t *testing.T) {
 
 	p.SetPresetKeyContent("preset", "invalid_key", "value1Changed")
 
-	content = p.GetPresetKeyContent("preset", "key1")
+	content = p.(*DefaultParser).Presets["preset"]["key1"]
 
 	if content != "value1" {
 		t.Errorf("expecting to find value 'value1', found %s", content)
@@ -322,10 +326,11 @@ commands:
   create:
     - command
 questions:
-  question1:
+  - key: question1
     message: message?
     options:
-      option1Key: option1Value
+      - name: option1
+        template: option1.yml
 `,
 	}
 
@@ -352,8 +357,130 @@ questions:
 		t.Error("failed getting create commands preset configuration")
 	}
 
-	questions1, question1Exists := cfg.Questions["question1"]
-	if !question1Exists || questions1.Message != "message?" || len(questions1.Options) != 1 || questions1.Options[0].Key != "option1Key" || questions1.Options[0].Value != "option1Value" {
+	question1 := cfg.Questions[0]
+	if question1.Key != "question1" || question1.Message != "message?" || len(question1.Options) != 1 || question1.Options[0].Template != "option1.yml" || question1.Options[0].Name != "option1" {
 		t.Error("failed getting questions preset configuration")
+	}
+}
+
+func TestErrorOpenFileWriteFilesParser(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	rofs := afero.NewReadOnlyFs(fs)
+
+	p := NewParserFS(rofs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	var (
+		fileError string
+		err       error
+	)
+
+	if fileError, err = p.WriteFiles("preset"); err == nil {
+		t.Error("expecting an error on WriteFiles, got none")
+	}
+
+	if fileError != "kool.yml" {
+		t.Errorf("expecting value 'kool.yml' on fileError, got '%s'", fileError)
+	}
+}
+
+func TestErrorFileWriteWriteFilesParser(t *testing.T) {
+	fs := &fakeFs{
+		MockWriteError: errors.New("write error"),
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	var (
+		fileError string
+		err       error
+	)
+
+	if fileError, err = p.WriteFiles("preset"); err == nil {
+		t.Errorf("expecting error '%v', got none", fs.MockWriteError)
+	} else if err != fs.MockWriteError {
+		t.Errorf("expecting error '%v', got '%v'", fs.MockWriteError, err)
+	}
+
+	if fileError != "kool.yml" {
+		t.Errorf("expecting value 'kool.yml' on fileError, got '%s'", fileError)
+	}
+}
+
+func TestErrorLinesWriteWriteFilesParser(t *testing.T) {
+	fs := &fakeFs{
+		MockWriteLines: 100,
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	var (
+		fileError string
+		err       error
+	)
+
+	if fileError, err = p.WriteFiles("preset"); err == nil {
+		t.Errorf("expecting error '%v', got none", ErrPresetWriteAllBytes)
+	} else if err != ErrPresetWriteAllBytes {
+		t.Errorf("expecting error '%v', got '%v'", ErrPresetWriteAllBytes, err)
+	}
+
+	if fileError != "kool.yml" {
+		t.Errorf("expecting value 'kool.yml' on fileError, got '%s'", fileError)
+	}
+}
+
+func TestErrorFileSyncWriteFilesParser(t *testing.T) {
+	fs := &fakeFs{
+		MockWriteLines: len([]byte("value1")),
+		MockSyncError:  errors.New("sync error"),
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	var (
+		fileError string
+		err       error
+	)
+
+	if fileError, err = p.WriteFiles("preset"); err == nil {
+		t.Errorf("expecting error '%v', got none", fs.MockSyncError)
+	} else if err != fs.MockSyncError {
+		t.Errorf("expecting error '%v', got '%v'", fs.MockSyncError, err)
+	}
+
+	if fileError != "kool.yml" {
+		t.Errorf("expecting value 'kool.yml' on fileError, got '%s'", fileError)
 	}
 }

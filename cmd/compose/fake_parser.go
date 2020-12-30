@@ -1,58 +1,62 @@
 package compose
 
+import (
+	"gopkg.in/yaml.v2"
+)
+
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledLoad                              map[string]bool
-	CalledSetService                        map[string]map[string]bool
-	CalledRemoveService, CalledRemoveVolume map[string]bool
-	CalledString                            bool
-	MockLoadError                           error
-	MockSetServiceError                     error
-	MockStringError                         error
+	CalledParse       map[string]bool
+	CalledGetServices bool
+	CalledSetService  map[string]bool
+	CalledGetVolumes  bool
+	CalledSetVolume   map[string]bool
+	CalledString      bool
+	MockParseError    error
+	MockStringError   error
+	MockGetServices   yaml.MapSlice
+	MockGetVolumes    yaml.MapSlice
 }
 
-// Load implements fake Load behavior
-func (f *FakeParser) Load(compose string) (err error) {
-	if f.CalledLoad == nil {
-		f.CalledLoad = make(map[string]bool)
+// Parse implements fake Parse behavior
+func (f *FakeParser) Parse(content string) (err error) {
+	if f.CalledParse == nil {
+		f.CalledParse = make(map[string]bool)
 	}
 
-	f.CalledLoad[compose] = true
-	err = f.MockLoadError
+	f.CalledParse[content] = true
+	err = f.MockParseError
 	return
+}
+
+// GetServices implements fake GetServices behavior
+func (f *FakeParser) GetServices() yaml.MapSlice {
+	f.CalledGetServices = true
+	return f.MockGetServices
 }
 
 // SetService implements fake SetService behavior
-func (f *FakeParser) SetService(service string, content string) (err error) {
+func (f *FakeParser) SetService(service string, content interface{}) {
 	if f.CalledSetService == nil {
-		f.CalledSetService = make(map[string]map[string]bool)
+		f.CalledSetService = make(map[string]bool)
 	}
 
-	if f.CalledSetService[service] == nil {
-		f.CalledSetService[service] = make(map[string]bool)
-	}
-
-	f.CalledSetService[service][content] = true
-	err = f.MockSetServiceError
-	return
+	f.CalledSetService[service] = true
 }
 
-// RemoveService implements fake RemoveService behavior
-func (f *FakeParser) RemoveService(service string) {
-	if f.CalledRemoveService == nil {
-		f.CalledRemoveService = make(map[string]bool)
-	}
-
-	f.CalledRemoveService[service] = true
+// GetVolumes implements fake GetVolumes behavior
+func (f *FakeParser) GetVolumes() yaml.MapSlice {
+	f.CalledGetVolumes = true
+	return f.MockGetVolumes
 }
 
-// RemoveVolume implements fake RemoveVolume behavior
-func (f *FakeParser) RemoveVolume(volume string) {
-	if f.CalledRemoveVolume == nil {
-		f.CalledRemoveVolume = make(map[string]bool)
+// SetVolume implements fake SetVolume behavior
+func (f *FakeParser) SetVolume(volume string) {
+	if f.CalledSetVolume == nil {
+		f.CalledSetVolume = make(map[string]bool)
 	}
 
-	f.CalledRemoveVolume[volume] = true
+	f.CalledSetVolume[volume] = true
 }
 
 // String implements fake String behavior

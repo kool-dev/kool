@@ -45,21 +45,10 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
 
-	f.MockPresetKeyContent = map[string]map[string]string{
-		"preset": map[string]string{
-			"key": "content",
-		},
-	}
-	content := f.GetPresetKeyContent("preset", "key")
-
-	if !f.CalledGetPresetKeyContent["preset"]["key"] || content != "content" {
-		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
-	}
-
 	f.SetPresetKeyContent("preset", "key", "content")
 
 	if !f.CalledSetPresetKeyContent["preset"]["key"]["content"] {
-		t.Error("failed to use mocked GetPresetKeyContent function on FakeParser")
+		t.Error("failed to use mocked SetPresetKeyContent function on FakeParser")
 	}
 
 	f.MockTemplates = nil

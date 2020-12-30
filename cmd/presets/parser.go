@@ -12,15 +12,23 @@ import (
 
 // PresetConfigQuestion preset config question
 type PresetConfigQuestion struct {
-	Message string        `yaml:"message"`
-	Options yaml.MapSlice `yaml:"options"`
+	Key           string                       `yaml:"key"`
+	DefaultAnswer string                       `yaml:"default_answer"`
+	Message       string                       `yaml:"message"`
+	Options       []PresetConfigQuestionOption `yaml:"options"`
+}
+
+// PresetConfigQuestionOption preset config question option
+type PresetConfigQuestionOption struct {
+	Name     string `yaml:"name"`
+	Template string `yaml:"template"`
 }
 
 // PresetConfig preset config
 type PresetConfig struct {
-	Language  string              `yaml:"language"`
-	Commands  map[string][]string `yaml:"commands"`
-	Questions map[string]PresetConfigQuestion
+	Language  string                 `yaml:"language"`
+	Commands  map[string][]string    `yaml:"commands"`
+	Questions []PresetConfigQuestion `yaml:"questions"`
 }
 
 // DefaultParser holds presets parsing data
@@ -41,7 +49,6 @@ type Parser interface {
 	LoadTemplates(map[string]map[string]string)
 	LoadConfigs(map[string]string)
 	WriteFiles(string) (string, error)
-	GetPresetKeyContent(string, string) string
 	SetPresetKeyContent(string, string, string)
 	GetTemplates() map[string]map[string]string
 	GetConfig(string) (*PresetConfig, error)
@@ -155,19 +162,6 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 		}
 
 		file.Close()
-	}
-
-	return
-}
-
-// GetPresetKeyContent get preset key value
-func (p *DefaultParser) GetPresetKeyContent(preset string, key string) (value string) {
-	if _, presetFound := p.Presets[preset]; !presetFound {
-		return
-	}
-
-	if dataContent, keyFound := p.Presets[preset][key]; keyFound {
-		value = dataContent
 	}
 
 	return

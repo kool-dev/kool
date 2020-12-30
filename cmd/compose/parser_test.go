@@ -2,7 +2,6 @@ package compose
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -24,51 +23,11 @@ services:
 volumes:
   service: null
   service2: null
-`
-
-const composeWithoutService = `version: "3.7"
-services:
-  service2:
-    image: service-image2
-    volumes:
-    - service2:/app:delegated
-volumes:
-  service: null
-  service2: null
-`
-
-const composeWithouServiceVolume string = `version: "3.7"
-services:
-  service:
-    image: service-image
-    volumes:
-    - service:/app:delegated
-  service2:
-    image: service-image2
-    volumes:
-    - service2:/app:delegated
-volumes:
-  service2: null
-`
-
-const newComposeService string = `image: new-service-image
-volumes:
-- service:/app:delegated
-`
-
-const composeWithNewService string = `version: "3.7"
-services:
-  service:
-    image: new-service-image
-    volumes:
-    - service:/app:delegated
-  service2:
-    image: service-image2
-    volumes:
-    - service2:/app:delegated
-volumes:
-  service: null
-  service2: null
+networks:
+  kool_local: null
+  kool_global:
+    external: true
+    name: ${KOOL_GLOBAL_NETWORK:-kool_global}
 `
 
 func TestNewParser(t *testing.T) {
@@ -79,16 +38,16 @@ func TestNewParser(t *testing.T) {
 	}
 }
 
-func TestLoadDefaultParser(t *testing.T) {
+func TestParseDefaultParser(t *testing.T) {
 	p := NewParser()
 
-	if err := p.Load(composeFile); err != nil {
+	if err := p.Parse(composeFile); err != nil {
 		t.Errorf("unexpected error loading docker compose file; error: %v", err)
 	}
 
 	yamlData := getYamlData(p.(*DefaultParser))
 
-	parsed := yaml.MapSlice{}
+	parsed := new(Compose)
 	_ = yaml.Unmarshal([]byte(composeFile), &parsed)
 
 	if !reflect.DeepEqual(yamlData, parsed) {
@@ -99,7 +58,7 @@ func TestLoadDefaultParser(t *testing.T) {
 func TestStringDefaultParser(t *testing.T) {
 	p := NewParser()
 
-	_ = p.Load(composeFile)
+	_ = p.Parse(composeFile)
 
 	content, err := p.String()
 
@@ -112,98 +71,61 @@ func TestStringDefaultParser(t *testing.T) {
 	}
 }
 
-func TestRemoveServiceDefaultParser(t *testing.T) {
+func TestServicesDefaultParser(t *testing.T) {
 	p := NewParser()
 
-	_ = p.Load(composeFile)
+	appService := yaml.MapSlice{
+		yaml.MapItem{Key: "image", Value: "kooldev/image"},
+	}
 
-	p.RemoveService("service")
+	services := yaml.MapSlice{
+		yaml.MapItem{Key: "app", Value: appService},
+	}
 
-	yamlData := getYamlData(p.(*DefaultParser))
+	p.SetService("app", appService)
 
-	parsed := yaml.MapSlice{}
-	_ = yaml.Unmarshal([]byte(composeWithoutService), &parsed)
+	if getServices := p.GetServices(); !reflect.DeepEqual(services, getServices) {
+		t.Error("failed handling services")
+	}
 
-	if !reflect.DeepEqual(yamlData, parsed) {
-		t.Error("failed removing docker compose file service")
+	appService = yaml.MapSlice{
+		yaml.MapItem{Key: "image", Value: "kooldev/image2"},
+	}
+
+	services = yaml.MapSlice{
+		yaml.MapItem{Key: "app", Value: appService},
+	}
+
+	p.SetService("app", appService)
+
+	if getServices := p.GetServices(); !reflect.DeepEqual(services, getServices) {
+		t.Error("failed handling services")
 	}
 }
 
-func TestRemoveVolumeDefaultParser(t *testing.T) {
+func TestVolumesDefaultParser(t *testing.T) {
 	p := NewParser()
 
-	_ = p.Load(composeFile)
-
-	p.RemoveVolume("service")
-
-	yamlData := getYamlData(p.(*DefaultParser))
-
-	parsed := yaml.MapSlice{}
-	_ = yaml.Unmarshal([]byte(composeWithouServiceVolume), &parsed)
-
-	if !reflect.DeepEqual(yamlData, parsed) {
-		t.Error("failed removing docker compose file volume")
-	}
-}
-
-func TestSetServiceDefaultParser(t *testing.T) {
-	p := NewParser()
-
-	_ = p.Load(composeFile)
-
-	if err := p.SetService("service", newComposeService); err != nil {
-		t.Errorf("unexpected error setting docker compose service; error: %v", err)
+	volumes := yaml.MapSlice{
+		yaml.MapItem{Key: "database"},
 	}
 
-	yamlData := getYamlData(p.(*DefaultParser))
+	p.SetVolume("database")
 
-	parsed := yaml.MapSlice{}
-	_ = yaml.Unmarshal([]byte(composeWithNewService), &parsed)
-
-	if !reflect.DeepEqual(yamlData, parsed) {
-		t.Error("failed setting docker compose file service")
-	}
-}
-
-func TestErrorSetServiceDefaultParser(t *testing.T) {
-	p := NewParser()
-	_ = p.Load(composeFile)
-
-	originalYamlUnmarshalFn := yamlUnmarshalFn
-	defer func() {
-		yamlUnmarshalFn = originalYamlUnmarshalFn
-	}()
-
-	yamlUnmarshalFn = func(in []byte, out interface{}) error {
-		fmt.Println("unmarshal")
-		return errors.New("yaml unmarshal error")
+	if getVolumes := p.GetVolumes(); !reflect.DeepEqual(volumes, getVolumes) {
+		t.Error("failed handling volumes")
 	}
 
-	err := p.SetService("service", newComposeService)
+	p.SetVolume("database")
 
-	if err == nil {
-		t.Error("expecting error 'yaml unmarshal error', got none")
-	} else if err.Error() != "yaml unmarshal error" {
-		t.Errorf("expecting error 'yaml unmarshal error', got %v", err)
-	}
-}
-
-func TestNotFoundSetServiceDefaultParser(t *testing.T) {
-	p := NewParser()
-	_ = p.Load(composeFile)
-
-	err := p.SetService("service_not_exists", newComposeService)
-
-	if err == nil {
-		t.Error("expecting error 'service service_not_exists not found', got none")
-	} else if err.Error() != "service service_not_exists not found" {
-		t.Errorf("expecting error 'service service_not_exists not found', got %v", err)
+	if getVolumes := p.GetVolumes(); !reflect.DeepEqual(volumes, getVolumes) {
+		t.Error("failed handling volumes")
 	}
 }
 
 func TestErrorStringDefaultParser(t *testing.T) {
 	p := NewParser()
-	_ = p.Load(composeFile)
+	_ = p.Parse(composeFile)
 
 	originalYamlMarshalFn := yamlMarshalFn
 	defer func() {
@@ -223,8 +145,28 @@ func TestErrorStringDefaultParser(t *testing.T) {
 	}
 }
 
-func getYamlData(p *DefaultParser) yaml.MapSlice {
+func TestErrorParseDefaultParser(t *testing.T) {
+	originalYamlUnmarshalFn := yamlUnmarshalFn
+	defer func() {
+		yamlUnmarshalFn = originalYamlUnmarshalFn
+	}()
+
+	yamlUnmarshalFn = func(in []byte, out interface{}) error {
+		return errors.New("yaml unmarshal error")
+	}
+
+	p := NewParser()
+	err := p.Parse(composeFile)
+
+	if err == nil {
+		t.Error("expecting error 'yaml unmarshal error', got none")
+	} else if err.Error() != "yaml unmarshal error" {
+		t.Errorf("expecting error 'yaml unmarshal error', got %v", err)
+	}
+}
+
+func getYamlData(p *DefaultParser) *Compose {
 	parserStruct := reflect.ValueOf(p).Elem()
-	reflectYamlData := parserStruct.FieldByName("yamlData")
-	return reflect.NewAt(reflectYamlData.Type(), unsafe.Pointer(reflectYamlData.UnsafeAddr())).Elem().Interface().(yaml.MapSlice)
+	reflectYamlData := parserStruct.FieldByName("compose")
+	return reflect.NewAt(reflectYamlData.Type(), unsafe.Pointer(reflectYamlData.UnsafeAddr())).Elem().Interface().(*Compose)
 }

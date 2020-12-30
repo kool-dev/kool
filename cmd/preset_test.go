@@ -3,34 +3,19 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"testing"
-
-	"gopkg.in/yaml.v2"
 )
 
-const defaultCompose string = `version: "3.7"
-services:
-  app:
-    image: kooldev/php:7.4-nginx
-    ports:
-     - "${KOOL_APP_PORT:-80}:80"
-    environment:
-      ASUSER: "${KOOL_ASUSER:-0}"
-      UID: "${UID:-0}"
-    volumes:
-     - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
-    networks:
-     - kool_local
-     - kool_global
+const mysqlTemplate string = `services:
   database:
-    image: mysql:8.0 # can change to: mysql:5.7
-    command: --default-authentication-plugin=mysql_native_password # remove this line if you change to: mysql:5.7
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
     ports:
-     - "${KOOL_DATABASE_PORT:-3306}:3306"
+      - "${KOOL_DATABASE_PORT:-3306}:3306"
     environment:
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
       MYSQL_DATABASE: "${DB_DATABASE:-database}"
@@ -40,39 +25,9 @@ services:
     volumes:
      - database:/var/lib/mysql:delegated
     networks:
-     - kool_local
-  cache:
-    image: redis:6-alpine
-    volumes:
-     - cache:/data:delegated
-    networks:
-     - kool_local
-
+      - kool_local
 volumes:
-  database:
-  cache:
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
-`
-
-const mysqlTemplate string = `image: mysql:8.0
-command: --default-authentication-plugin=mysql_native_password
-ports:
-  - "${KOOL_DATABASE_PORT:-3306}:3306"
-environment:
-  MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
-  MYSQL_DATABASE: "${DB_DATABASE:-database}"
-  MYSQL_USER: "${DB_USERNAME:-user}"
-  MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
-  MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-volumes:
- - database:/var/lib/mysql:delegated
-networks:
- - kool_local
+  database: null
  `
 
 func newFakeKoolPreset() *KoolPreset {
@@ -81,8 +36,14 @@ func newFakeKoolPreset() *KoolPreset {
 		&KoolPresetFlags{false},
 		&presets.FakeParser{},
 		&compose.FakeParser{},
+		&compose.FakeParser{},
 		&shell.FakePromptSelect{},
 	}
+}
+
+func parseMysqlTemplate() (template yaml.MapSlice) {
+	_ = yaml.Unmarshal([]byte(mysqlTemplate), &template)
+	return
 }
 
 func TestNewKoolPreset(t *testing.T) {
@@ -126,11 +87,6 @@ func TestNewKoolPreset(t *testing.T) {
 func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"kool.yml": "kool.yml content",
-		},
-	}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
 		"laravel": &presets.PresetConfig{},
 	}
@@ -295,11 +251,6 @@ func TestOverrideFilesPresetCommand(t *testing.T) {
 func TestWriteErrorPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"kool.yml": "kool.yml content",
-		},
-	}
 	f.presetsParser.(*presets.FakeParser).MockError = errors.New("write error")
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
 		"laravel": &presets.PresetConfig{},
@@ -507,23 +458,19 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: map[string]presets.PresetConfigQuestion{
-			"database": presets.PresetConfigQuestion{
+		Questions: []presets.PresetConfigQuestion{
+			presets.PresetConfigQuestion{
+				Key:     "database",
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
 	}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
 		"laravel": config,
-	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"docker-compose.yml": defaultCompose,
-		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "mysql",
@@ -534,6 +481,14 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		},
 	}
 
+	f.templateParser.(*compose.FakeParser).MockGetServices = yaml.MapSlice{
+		yaml.MapItem{Key: "database", Value: parseMysqlTemplate()},
+	}
+
+	f.templateParser.(*compose.FakeParser).MockGetVolumes = yaml.MapSlice{
+		yaml.MapItem{Key: "database"},
+	}
+
 	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
@@ -542,20 +497,85 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["docker-compose.yml"]; !ok || !val {
-		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'laravel' and key 'docker-compose.yml'")
+	if val, ok := f.templateParser.(*compose.FakeParser).CalledParse[mysqlTemplate]; !ok || !val {
+		t.Error("failed calling templateParser.Parse to database mysql service")
 	}
 
-	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; !ok || !val {
-		t.Error("failed calling compose.Load")
+	if !f.templateParser.(*compose.FakeParser).CalledGetServices {
+		t.Error("failed calling templateParser.GetServices")
 	}
 
-	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"][mysqlTemplate]; !ok || !val {
-		t.Error("failed calling compose.SetService to database mysql service")
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"]; !ok || !val {
+		t.Error("failed calling composeParser.SetService to database mysql service")
+	}
+
+	if !f.templateParser.(*compose.FakeParser).CalledGetVolumes {
+		t.Error("failed calling templateParser.GetVolumes")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetVolume["database"]; !ok || !val {
+		t.Error("failed calling composeParser.SetVolume to database mysql service")
 	}
 
 	if !f.composeParser.(*compose.FakeParser).CalledString {
-		t.Error("failed calling compose.String to database mysql service")
+		t.Error("failed calling composeParser.String to database mysql service")
+	}
+}
+
+func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	config := &presets.PresetConfig{
+		Questions: []presets.PresetConfigQuestion{
+			presets.PresetConfigQuestion{
+				Key:     "database",
+				Message: "What database service do you want to use",
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+				},
+			},
+		},
+	}
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"laravel": config,
+	}
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What database service do you want to use": "mysql",
+	}
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"database": map[string]string{
+			"mysql.yml": mysqlTemplate,
+		},
+	}
+
+	f.templateParser.(*compose.FakeParser).MockParseError = errors.New("parse error")
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"laravel"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.shell.(*shell.FakeShell).Err
+
+	expectedErr := "Failed to write preset file docker-compose.yml: parse error"
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != expectedErr {
+		t.Errorf("expecting error '%s', got %v", expectedErr, err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
 	}
 }
 
@@ -564,24 +584,20 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: map[string]presets.PresetConfigQuestion{
-			"database": presets.PresetConfigQuestion{
+		Questions: []presets.PresetConfigQuestion{
+			presets.PresetConfigQuestion{
+				Key:     "database",
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
-					yaml.MapItem{Key: "none", Value: "none"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
 				},
 			},
 		},
 	}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
 		"laravel": config,
-	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"docker-compose.yml": defaultCompose,
-		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "none",
@@ -600,28 +616,28 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if val, ok := f.presetsParser.(*presets.FakeParser).CalledGetPresetKeyContent["laravel"]["docker-compose.yml"]; !ok || !val {
-		t.Error("failed calling presetsParser.GetPresetKeyContent for preset 'laravel' and key 'docker-compose.yml'")
+	if val, ok := f.templateParser.(*compose.FakeParser).CalledParse[mysqlTemplate]; ok && val {
+		t.Error("should not call templateParser.Parse to database mysql service")
 	}
 
-	if val, ok := f.composeParser.(*compose.FakeParser).CalledLoad[defaultCompose]; !ok || !val {
-		t.Error("failed calling compose.Load")
+	if f.templateParser.(*compose.FakeParser).CalledGetServices {
+		t.Error("should not call templateParser.GetServices")
 	}
 
-	if val, ok := f.composeParser.(*compose.FakeParser).CalledRemoveService["database"]; !ok || !val {
-		t.Error("failed calling compose.RemoveService to database service")
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"]; ok && val {
+		t.Error("should not call composeParser.SetService to database service")
 	}
 
-	if val, ok := f.composeParser.(*compose.FakeParser).CalledRemoveVolume["database"]; !ok || !val {
-		t.Error("failed calling compose.RemoveService to database service")
+	if f.templateParser.(*compose.FakeParser).CalledGetVolumes {
+		t.Error("should not call templateParser.GetVolumes")
 	}
 
-	if _, ok := f.composeParser.(*compose.FakeParser).CalledSetService["database"][mysqlTemplate]; ok {
-		t.Error("should not call compose.SetService to database service")
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetVolume["database"]; ok && val {
+		t.Error("should not call composeParser.SetVolume to database service")
 	}
 
 	if !f.composeParser.(*compose.FakeParser).CalledString {
-		t.Error("failed calling compose.String to database mysql service")
+		t.Error("failed calling composeParser.String to database mysql service")
 	}
 }
 
@@ -631,12 +647,13 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: map[string]presets.PresetConfigQuestion{
-			"database": presets.PresetConfigQuestion{
+		Questions: []presets.PresetConfigQuestion{
+			presets.PresetConfigQuestion{
+				Key:     "database",
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
@@ -670,135 +687,25 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 	}
 }
 
-func TestErrorLoadComposePresetCommand(t *testing.T) {
-	f := newFakeKoolPreset()
-
-	f.presetsParser.(*presets.FakeParser).MockExists = true
-
-	config := &presets.PresetConfig{
-		Questions: map[string]presets.PresetConfigQuestion{
-			"database": presets.PresetConfigQuestion{
-				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
-				},
-			},
-		},
-	}
-	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": config,
-	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"docker-compose.yml": defaultCompose,
-		},
-	}
-	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
-		"What database service do you want to use": "mysql",
-	}
-	f.composeParser.(*compose.FakeParser).MockLoadError = errors.New("compose load error")
-
-	cmd := NewPresetCommand(f)
-
-	cmd.SetArgs([]string{"laravel"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "Failed to write preset file docker-compose.yml: compose load error" {
-		t.Errorf("expecting error 'Failed to write preset file docker-compose.yml: compose load error', got %v", err)
-	}
-}
-
-func TestErrorSetComposeServicePresetCommand(t *testing.T) {
-	f := newFakeKoolPreset()
-
-	f.presetsParser.(*presets.FakeParser).MockExists = true
-
-	config := &presets.PresetConfig{
-		Questions: map[string]presets.PresetConfigQuestion{
-			"database": presets.PresetConfigQuestion{
-				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
-				},
-			},
-		},
-	}
-	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": config,
-	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"docker-compose.yml": defaultCompose,
-		},
-	}
-	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
-		"What database service do you want to use": "mysql",
-	}
-	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"database": map[string]string{
-			"mysql.yml": mysqlTemplate,
-		},
-	}
-
-	f.composeParser.(*compose.FakeParser).MockSetServiceError = errors.New("compose set service error")
-
-	cmd := NewPresetCommand(f)
-
-	cmd.SetArgs([]string{"laravel"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "Failed to write preset file docker-compose.yml: compose set service error" {
-		t.Errorf("expecting error 'Failed to write preset file docker-compose.yml: compose set service error', got %v", err)
-	}
-}
-
 func TestErrorComposeStringPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: map[string]presets.PresetConfigQuestion{
-			"database": presets.PresetConfigQuestion{
+		Questions: []presets.PresetConfigQuestion{
+			presets.PresetConfigQuestion{
+				Key:     "database",
 				Message: "What database service do you want to use",
-				Options: yaml.MapSlice{
-					yaml.MapItem{Key: "mysql", Value: "mysql"},
-					yaml.MapItem{Key: "postgresql", Value: "postgresql"},
+				Options: []presets.PresetConfigQuestionOption{
+					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
 				},
 			},
 		},
 	}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
 		"laravel": config,
-	}
-	f.presetsParser.(*presets.FakeParser).MockPresetKeyContent = map[string]map[string]string{
-		"laravel": map[string]string{
-			"docker-compose.yml": defaultCompose,
-		},
 	}
 	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
 		"What database service do you want to use": "mysql",

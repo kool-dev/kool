@@ -2,6 +2,8 @@ package compose
 
 import (
 	"errors"
+	"gopkg.in/yaml.v2"
+	"reflect"
 	"testing"
 )
 
@@ -10,42 +12,49 @@ func TestFakeParser(t *testing.T) {
 
 	f := &FakeParser{}
 
-	f.MockLoadError = errors.New("load error")
-	err = f.Load("compose")
+	f.MockParseError = errors.New("parse error")
+	err = f.Parse("compose")
 
 	if err == nil {
 		t.Error("expecting error on Load, got none")
-	} else if err.Error() != "load error" {
-		t.Errorf("expecting error 'load error' on Load, got %v", err)
+	} else if err.Error() != "parse error" {
+		t.Errorf("expecting error 'parse error' on Load, got %v", err)
 	}
 
-	if val, ok := f.CalledLoad["compose"]; !ok || !val {
-		t.Error("failed calling Load")
+	if val, ok := f.CalledParse["compose"]; !ok || !val {
+		t.Error("failed calling Parse")
 	}
 
-	f.MockSetServiceError = errors.New("set service error")
-	err = f.SetService("service", "content")
-
-	if err == nil {
-		t.Error("expecting error on SetService, got none")
-	} else if err.Error() != "set service error" {
-		t.Errorf("expecting error 'set service error' on SetService, got %v", err)
+	f.MockGetServices = yaml.MapSlice{
+		yaml.MapItem{Key: "serviceKey", Value: "serviceValue"},
 	}
 
-	if val, ok := f.CalledSetService["service"]["content"]; !ok || !val {
+	services := f.GetServices()
+
+	if !f.CalledGetServices || !reflect.DeepEqual(services, f.MockGetServices) {
+		t.Error("failed calling GetServices")
+	}
+
+	f.SetService("service", "content")
+
+	if val, ok := f.CalledSetService["service"]; !ok || !val {
 		t.Error("failed calling SetService")
 	}
 
-	f.RemoveService("service")
-
-	if val, ok := f.CalledRemoveService["service"]; !ok || !val {
-		t.Error("failed calling RemoveService")
+	f.MockGetVolumes = yaml.MapSlice{
+		yaml.MapItem{Key: "volume"},
 	}
 
-	f.RemoveVolume("volume")
+	volumes := f.GetVolumes()
 
-	if val, ok := f.CalledRemoveVolume["volume"]; !ok || !val {
-		t.Error("failed calling RemoveVolume")
+	if !f.CalledGetVolumes || !reflect.DeepEqual(volumes, f.MockGetVolumes) {
+		t.Error("failed calling GetVolumes")
+	}
+
+	f.SetVolume("volume")
+
+	if val, ok := f.CalledSetVolume["volume"]; !ok || !val {
+		t.Error("failed calling SetVolume")
 	}
 
 	f.MockStringError = errors.New("string error")

@@ -17,20 +17,36 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
 questions:
-  database:
+  - key: app
+    default_answer: PHP 7.4
+    message: What app service do you want to use
+    options:
+      - name: PHP 7.4
+        template: php74.yml
+      - name: PHP 8.0
+        template: php8.yml
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
-      mysql8: MySQL 8.0
-      mysql57: MySQL 5.7
-      postgresql13: PostgreSQL 13.0
-      none: none
-  cache:
+      - name: MySQL 8.0
+        template: mysql8.yml
+      - name: MySQL 5.7
+        template: mysql57.yml
+      - name: PostgreSQL 13.0
+        template: postgresql13.yml
+      - name: none
+        template: none
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
-      redis6: Redis 6.0
-      memcached16: Memcached 1.6
-      none: none
-
+      - name: Redis 6.0
+        template: redis6.yml
+      - name: Memcached 1.6
+        template: memcached16.yml
+      - name: none
+        template: none
 `
 	configs["nestjs"] = `language: javascript
 commands:
@@ -67,19 +83,36 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton
 questions:
-  database:
+  - key: app
+    default_answer: PHP 7.4
+    message: What app service do you want to use
+    options:
+      - name: PHP 7.4
+        template: php74.yml
+      - name: PHP 8.0
+        template: php8.yml
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
-      mysql8: MySQL 8.0
-      mysql57: MySQL 5.7
-      postgresql13: PostgreSQL 13.0
-      none: none
-  cache:
+      - name: MySQL 8.0
+        template: mysql8.yml
+      - name: MySQL 5.7
+        template: mysql57.yml
+      - name: PostgreSQL 13.0
+        template: postgresql13.yml
+      - name: none
+        template: none
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
-      redis6: Redis 6.0
-      memcached16: Memcached 1.6
-      none: none
+      - name: Redis 6.0
+        template: redis6.yml
+      - name: Memcached 1.6
+        template: memcached16.yml
+      - name: none
+        template: none
 
 `
 	configs["wordpress"] = `language: php
@@ -87,19 +120,29 @@ commands:
   create:
   - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
 questions:
-  database:
+  - key: database
+    default_answer: MySQL 5.7
     message: What database service do you want to use
     options:
-      mysql8: MySQL 8.0
-      mysql57: MySQL 5.7
-      postgresql13: PostgreSQL 13.0
-      none: none
-  cache:
+      - name: MySQL 8.0
+        template: mysql8.yml
+      - name: MySQL 5.7
+        template: mysql57.yml
+      - name: PostgreSQL 13.0
+        template: postgresql13.yml
+      - name: none
+        template: none
+  - key: cache
+    default_answer: Redis 6.0
     message: What cache service do you want to use
     options:
-      redis6: Redis 6.0
-      memcached16: Memcached 1.6
-      none: none
+      - name: Redis 6.0
+        template: redis6.yml
+      - name: Memcached 1.6
+        template: memcached16.yml
+      - name: none
+        template: none
+
 
 `
 	return configs
