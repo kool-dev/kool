@@ -3,13 +3,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/cmd/templates"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 const mysqlTemplate string = `services:
@@ -39,7 +40,7 @@ func newFakeKoolPreset() *KoolPreset {
 		&presets.FakeParser{},
 		&compose.FakeParser{},
 		&templates.FakeParser{},
-		&parser.KoolYaml{},
+		&parser.FakeKoolYaml{},
 		&shell.FakePromptSelect{},
 	}
 }
@@ -783,6 +784,149 @@ func TestErrorGetConfigPresetCommand(t *testing.T) {
 		t.Error("expecting an error, got none")
 	} else if err.Error() != "error parsing preset config; err: get config error" {
 		t.Errorf("expecting error 'error parsing preset config; err: get config error', got %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Error")
+	}
+}
+
+func TestDefaultTemplatesPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	defaultTemplate := `services:
+  service:
+    image: image
+  volumes:
+    volume: null
+  scripts:
+    script: script`
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Templates: []presets.PresetConfigTemplate{
+				presets.PresetConfigTemplate{
+					Key:      "scripts",
+					Template: "template.yml",
+				},
+			},
+		},
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"template.yml": defaultTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetServices = yaml.MapSlice{
+		yaml.MapItem{Key: "service", Value: yaml.MapSlice{
+			yaml.MapItem{Key: "image", Value: "image"},
+		}},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetVolumes = yaml.MapSlice{
+		yaml.MapItem{Key: "volume"},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
+		"script": []string{"script"},
+	}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.presetsParser.(*presets.FakeParser).CalledGetTemplates {
+		t.Error("did not call presetsParser.GetTemplates")
+	}
+
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[defaultTemplate]; !ok || !val {
+		t.Error("failed calling templateParser.Parse")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetServices {
+		t.Error("failed calling templateParser.GetServices")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["service"]; !ok || !val {
+		t.Errorf("%v", f.composeParser.(*compose.FakeParser).CalledSetService)
+		t.Error("failed calling composeParser.SetService")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetVolumes {
+		t.Error("failed calling templateParser.GetVolumes")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetVolume["volume"]; !ok || !val {
+		t.Error("failed calling composeParser.SetVolume")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetScripts {
+		t.Error("failed calling templateParser.GetScripts")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["script"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript")
+	}
+}
+
+func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	defaultTemplate := `services:
+  service:
+    image: image
+  volumes:
+    volume: null
+  scripts:
+    script: script`
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Templates: []presets.PresetConfigTemplate{
+				presets.PresetConfigTemplate{
+					Key:      "scripts",
+					Template: "template.yml",
+				},
+			},
+		},
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"template.yml": defaultTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockParseError = errors.New("template parse error")
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.shell.(*shell.FakeShell).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "Failed to load default preset templates: template parse error" {
+		t.Errorf("expecting error 'Failed to load default preset templates: template parse error', got %v", err)
 	}
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {

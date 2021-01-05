@@ -41,6 +41,8 @@ func (f *FakeParser) GetVolumes() yaml.MapSlice {
 
 // GetScripts implements fake GetScripts behavior
 func (f *FakeParser) GetScripts() map[string][]string {
+	f.CalledGetScripts = true
+
 	if f.MockGetScripts == nil {
 		f.MockGetScripts = make(map[string][]string)
 	}

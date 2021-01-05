@@ -176,12 +176,12 @@ func (p *KoolPreset) setDefaultTemplates(config *presets.PresetConfig) (err erro
 
 	for _, template := range config.Templates {
 		if err = p.templateParser.Parse(allTemplates[template.Key][template.Template]); err != nil {
-			err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
+			err = fmt.Errorf("Failed to load default preset templates: %v", err)
 			return
 		}
 
 		for _, service := range p.templateParser.GetServices() {
-			p.composeParser.SetService(template.Key, service.Value.(yaml.MapSlice))
+			p.composeParser.SetService(service.Key.(string), service.Value.(yaml.MapSlice))
 		}
 
 		for _, volume := range p.templateParser.GetVolumes() {
