@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/environment"
 	"kool-dev/kool/tgz"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -174,36 +175,46 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 
 	// we are in a GIT environment!
 	var (
-		output string
-		files  []string
+		files, allFiles []string
+
+		gitListingFilesFlags = [][]string{
+			// Include commited files - git ls-files -c
+			{"-c"},
+
+			// Untracked files - git ls-files -o --exclude-standard
+			{"-o", "--exclude-standard"},
+		}
 	)
+
 	// Exclude list - git ls-files -d
-	output, err = d.Exec(d.git, "ls-files", "-d")
-	if err != nil {
-		d.Error(err)
-		err = fmt.Errorf("failed listing GIT deleted files")
+	if files, err = d.parseFilesListFromGIT([]string{"-d"}); err != nil {
 		return
 	}
-	tarball.SetIgnoreList(strings.Split(output, "\n"))
+	tarball.SetIgnoreList(files)
 
-	// Include list - git ls-files -c
-	output, err = d.Exec(d.git, "ls-files", "-c")
-	if err != nil {
-		d.Error(err)
-		err = fmt.Errorf("failed list GIT cached files")
-		return
-	}
-	files = append(files, strings.Split(output, "\n")...)
-	// git ls-files -o --exclude-standard
-	output, err = d.Exec(d.git, "ls-files", "-o", "--exclude-standard")
-	if err != nil {
-		d.Error(err)
-		err = fmt.Errorf("failed list Git untracked non-ignored files")
-		return
-	}
-	files = append(files, strings.Split(output, "\n")...)
+	for _, lsArgs := range gitListingFilesFlags {
+		if files, err = d.parseFilesListFromGIT(lsArgs); err != nil {
+			return
+		}
 
-	filename, err = tarball.CompressFiles(d.handleDeployEnv(files))
+		allFiles = append(allFiles, files...)
+	}
+	filename, err = tarball.CompressFiles(d.handleDeployEnv(allFiles))
+	return
+}
+
+func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err error) {
+	var output string
+
+	output, err = d.Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
+	if err != nil {
+		d.Error(err)
+		err = fmt.Errorf("failed listing GIT files")
+		return
+	}
+
+	// -z parameter returns the utf-8 file names separated by 0 bytes
+	files = strings.Split(output, string(rune(0x00)))
 	return
 }
 
@@ -213,8 +224,8 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 // from GIT, we still are required to send it - it is required for
 // the Deploy API.
 func (d *KoolDeploy) handleDeployEnv(files []string) []string {
-	if _, envErr := os.Stat(koolDeployEnv); envErr == os.ErrNotExist {
-		d.Error(fmt.Errorf("missing required file: %v", koolDeployEnv))
+	path := filepath.Join(d.envStorage.Get("PWD"), koolDeployEnv)
+	if _, envErr := os.Stat(path); os.IsNotExist(envErr) {
 		return files
 	}
 
