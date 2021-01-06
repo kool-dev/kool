@@ -933,3 +933,96 @@ func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
 		t.Error("did not call Error")
 	}
 }
+
+func TestCustomKoolYmlPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	yarnTemplate := `scripts:
+  yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
+`
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Questions: map[string][]presets.PresetConfigQuestion{
+				"kool": []presets.PresetConfigQuestion{
+					presets.PresetConfigQuestion{
+						Key:           "scripts",
+						DefaultAnswer: "npm",
+						Message:       "What javascript package manager do you want to use",
+						Options: []presets.PresetConfigQuestionOption{
+							presets.PresetConfigQuestionOption{
+								Name:     "npm",
+								Template: "npm.yml",
+							},
+							presets.PresetConfigQuestionOption{
+								Name:     "yarn",
+								Template: "yarn.yml",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What javascript package manager do you want to use": "yarn",
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"yarn.yml": yarnTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
+		"yarn":       []string{"kool docker kooldev/node:14 yarn"},
+		"node-setup": []string{"kool run yarn install", "kool run yarn dev"},
+	}
+
+	f.koolYamlParser.(*parser.FakeKoolYaml).MockString = "kool content"
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.presetsParser.(*presets.FakeParser).CalledGetTemplates {
+		t.Error("did not call presetsParser.GetTemplates")
+	}
+
+	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("did not call promptSelect.Ask")
+	}
+
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[yarnTemplate]; !ok || !val {
+		t.Error("failed calling templateParser.Parse")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetScripts {
+		t.Error("failed calling templateParser.GetScripts")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["yarn"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript for yarn script")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["node-setup"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript for node-setup script")
+	}
+
+	if !f.koolYamlParser.(*parser.FakeKoolYaml).CalledString {
+		t.Error("did not call koolYamlParser.String")
+	}
+
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledSetPresetKeyContent["preset"]["kool.yml"]["kool content"]; !ok || !val {
+		t.Error("failed calling presetsParser.SetPresetKeyContent")
+	}
+}
