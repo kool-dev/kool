@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"kool-dev/kool/cmd/updater"
+	"kool-dev/kool/cmd/user"
+	"runtime"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
@@ -33,6 +35,10 @@ func NewKoolSelfUpdate() *KoolSelfUpdate {
 
 // Execute runs the self-update logic with incoming arguments.
 func (s *KoolSelfUpdate) Execute(args []string) (err error) {
+	if err = s.checkPermission(); err != nil {
+		return
+	}
+
 	var currentVersion, latestVersion semver.Version
 
 	currentVersion = s.updater.GetCurrentVersion()
@@ -47,6 +53,25 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 	}
 
 	s.Success("Successfully updated to version ", latestVersion.String())
+	return
+}
+
+func (s *KoolSelfUpdate) checkPermission() (err error) {
+	if runtime.GOOS != "windows" && runtime.GOOS != "linux" {
+		// we should be fine in other plataforms, permission-wise
+		return
+	}
+
+	// we need elevated privileges!
+	var isAdmin = user.CurrentUserIsElevated()
+	if !isAdmin {
+		if runtime.GOOS == "linux" {
+			err = fmt.Errorf("you need to use 'sudo' to perform this task")
+		} else if runtime.GOOS == "windows" {
+			err = fmt.Errorf("you need to Run as Administrator to perform this task")
+		}
+	}
+
 	return
 }
 
