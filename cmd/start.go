@@ -20,7 +20,7 @@ type KoolStart struct {
 	start      builder.Command
 }
 
-// NewStartCommand initializes new kool start command
+// NewStartCommand initializes new kool start Cobra command
 func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
 		Use:                   "start [SERVICE]",
