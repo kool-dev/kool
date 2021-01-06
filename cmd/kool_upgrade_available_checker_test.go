@@ -32,7 +32,7 @@ func TestStartWithUpdaterWrapper(t *testing.T) {
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
 		MockLatestVersion:  "1.0.0",
-		MockError:          nil,
+		MockErrorUpdate:    nil,
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -71,7 +71,7 @@ func TestStartWithUpdaterWrapperError(t *testing.T) {
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
 		MockLatestVersion:  "1.0.0",
-		MockError:          errors.New("error"),
+		MockErrorUpdate:    errors.New("error"),
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -108,7 +108,7 @@ func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "1.0.0",
 		MockLatestVersion:  "1.0.0",
-		MockError:          nil,
+		MockErrorUpdate:    nil,
 	}
 
 	cmd := NewStartCommand(koolStart)
@@ -145,7 +145,7 @@ func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
 		MockLatestVersion:  "1.0.0",
-		MockError:          nil,
+		MockErrorUpdate:    nil,
 	}
 	koolStart.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
 
