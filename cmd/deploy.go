@@ -39,9 +39,8 @@ func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 // NewKoolDeploy creates a new pointer with default KoolDeploy service
 // dependencies.
 func NewKoolDeploy() *KoolDeploy {
-	defaultKoolService := newDefaultKoolService()
 	return &KoolDeploy{
-		*defaultKoolService,
+		*newDefaultKoolService(),
 		environment.NewEnvStorage(),
 
 		builder.NewCommand("git"),
@@ -64,9 +63,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	}
 
 	d.Println("Create release file...")
-	filename, err = d.createReleaseFile()
-
-	if err != nil {
+	if filename, err = d.createReleaseFile(); err != nil {
 		return
 	}
 
@@ -80,9 +77,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	deploy = api.NewDeploy(filename)
 
 	d.Println("Upload release file...")
-	err = deploy.SendFile()
-
-	if err != nil {
+	if err = deploy.SendFile(); err != nil {
 		return
 	}
 
@@ -208,8 +203,7 @@ func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err e
 
 	output, err = d.Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
 	if err != nil {
-		d.Error(err)
-		err = fmt.Errorf("failed listing GIT files")
+		err = fmt.Errorf("failed listing GIT files: %s", err.Error())
 		return
 	}
 
