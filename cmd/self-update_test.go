@@ -9,13 +9,14 @@ import (
 	"testing"
 )
 
-func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, err error) *KoolSelfUpdate {
+func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, errU, errP error) *KoolSelfUpdate {
 	selfUpdate := &KoolSelfUpdate{
 		*newFakeKoolService(),
 		&updater.FakeUpdater{
-			MockCurrentVersion: currentVersion,
-			MockLatestVersion:  latestVersion,
-			MockError:          err,
+			MockCurrentVersion:  currentVersion,
+			MockLatestVersion:   latestVersion,
+			MockErrorUpdate:     errU,
+			MockErrorPermission: errP,
 		},
 	}
 
@@ -44,7 +45,7 @@ func TestNewKoolSelfUpdate(t *testing.T) {
 }
 
 func TestNewSelfUpdateCommand(t *testing.T) {
-	f := newFakeKoolSelfUpdate("0.0.0", "1.0.0", nil)
+	f := newFakeKoolSelfUpdate("0.0.0", "1.0.0", nil, nil)
 	cmd := NewSelfUpdateCommand(f)
 
 	if err := cmd.Execute(); err != nil {
@@ -71,7 +72,7 @@ func TestNewSelfUpdateCommand(t *testing.T) {
 }
 
 func TestNewSelfUpdateUpToDateCommand(t *testing.T) {
-	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", nil)
+	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", nil, nil)
 	cmd := NewSelfUpdateCommand(f)
 
 	if err := cmd.Execute(); err != nil {
@@ -94,7 +95,7 @@ func TestNewSelfUpdateUpToDateCommand(t *testing.T) {
 }
 
 func TestNewSelfUpdateErrorCommand(t *testing.T) {
-	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", errors.New("error"))
+	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", errors.New("error"), nil)
 	cmd := NewSelfUpdateCommand(f)
 
 	if err := cmd.Execute(); err != nil {
@@ -121,5 +122,13 @@ func TestNewSelfUpdateErrorCommand(t *testing.T) {
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {
 		t.Errorf("did not exited after failing update")
+	}
+}
+
+func TestNewSelfUpdatePermissionErrorCommand(t *testing.T) {
+	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", nil, errors.New("perm"))
+
+	if err := f.Execute(nil); err == nil || err.Error() != "perm" {
+		t.Errorf("unexpected non-error executing self-update command")
 	}
 }

@@ -33,6 +33,10 @@ func NewKoolSelfUpdate() *KoolSelfUpdate {
 
 // Execute runs the self-update logic with incoming arguments.
 func (s *KoolSelfUpdate) Execute(args []string) (err error) {
+	if err = s.updater.CheckPermission(); err != nil {
+		return
+	}
+
 	var currentVersion, latestVersion semver.Version
 
 	currentVersion = s.updater.GetCurrentVersion()

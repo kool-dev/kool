@@ -19,12 +19,11 @@ type DefaultChecker struct {
 
 // NewChecker initializes checker
 func NewChecker(s shell.Shell) *DefaultChecker {
-	var dockerInfoCmd, dockerComposePsCmd *builder.DefaultCommand
-
-	dockerInfoCmd = builder.NewCommand("docker", "info")
-	dockerComposePsCmd = builder.NewCommand("docker-compose", "ps")
-
-	return &DefaultChecker{dockerInfoCmd, dockerComposePsCmd, s}
+	return &DefaultChecker{
+		builder.NewCommand("docker", "info"),
+		builder.NewCommand("docker-compose", "ps"),
+		s,
+	}
 }
 
 // Check checks kool dependencies

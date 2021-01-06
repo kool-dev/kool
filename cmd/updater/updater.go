@@ -1,6 +1,10 @@
 package updater
 
 import (
+	"fmt"
+	"kool-dev/kool/cmd/user"
+	"runtime"
+
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"github.com/spf13/cobra"
@@ -16,6 +20,7 @@ type Updater interface {
 	GetCurrentVersion() semver.Version
 	Update(semver.Version) (semver.Version, error)
 	CheckForUpdates(semver.Version, chan bool)
+	CheckPermission() error
 }
 
 // GetCurrentVersion get current version
@@ -61,4 +66,26 @@ func (u *DefaultUpdater) CheckForUpdates(current semver.Version, chHasNewVersion
 	}
 
 	close(chHasNewVersion)
+}
+
+// CheckPermission will return an error if the running
+// user has not enough privileges to perform this task,
+// OS wise.
+func (u *DefaultUpdater) CheckPermission() (err error) {
+	if runtime.GOOS != "windows" && runtime.GOOS != "linux" {
+		// we should be fine in other plataforms, permission-wise
+		return
+	}
+
+	// we need elevated privileges!
+	var isAdmin = user.CurrentUserIsElevated()
+	if !isAdmin {
+		if runtime.GOOS == "linux" {
+			err = fmt.Errorf("you need to use 'sudo' to perform this task")
+		} else if runtime.GOOS == "windows" {
+			err = fmt.Errorf("you need to Run as Administrator to perform this task")
+		}
+	}
+
+	return
 }
