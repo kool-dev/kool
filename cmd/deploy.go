@@ -48,7 +48,10 @@ func NewKoolDeploy() *KoolDeploy {
 }
 
 func init() {
-	rootCmd.AddCommand(NewDeployCommand(NewKoolDeploy()))
+	deployCmd := NewDeployCommand(NewKoolDeploy())
+
+	rootCmd.AddCommand(deployCmd)
+	deployCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
 }
 
 // Execute runs the deploy logic.
