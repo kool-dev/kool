@@ -114,7 +114,12 @@ func (y *KoolYaml) SetScript(key string, commands []string) {
 	if len(commands) == 1 {
 		y.Scripts[key] = commands[0]
 	} else {
-		y.Scripts[key] = commands
+		var scripts []interface{}
+
+		for _, c := range commands {
+			scripts = append(scripts, c)
+		}
+		y.Scripts[key] = scripts
 	}
 }
 

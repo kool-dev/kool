@@ -5,6 +5,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -17,10 +18,11 @@ const KoolYmlOK = `scripts:
 
 func TestParseKoolYaml(t *testing.T) {
 	var (
-		err     error
-		tmpPath string
-		parsed  *KoolYaml
-		cmds    []builder.Command
+		err         error
+		tmpPath     string
+		parsed      *KoolYaml
+		cmds        []builder.Command
+		koolContent string
 	)
 
 	tmpPath = path.Join(t.TempDir(), "kool.yml")
@@ -65,6 +67,98 @@ func TestParseKoolYaml(t *testing.T) {
 
 	if len(cmds) != 2 {
 		t.Errorf("expected multi-line to parse 1 command; got %d", len(cmds))
+		return
+	}
+
+	parsed.SetScript("new-script", []string{"new-command 1"})
+
+	if len(parsed.Scripts) != 3 {
+		t.Errorf("expected to get 3 scripts after setting a new one; got %d", len(parsed.Scripts))
+		return
+	}
+
+	if !parsed.HasScript("new-script") {
+		t.Errorf("expected to have new-script script")
+		return
+	}
+
+	if cmds, err = parsed.ParseCommands("new-script"); err != nil {
+		t.Errorf("failed to parse proper new-script; error: %s", err)
+		return
+	}
+
+	if len(cmds) != 1 {
+		t.Errorf("expected new-script to parse 1 command; got %d", len(cmds))
+		return
+	}
+
+	parsed.SetScript("new-script", []string{"new-command 1", "new-command 2"})
+
+	if len(parsed.Scripts) != 3 {
+		t.Errorf("expected to get 3 scripts after setting a existing one; got %d", len(parsed.Scripts))
+		return
+	}
+
+	if !parsed.HasScript("new-script") {
+		t.Errorf("expected to have new-script script")
+		return
+	}
+
+	if cmds, err = parsed.ParseCommands("new-script"); err != nil {
+		t.Errorf("failed to parse proper new-script; error: %s", err)
+		return
+	}
+
+	if len(cmds) != 2 {
+		t.Errorf("expected new-script to parse 2 commands; got %d", len(cmds))
+		return
+	}
+
+	if koolContent, err = parsed.String(); err != nil {
+		t.Errorf("failed to get kool.yml content; error: %s", err)
+		return
+	}
+
+	expected := `scripts:
+  multi-line:
+  - line 1
+  - line 2
+  new-script:
+  - new-command 1
+  - new-command 2
+  single-line: single line script`
+
+	if expected != strings.TrimSpace(koolContent) {
+		t.Errorf("expecting kool.yml content '%s', got '%s'", expected, strings.TrimSpace(koolContent))
+	}
+}
+
+func TestParseKoolYamlStruct(t *testing.T) {
+	var (
+		err     error
+		tmpPath string
+		parsed  *KoolYaml
+	)
+
+	tmpPath = path.Join(t.TempDir(), "kool.yml")
+
+	err = ioutil.WriteFile(tmpPath, []byte(KoolYmlOK), os.ModePerm)
+
+	if err != nil {
+		t.Fatal("failed creating temporary file for test", err)
+	}
+
+	parsed = new(KoolYaml)
+
+	err = parsed.Parse(tmpPath)
+
+	if err != nil {
+		t.Errorf("failed parsing proper kool.yml file; error: %s", err)
+		return
+	}
+
+	if len(parsed.Scripts) != 2 {
+		t.Errorf("expected to parse 2 scripts; got %d", len(parsed.Scripts))
 		return
 	}
 }
