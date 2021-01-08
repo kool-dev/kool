@@ -41,4 +41,14 @@ func TestFakeParser(t *testing.T) {
 	if !f.CalledGetVolumes || !reflect.DeepEqual(volumes, f.MockGetVolumes) {
 		t.Error("failed calling GetVolumes")
 	}
+
+	f.MockGetScripts = map[string][]string{
+		"script": []string{"script"},
+	}
+
+	scripts := f.GetScripts()
+
+	if !f.CalledGetScripts || !reflect.DeepEqual(scripts, f.MockGetScripts) {
+		t.Error("failed calling GetScripts")
+	}
 }
