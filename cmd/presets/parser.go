@@ -24,11 +24,18 @@ type PresetConfigQuestionOption struct {
 	Template string `yaml:"template"`
 }
 
+// PresetConfigTemplate default templates for preset
+type PresetConfigTemplate struct {
+	Key      string `yaml:"key"`
+	Template string `yaml:"template"`
+}
+
 // PresetConfig preset config
 type PresetConfig struct {
-	Language  string                 `yaml:"language"`
-	Commands  map[string][]string    `yaml:"commands"`
-	Questions []PresetConfigQuestion `yaml:"questions"`
+	Language  string                            `yaml:"language"`
+	Commands  map[string][]string               `yaml:"commands"`
+	Questions map[string][]PresetConfigQuestion `yaml:"questions"`
+	Templates []PresetConfigTemplate            `yaml:"templates"`
 }
 
 // DefaultParser holds presets parsing data

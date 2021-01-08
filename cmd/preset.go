@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
+	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/cmd/templates"
 
 	"github.com/spf13/cobra"
 )
@@ -22,7 +24,8 @@ type KoolPreset struct {
 	Flags          *KoolPresetFlags
 	presetsParser  presets.Parser
 	composeParser  compose.Parser
-	templateParser compose.Parser
+	templateParser templates.Parser
+	koolYamlParser parser.KoolYamlParser
 	promptSelect   shell.PromptSelect
 }
 
@@ -45,17 +48,15 @@ func NewKoolPreset() *KoolPreset {
 		&KoolPresetFlags{false},
 		presets.NewParser(),
 		compose.NewParser(),
-		compose.NewParser(),
+		templates.NewParser(),
+		&parser.KoolYaml{},
 		shell.NewPromptSelect(),
 	}
 }
 
 // Execute runs the preset logic with incoming arguments.
 func (p *KoolPreset) Execute(args []string) (err error) {
-	var (
-		fileError, preset string
-		servicesTemplates map[string]string
-	)
+	var fileError, preset string
 
 	p.loadParsers()
 
@@ -65,10 +66,6 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 
 	if !p.presetsParser.Exists(preset) {
 		err = fmt.Errorf("Unknown preset %s", preset)
-		return
-	}
-
-	if servicesTemplates, err = p.getComposeServicesToCustomize(preset); err != nil {
 		return
 	}
 
@@ -85,7 +82,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		}
 	}
 
-	if err = p.customizeCompose(preset, servicesTemplates); err != nil {
+	if err = p.customizePreset(preset); err != nil {
 		return
 	}
 
@@ -154,18 +151,56 @@ func (p *KoolPreset) getPresetArgOrAsk(args []string) (preset string, err error)
 	return
 }
 
-func (p *KoolPreset) getComposeServicesToCustomize(preset string) (servicesTemplates map[string]string, err error) {
+func (p *KoolPreset) customizePreset(preset string) (err error) {
 	var presetConfig *presets.PresetConfig
-	servicesTemplates = make(map[string]string)
 
 	if presetConfig, err = p.presetsParser.GetConfig(preset); err != nil || presetConfig == nil {
 		err = fmt.Errorf("error parsing preset config; err: %v", err)
 		return
 	}
 
+	if err = p.setDefaultTemplates(presetConfig); err != nil {
+		return
+	}
+
+	if err = p.customizeCompose(preset, presetConfig); err != nil {
+		return
+	}
+
+	err = p.customizeKoolYaml(preset, presetConfig)
+	return
+}
+
+func (p *KoolPreset) setDefaultTemplates(config *presets.PresetConfig) (err error) {
 	allTemplates := p.presetsParser.GetTemplates()
 
-	if servicesToAsk := presetConfig.Questions; len(servicesToAsk) > 0 {
+	for _, template := range config.Templates {
+		if err = p.templateParser.Parse(allTemplates[template.Key][template.Template]); err != nil {
+			err = fmt.Errorf("Failed to load default preset templates: %v", err)
+			return
+		}
+
+		for _, service := range p.templateParser.GetServices() {
+			p.composeParser.SetService(service.Key.(string), service.Value.(yaml.MapSlice))
+		}
+
+		for _, volume := range p.templateParser.GetVolumes() {
+			p.composeParser.SetVolume(volume.Key.(string))
+		}
+
+		for scriptName, scripts := range p.templateParser.GetScripts() {
+			p.koolYamlParser.SetScript(scriptName, scripts)
+		}
+	}
+
+	return
+}
+
+func (p *KoolPreset) customizeCompose(preset string, config *presets.PresetConfig) (err error) {
+	var newCompose string
+	allTemplates := p.presetsParser.GetTemplates()
+
+	if servicesToAsk := config.Questions["compose"]; len(servicesToAsk) > 0 {
 		for _, question := range servicesToAsk {
 			var (
 				options        []string
@@ -186,33 +221,22 @@ func (p *KoolPreset) getComposeServicesToCustomize(preset string) (servicesTempl
 				}
 			}
 
-			if selectedOption == "none" {
-				servicesTemplates[serviceName] = "none"
-			} else {
-				servicesTemplates[serviceName] = optionTemplate[selectedOption]
-			}
-		}
-	}
-
-	return
-}
-
-func (p *KoolPreset) customizeCompose(preset string, servicesTemplates map[string]string) (err error) {
-	if len(servicesTemplates) > 0 {
-		var newCompose string
-		for serviceKey, serviceTemplate := range servicesTemplates {
-			if serviceTemplate != "none" {
-				if err = p.templateParser.Parse(serviceTemplate); err != nil {
+			if selectedOption != "none" {
+				if err = p.templateParser.Parse(optionTemplate[selectedOption]); err != nil {
 					err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
 					return
 				}
 
 				for _, service := range p.templateParser.GetServices() {
-					p.composeParser.SetService(serviceKey, service.Value.(yaml.MapSlice))
+					p.composeParser.SetService(serviceName, service.Value.(yaml.MapSlice))
 				}
 
 				for _, volume := range p.templateParser.GetVolumes() {
 					p.composeParser.SetVolume(volume.Key.(string))
+				}
+
+				for scriptName, scripts := range p.templateParser.GetScripts() {
+					p.koolYamlParser.SetScript(scriptName, scripts)
 				}
 			}
 		}
@@ -223,6 +247,53 @@ func (p *KoolPreset) customizeCompose(preset string, servicesTemplates map[strin
 		}
 
 		p.presetsParser.SetPresetKeyContent(preset, "docker-compose.yml", newCompose)
+	}
+
+	return
+}
+
+func (p *KoolPreset) customizeKoolYaml(preset string, config *presets.PresetConfig) (err error) {
+	var newKoolYaml string
+	allTemplates := p.presetsParser.GetTemplates()
+
+	if scriptsToAsk := config.Questions["kool"]; len(scriptsToAsk) > 0 {
+		for _, question := range scriptsToAsk {
+			var (
+				options        []string
+				selectedOption string = question.DefaultAnswer
+			)
+
+			optionTemplate := make(map[string]string)
+
+			for _, option := range question.Options {
+				options = append(options, option.Name)
+				optionTemplate[option.Name] = allTemplates["scripts"][option.Template]
+			}
+
+			if p.IsTerminal() {
+				if selectedOption, err = p.promptSelect.Ask(question.Message, options); err != nil {
+					return
+				}
+			}
+
+			if selectedOption != "none" {
+				if err = p.templateParser.Parse(optionTemplate[selectedOption]); err != nil {
+					err = fmt.Errorf("Failed to write preset file kool.yml: %v", err)
+					return
+				}
+
+				for scriptName, scripts := range p.templateParser.GetScripts() {
+					p.koolYamlParser.SetScript(scriptName, scripts)
+				}
+			}
+		}
+
+		if newKoolYaml, err = p.koolYamlParser.String(); err != nil {
+			err = fmt.Errorf("Failed to write preset file kool.yml: %v", err)
+			return
+		}
+
+		p.presetsParser.SetPresetKeyContent(preset, "kool.yml", newKoolYaml)
 	}
 
 	return

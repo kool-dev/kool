@@ -78,6 +78,9 @@ volumes:
 
 volumes:
   database:
+
+scripts:
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
 `,
 		"mysql8.yml": `services:
   database:
@@ -98,6 +101,9 @@ volumes:
 
 volumes:
   database:
+
+scripts:
+  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
 `,
 		"postgresql13.yml": `services:
   database:
@@ -117,6 +123,59 @@ volumes:
 volumes:
   database:
 
+scripts:
+  psql: kool exec --env=PGPASSWORD=${DB_PASSWORD} database psql --username=${DB_USERNAME}
+`,
+	}
+	templates["scripts"] = map[string]string{
+		"composer.yml": `scripts:
+  composer: kool exec app composer
+`,
+		"composer2.yml": `scripts:
+  composer: kool exec app composer2
+`,
+		"laravel.yml": `scripts:
+  artisan: kool exec app php artisan
+  node: kool docker kooldev/node:14 node
+
+  setup:
+    - cp .env.example .env
+    - kool start
+    - kool run composer install
+    - kool run artisan key:generate
+    - kool run node-setup
+
+  reset:
+    - kool run composer install
+    - kool run artisan migrate:fresh --seed
+    - kool run node-setup
+`,
+		"npm.yml": `scripts:
+  npm: kool docker kooldev/node:14 npm
+  node-setup:
+    - kool run npm install
+    - kool run npm run dev
+`,
+		"symfony.yml": `scripts:
+  console: kool exec app php ./bin/console
+  phpunit: kool exec app php ./bin/phpunit
+
+  node: kool docker kooldev/node:14 node
+
+  setup:
+    - kool start
+    - cp .env.example .env
+    - kool run composer install
+`,
+		"wordpress.yml": `scripts:
+  php: kool exec app php
+  wp: kool exec app wp
+`,
+		"yarn.yml": `scripts:
+  yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
 `,
 	}
 	return templates

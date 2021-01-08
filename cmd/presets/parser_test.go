@@ -326,11 +326,12 @@ commands:
   create:
     - command
 questions:
-  - key: question1
-    message: message?
-    options:
-      - name: option1
-        template: option1.yml
+  compose:
+    - key: question1
+      message: message?
+      options:
+        - name: option1
+          template: option1.yml
 `,
 	}
 
@@ -357,7 +358,7 @@ questions:
 		t.Error("failed getting create commands preset configuration")
 	}
 
-	question1 := cfg.Questions[0]
+	question1 := cfg.Questions["compose"][0]
 	if question1.Key != "question1" || question1.Message != "message?" || len(question1.Options) != 1 || question1.Options[0].Template != "option1.yml" || question1.Options[0].Name != "option1" {
 		t.Error("failed getting questions preset configuration")
 	}

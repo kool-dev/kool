@@ -84,7 +84,7 @@ func TestServicesDefaultParser(t *testing.T) {
 
 	p.SetService("app", appService)
 
-	if getServices := p.GetServices(); !reflect.DeepEqual(services, getServices) {
+	if yamlData := getYamlData(p.(*DefaultParser)); !reflect.DeepEqual(services, yamlData.Services) {
 		t.Error("failed handling services")
 	}
 
@@ -98,7 +98,7 @@ func TestServicesDefaultParser(t *testing.T) {
 
 	p.SetService("app", appService)
 
-	if getServices := p.GetServices(); !reflect.DeepEqual(services, getServices) {
+	if yamlData := getYamlData(p.(*DefaultParser)); !reflect.DeepEqual(services, yamlData.Services) {
 		t.Error("failed handling services")
 	}
 }
@@ -112,13 +112,13 @@ func TestVolumesDefaultParser(t *testing.T) {
 
 	p.SetVolume("database")
 
-	if getVolumes := p.GetVolumes(); !reflect.DeepEqual(volumes, getVolumes) {
+	if yamlData := getYamlData(p.(*DefaultParser)); !reflect.DeepEqual(volumes, yamlData.Volumes) {
 		t.Error("failed handling volumes")
 	}
 
 	p.SetVolume("database")
 
-	if getVolumes := p.GetVolumes(); !reflect.DeepEqual(volumes, getVolumes) {
+	if yamlData := getYamlData(p.(*DefaultParser)); !reflect.DeepEqual(volumes, yamlData.Volumes) {
 		t.Error("failed handling volumes")
 	}
 }

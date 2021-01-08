@@ -3,11 +3,14 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
+	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/cmd/templates"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 const mysqlTemplate string = `services:
@@ -28,6 +31,8 @@ const mysqlTemplate string = `services:
       - kool_local
 volumes:
   database: null
+scripts:
+  script: script
  `
 
 func newFakeKoolPreset() *KoolPreset {
@@ -36,7 +41,8 @@ func newFakeKoolPreset() *KoolPreset {
 		&KoolPresetFlags{false},
 		&presets.FakeParser{},
 		&compose.FakeParser{},
-		&compose.FakeParser{},
+		&templates.FakeParser{},
+		&parser.FakeKoolYaml{},
 		&shell.FakePromptSelect{},
 	}
 }
@@ -73,6 +79,10 @@ func TestNewKoolPreset(t *testing.T) {
 
 	if _, ok := k.composeParser.(*compose.DefaultParser); !ok {
 		t.Errorf("unexpected compose.Parser on default KoolPreset instance")
+	}
+
+	if _, ok := k.templateParser.(*templates.DefaultParser); !ok {
+		t.Errorf("unexpected templates.Parser on default KoolPreset instance")
 	}
 
 	if _, ok := k.promptSelect.(*shell.DefaultPromptSelect); !ok {
@@ -458,13 +468,15 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -481,12 +493,16 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		},
 	}
 
-	f.templateParser.(*compose.FakeParser).MockGetServices = yaml.MapSlice{
+	f.templateParser.(*templates.FakeParser).MockGetServices = yaml.MapSlice{
 		yaml.MapItem{Key: "database", Value: parseMysqlTemplate()},
 	}
 
-	f.templateParser.(*compose.FakeParser).MockGetVolumes = yaml.MapSlice{
+	f.templateParser.(*templates.FakeParser).MockGetVolumes = yaml.MapSlice{
 		yaml.MapItem{Key: "database"},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
+		"script": []string{"script"},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -497,11 +513,11 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if val, ok := f.templateParser.(*compose.FakeParser).CalledParse[mysqlTemplate]; !ok || !val {
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[mysqlTemplate]; !ok || !val {
 		t.Error("failed calling templateParser.Parse to database mysql service")
 	}
 
-	if !f.templateParser.(*compose.FakeParser).CalledGetServices {
+	if !f.templateParser.(*templates.FakeParser).CalledGetServices {
 		t.Error("failed calling templateParser.GetServices")
 	}
 
@@ -509,12 +525,16 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		t.Error("failed calling composeParser.SetService to database mysql service")
 	}
 
-	if !f.templateParser.(*compose.FakeParser).CalledGetVolumes {
+	if !f.templateParser.(*templates.FakeParser).CalledGetVolumes {
 		t.Error("failed calling templateParser.GetVolumes")
 	}
 
 	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetVolume["database"]; !ok || !val {
 		t.Error("failed calling composeParser.SetVolume to database mysql service")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["script"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript to database mysql service")
 	}
 
 	if !f.composeParser.(*compose.FakeParser).CalledString {
@@ -527,13 +547,15 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -550,7 +572,7 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 		},
 	}
 
-	f.templateParser.(*compose.FakeParser).MockParseError = errors.New("parse error")
+	f.templateParser.(*templates.FakeParser).MockParseError = errors.New("parse error")
 
 	cmd := NewPresetCommand(f)
 
@@ -584,14 +606,16 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
-					presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+						presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
+					},
 				},
 			},
 		},
@@ -616,11 +640,11 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		t.Errorf("unexpected error executing preset command; error: %v", err)
 	}
 
-	if val, ok := f.templateParser.(*compose.FakeParser).CalledParse[mysqlTemplate]; ok && val {
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[mysqlTemplate]; ok && val {
 		t.Error("should not call templateParser.Parse to database mysql service")
 	}
 
-	if f.templateParser.(*compose.FakeParser).CalledGetServices {
+	if f.templateParser.(*templates.FakeParser).CalledGetServices {
 		t.Error("should not call templateParser.GetServices")
 	}
 
@@ -628,7 +652,7 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		t.Error("should not call composeParser.SetService to database service")
 	}
 
-	if f.templateParser.(*compose.FakeParser).CalledGetVolumes {
+	if f.templateParser.(*templates.FakeParser).CalledGetVolumes {
 		t.Error("should not call templateParser.GetVolumes")
 	}
 
@@ -647,13 +671,15 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -693,13 +719,15 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	config := &presets.PresetConfig{
-		Questions: []presets.PresetConfigQuestion{
-			presets.PresetConfigQuestion{
-				Key:     "database",
-				Message: "What database service do you want to use",
-				Options: []presets.PresetConfigQuestionOption{
-					presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-					presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+		Questions: map[string][]presets.PresetConfigQuestion{
+			"compose": []presets.PresetConfigQuestion{
+				presets.PresetConfigQuestion{
+					Key:     "database",
+					Message: "What database service do you want to use",
+					Options: []presets.PresetConfigQuestionOption{
+						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
+						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+					},
 				},
 			},
 		},
@@ -766,6 +794,449 @@ func TestErrorGetConfigPresetCommand(t *testing.T) {
 		t.Error("expecting an error, got none")
 	} else if err.Error() != "error parsing preset config; err: get config error" {
 		t.Errorf("expecting error 'error parsing preset config; err: get config error', got %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Error")
+	}
+}
+
+func TestDefaultTemplatesPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	defaultTemplate := `services:
+  service:
+    image: image
+  volumes:
+    volume: null
+  scripts:
+    script: script`
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Templates: []presets.PresetConfigTemplate{
+				presets.PresetConfigTemplate{
+					Key:      "scripts",
+					Template: "template.yml",
+				},
+			},
+		},
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"template.yml": defaultTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetServices = yaml.MapSlice{
+		yaml.MapItem{Key: "service", Value: yaml.MapSlice{
+			yaml.MapItem{Key: "image", Value: "image"},
+		}},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetVolumes = yaml.MapSlice{
+		yaml.MapItem{Key: "volume"},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
+		"script": []string{"script"},
+	}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.presetsParser.(*presets.FakeParser).CalledGetTemplates {
+		t.Error("did not call presetsParser.GetTemplates")
+	}
+
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[defaultTemplate]; !ok || !val {
+		t.Error("failed calling templateParser.Parse")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetServices {
+		t.Error("failed calling templateParser.GetServices")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetService["service"]; !ok || !val {
+		t.Errorf("%v", f.composeParser.(*compose.FakeParser).CalledSetService)
+		t.Error("failed calling composeParser.SetService")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetVolumes {
+		t.Error("failed calling templateParser.GetVolumes")
+	}
+
+	if val, ok := f.composeParser.(*compose.FakeParser).CalledSetVolume["volume"]; !ok || !val {
+		t.Error("failed calling composeParser.SetVolume")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetScripts {
+		t.Error("failed calling templateParser.GetScripts")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["script"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript")
+	}
+}
+
+func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	defaultTemplate := `services:
+  service:
+    image: image
+  volumes:
+    volume: null
+  scripts:
+    script: script`
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Templates: []presets.PresetConfigTemplate{
+				presets.PresetConfigTemplate{
+					Key:      "scripts",
+					Template: "template.yml",
+				},
+			},
+		},
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"template.yml": defaultTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockParseError = errors.New("template parse error")
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.shell.(*shell.FakeShell).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "Failed to load default preset templates: template parse error" {
+		t.Errorf("expecting error 'Failed to load default preset templates: template parse error', got %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Error")
+	}
+}
+
+func TestCustomKoolYmlPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	yarnTemplate := `scripts:
+  yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
+`
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Questions: map[string][]presets.PresetConfigQuestion{
+				"kool": []presets.PresetConfigQuestion{
+					presets.PresetConfigQuestion{
+						Key:           "scripts",
+						DefaultAnswer: "npm",
+						Message:       "What javascript package manager do you want to use",
+						Options: []presets.PresetConfigQuestionOption{
+							presets.PresetConfigQuestionOption{
+								Name:     "npm",
+								Template: "npm.yml",
+							},
+							presets.PresetConfigQuestionOption{
+								Name:     "yarn",
+								Template: "yarn.yml",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What javascript package manager do you want to use": "yarn",
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"yarn.yml": yarnTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
+		"yarn":       []string{"kool docker kooldev/node:14 yarn"},
+		"node-setup": []string{"kool run yarn install", "kool run yarn dev"},
+	}
+
+	f.koolYamlParser.(*parser.FakeKoolYaml).MockString = "kool content"
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.presetsParser.(*presets.FakeParser).CalledGetTemplates {
+		t.Error("did not call presetsParser.GetTemplates")
+	}
+
+	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("did not call promptSelect.Ask")
+	}
+
+	if val, ok := f.templateParser.(*templates.FakeParser).CalledParse[yarnTemplate]; !ok || !val {
+		t.Error("failed calling templateParser.Parse")
+	}
+
+	if !f.templateParser.(*templates.FakeParser).CalledGetScripts {
+		t.Error("failed calling templateParser.GetScripts")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["yarn"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript for yarn script")
+	}
+
+	if val, ok := f.koolYamlParser.(*parser.FakeKoolYaml).CalledSetScript["node-setup"]; !ok || !val {
+		t.Error("failed calling koolYamlParser.SetScript for node-setup script")
+	}
+
+	if !f.koolYamlParser.(*parser.FakeKoolYaml).CalledString {
+		t.Error("did not call koolYamlParser.String")
+	}
+
+	if val, ok := f.presetsParser.(*presets.FakeParser).CalledSetPresetKeyContent["preset"]["kool.yml"]["kool content"]; !ok || !val {
+		t.Error("failed calling presetsParser.SetPresetKeyContent")
+	}
+}
+
+func TestAskErrorCustomKoolYmlPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Questions: map[string][]presets.PresetConfigQuestion{
+				"kool": []presets.PresetConfigQuestion{
+					presets.PresetConfigQuestion{
+						Key:           "scripts",
+						DefaultAnswer: "npm",
+						Message:       "What javascript package manager do you want to use",
+						Options: []presets.PresetConfigQuestionOption{
+							presets.PresetConfigQuestionOption{
+								Name:     "npm",
+								Template: "npm.yml",
+							},
+							presets.PresetConfigQuestionOption{
+								Name:     "yarn",
+								Template: "yarn.yml",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"yarn.yml": "template",
+		},
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"What javascript package manager do you want to use": errors.New("ask error"),
+	}
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.shell.(*shell.FakeShell).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "ask error" {
+		t.Errorf("expecting error 'ask error', got %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Error")
+	}
+}
+
+func TestTemplateParseErrorCustomKoolYmlPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Questions: map[string][]presets.PresetConfigQuestion{
+				"kool": []presets.PresetConfigQuestion{
+					presets.PresetConfigQuestion{
+						Key:           "scripts",
+						DefaultAnswer: "npm",
+						Message:       "What javascript package manager do you want to use",
+						Options: []presets.PresetConfigQuestionOption{
+							presets.PresetConfigQuestionOption{
+								Name:     "npm",
+								Template: "npm.yml",
+							},
+							presets.PresetConfigQuestionOption{
+								Name:     "yarn",
+								Template: "yarn.yml",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"yarn.yml": "template",
+		},
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What javascript package manager do you want to use": "yarn",
+	}
+
+	f.templateParser.(*templates.FakeParser).MockParseError = errors.New("parse error")
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.shell.(*shell.FakeShell).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "Failed to write preset file kool.yml: parse error" {
+		t.Errorf("expecting error 'Failed to write preset file kool.yml: parse error', got %v", err)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Error")
+	}
+}
+
+func TestStringErrorCustomKoolYmlPresetCommand(t *testing.T) {
+	f := newFakeKoolPreset()
+
+	yarnTemplate := `scripts:
+  yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
+`
+	f.presetsParser.(*presets.FakeParser).MockExists = true
+
+	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
+		"preset": &presets.PresetConfig{
+			Questions: map[string][]presets.PresetConfigQuestion{
+				"kool": []presets.PresetConfigQuestion{
+					presets.PresetConfigQuestion{
+						Key:           "scripts",
+						DefaultAnswer: "npm",
+						Message:       "What javascript package manager do you want to use",
+						Options: []presets.PresetConfigQuestionOption{
+							presets.PresetConfigQuestionOption{
+								Name:     "npm",
+								Template: "npm.yml",
+							},
+							presets.PresetConfigQuestionOption{
+								Name:     "yarn",
+								Template: "yarn.yml",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"What javascript package manager do you want to use": "yarn",
+	}
+
+	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
+		"scripts": map[string]string{
+			"yarn.yml": yarnTemplate,
+		},
+	}
+
+	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
+		"yarn":       []string{"kool docker kooldev/node:14 yarn"},
+		"node-setup": []string{"kool run yarn install", "kool run yarn dev"},
+	}
+
+	f.koolYamlParser.(*parser.FakeKoolYaml).MockStringError = errors.New("string error")
+
+	cmd := NewPresetCommand(f)
+
+	cmd.SetArgs([]string{"preset"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing preset command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error")
+	}
+
+	err := f.shell.(*shell.FakeShell).Err
+
+	if err == nil {
+		t.Error("expecting an error, got none")
+	} else if err.Error() != "Failed to write preset file kool.yml: string error" {
+		t.Errorf("expecting error 'Failed to write preset file kool.yml: string error', got %v", err)
 	}
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {

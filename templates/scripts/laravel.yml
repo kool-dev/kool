@@ -1,0 +1,15 @@
+scripts:
+  artisan: kool exec app php artisan
+  node: kool docker kooldev/node:14 node
+
+  setup:
+    - cp .env.example .env
+    - kool start
+    - kool run composer install
+    - kool run artisan key:generate
+    - kool run node-setup
+
+  reset:
+    - kool run composer install
+    - kool run artisan migrate:fresh --seed
+    - kool run node-setup
