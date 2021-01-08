@@ -134,7 +134,7 @@ git commit -m "Updated commands docs"
 
 ## Security
 
-If you find security issue please let us know ahead of making it public like in an issue so we can take action as soon as possible. Please email the concern to `fabricio.souza@fireworkweb.com`.
+If you find security issue please let us know ahead of making it public like in an issue so we can take action as soon as possible. Please email the concern to `contact@kool.dev`.
 
 ## License
 
