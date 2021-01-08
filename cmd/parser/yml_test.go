@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"os"
@@ -160,5 +161,65 @@ func TestParseKoolYamlStruct(t *testing.T) {
 	if len(parsed.Scripts) != 2 {
 		t.Errorf("expected to parse 2 scripts; got %d", len(parsed.Scripts))
 		return
+	}
+}
+
+func TestErrorParseKoolYamlStruct(t *testing.T) {
+	var (
+		err     error
+		tmpPath string
+		parsed  *KoolYaml
+	)
+
+	tmpPath = path.Join(t.TempDir(), "kool.yml")
+
+	invalidKoolYml := "	invalid"
+
+	err = ioutil.WriteFile(tmpPath, []byte(invalidKoolYml), os.ModePerm)
+
+	if err != nil {
+		t.Fatal("failed creating temporary file for test", err)
+	}
+
+	parsed = new(KoolYaml)
+
+	if err = parsed.Parse(tmpPath); err == nil {
+		t.Error("expecting error on Parse, got none")
+		return
+	}
+}
+
+func TestSetScriptEmptyCommandsKoolYmlParser(t *testing.T) {
+	parsed := new(KoolYaml)
+	var emptyCommands []string
+
+	parsed.SetScript("key", []string{"command", "another-command"})
+
+	parsed.SetScript("key", emptyCommands)
+
+	if commands := parsed.Scripts["key"]; len(commands.([]interface{})) == 0 {
+		t.Error("calling SetScript with no command should no override existing commands")
+	}
+}
+
+func TestErrorStringKoolYmlParser(t *testing.T) {
+	originalYamlMarshalFn := yamlMarshalFn
+
+	defer func() {
+		yamlMarshalFn = originalYamlMarshalFn
+	}()
+
+	yamlMarshalFn = func(in interface{}) ([]byte, error) {
+		return nil, errors.New("marshal error")
+	}
+
+	parsed := new(KoolYaml)
+
+	_, err := parsed.String()
+
+	if err == nil {
+		t.Error("expecting an error on String, got none")
+	} else if err.Error() != "marshal error" {
+		t.Errorf("expecting error 'marshal error' on String, got '%v'", err)
 	}
 }
