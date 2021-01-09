@@ -101,10 +101,10 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		)
 
 		for {
-			err = deploy.GetStatus()
+			err = deploy.FetchLatestStatus()
 
-			if lastStatus != deploy.Status {
-				lastStatus = deploy.Status
+			if lastStatus != deploy.Status.Status {
+				lastStatus = deploy.Status.Status
 				d.Println("  > deploy:", lastStatus)
 			}
 

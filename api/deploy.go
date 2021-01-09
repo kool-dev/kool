@@ -16,15 +16,17 @@ import (
 // Deploy represents a deployment process, from
 // request to finish and retrieving the public URL.
 type Deploy struct {
-	tarballPath, id, Status, url string
+	tarballPath, id, url string
+
+	Status *StatusResponse
 }
 
 // NewDeploy creates a new handler for using the
 // Kool Dev API for deploying your application.
-func NewDeploy(tarballPath string) (d *Deploy) {
-	d = new(Deploy)
-	d.tarballPath = tarballPath
-	return
+func NewDeploy(tarballPath string) *Deploy {
+	return &Deploy{
+		tarballPath: tarballPath,
+	}
 }
 
 // GetID returns the ID for the deployment
@@ -125,68 +127,33 @@ func (d *Deploy) SendFile() (err error) {
 	if idF, ok = deploy["id"].(float64); ok {
 		d.id = fmt.Sprintf("%d", int64(idF))
 	} else {
-		err = errors.New("unexpected API response. Please ask for support")
+		err = errors.New("unexpected API response, please ask for support")
 	}
 
 	return
 }
 
-// GetStatus checks the API for the status of
-// the deployment process happening in the
-// background.
-func (d *Deploy) GetStatus() (err error) {
-	var (
-		request *http.Request
-		resp    *http.Response
-		raw     []byte
-		ok      bool
-	)
-	request, _ = http.NewRequest("GET", fmt.Sprintf("%s/deploy/%s/status", apiBaseURL, d.id), nil)
-
-	if resp, err = doRequest(request); err != nil {
+// FetchLatestStatus checks the API for the status of the deployment process
+// happening in the background
+func (d *Deploy) FetchLatestStatus() (err error) {
+	if d.Status, err = NewStatusCall(d.id).Call(); err != nil {
 		return
 	}
 
-	defer resp.Body.Close()
-
-	if raw, err = ioutil.ReadAll(resp.Body); err != nil {
-		return
-	}
-
-	var data = make(map[string]interface{})
-
-	if err = json.Unmarshal(raw, &data); err != nil {
-		return
-	}
-
-	if d.Status, ok = data["status"].(string); !ok {
-		err = ErrUnexpectedResponse
-		return
-	}
-
-	if d.Status == "failed" {
+	if d.Status.Status == "failed" {
 		err = ErrDeployFailed
 		return
 	}
 
-	if d.Status == "success" {
-		if d.url, ok = data["url"].(string); !ok {
-			err = ErrUnexpectedResponse
-			return
-		}
-	}
-
 	return
 }
 
-// IsSuccessful tells whether the deployment
-// process finished successfully.
+// IsSuccessful tells whether the deployment process finished successfully
 func (d *Deploy) IsSuccessful() bool {
-	return d.Status == "success"
+	return d.Status.Status == "success"
 }
 
-// GetURL returns the generated URL for the deployment
-// after it finishes successfully.
+// GetURL returns the generated URL for the deployment after it finishes successfully
 func (d *Deploy) GetURL() string {
-	return d.url
+	return d.Status.URL
 }
