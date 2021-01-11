@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	// "k8s.io/cli-runtime/pkg/genericclioptions"
-	// kubectlExec "k8s.io/kubectl/pkg/cmd/exec"
-
-	kubectl "k8s.io/kubectl/pkg/cmd"
-	// "k8s.io/kubectl/pkg/polymorphichelpers"
+	"fmt"
+	"io/ioutil"
+	"kool-dev/kool/api"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/environment"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -13,6 +14,10 @@ import (
 // KoolDeployExec holds handlers and functions for using Deploy API
 type KoolDeployExec struct {
 	DefaultKoolService
+
+	kubectl, kool builder.Command
+	env           environment.EnvStorage
+	apiExec       api.ExecCall
 }
 
 // NewDeployExecCommand initializes new kool deploy Cobra command
@@ -24,49 +29,70 @@ func NewDeployExecCommand(deployExec *KoolDeployExec) *cobra.Command {
 	}
 }
 
-// NewKoolDeployExec creates a new pointer with default KoolDeploy service
-// dependencies.
+// NewKoolDeployExec creates a new pointer with default KoolDeployExec service dependencies
 func NewKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
 		*newDefaultKoolService(),
+		builder.NewCommand("kubectl"),
+		builder.NewCommand("kool"),
+		environment.NewEnvStorage(),
+		api.NewDefaultExecCall(),
 	}
 }
 
-// Execute runs the deploy logic.
+// Execute runs the deploy exec logic - integrating with Deploy API
 func (e *KoolDeployExec) Execute(args []string) (err error) {
+	var (
+		domain string
+		resp   *api.ExecResponse
+	)
+
 	e.Println("kool deploy exec - start")
 
-	cmd := kubectl.NewKubectlCommand(e.InStream(), e.OutStream(), e.ErrStream())
+	if domain = e.env.Get("KOOL_DEPLOY_DOMAIN"); domain == "" {
+		err = fmt.Errorf("missing deploy domain (env KOOL_DEPLOY_DOMAIN)")
+		return
+	}
 
-	token := "eyJhbGciOiJSUzI1NiIsImtpZCI6Im5RYXNwLUFRR0Y2UVlQa2ZnX3ZQc1pESHAyRkNINTdMV2FxVnJSM2NMazAifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrb29sIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Imtvb2wtdG9rZW4tbW5wZzQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoia29vbCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjVkNDBlYWU3LWNhMjEtNDZhMC1iZWZlLTEzNWY3YTk1NzdlZSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprb29sOmtvb2wifQ.i7_OuD0ByRr7vmK6XjQ42YE0M1hoom5Mr8PhLaDhuyipk3n64u7dy-OI-EoJHbW8C0jUu84e55HHVPq37KowwokXYAMV0r2XM83AiX072E39LES8q2o_XgCVgMDiVW6k4qAMR8Xt-IP9jB7Bfb6_Sr_VzqHxlyvIUoPjtzDYX4rCnTZrMmmRKsn1JWi0GzQ5_GxfbayRlEik45bfL-ztk1tMTafG5UGe3piqJ63iQ02tlH1_A0Hv8lcv7uqGD9MbPD5xmslkEmjWct1Haw3ik3y9gexexX7PJXW_INS78g20G1swNLciQg9cSiy05E0xeZguj2cg0fHJJ6EGYKZZbQ"
+	e.apiExec.Body().Set("domain", domain)
 
-	cmd.SetArgs([]string{"--token", token, "-n", "kool", "exec", "-it", "deployment/kool", "--", "bash"})
-	err = cmd.Execute()
+	if resp, err = e.apiExec.Call(); err != nil {
+		return
+	}
 
-	// streams := genericclioptions.IOStreams{
-	// 	In:     e.InStream(),
-	// 	Out:    e.OutStream(),
-	// 	ErrOut: e.ErrStream(),
-	// }
+	if resp.Token == "" {
+		err = fmt.Errorf("failed to generate access credentials to cloud deploy")
+		return
+	}
 
-	// f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
+	CAPath := fmt.Sprintf("%s/.kool-cluster-CA", os.TempDir())
+	if err = ioutil.WriteFile(CAPath, []byte(resp.CA), os.ModePerm); err != nil {
+		return
+	}
 
-	// cmd := kubectlExec.NewCmdExec(f, streams)
+	e.kubectl.AppendArgs("--token", resp.Token, "-n", resp.Namespace, "exec", "-i")
+	// e.kubectl.AppendArgs("--insecure-skip-tls-verify", "true", "--server", resp.Server)
+	e.kubectl.AppendArgs("--certificate-authority", CAPath)
+	if e.IsTerminal() {
+		e.kubectl.AppendArgs("-t")
+	}
+	e.kubectl.AppendArgs(resp.Path, "--")
+	if len(args) == 0 {
+		args = []string{"bash"}
+	}
+	e.kubectl.AppendArgs(args...)
 
-	// ex := &kubectlExec.ExecOptions{
-	// 	StreamOptions: kubectlExec.StreamOptions{
-	// 		IOStreams: streams,
-	// 	},
+	if e.LookPath(e.kubectl) == nil {
+		// the command is available on current PATH, so let's
+		// just execute it
+		err = e.Interactive(e.kubectl)
+		return
+	}
 
-	// 	Executor: &kubectlExec.DefaultRemoteExecutor{},
-	// }
+	// we do not have 'kubectl' on current path... let's use a container!
+	e.kool.AppendArgs("docker", "--", "kooldev/toolkit:full", e.kubectl.Cmd())
+	e.kool.AppendArgs(e.kubectl.Args()...)
 
-	// ex.ResourceName = "deployment/kool"
-	// ex.Command = []string{"php", "-v"}
-	// ex.EnforceNamespace = true
-	// ex.Namespace = "kool"
-	// ex.ExecutablePodFn = polymorphichelpers.AttachablePodForObjectFn
-	// ex.GetPodTimeout = time.Minute * 100
-
+	err = e.Interactive(e.kool)
 	return
 }

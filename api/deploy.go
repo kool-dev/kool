@@ -2,11 +2,9 @@ package api
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/environment"
 	"mime/multipart"
 	"net/http"
@@ -16,15 +14,26 @@ import (
 // Deploy represents a deployment process, from
 // request to finish and retrieving the public URL.
 type Deploy struct {
+	Endpoint
+
 	tarballPath, id, url string
 
+	env environment.EnvStorage
+
 	Status *StatusResponse
+}
+
+// DeployResponse holds data returned from the deploy endpoint
+type DeployResponse struct {
+	ID int `json:"id"`
 }
 
 // NewDeploy creates a new handler for using the
 // Kool Dev API for deploying your application.
 func NewDeploy(tarballPath string) *Deploy {
 	return &Deploy{
+		Endpoint:    newDefaultEndpoint("POST"),
+		env:         environment.NewEnvStorage(),
 		tarballPath: tarballPath,
 	}
 }
@@ -37,14 +46,53 @@ func (d *Deploy) GetID() string {
 // SendFile calls deploy/create in the Kool Dev API
 func (d *Deploy) SendFile() (err error) {
 	var (
+		body io.Reader
+		resp = &DeployResponse{}
+	)
+
+	if body, err = d.getPayload(); err != nil {
+		return
+	}
+
+	d.SetPath("deploy/create")
+	d.SetRawBody(body)
+	d.SetResponseReceiver(resp)
+	if err = d.DoCall(); err != nil {
+		return
+	}
+
+	body = nil
+
+	code := d.StatusCode()
+
+	if code == http.StatusUnauthorized {
+		err = ErrUnauthorized
+	} else if code == http.StatusUnprocessableEntity {
+		err = ErrPayloadValidation
+	} else if code != http.StatusOK && code != http.StatusCreated {
+		err = ErrBadResponseStatus
+	}
+
+	if err != nil {
+		return
+	}
+
+	d.id = fmt.Sprintf("%d", resp.ID)
+	if d.id == "0" {
+		err = errors.New("unexpected API response, please ask for support")
+	}
+
+	return
+}
+
+func (d *Deploy) getPayload() (body io.Reader, err error) {
+	var (
 		buff         bytes.Buffer
 		file         *os.File
 		fw           io.Writer
 		domain       string
 		domainExtras string
 		wwwRedirect  string
-		resp         *http.Response
-		raw          []byte
 	)
 
 	w := multipart.NewWriter(&buff)
@@ -56,7 +104,6 @@ func (d *Deploy) SendFile() (err error) {
 	fi, _ := file.Stat()
 	fmt.Printf("Release tarball got %.2fMBs...\n", float64(fi.Size())/1024/1024)
 
-	// fw, err = w.CreateFormFile("deploy", d.tarballPath)
 	if fw, err = w.CreateFormFile("deploy", "deploy.tgz"); err != nil {
 		return
 	}
@@ -67,76 +114,35 @@ func (d *Deploy) SendFile() (err error) {
 
 	defer file.Close()
 
-	if domain = environment.NewEnvStorage().Get("KOOL_DEPLOY_DOMAIN"); domain != "" {
+	if domain = d.env.Get("KOOL_DEPLOY_DOMAIN"); domain != "" {
 		if err = w.WriteField("domain", domain); err != nil {
 			return
 		}
 	}
 
-	if domainExtras = environment.NewEnvStorage().Get("KOOL_DEPLOY_DOMAIN_EXTRAS"); domainExtras != "" {
+	if domainExtras = d.env.Get("KOOL_DEPLOY_DOMAIN_EXTRAS"); domainExtras != "" {
 		if err = w.WriteField("domain_extras", domainExtras); err != nil {
 			return
 		}
 	}
 
-	if wwwRedirect = environment.NewEnvStorage().Get("KOOL_DEPLOY_WWW_REDIRECT"); wwwRedirect != "" {
+	if wwwRedirect = d.env.Get("KOOL_DEPLOY_WWW_REDIRECT"); wwwRedirect != "" {
 		if err = w.WriteField("www_redirect", wwwRedirect); err != nil {
 			return
 		}
 	}
 
+	d.SetContentType(w.FormDataContentType())
 	w.Close()
 
-	req, _ := http.NewRequest("POST", apiBaseURL+"/deploy/create", &buff)
-	req.Header.Add("Content-Type", w.FormDataContentType())
-	if resp, err = doRequest(req); err != nil {
-		return
-	}
-
-	defer resp.Body.Close()
-
-	if raw, err = ioutil.ReadAll(resp.Body); err != nil {
-		return
-	}
-
-	if resp.StatusCode == http.StatusUnauthorized {
-		err = ErrUnauthorized
-	} else if resp.StatusCode == http.StatusUnprocessableEntity {
-		err = ErrPayloadValidation
-		fmt.Println(string(raw))
-	} else if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		err = ErrBadResponseStatus
-		fmt.Println(string(raw))
-	}
-
-	if err != nil {
-		return
-	}
-
-	deploy := make(map[string]interface{})
-
-	if err = json.Unmarshal(raw, &deploy); err != nil {
-		return
-	}
-
-	var (
-		ok  bool
-		idF float64
-	)
-
-	if idF, ok = deploy["id"].(float64); ok {
-		d.id = fmt.Sprintf("%d", int64(idF))
-	} else {
-		err = errors.New("unexpected API response, please ask for support")
-	}
-
+	body = &buff
 	return
 }
 
 // FetchLatestStatus checks the API for the status of the deployment process
 // happening in the background
 func (d *Deploy) FetchLatestStatus() (err error) {
-	if d.Status, err = NewStatusCall(d.id).Call(); err != nil {
+	if d.Status, err = NewDefaultStatusCall(d.id).Call(); err != nil {
 		return
 	}
 

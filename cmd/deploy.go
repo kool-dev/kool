@@ -23,8 +23,8 @@ const (
 type KoolDeploy struct {
 	DefaultKoolService
 
-	envStorage environment.EnvStorage
-	git        builder.Command
+	env environment.EnvStorage
+	git builder.Command
 }
 
 // NewDeployCommand initializes new kool deploy Cobra command
@@ -61,7 +61,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		deploy   *api.Deploy
 	)
 
-	if url := d.envStorage.Get("KOOL_API_URL"); url != "" {
+	if url := d.env.Get("KOOL_API_URL"); url != "" {
 		api.SetBaseURL(url)
 	}
 
@@ -88,7 +88,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 	timeout := 10 * time.Minute
 
-	if min, err := strconv.Atoi(d.envStorage.Get("KOOL_API_TIMEOUT")); err == nil {
+	if min, err := strconv.Atoi(d.env.Get("KOOL_API_TIMEOUT")); err == nil {
 		timeout = time.Duration(min) * time.Minute
 	}
 
@@ -221,7 +221,7 @@ func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err e
 // from GIT, we still are required to send it - it is required for
 // the Deploy API.
 func (d *KoolDeploy) handleDeployEnv(files []string) []string {
-	path := filepath.Join(d.envStorage.Get("PWD"), koolDeployEnv)
+	path := filepath.Join(d.env.Get("PWD"), koolDeployEnv)
 	if _, envErr := os.Stat(path); os.IsNotExist(envErr) {
 		return files
 	}
