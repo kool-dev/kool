@@ -10,8 +10,6 @@ type ExecCall interface {
 // DefaultExecCall holds data and logic for consuming the "exec" endpoint
 type DefaultExecCall struct {
 	Endpoint
-
-	domain string
 }
 
 // ExecResponse holds data from the "exec" endpoint

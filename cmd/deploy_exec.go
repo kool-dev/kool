@@ -16,15 +16,17 @@ type KoolDeployExec struct {
 	DefaultKoolService
 
 	kubectl, kool builder.Command
-	env           environment.EnvStorage
-	apiExec       api.ExecCall
+
+	env     environment.EnvStorage
+	apiExec api.ExecCall
 }
 
 // NewDeployExecCommand initializes new kool deploy Cobra command
 func NewDeployExecCommand(deployExec *KoolDeployExec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "exec",
-		Short: "Executes a command in your deployed application on Kool cloud",
+		Use:   "exec [service]",
+		Short: "Executes a command in a service from your deployed application on Kool cloud",
+		Args:  cobra.MinimumNArgs(1),
 		Run:   DefaultCommandRunFunction(deployExec),
 	}
 }
@@ -43,9 +45,12 @@ func NewKoolDeployExec() *KoolDeployExec {
 // Execute runs the deploy exec logic - integrating with Deploy API
 func (e *KoolDeployExec) Execute(args []string) (err error) {
 	var (
-		domain string
-		resp   *api.ExecResponse
+		domain  string
+		service string = args[0]
+		resp    *api.ExecResponse
 	)
+
+	args = args[1:]
 
 	e.Println("kool deploy exec - start")
 
@@ -55,6 +60,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 	}
 
 	e.apiExec.Body().Set("domain", domain)
+	e.apiExec.Body().Set("service", service)
 
 	if resp, err = e.apiExec.Call(); err != nil {
 		return
@@ -70,9 +76,11 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 		return
 	}
 
-	e.kubectl.AppendArgs("--token", resp.Token, "-n", resp.Namespace, "exec", "-i")
-	// e.kubectl.AppendArgs("--insecure-skip-tls-verify", "true", "--server", resp.Server)
+	e.kubectl.AppendArgs("--server", resp.Server)
+	e.kubectl.AppendArgs("--token", resp.Token)
+	e.kubectl.AppendArgs("--namespace", resp.Namespace)
 	e.kubectl.AppendArgs("--certificate-authority", CAPath)
+	e.kubectl.AppendArgs("exec", "-i")
 	if e.IsTerminal() {
 		e.kubectl.AppendArgs("-t")
 	}
@@ -83,14 +91,18 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 	e.kubectl.AppendArgs(args...)
 
 	if e.LookPath(e.kubectl) == nil {
-		// the command is available on current PATH, so let's
-		// just execute it
+		// the command is available on current PATH, so let's use it
 		err = e.Interactive(e.kubectl)
 		return
 	}
 
 	// we do not have 'kubectl' on current path... let's use a container!
-	e.kool.AppendArgs("docker", "--", "kooldev/toolkit:full", e.kubectl.Cmd())
+	e.kool.AppendArgs(
+		"docker", "--",
+		"-v", fmt.Sprintf("%s:%s", CAPath, CAPath),
+		"kooldev/toolkit:full",
+		e.kubectl.Cmd(),
+	)
 	e.kool.AppendArgs(e.kubectl.Args()...)
 
 	err = e.Interactive(e.kool)

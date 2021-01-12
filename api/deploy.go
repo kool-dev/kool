@@ -16,7 +16,7 @@ import (
 type Deploy struct {
 	Endpoint
 
-	tarballPath, id, url string
+	tarballPath, id string
 
 	env environment.EnvStorage
 
@@ -60,8 +60,6 @@ func (d *Deploy) SendFile() (err error) {
 	if err = d.DoCall(); err != nil {
 		return
 	}
-
-	body = nil
 
 	code := d.StatusCode()
 
