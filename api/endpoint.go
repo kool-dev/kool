@@ -11,6 +11,13 @@ import (
 	"strings"
 )
 
+// HTTPRequester interface holds the methods to execute HTTP requests
+type HTTPRequester interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+var httpRequester HTTPRequester = http.DefaultClient
+
 // Endpoint interface encapsulates the behaviour necessary for consuming
 // an API endpoint
 type Endpoint interface {
@@ -140,7 +147,7 @@ func (e *DefaultEndpoint) doRequest(request *http.Request) (resp *http.Response,
 	request.Header.Add("Accept", "application/json")
 	request.Header.Add("Authorization", "Bearer "+apiToken)
 
-	resp, err = http.DefaultClient.Do(request)
+	resp, err = httpRequester.Do(request)
 
 	return
 }

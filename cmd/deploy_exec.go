@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -75,7 +76,12 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 		return
 	}
 
-	CAPath := fmt.Sprintf("%s/.kool-cluster-CA", os.TempDir())
+	CAPath := filepath.Join("/tmp", ".kool-cluster-CA")
+	defer func() {
+		if err := os.Remove(CAPath); err != nil {
+			e.Warning("failed to clear up temporary file; error:", err.Error())
+		}
+	}()
 	if err = ioutil.WriteFile(CAPath, []byte(resp.CA), os.ModePerm); err != nil {
 		return
 	}
