@@ -46,13 +46,17 @@ func NewKoolDeployExec() *KoolDeployExec {
 func (e *KoolDeployExec) Execute(args []string) (err error) {
 	var (
 		domain  string
-		service string = args[0]
+		service string
 		resp    *api.ExecResponse
 	)
 
-	args = args[1:]
+	if len(args) == 0 {
+		err = fmt.Errorf("KoolDeployExec.Execute: required at least one argument")
+		return
+	}
 
-	e.Println("kool deploy exec - start")
+	service = args[0]
+	args = args[1:]
 
 	if domain = e.env.Get("KOOL_DEPLOY_DOMAIN"); domain == "" {
 		err = fmt.Errorf("missing deploy domain (env KOOL_DEPLOY_DOMAIN)")
