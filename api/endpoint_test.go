@@ -47,6 +47,12 @@ func TestNewDefaultEndpoint(t *testing.T) {
 		t.Errorf("unexpected default rawBody")
 	}
 
+	e.SetRawBody(new(fakeIOReader))
+
+	if _, ok := e.rawBody.(*fakeIOReader); !ok {
+		t.Errorf("failed setting rawBody")
+	}
+
 	if e.body != nil {
 		t.Errorf("unexpected non-null default body")
 	}

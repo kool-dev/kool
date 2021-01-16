@@ -18,6 +18,12 @@ type HTTPRequester interface {
 
 var httpRequester HTTPRequester = http.DefaultClient
 
+type fakeIOReader struct{}
+
+func (*fakeIOReader) Read(p []byte) (n int, err error) {
+	return
+}
+
 // Endpoint interface encapsulates the behaviour necessary for consuming
 // an API endpoint
 type Endpoint interface {
