@@ -13,13 +13,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@master
 
-    - uses: olegtarasov/get-tag@v1
+    - uses: olegtarasov/get-tag@v2.1
       id: tagName
 
     - name: Build image
       env:
         TAGNAME: ${{ steps.tagName.outputs.tag }}
-      run: docker build --pull -t kooldev/kool:$TAGNAME .
+      run: docker build --build-arg BUILD_VERSION=$TAGNAME --pull -t kooldev/kool:$TAGNAME .
 
     - name: Test image
       env:
