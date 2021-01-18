@@ -3,7 +3,7 @@ scripts:
   npm: kool exec app npm # can change to: yarn,pnpm
   nest: kool exec app nest
 
-  mysql: kool exec database mysql -uroot -prootpass
+  mysql: kool exec -e MYSQL_PWD=rootpass mysql -uroot
 
   mongo: kool exec mongo mongo -uroot -prootpass
 

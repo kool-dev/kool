@@ -80,7 +80,7 @@ volumes:
   database:
 
 scripts:
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
 `,
 		"mysql8.yml": `services:
   database:
@@ -103,7 +103,7 @@ volumes:
   database:
 
 scripts:
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
 `,
 		"postgresql13.yml": `services:
   database:
