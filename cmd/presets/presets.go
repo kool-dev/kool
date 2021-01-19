@@ -93,7 +93,7 @@ networks:
   compile: kool run go build -o my-cli
   install:
     - mv my-cli /usr/local/bin/my-cli
-  fmt: kool run go fmt
+  fmt: kool run go fmt ./...
   lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
 `,
 	}
@@ -169,7 +169,7 @@ networks:
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
 
   setup:
     - cp .env.example .env
@@ -266,7 +266,7 @@ networks:
   npm: kool exec app npm # can change to: yarn,pnpm
   nest: kool exec app nest
 
-  mysql: kool exec database mysql -uroot -prootpass
+  mysql: kool exec -e MYSQL_PWD=rootpass mysql -uroot
 
   mongo: kool exec mongo mongo -uroot -prootpass
 
@@ -562,7 +562,7 @@ networks:
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # can change to: yarn,pnpm
 
-  mysql: kool exec database mysql -uroot -prootpass
+  mysql: kool exec -e MYSQL_PWD=rootpass database mysql -uroot
 
   setup:
     - kool start
@@ -621,7 +621,7 @@ networks:
   php: kool exec app php
   wp: kool exec app wp
 
-  mysql: kool exec database mysql -uroot -p$DB_PASSWORD
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
 `,
 	}
 	return presets
