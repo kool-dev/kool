@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
@@ -23,9 +22,6 @@ type KoolPreset struct {
 	koolYamlParser parser.KoolYamlParser
 	promptSelect   shell.PromptSelect
 }
-
-// ErrPresetFilesAlreadyExists error for existing presets files
-var ErrPresetFilesAlreadyExists = errors.New("some preset files already exist")
 
 func init() {
 	var (
@@ -99,10 +95,7 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 			preset.SetErrStream(cmd.ErrOrStderr())
 
 			if err := preset.Execute(args); err != nil {
-				if err.Error() == ErrPresetFilesAlreadyExists.Error() {
-					preset.Warning("Some preset files already exist. In case you wanna override them, use --override.")
-					preset.Exit(2)
-				} else if err.Error() == shell.ErrPromptSelectInterrupted.Error() {
+				if err.Error() == shell.ErrPromptSelectInterrupted.Error() {
 					preset.Warning("Operation Cancelled")
 					preset.Exit(0)
 				} else {
