@@ -12,6 +12,11 @@ import (
 	"github.com/spf13/afero/mem"
 )
 
+type fakeRenameErrorFs struct {
+	afero.MemMapFs
+	MockRenameError error
+}
+
 type fakeFs struct {
 	afero.MemMapFs
 	MockWriteError error
@@ -34,6 +39,10 @@ func (f *fakeFs) OpenFile(name string, flag int, perm os.FileMode) (afero.File, 
 	}
 
 	return file, nil
+}
+
+func (f *fakeRenameErrorFs) Rename(oldname, newname string) error {
+	return f.MockRenameError
 }
 
 func (f *fakeFile) Write(b []byte) (n int, err error) {
@@ -521,6 +530,46 @@ func TestErrorFileSyncWriteFilesParser(t *testing.T) {
 		t.Errorf("expecting error '%v', got none", fs.MockSyncError)
 	} else if err != fs.MockSyncError {
 		t.Errorf("expecting error '%v', got '%v'", fs.MockSyncError, err)
+	}
+
+	if fileError != "kool.yml" {
+		t.Errorf("expecting value 'kool.yml' on fileError, got '%s'", fileError)
+	}
+}
+
+func TestErrorRenameExistingFileWriteFilesParser(t *testing.T) {
+	var (
+		existingFile afero.File
+		err          error
+		fileError    string
+	)
+
+	fs := &fakeRenameErrorFs{
+		MockRenameError: errors.New("rename error"),
+	}
+
+	if existingFile, err = fs.OpenFile("kool.yml", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = existingFile.Write([]byte("")); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	if fileError, err = p.WriteFiles("preset"); err == nil {
+		t.Errorf("expecting error '%v', got none", fs.MockRenameError)
+	} else if err != fs.MockRenameError {
+		t.Errorf("expecting error '%v', got '%v'", fs.MockRenameError, err)
 	}
 
 	if fileError != "kool.yml" {
