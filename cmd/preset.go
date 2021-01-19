@@ -9,19 +9,14 @@ import (
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/cmd/templates"
+	"time"
 
 	"github.com/spf13/cobra"
 )
 
-// KoolPresetFlags holds the flags for the preset command
-type KoolPresetFlags struct {
-	Override bool
-}
-
 // KoolPreset holds handlers and functions to implement the preset command logic
 type KoolPreset struct {
 	DefaultKoolService
-	Flags          *KoolPresetFlags
 	presetsParser  presets.Parser
 	composeParser  compose.Parser
 	templateParser templates.Parser
@@ -45,7 +40,6 @@ func init() {
 func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
-		&KoolPresetFlags{false},
 		presets.NewParser(),
 		compose.NewParser(),
 		templates.NewParser(),
@@ -71,14 +65,12 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 
 	p.Println("Preset", preset, "is initializing!")
 
-	if !p.Flags.Override {
-		if existingFiles := p.presetsParser.LookUpFiles(preset); len(existingFiles) > 0 {
-			for _, fileName := range existingFiles {
-				p.Warning("Preset file ", fileName, " already exists.")
-			}
+	backupDate := time.Now().Format("20060102")
 
-			err = ErrPresetFilesAlreadyExists
-			return
+	if existingFiles := p.presetsParser.LookUpFiles(preset); len(existingFiles) > 0 {
+		for _, fileName := range existingFiles {
+			warning := fmt.Sprintf("Preset file %s already exists and will be renamed to %s.bak.%s", fileName, fileName, backupDate)
+			p.Warning(warning)
 		}
 	}
 
@@ -121,7 +113,6 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 		},
 	}
 
-	presetCmd.Flags().BoolVarP(&preset.Flags.Override, "override", "", false, "Force replace local existing files with the preset files")
 	return
 }
 

@@ -8,7 +8,9 @@ import (
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/cmd/templates"
+	"strings"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -38,7 +40,6 @@ scripts:
 func newFakeKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newFakeKoolService(),
-		&KoolPresetFlags{false},
 		&presets.FakeParser{},
 		&compose.FakeParser{},
 		&templates.FakeParser{},
@@ -65,12 +66,6 @@ func TestNewKoolPreset(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on default KoolPreset instance")
-	}
-
-	if k.Flags == nil {
-		t.Errorf("Flags not initialized on default KoolPreset instance")
-	} else if k.Flags.Override {
-		t.Errorf("bad default value for Override flag on default KoolPreset instance")
 	}
 
 	if _, ok := k.presetsParser.(*presets.DefaultParser); !ok {
@@ -201,6 +196,7 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
 		"laravel": &presets.PresetConfig{},
 	}
+
 	cmd := NewPresetCommand(f)
 
 	cmd.SetArgs([]string{"laravel"})
@@ -210,43 +206,14 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 	}
 
 	if !f.shell.(*shell.FakeShell).CalledWarning {
-		t.Error("did not call Warning")
+		t.Error("did not call existing files Warning")
 	}
 
-	expected := "Some preset files already exist. In case you wanna override them, use --override."
-	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
+	output := strings.TrimSpace(fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...))
+	expected := fmt.Sprintf("Preset file kool.yml already exists and will be renamed to kool.yml.bak.%s", time.Now().Format("20060102"))
 
 	if output != expected {
 		t.Errorf("expecting message '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
-}
-
-func TestOverrideFilesPresetCommand(t *testing.T) {
-	f := newFakeKoolPreset()
-	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
-	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
-	}
-
-	cmd := NewPresetCommand(f)
-
-	cmd.SetArgs([]string{"--override", "laravel"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if f.presetsParser.(*presets.FakeParser).CalledLookUpFiles {
-		t.Error("unexpected existing files checking")
-	}
-
-	if f.shell.(*shell.FakeShell).CalledWarning {
-		t.Error("unexpected existing files Warning")
 	}
 
 	if f.exiter.(*shell.FakeExiter).Exited() {

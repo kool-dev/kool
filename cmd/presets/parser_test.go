@@ -2,9 +2,11 @@ package presets
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/mem"
@@ -277,6 +279,46 @@ func TestWriteFilesParser(t *testing.T) {
 
 	if _, err := fs.Stat("kool.yml"); os.IsNotExist(err) {
 		t.Error("could not write the file 'kool.yml'")
+	}
+}
+
+func TestWriteExistingFilesParser(t *testing.T) {
+	var (
+		existingFile afero.File
+		err          error
+	)
+
+	fs := afero.NewMemMapFs()
+
+	if existingFile, err = fs.OpenFile("kool.yml", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = existingFile.Write([]byte("")); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	if _, err = p.WriteFiles("preset"); err != nil {
+		t.Errorf("unexpected error writing file, err: %v", err)
+	}
+
+	if _, err = fs.Stat("kool.yml"); os.IsNotExist(err) {
+		t.Error("could not write the file 'kool.yml'")
+	}
+
+	backupFile := fmt.Sprintf("kool.yml.bak.%s", time.Now().Format("20060102"))
+	if _, err = fs.Stat(backupFile); os.IsNotExist(err) {
+		t.Errorf("could not write the backup file '%s'", backupFile)
 	}
 }
 

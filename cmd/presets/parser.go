@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
@@ -144,6 +145,13 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 			file  afero.File
 			lines int
 		)
+
+		if _, statErr := p.fs.Stat(fileName); !os.IsNotExist(statErr) {
+			if err = p.fs.Rename(fileName, fmt.Sprintf("%s.bak.%s", fileName, time.Now().Format("20060102"))); err != nil {
+				fileError = fileName
+				return
+			}
+		}
 
 		file, err = p.fs.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 
