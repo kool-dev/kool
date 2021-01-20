@@ -10,33 +10,33 @@ func TestNewDeploy(t *testing.T) {
 	d := NewDeploy(tarball)
 
 	if _, ok := d.env.(*environment.DefaultEnvStorage); !ok {
-		t.Errorf("unexpected default environment.EnvStorage")
+		t.Error("unexpected default environment.EnvStorage")
 	}
 
 	if _, ok := d.Endpoint.(*DefaultEndpoint); !ok {
-		t.Errorf("unexpected default Endpoint")
+		t.Error("unexpected default Endpoint")
 	}
 
 	if tarball != d.tarballPath {
-		t.Errorf("failed setting tarballPath")
+		t.Error("failed setting tarballPath")
 	}
 
 	var id = "id"
 	d.id = id
 
 	if id != d.GetID() {
-		t.Errorf("failed setting id")
+		t.Error("failed setting id")
 	}
 
 	var url = "url"
 	d.Status = &StatusResponse{Status: "success", URL: url}
 
 	if !d.IsSuccessful() {
-		t.Errorf("failed asserting success")
+		t.Error("failed asserting success")
 	}
 
 	if url != d.GetURL() {
-		t.Errorf("failed getting URL")
+		t.Error("failed getting URL")
 	}
 
 	// still in need of testing

@@ -22,66 +22,66 @@ func TestNewDefaultEndpoint(t *testing.T) {
 	e := newDefaultEndpoint(method)
 
 	if e.method != method {
-		t.Errorf("unexpected method")
+		t.Error("unexpected method")
 	}
 
 	if _, ok := e.env.(*environment.DefaultEnvStorage); !ok {
-		t.Errorf("unexpected environment storage")
+		t.Error("unexpected environment storage")
 	}
 
 	var path string = "path"
 	e.SetPath(path)
 
 	if e.path != path {
-		t.Errorf("failed to SetPath")
+		t.Error("failed to SetPath")
 	}
 
 	var contentType string = "type"
 	e.SetContentType(contentType)
 
 	if e.contentType != contentType {
-		t.Errorf("failed to SetContentType")
+		t.Error("failed to SetContentType")
 	}
 
 	if e.rawBody != nil {
-		t.Errorf("unexpected default rawBody")
+		t.Error("unexpected default rawBody")
 	}
 
 	e.SetRawBody(new(fakeIOReader))
 
 	if _, ok := e.rawBody.(*fakeIOReader); !ok {
-		t.Errorf("failed setting rawBody")
+		t.Error("failed setting rawBody")
 	}
 
 	if e.body != nil {
-		t.Errorf("unexpected non-null default body")
+		t.Error("unexpected non-null default body")
 	}
 
 	e.Body().Set("foo", "bar")
 	e.Body().Set("foo2", "bar2")
 
 	if e.body == nil {
-		t.Errorf("body must not be null after access")
+		t.Error("body must not be null after access")
 	}
 
 	if e.StatusCode() != e.statusCode || e.statusCode != 0 {
-		t.Errorf("unexpected default statusCode")
+		t.Error("unexpected default statusCode")
 	}
 
 	e.Query().Add("foo", "qbar")
 
 	if e.query.Get("foo") != "qbar" {
-		t.Errorf("failed to write query")
+		t.Error("failed to write query")
 	}
 
 	if e.response != nil {
-		t.Errorf("unexpected default response receiver")
+		t.Error("unexpected default response receiver")
 	}
 
 	e.SetResponseReceiver("receiver")
 
 	if resp, ok := e.response.(string); !ok || resp != "receiver" {
-		t.Errorf("failed SetResponseReceiver")
+		t.Error("failed SetResponseReceiver")
 	}
 }
 
@@ -116,10 +116,10 @@ func TestDoRequest(t *testing.T) {
 		t.Errorf("unexpected error returned; %v", err)
 	}
 	if request.Header.Get("Accept") != "application/json" {
-		t.Errorf("failed setting Accept header")
+		t.Error("failed setting Accept header")
 	}
 
 	if !strings.Contains(request.Header.Get("Authorization"), "fake token") {
-		t.Errorf("failed setting Authorization header")
+		t.Error("failed setting Authorization header")
 	}
 }
