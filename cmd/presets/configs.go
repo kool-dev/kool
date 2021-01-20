@@ -157,11 +157,14 @@ templates:
     template: symfony.yml
 `
 	configs["wordpress"] = `language: php
-commands:
-  create:
-  - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
 questions:
   compose:
+    - key: app
+      default_answer: PHP 7.4
+      message: What app service do you want to use
+      options:
+        - name: PHP 7.4
+          template: wordpress74.yml
     - key: database
       default_answer: MySQL 5.7
       message: What database service do you want to use

@@ -9,6 +9,8 @@ import (
 )
 
 func TestPresetsKoolFile(t *testing.T) {
+	configs := GetConfigs()
+
 	for preset, files := range GetAll() {
 		var (
 			parsed *parser.KoolYaml
@@ -16,7 +18,17 @@ func TestPresetsKoolFile(t *testing.T) {
 		)
 
 		if _, hasKool := files["kool.yml"]; !hasKool {
-			t.Errorf("kool.yml is missing from %s preset", preset)
+			config := new(PresetConfig)
+
+			if err := yaml.Unmarshal([]byte(configs[preset]), &config); err != nil {
+				t.Fatal(err)
+			}
+
+			if _, hasKoolQuestions := config.Questions["kool"]; !hasKoolQuestions {
+				t.Errorf("preset %s must have either 'kool.yml' on preset files or 'kool' questions on 'preset-config.yml' to create a new 'kool.yml'", preset)
+			}
+
+			continue
 		}
 
 		if kool = []byte(files["kool.yml"]); len(kool) == 0 {

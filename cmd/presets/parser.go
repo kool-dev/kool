@@ -180,10 +180,6 @@ func (p *DefaultParser) SetPresetKeyContent(preset string, key string, content s
 		return
 	}
 
-	if _, found := p.Presets[preset][key]; !found {
-		return
-	}
-
 	p.Presets[preset][key] = content
 }
 

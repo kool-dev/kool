@@ -215,7 +215,7 @@ func (p *KoolPreset) customizeCompose(preset string, config *presets.PresetConfi
 				optionTemplate[option.Name] = allTemplates[serviceName][option.Template]
 			}
 
-			if p.IsTerminal() {
+			if p.IsTerminal() && len(options) > 1 {
 				if selectedOption, err = p.promptSelect.Ask(question.Message, options); err != nil {
 					return
 				}
