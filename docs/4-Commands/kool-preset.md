@@ -9,8 +9,7 @@ kool preset [PRESET] [flags]
 ### Options
 
 ```
-  -h, --help       help for preset
-      --override   Force replace local existing files with the preset files
+  -h, --help   help for preset
 ```
 
 ### Options inherited from parent commands

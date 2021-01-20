@@ -2,13 +2,20 @@ package presets
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/mem"
 )
+
+type fakeRenameErrorFs struct {
+	afero.MemMapFs
+	MockRenameError error
+}
 
 type fakeFs struct {
 	afero.MemMapFs
@@ -32,6 +39,10 @@ func (f *fakeFs) OpenFile(name string, flag int, perm os.FileMode) (afero.File, 
 	}
 
 	return file, nil
+}
+
+func (f *fakeRenameErrorFs) Rename(oldname, newname string) error {
+	return f.MockRenameError
 }
 
 func (f *fakeFile) Write(b []byte) (n int, err error) {
@@ -280,6 +291,46 @@ func TestWriteFilesParser(t *testing.T) {
 	}
 }
 
+func TestWriteExistingFilesParser(t *testing.T) {
+	var (
+		existingFile afero.File
+		err          error
+	)
+
+	fs := afero.NewMemMapFs()
+
+	if existingFile, err = fs.OpenFile("kool.yml", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = existingFile.Write([]byte("")); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	if _, err = p.WriteFiles("preset"); err != nil {
+		t.Errorf("unexpected error writing file, err: %v", err)
+	}
+
+	if _, err = fs.Stat("kool.yml"); os.IsNotExist(err) {
+		t.Error("could not write the file 'kool.yml'")
+	}
+
+	backupFile := fmt.Sprintf("kool.yml.bak.%s", time.Now().Format("20060102"))
+	if _, err = fs.Stat(backupFile); os.IsNotExist(err) {
+		t.Errorf("could not write the backup file '%s'", backupFile)
+	}
+}
+
 func TestLoadPresetsParser(t *testing.T) {
 	presets := map[string]map[string]string{
 		"laravel": {"file": "content"},
@@ -479,6 +530,46 @@ func TestErrorFileSyncWriteFilesParser(t *testing.T) {
 		t.Errorf("expecting error '%v', got none", fs.MockSyncError)
 	} else if err != fs.MockSyncError {
 		t.Errorf("expecting error '%v', got '%v'", fs.MockSyncError, err)
+	}
+
+	if fileError != "kool.yml" {
+		t.Errorf("expecting value 'kool.yml' on fileError, got '%s'", fileError)
+	}
+}
+
+func TestErrorRenameExistingFileWriteFilesParser(t *testing.T) {
+	var (
+		existingFile afero.File
+		err          error
+		fileError    string
+	)
+
+	fs := &fakeRenameErrorFs{
+		MockRenameError: errors.New("rename error"),
+	}
+
+	if existingFile, err = fs.OpenFile("kool.yml", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err = existingFile.Write([]byte("")); err != nil {
+		t.Fatal(err)
+	}
+
+	p := NewParserFS(fs)
+
+	presets := make(map[string]map[string]string)
+	preset := make(map[string]string)
+
+	preset["kool.yml"] = "value1"
+	presets["preset"] = preset
+
+	p.LoadPresets(presets)
+
+	if fileError, err = p.WriteFiles("preset"); err == nil {
+		t.Errorf("expecting error '%v', got none", fs.MockRenameError)
+	} else if err != fs.MockRenameError {
+		t.Errorf("expecting error '%v', got '%v'", fs.MockRenameError, err)
 	}
 
 	if fileError != "kool.yml" {
