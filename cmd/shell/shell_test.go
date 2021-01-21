@@ -371,3 +371,30 @@ func TestSuccessShell(t *testing.T) {
 		t.Errorf("expecting output '%s', got '%s'", expected, output)
 	}
 }
+
+func TestRecursiveInteractiveCommand(t *testing.T) {
+	s := NewShell()
+	command := builder.NewCommand("kool", "-v")
+
+	var (
+		calledRecursive     = false
+		calledRecursiveArgs []string
+	)
+
+	// set published RecursiveCall handler
+	RecursiveCall = func(args []string) error {
+		calledRecursive = true
+		calledRecursiveArgs = args
+		return nil
+	}
+
+	err := s.Interactive(command)
+
+	if err != nil {
+		t.Errorf("unexpected error calling recursive kool: %s", err.Error())
+	}
+
+	if !calledRecursive || len(calledRecursiveArgs) != 1 || calledRecursiveArgs[0] != "-v" {
+		t.Errorf("unexpected recursive call - args: %v", calledRecursiveArgs)
+	}
+}

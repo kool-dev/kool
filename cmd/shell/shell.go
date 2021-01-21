@@ -20,7 +20,13 @@ type execLookPathFnType func(string) (string, error)
 
 var execCmdFn execCmdFnType = exec.Command
 var execLookPathFn execLookPathFnType = exec.LookPath
+
+// ErrLookPath error when we fail to find in PATH
 var ErrLookPath = errors.New("command not found")
+
+// RecursiveCall is used to proxy self-executaion commands internally
+// instead of creating a whole new OS process
+var RecursiveCall func([]string) error
 
 // DefaultShell holds data for handling a shell
 type DefaultShell struct {
@@ -124,6 +130,11 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 		exe            string   = command.Cmd()
 		args           []string = command.Args()
 	)
+
+	if exe == "kool" && RecursiveCall != nil {
+		// it is a recursive call! let's try to avoid creating a new process...
+		return RecursiveCall(args)
+	}
 
 	if exe == "docker-compose" {
 		args = append(s.dockerComposeDefaultArgs(), args...)
