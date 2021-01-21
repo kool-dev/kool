@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"os"
 	"strings"
@@ -238,5 +239,24 @@ func TestVerboseFlagRootCommand(t *testing.T) {
 
 	if verbose := fakeEnv.IsTrue("KOOL_VERBOSE"); !verbose {
 		t.Error("expecting 'KOOL_VERBOSE' to be true, got false")
+	}
+}
+
+func TestRecursiveCall(t *testing.T) {
+	recursive := &cobra.Command{
+		Use: "recursive",
+		Run: func(cmd *cobra.Command, args []string) {
+			_ = shell.Interactive("kool", "-v")
+		},
+	}
+
+	rootCmd.AddCommand(recursive)
+
+	rootCmd.SetArgs([]string{"recursive"})
+
+	err := Execute()
+
+	if err != nil {
+		t.Errorf("fail calling recursive command: %v", err)
 	}
 }

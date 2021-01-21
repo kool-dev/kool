@@ -1,8 +1,10 @@
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
+
+	"github.com/spf13/cobra"
 )
 
 // CobraRunFN Cobra command run function
@@ -35,6 +37,11 @@ Complete documentation is available at https://kool.dev/docs`,
 
 // Execute proxies the call to cobra root command
 func Execute() error {
+	shell.RecursiveCall = func(args []string) error {
+		rootCmd.SetArgs(args)
+		return rootCmd.Execute()
+	}
+
 	return rootCmd.Execute()
 }
 
