@@ -246,7 +246,7 @@ func TestRecursiveCall(t *testing.T) {
 	recursive := &cobra.Command{
 		Use: "recursive",
 		Run: func(cmd *cobra.Command, args []string) {
-			shell.Interactive("kool", "-v")
+			_ = shell.Interactive("kool", "-v")
 		},
 	}
 
