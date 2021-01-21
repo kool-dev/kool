@@ -381,6 +381,11 @@ func TestRecursiveInteractiveCommand(t *testing.T) {
 		calledRecursiveArgs []string
 	)
 
+	oldRecursiveCall := RecursiveCall
+	defer func() {
+		RecursiveCall = oldRecursiveCall
+	}()
+
 	// set published RecursiveCall handler
 	RecursiveCall = func(args []string) error {
 		calledRecursive = true
