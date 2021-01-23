@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
+	"strings"
 	"testing"
 )
 
@@ -180,8 +181,35 @@ func TestFailingNewExecCommand(t *testing.T) {
 	}
 }
 
+func TestDockerComposeTerminalAwarness(t *testing.T) {
+	f := newFakeKoolExec()
+	f.composeExec = compose.NewDockerCompose("cmd")
+
+	cmd := NewExecCommand(f)
+	cmd.SetArgs([]string{"service", "command"})
+
+	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing exec command; error: %v", err)
+	}
+
+	if strings.Contains(f.composeExec.String(), " -t ") {
+		t.Error("unexpected -t flag when NOT under TTY")
+	}
+
+	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = true
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing exec command; error: %v", err)
+	}
+
+	if !strings.Contains(f.composeExec.String(), " -t ") {
+		t.Error("missing -t flag when under TTY")
+	}
+}
+
 func TestNonTerminalNewExecCommand(t *testing.T) {
 	f := newFakeKoolExec()
+
 	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
 
 	cmd := NewExecCommand(f)

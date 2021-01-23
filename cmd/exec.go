@@ -50,7 +50,7 @@ func (e *KoolExec) Execute(args []string) (err error) {
 	}
 
 	if _, assert := e.composeExec.(*compose.DockerCompose); assert {
-		// we are in a TTY so we need to let DockerCompose
+		// let DockerCompose know about wheter we are under TTY or not
 		e.composeExec.(*compose.DockerCompose).SetIsTTY(e.IsTerminal())
 	}
 
