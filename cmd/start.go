@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/compose"
@@ -55,7 +54,6 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 
-	fmt.Println("going to execute", s.start.String())
 	err = s.Interactive(s.start, args...)
 	return
 }

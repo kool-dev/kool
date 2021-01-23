@@ -8,14 +8,18 @@ import (
 	"strings"
 )
 
-const DOCKER_COMPOSE_IMAGE = "docker/compose:1.28.0"
+// DockerComposeImage holds the Docker image:tag to use for Docker Compose
+const DockerComposeImage = "docker/compose:1.28.0"
 
+// DockerCompose holds data and logic to wrap docker-compose command
+// within a container for flexibility
 type DockerCompose struct {
 	builder.Command
 	env   environment.EnvStorage
 	isTTY bool
 }
 
+// NewDockerCompose creates a new instance of DockerCompose
 func NewDockerCompose(cmd string, args ...string) *DockerCompose {
 	return &DockerCompose{
 		Command: builder.NewCommand(cmd, args...),
@@ -71,7 +75,7 @@ func (c *DockerCompose) Args() (args []string) {
 		args = append(args, "-e", key)
 	}
 
-	args = append(args, DOCKER_COMPOSE_IMAGE, "-p", c.env.Get("KOOL_NAME"), c.Command.Cmd())
+	args = append(args, DockerComposeImage, "-p", c.env.Get("KOOL_NAME"), c.Command.Cmd())
 	return append(args, c.Command.Args()...)
 }
 
