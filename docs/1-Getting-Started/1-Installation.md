@@ -2,7 +2,7 @@
 
 ### Requirements
 
-Kool is powered by **[Docker](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)**, you need to have them installed on your machine.
+Kool is powered by **[Docker](https://docs.docker.com/get-docker/)**, you need to have it installed on your machine.
 
 ### For Linux and MacOS
 
