@@ -3,6 +3,7 @@ package cmd
 import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
@@ -50,8 +51,8 @@ func NewKoolStatus() *KoolStatus {
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		builder.NewCommand("docker-compose", "ps", "--services"),
-		builder.NewCommand("docker-compose", "ps", "-q"),
+		compose.NewDockerCompose("ps", "--services"),
+		compose.NewDockerCompose("ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewTableWriter(),
 	}
