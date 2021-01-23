@@ -12,7 +12,7 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability)](https://codeclimate.com/github/kool-dev/kool/maintainability)
 [<img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack">](https://join.slack.com/t/kool-dev/shared_invite/zt-jeh36s5g-kVFHUsyLjFENUUH4ucrxPg)
 
-**kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environments - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging Kubernetes cloud deployment for staging and production deployments.
+**kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environments - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging _Kubernetes_ cloud deployment for staging and production deployments.
 
 Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provide all flexibility the DevOps team needs to tailor up everything.
 
@@ -26,7 +26,7 @@ Get your local development environment up and running easy and quickly, put time
 
 ## Installation
 
-Kool is powered by [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/), you need to have them already installed on your machine.
+Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/) so you need to have it already installed on your machine. If you still don't, please [get Docker first](https://docs.docker.com/get-docker/).
 
 #### For Linux or MacOS
 
@@ -42,7 +42,7 @@ Download and run the latest installer from our releases artifacts [here](https:/
 
 ## Getting started
 
-It is easy to get started leveraging `kool`. Provided you have all requirements (Docker and Docker Compose).
+It is easy to get started leveraging `kool`.
 
 To create a new Laravel project you only need to:
 
