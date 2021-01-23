@@ -3,6 +3,7 @@ package compose
 import (
 	"fmt"
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"os"
 	"strings"
@@ -16,6 +17,7 @@ const DockerComposeImage = "docker/compose:1.28.0"
 type DockerCompose struct {
 	builder.Command
 	env   environment.EnvStorage
+	sh    shell.Shell
 	isTTY bool
 }
 
@@ -24,6 +26,7 @@ func NewDockerCompose(cmd string, args ...string) *DockerCompose {
 	return &DockerCompose{
 		Command: builder.NewCommand(cmd, args...),
 		env:     environment.NewEnvStorage(),
+		sh:      shell.NewShell(),
 	}
 }
 
@@ -36,6 +39,10 @@ func (c *DockerCompose) SetIsTTY(tty bool) *DockerCompose {
 
 // Args returns the command arguments
 func (c *DockerCompose) Args() (args []string) {
+	if c.sh.LookPath(builder.NewCommand("docker-compose")) == nil {
+		return append([]string{c.Command.Cmd()}, c.Command.Args()...)
+	}
+
 	args = append(args, "run", "--rm", "-i")
 
 	if c.isTTY {
@@ -81,6 +88,10 @@ func (c *DockerCompose) Args() (args []string) {
 
 // Cmd returns the command executable
 func (c *DockerCompose) Cmd() string {
+	if c.sh.LookPath(builder.NewCommand("docker-compose")) == nil {
+		return "docker-compose"
+	}
+
 	return "docker"
 }
 
