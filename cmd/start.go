@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/updater"
 	"kool-dev/kool/environment"
@@ -39,7 +41,7 @@ func NewKoolStart() *KoolStart {
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		builder.NewCommand("docker-compose", "up", "-d", "--force-recreate"),
+		compose.NewDockerCompose("up", "-d", "--force-recreate"),
 	}
 }
 
@@ -53,6 +55,7 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 
+	fmt.Println("going to execute", s.start.String())
 	err = s.Interactive(s.start, args...)
 	return
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/environment"
 
 	"github.com/spf13/cobra"
@@ -19,7 +20,7 @@ type KoolExec struct {
 	DefaultKoolService
 	Flags *KoolExecFlags
 
-	envStorage  environment.EnvStorage
+	env         environment.EnvStorage
 	composeExec builder.Command
 }
 
@@ -38,7 +39,7 @@ func NewKoolExec() *KoolExec {
 		*newDefaultKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewEnvStorage(),
-		builder.NewCommand("docker-compose", "exec"),
+		compose.NewDockerCompose("exec"),
 	}
 }
 
@@ -48,7 +49,12 @@ func (e *KoolExec) Execute(args []string) (err error) {
 		e.composeExec.AppendArgs("-T")
 	}
 
-	if asuser := e.envStorage.Get("KOOL_ASUSER"); asuser != "" {
+	if _, assert := e.composeExec.(*compose.DockerCompose); assert {
+		// we are in a TTY so we need to let DockerCompose
+		e.composeExec.(*compose.DockerCompose).SetIsTTY(e.IsTerminal())
+	}
+
+	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
 		e.composeExec.AppendArgs("--user", asuser)
 	}
 

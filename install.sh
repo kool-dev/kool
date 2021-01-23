@@ -65,10 +65,21 @@ do_install () {
 
 	start_success="\033[0;32m"
 	end_success="\033[0m"
-	builtin echo -e "${start_success}$(kool -v) installed successfully.${end_success}"
+	start_error="\033[0;32m"
+	end_error="\033[0m"
 
-	# TODO: use command_exists to check and alert about docker/docker-compose
-	# being available.
+	if ! command_exists docker; then
+		builtin echo -e "${start_error}We could not identify the command docker installed.${end_error}"
+		builtin echo -e "Please refer to the official documentation to get it: https://docs.docker.com/get-docker/"
+		exit
+	fi
+
+	# pre-load docker/compose image that we will be using
+	builtin echo -e "Downloading base images..."
+	docker pull docker/compose:1.28.0 > /dev/null
+
+	# success
+	builtin echo -e "${start_success}$(kool -v) installed successfully.${end_success}"
 }
 
 do_install

@@ -139,7 +139,7 @@ func TestExecDockerComposeDefaultShell(t *testing.T) {
 		t.Errorf("expecting to run 'docker-compose', got '%s'", exeTest)
 	}
 
-	expectedArgs := []string{"-p", "kool_test", "ps", "extraArg"}
+	expectedArgs := []string{"ps", "extraArg"}
 	if !reflect.DeepEqual(argsTest, expectedArgs) {
 		t.Errorf("expecting args '%v', got '%v'", expectedArgs, argsTest)
 	}
@@ -228,7 +228,7 @@ func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
 		t.Errorf("expecting to run 'docker-compose', got '%s'", exeTest)
 	}
 
-	expectedArgs := []string{"-p", "kool_test", "ps", "extraArg"}
+	expectedArgs := []string{"ps", "extraArg"}
 	if !reflect.DeepEqual(argsTest, expectedArgs) {
 		t.Errorf("expecting args '%v', got '%v'", expectedArgs, argsTest)
 	}

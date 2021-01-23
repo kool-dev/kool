@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"testing"
@@ -58,8 +59,8 @@ func TestNewKoolExec(t *testing.T) {
 		}
 	}
 
-	if _, ok := k.composeExec.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected builder.Command on default KoolExec instance")
+	if _, ok := k.composeExec.(*compose.DockerCompose); !ok {
+		t.Errorf("unexpected compose.DockerCompose on default KoolExec instance")
 	}
 }
 
@@ -101,7 +102,7 @@ func TestKoolUserEnvNewExecCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"service", "command"})
 
-	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "user_testing"
+	f.env.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "user_testing"
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing exec command; error: %v", err)

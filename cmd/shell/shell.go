@@ -105,10 +105,6 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 		exe  string   = command.Cmd()
 	)
 
-	if exe == "docker-compose" {
-		args = append(s.dockerComposeDefaultArgs(), args...)
-	}
-
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
 	}
@@ -134,10 +130,6 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	if exe == "kool" && RecursiveCall != nil {
 		// it is a recursive call! let's try to avoid creating a new process...
 		return RecursiveCall(args)
-	}
-
-	if exe == "docker-compose" {
-		args = append(s.dockerComposeDefaultArgs(), args...)
 	}
 
 	if len(extraArgs) > 0 {
@@ -281,8 +273,4 @@ func Warning(out ...interface{}) {
 // Success success message
 func Success(out ...interface{}) {
 	NewShell().Success(out)
-}
-
-func (s *DefaultShell) dockerComposeDefaultArgs() []string {
-	return []string{"-p", s.envStorage.Get("KOOL_NAME")}
 }
