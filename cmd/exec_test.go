@@ -104,9 +104,15 @@ func TestKoolUserEnvNewExecCommand(t *testing.T) {
 	cmd.SetArgs([]string{"service", "command"})
 
 	f.env.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "user_testing"
+	// mock /etc/passwd return with existing user
+	f.composeExec.(*builder.FakeCommand).MockExecOut = "kool:x:user_testing"
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing exec command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledExec["exec"] {
+		t.Error("did not call Exec")
 	}
 
 	if !f.composeExec.(*builder.FakeCommand).CalledAppendArgs {
@@ -117,6 +123,26 @@ func TestKoolUserEnvNewExecCommand(t *testing.T) {
 
 	if len(argsAppend) != 2 || argsAppend[0] != "--user" || argsAppend[1] != "user_testing" {
 		t.Error("bad arguments to KoolExec.composeExec Command with KOOL_USER environment variable")
+	}
+
+	// now check
+	f = newFakeKoolExec()
+	cmd = NewExecCommand(f)
+
+	cmd.SetArgs([]string{"service", "command"})
+
+	f.env.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "user_testing"
+	// mock /etc/passwd return without existing user
+	f.composeExec.(*builder.FakeCommand).MockExecOut = ""
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing exec command; error: %v", err)
+	}
+
+	argsAppend = f.composeExec.(*builder.FakeCommand).ArgsAppend
+
+	if len(argsAppend) != 0 {
+		t.Errorf("unexpected args appended: %v", argsAppend)
 	}
 }
 
@@ -184,6 +210,10 @@ func TestFailingNewExecCommand(t *testing.T) {
 func TestDockerComposeTerminalAwarness(t *testing.T) {
 	f := newFakeKoolExec()
 	f.composeExec = compose.NewDockerCompose("cmd")
+	f.composeExec.(*compose.DockerCompose).SetShell(&shell.FakeShell{})
+	f.composeExec.(*compose.DockerCompose).SetLocalDockerCompose(&builder.FakeCommand{
+		MockLookPathError: errors.New("some error"),
+	})
 
 	cmd := NewExecCommand(f)
 	cmd.SetArgs([]string{"service", "command"})
@@ -194,7 +224,7 @@ func TestDockerComposeTerminalAwarness(t *testing.T) {
 	}
 
 	if strings.Contains(f.composeExec.String(), " -t ") {
-		t.Error("unexpected -t flag when NOT under TTY")
+		t.Errorf("unexpected -t flag when NOT under TTY; %s", f.composeExec.String())
 	}
 
 	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = true

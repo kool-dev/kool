@@ -16,17 +16,19 @@ const DockerComposeImage = "docker/compose:1.28.0"
 // within a container for flexibility
 type DockerCompose struct {
 	builder.Command
-	env   environment.EnvStorage
-	sh    shell.Shell
-	isTTY bool
+	localDockerCompose builder.Command
+	env                environment.EnvStorage
+	sh                 shell.Shell
+	isTTY              bool
 }
 
 // NewDockerCompose creates a new instance of DockerCompose
 func NewDockerCompose(cmd string, args ...string) *DockerCompose {
 	return &DockerCompose{
-		Command: builder.NewCommand(cmd, args...),
-		env:     environment.NewEnvStorage(),
-		sh:      shell.NewShell(),
+		Command:            builder.NewCommand(cmd, args...),
+		env:                environment.NewEnvStorage(),
+		sh:                 shell.NewShell(),
+		localDockerCompose: builder.NewCommand("docker-compose"),
 	}
 }
 
@@ -37,9 +39,24 @@ func (c *DockerCompose) SetIsTTY(tty bool) *DockerCompose {
 	return c
 }
 
+// SetShell sets the shell.Shell to be used
+func (c *DockerCompose) SetShell(sh shell.Shell) *DockerCompose {
+	c.sh = sh
+
+	return c
+}
+
+// SetLocalDockerCompose sets the builder.Command to be used for checking
+// docker-compose on PATH
+func (c *DockerCompose) SetLocalDockerCompose(cmd builder.Command) *DockerCompose {
+	c.localDockerCompose = cmd
+
+	return c
+}
+
 // Args returns the command arguments
 func (c *DockerCompose) Args() (args []string) {
-	if c.sh.LookPath(builder.NewCommand("docker-compose")) == nil {
+	if c.sh.LookPath(c.localDockerCompose) == nil {
 		return append([]string{c.Command.Cmd()}, c.Command.Args()...)
 	}
 
@@ -88,7 +105,7 @@ func (c *DockerCompose) Args() (args []string) {
 
 // Cmd returns the command executable
 func (c *DockerCompose) Cmd() string {
-	if c.sh.LookPath(builder.NewCommand("docker-compose")) == nil {
+	if c.sh.LookPath(c.localDockerCompose) == nil {
 		return "docker-compose"
 	}
 

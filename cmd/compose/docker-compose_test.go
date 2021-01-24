@@ -1,6 +1,9 @@
 package compose
 
 import (
+	"errors"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"os"
 	"strings"
@@ -28,6 +31,10 @@ func TestNewDockerCompose(t *testing.T) {
 		t.Errorf("unexpected DockerCompose.String() suffix: %s", dc.String())
 	}
 
+	dc.SetShell(&shell.FakeShell{})
+	dc.SetLocalDockerCompose(&builder.FakeCommand{
+		MockLookPathError: errors.New("some error"),
+	})
 	if !strings.HasPrefix(dc.String(), "docker run --rm -i") {
 		t.Errorf("unexpected DockerCompose.String() prefix: %s", dc.String())
 	}
@@ -40,10 +47,21 @@ func TestNewDockerCompose(t *testing.T) {
 	if !strings.Contains(dc.String(), " -t ") {
 		t.Error("missing -t flag when on TTY")
 	}
+
+	dc.localDockerCompose = &builder.FakeCommand{
+		MockLookPathError: nil,
+	}
+	if !strings.HasPrefix(dc.String(), "docker-compose") {
+		t.Errorf("unexpected DockerCompose.String() prefix: %s", dc.String())
+	}
 }
 
 func TestDockerComposeArgsParsing(t *testing.T) {
 	dc := NewDockerCompose("cmd", "arg")
+	dc.sh = &shell.FakeShell{}
+	dc.localDockerCompose = &builder.FakeCommand{
+		MockLookPathError: errors.New("some error"),
+	}
 	dc.env = environment.NewFakeEnvStorage()
 
 	dc.env.Set("DOCKER_HOST", "")
