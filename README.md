@@ -26,7 +26,7 @@ Get your local development environment up and running easy and quickly, put time
 
 ## Installation
 
-Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/) so you need to have it already installed on your machine. If you still don't, please [get Docker first](https://docs.docker.com/get-docker/).
+Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/) so you need to have it already installed on your machine. If you haven't already, please [get Docker first](https://docs.docker.com/get-docker/).
 
 #### For Linux or MacOS
 
