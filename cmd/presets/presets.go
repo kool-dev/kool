@@ -97,6 +97,28 @@ networks:
   lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
 `,
 	}
+	presets["hugo"] = map[string]string{
+		"docker-compose.yml": `services:
+  app:
+    image: klakegg/hugo
+    command: ["server", "-p", "80"]
+    working_dir: /app
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    # environment:
+    #   ASUSER: "${KOOL_ASUSER:-0}"
+    #   UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+`,
+		"kool.yml": `scripts:
+  hugo: kool docker -p 1313:1313 klakegg/hugo
+  serve: kool run hugo server
+`,
+	}
 	presets["laravel"] = map[string]string{
 		".dockerignore": `/node_modules
 /vendor

@@ -1,0 +1,3 @@
+scripts:
+  hugo: kool docker -p 1313:1313 klakegg/hugo
+  serve: kool run hugo server
