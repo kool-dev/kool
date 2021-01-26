@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/network"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
@@ -57,11 +58,11 @@ func TestNewKoolStatus(t *testing.T) {
 		t.Errorf("unexpected network.Handler on default KoolStatus instance")
 	}
 
-	if _, ok := k.getServicesCmd.(*builder.DefaultCommand); !ok {
+	if _, ok := k.getServicesCmd.(*compose.DockerCompose); !ok {
 		t.Errorf("unexpected builder.Command on default KoolStatus instance")
 	}
 
-	if _, ok := k.getServiceIDCmd.(*builder.DefaultCommand); !ok {
+	if _, ok := k.getServiceIDCmd.(*compose.DockerCompose); !ok {
 		t.Errorf("unexpected builder.Command on default KoolStatus instance")
 	}
 
