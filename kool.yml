@@ -4,8 +4,10 @@ scripts:
   dev:
     - kool run compile
     - kool run install
-  # Runs go CLI with proper version for kool development
+  # Runs go CLI with proper version for kool development (targets host OS passing down GOOS)
   go: kool docker --volume=kool_gopath:/go --env='GOOS=$GOOS' golang:1.15.0 go
+  # Runs go CLI with Linux, independent of host OS
+  go:linux: kool docker --volume=kool_gopath:/go golang:1.15.0 go
   # Compiling kool itself. In case you are on MacOS make sure to have your .env
   # file properly setting GOOS=darwin so you will be able to use the binary.
   compile:
@@ -13,19 +15,19 @@ scripts:
     - kool run go build -o kool
   install:
     - mv kool /usr/local/bin/kool
-  fmt: kool run go fmt ./...
+  fmt: kool run go:linux fmt ./...
   lint: kool docker --volume=kool_gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
-  test: kool docker --volume=kool_gopath:/go golang:1.15.0 go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
+  test: kool run go:linux test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
   # Generate documentation for kool commands
   make-docs:
     - rm -f docs/4-Commands/*.md
-    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run docs.go
+    - kool run go:linux run docs.go
   # Parsing the preset files onto Go code in an automated fashion.
   parse-presets:
     - rm -f cmd/presets/presets.go
     - rm -f cmd/presets/templates.go
     - rm -f cmd/presets/configs.go
-    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_presets.go
-    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_templates.go
-    - kool docker --volume=kool_gopath:/go golang:1.15.0 go run parse_presets_configs.go
+    - kool run go:linux run parse_presets.go
+    - kool run go:linux run parse_templates.go
+    - kool run go:linux run parse_presets_configs.go
     - kool run fmt
