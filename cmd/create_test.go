@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/environment"
 	"testing"
 )
 
@@ -14,6 +15,7 @@ func newFakeKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newFakeKoolService(),
 		&presets.FakeParser{},
+		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 		*newFakeKoolPreset(),
 	}
