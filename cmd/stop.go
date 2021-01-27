@@ -3,6 +3,7 @@ package cmd
 import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
+	"kool-dev/kool/cmd/compose"
 
 	"github.com/spf13/cobra"
 )
@@ -37,7 +38,7 @@ func NewKoolStop() *KoolStop {
 		*defaultKoolService,
 		&KoolStopFlags{false},
 		checker.NewChecker(defaultKoolService.shell),
-		builder.NewCommand("docker-compose", "down"),
+		compose.NewDockerCompose("down"),
 	}
 }
 

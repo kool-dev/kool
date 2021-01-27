@@ -33,7 +33,7 @@ type DefaultShell struct {
 	inStream   io.Reader
 	outStream  io.Writer
 	errStream  io.Writer
-	lookedUp   map[string]bool
+	lookedUp   map[string]error
 	envStorage environment.EnvStorage
 }
 
@@ -105,10 +105,6 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 		exe  string   = command.Cmd()
 	)
 
-	if exe == "docker-compose" {
-		args = append(s.dockerComposeDefaultArgs(), args...)
-	}
-
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
 	}
@@ -134,10 +130,6 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	if exe == "kool" && RecursiveCall != nil {
 		// it is a recursive call! let's try to avoid creating a new process...
 		return RecursiveCall(args)
-	}
-
-	if exe == "docker-compose" {
-		args = append(s.dockerComposeDefaultArgs(), args...)
 	}
 
 	if len(extraArgs) > 0 {
@@ -198,18 +190,26 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 
 // LookPath returns if the command exists
 func (s *DefaultShell) LookPath(command builder.Command) (err error) {
-	var exe string = command.Cmd()
+	var (
+		exe       string = command.Cmd()
+		hasLooked bool
+	)
 
 	if s.lookedUp == nil {
-		s.lookedUp = make(map[string]bool)
+		s.lookedUp = make(map[string]error)
 	}
 
-	if exe != "kool" && !s.lookedUp[exe] && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
-		// non-kool and non-absolute/relative path... let's look it up
+	if err, hasLooked = s.lookedUp[exe]; err != nil {
+		return
+	}
+
+	if !hasLooked && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
+		// non-absolute/relative path... let's look it up on PATH
 		_, err = execLookPathFn(exe)
 
-		s.lookedUp[exe] = true
+		s.lookedUp[exe] = err
 	}
+
 	return
 }
 
@@ -281,8 +281,4 @@ func Warning(out ...interface{}) {
 // Success success message
 func Success(out ...interface{}) {
 	NewShell().Success(out)
-}
-
-func (s *DefaultShell) dockerComposeDefaultArgs() []string {
-	return []string{"-p", s.envStorage.Get("KOOL_NAME")}
 }

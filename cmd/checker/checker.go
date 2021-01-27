@@ -2,6 +2,7 @@ package checker
 
 import (
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/shell"
 )
 
@@ -21,7 +22,7 @@ type DefaultChecker struct {
 func NewChecker(s shell.Shell) *DefaultChecker {
 	return &DefaultChecker{
 		builder.NewCommand("docker", "info"),
-		builder.NewCommand("docker-compose", "ps"),
+		compose.NewDockerCompose("ps"),
 		s,
 	}
 }

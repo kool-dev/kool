@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"fmt"
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/environment"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -19,7 +22,7 @@ type KoolExec struct {
 	DefaultKoolService
 	Flags *KoolExecFlags
 
-	envStorage  environment.EnvStorage
+	env         environment.EnvStorage
 	composeExec builder.Command
 }
 
@@ -38,18 +41,30 @@ func NewKoolExec() *KoolExec {
 		*newDefaultKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewEnvStorage(),
-		builder.NewCommand("docker-compose", "exec"),
+		compose.NewDockerCompose("exec"),
 	}
 }
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
+	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
+		// we have a KOOL_ASUSER env; now we need to know whether
+		// the image of the target service have such user
+		passwd, _ := e.Exec(e.composeExec, args[0], "cat", "/etc/passwd")
+		// kool:x:UID
+		if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
+			// since user existing within the container, we use it
+			e.composeExec.AppendArgs("--user", asuser)
+		}
+	}
+
 	if !e.IsTerminal() {
 		e.composeExec.AppendArgs("-T")
 	}
 
-	if asuser := e.envStorage.Get("KOOL_ASUSER"); asuser != "" {
-		e.composeExec.AppendArgs("--user", asuser)
+	if _, assert := e.composeExec.(*compose.DockerCompose); assert {
+		// let DockerCompose know about wheter we are under TTY or not
+		e.composeExec.(*compose.DockerCompose).SetIsTTY(e.IsTerminal())
 	}
 
 	if len(e.Flags.EnvVariables) > 0 {

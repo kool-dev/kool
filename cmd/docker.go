@@ -4,7 +4,6 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -47,14 +46,13 @@ func NewKoolDocker() *KoolDocker {
 
 // Execute runs the docker logic with incoming arguments.
 func (d *KoolDocker) Execute(args []string) (err error) {
-	image := args[0]
 	workDir, _ := os.Getwd()
 
 	if d.IsTerminal() {
 		d.dockerRun.AppendArgs("-t")
 	}
 
-	if asuser := d.envStorage.Get("KOOL_ASUSER"); asuser != "" && (strings.HasPrefix(image, "kooldev") || strings.HasPrefix(image, "fireworkweb")) {
+	if asuser := d.envStorage.Get("KOOL_ASUSER"); asuser != "" {
 		d.dockerRun.AppendArgs("--env", "ASUSER="+asuser)
 	}
 
