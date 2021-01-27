@@ -98,25 +98,35 @@ networks:
 `,
 	}
 	presets["hugo"] = map[string]string{
-		"docker-compose.yml": `services:
+		"docker-compose.yml": `version: "3.8"
+services:
   app:
     image: klakegg/hugo
-    command: ["server", "-p", "80"]
+    command: ["server", "-p", "80", "-D"]
     working_dir: /app
     ports:
       - "${KOOL_APP_PORT:-80}:80"
-    # environment:
-    #   ASUSER: "${KOOL_ASUSER:-0}"
-    #   UID: "${UID:-0}"
     volumes:
       - .:/app:delegated
     networks:
       - kool_local
       - kool_global
+  static:
+    image: kooldev/nginx:static
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
 `,
 		"kool.yml": `scripts:
   hugo: kool docker -p 1313:1313 klakegg/hugo
-  serve: kool run hugo server
+  dev: kool run hugo server -D
 `,
 	}
 	presets["laravel"] = map[string]string{
