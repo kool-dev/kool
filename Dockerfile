@@ -1,4 +1,4 @@
-FROM docker/compose:alpine-1.26.2 AS docker-compose
+FROM docker/compose:alpine-1.28.2 AS docker-compose
 FROM golang:1.15.0 AS build
 
 ARG BUILD_VERSION=0.0.0-auto
