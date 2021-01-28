@@ -86,6 +86,7 @@ Out current presets:
 - [NestJS](docs/2-Presets/NestJS.md)
 - [NextJS](docs/2-Presets/NextJS.md)
 - [NuxtJS](docs/2-Presets/NuxtJS.md)
+- [Hugo](docs/2-Presets/Hugo.md)
 
 ## Demo
 

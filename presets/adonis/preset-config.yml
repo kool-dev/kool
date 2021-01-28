@@ -1,4 +1,4 @@
 language: javascript
 commands:
   create:
-    - kool docker kooldev/node:14-adonis adonis new
+    - kool docker kooldev/node:14-adonis adonis new $CREATE_DIRECTORY

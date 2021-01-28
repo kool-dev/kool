@@ -8,14 +8,34 @@ func GetConfigs() map[string]string {
 	configs["adonis"] = `language: javascript
 commands:
   create:
-    - kool docker kooldev/node:14-adonis adonis new
+    - kool docker kooldev/node:14-adonis adonis new $CREATE_DIRECTORY
 `
 	configs["golang-cli"] = `language: golang
+`
+	configs["hugo"] = `language: static
+commands:
+  create:
+  - kool docker klakegg/hugo new site $CREATE_DIRECTORY
+# questions:
+#   compose:
+#     - key: app
+#       template: hugo.yml
+#     - key: comments
+#       default_answer: none
+#       message: What comments service do you want to use
+#       options:
+#         - name: Commento
+#           template: commento.yml
+#         - name: none
+#           template: none
+# templates:
+#   - key: scripts
+#     template: hugo.yml
 `
 	configs["laravel"] = `language: php
 commands:
   create:
-  - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel
+  - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel $CREATE_DIRECTORY
 questions:
   compose:
     - key: app
@@ -72,37 +92,37 @@ templates:
 	configs["nestjs"] = `language: javascript
 commands:
   create:
-  - kool docker kooldev/node:14-nest nest new
+  - kool docker kooldev/node:14-nest nest new $CREATE_DIRECTORY
 
 `
 	configs["nextjs"] = `language: javascript
 commands:
   create:
-  - kool docker kooldev/node:14 yarn create next-app
+  - kool docker kooldev/node:14 yarn create next-app $CREATE_DIRECTORY
 
 `
 	configs["nextjs-static"] = `language: javascript
 commands:
   create:
-  - kool docker kooldev/node:14 yarn create next-app
+  - kool docker kooldev/node:14 yarn create next-app $CREATE_DIRECTORY
 
 `
 	configs["nuxtjs"] = `language: javascript
 commands:
   create:
-  - kool docker kooldev/node:14 yarn create nuxt-app
+  - kool docker kooldev/node:14 yarn create nuxt-app $CREATE_DIRECTORY
 
 `
 	configs["nuxtjs-static"] = `language: javascript
 commands:
   create:
-  - kool docker kooldev/node:14 yarn create nuxt-app
+  - kool docker kooldev/node:14 yarn create nuxt-app $CREATE_DIRECTORY
 
 `
 	configs["symfony"] = `language: php
 commands:
   create:
-  - kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton
+  - kool docker kooldev/php:7.4 composer create-project --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
 questions:
   compose:
     - key: app

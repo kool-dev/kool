@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/presets"
+	"kool-dev/kool/environment"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ import (
 type KoolCreate struct {
 	DefaultKoolService
 	parser        presets.Parser
+	env           environment.EnvStorage
 	createCommand builder.Command
 	KoolPreset
 }
@@ -31,21 +33,24 @@ func NewKoolCreate() *KoolCreate {
 	return &KoolCreate{
 		*newDefaultKoolService(),
 		presets.NewParser(),
+		environment.NewEnvStorage(),
 		&builder.DefaultCommand{},
 		*NewKoolPreset(),
 	}
 }
 
 // Execute runs the create logic with incoming arguments.
-func (c *KoolCreate) Execute(originalArgs []string) (err error) {
+func (c *KoolCreate) Execute(args []string) (err error) {
 	var (
-		presetConfig *presets.PresetConfig
-		createCmds   []string
-		ok           bool
+		presetConfig    *presets.PresetConfig
+		createCmds      []string
+		ok              bool
+		preset          = args[0]
+		createDirectory = args[1]
 	)
 
-	preset := originalArgs[0]
-	dir := originalArgs[1]
+	// sets env variable CREATE_DIRECTORY that aims to tell
+	c.env.Set("CREATE_DIRECTORY", createDirectory)
 
 	c.parser.LoadPresets(presets.GetAll())
 	c.parser.LoadConfigs(presets.GetConfigs())
@@ -70,12 +75,12 @@ func (c *KoolCreate) Execute(originalArgs []string) (err error) {
 			return
 		}
 
-		if err = c.Interactive(c.createCommand, dir); err != nil {
+		if err = c.Interactive(c.createCommand); err != nil {
 			return
 		}
 	}
 
-	_ = os.Chdir(dir)
+	_ = os.Chdir(createDirectory)
 
 	err = c.KoolPreset.Execute([]string{preset})
 

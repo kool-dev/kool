@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  app:
+    image: klakegg/hugo
+    command: ["server", "-p", "80", "-D"]
+    working_dir: /app
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+  static:
+    image: kooldev/nginx:static
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
