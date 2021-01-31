@@ -12,10 +12,13 @@ Thank you for contributing with this PR!
 | :trophy: Feature | Yes/No |
 | :pencil: Refactor | Yes/No |
 | :open_book: Documentation | Yes/No |
-| :warning: Break Change | | Yes/No |
+| :warning: Break Change | Yes/No |
 
+**Description**
 <!-- descriptive text on the changes made -->
 
 ---
 
+**Notes**
 <!-- testing notes, conditions, expcted behavour -->
+<!-- consider adding screenshots or videos if helpful -->
