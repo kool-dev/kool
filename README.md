@@ -77,7 +77,7 @@ You can check the documentation at **https://kool.dev/docs** or at [docs/](docs/
 
 To help getting you started we've built presets as a starting point for some popular stacks and frameworks. In case you miss one let us know in an issue or feel free to open up a PR for it!
 
-Out current presets:
+Some or our current presets to get you started in no time:
 
 - [Laravel](docs/2-Presets/Laravel.md)
 - [Symfony](docs/2-Presets/Symfony.md)
@@ -88,19 +88,17 @@ Out current presets:
 - [NuxtJS](docs/2-Presets/NuxtJS.md)
 - [Hugo](docs/2-Presets/Hugo.md)
 
-## Demo
+## See it in action (DEMO)
 
-<a href="https://www.youtube.com/watch?v=c4LonyQkFEI" target="_blank" title="Click to see full demo">
-    <img src="https://user-images.githubusercontent.com/347400/87970968-fad10c80-ca9a-11ea-9bef-a88400b01f2c.png" alt="kool - demo" style="max-width:100%;">
-</a>
+You can check out a couple of sample commands in action at [asciinema.org/~kooldev](https://asciinema.org/~kooldev). We will be continuously uploading more samples.
 
-## Contributing
+## Community, Contributing and Support
 
-You are most welcome to contribute! There are issues with [`good first issue`](https://github.com/kool-dev/kool/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) label, feel free to browse through and enter discussions or get to work!
+You are most welcome to contribute and help in our missiong of making software development *kool* for everyone.
 
-The workflow is not written in stone, so you may go ahead and fork, code and PR with clear and direct communication on the feature/improvement or fix you developed.
-
-For help and getting involved, please feel free to join our growing [Slack community](https://kool-dev.slack.com).
+- [Issues](/issues) are the primary channel for bringing up and tracking issues or proposals.
+- [Kool community on Slack](https://kool-dev.slack.com) is the a great place to get help and reach Kool developers.
+- Check out our draft on [contributing guide](CONTRIBUTING.md) for getting involved.
 
 ### Roadmap
 
