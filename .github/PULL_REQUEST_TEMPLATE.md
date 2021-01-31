@@ -1,9 +1,9 @@
 <!--
-Thank you for contributing with this PR!
+Thank you for contributing through this Pull Request!
 
-- Please link to the issue in hand. If the subject in question have no issue, please consider opening one for history tracking.
+- Please link to the issue at hand. If the subject in question has no associated issue, please consider opening one for history tracking.
 - Please provide a clear and objective description of the work done.
-- Mak sure the PR **passes** all CI checks. Code changes should have respective tests added.
+- Make sure the PR **passes** all CI checks. Code changes should have respective tests added.
 -->
 
 | Issue | # |
