@@ -133,20 +133,6 @@ networks:
 		".dockerignore": `/node_modules
 /vendor
 `,
-		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
-
-COPY . /app
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --quiet
-
-FROM kooldev/node:14 AS node
-
-COPY --from=composer /app /app
-RUN yarn install && yarn prod
-
-FROM kooldev/php:7.4-nginx
-
-COPY --from=node --chown=kool:kool /app /app
-`,
 	}
 	presets["nestjs"] = map[string]string{
 		".dockerignore": `/node_modules
