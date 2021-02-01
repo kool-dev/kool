@@ -4,8 +4,23 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
+
+func TestErrPossibleTypo(t *testing.T) {
+	err := &ErrPossibleTypo{[]string{"script1"}}
+
+	if !strings.Contains(err.Error(), "script1") {
+		t.Errorf("unexpected error message: %s", err.Error())
+	}
+
+	err = &ErrPossibleTypo{[]string{"script1", "script2"}}
+
+	if !strings.Contains(err.Error(), "script1") || !strings.Contains(err.Error(), "script2") {
+		t.Errorf("unexpected error message [2]: %s", err.Error())
+	}
+}
 
 func TestDefaultParser(t *testing.T) {
 	var p Parser = NewParser()
@@ -65,6 +80,12 @@ func TestParserParse(t *testing.T) {
 
 	if len(commands) != 1 || commands[0].String() != "echo testing" {
 		t.Error("failed to parse testing kool.yml")
+	}
+
+	if _, err = p.Parse("testin"); err == nil {
+		t.Error("unexpected non-error on typo")
+	} else if _, foundSimilar := err.(*ErrPossibleTypo); !foundSimilar {
+		t.Errorf("unexpected error; should be ErrPossibleTypo; got %s", err)
 	}
 
 	if commands, err = p.Parse("invalid"); err != nil {

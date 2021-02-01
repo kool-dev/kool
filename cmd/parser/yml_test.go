@@ -51,6 +51,10 @@ func TestParseKoolYaml(t *testing.T) {
 		return
 	}
 
+	if hasSimilars, similars := parsed.GetSimilars("single-lne"); !hasSimilars || len(similars) != 1 {
+		t.Errorf("unexpected return on GetSimilars %v - %v", hasSimilars, similars)
+	}
+
 	if cmds, err = parsed.ParseCommands("single-line"); err != nil {
 		t.Errorf("failed to parse proper single-line; error: %s", err)
 		return

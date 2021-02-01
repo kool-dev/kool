@@ -49,8 +49,8 @@ func NewKoolRun() *KoolRun {
 // Execute runs the run logic with incoming arguments.
 func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	var (
-		script string
-		args   []string
+		script string   = originalArgs[0]
+		args   []string = originalArgs[1:]
 	)
 
 	// look for kool.yml on current working directory
@@ -58,13 +58,11 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	// look for kool.yml on kool folder within user home directory
 	_ = r.parser.AddLookupPath(path.Join(r.envStorage.Get("HOME"), "kool"))
 
-	script = originalArgs[0]
-	args = originalArgs[1:]
-
 	if r.commands, err = r.parser.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
 			// we should just warn the user about multiple finds for the script
 			r.Warning("Attention: the script was found in more than one kool.yml file")
+			err = nil
 		} else {
 			return
 		}
