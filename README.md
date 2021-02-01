@@ -104,14 +104,7 @@ For help and getting involved, please feel free to join our growing [Slack commu
 
 ### Roadmap
 
-We have been working in a loosely defined but clear roadmap:
-
-- Recently: we focused on tests coverage for moving forward condifently; we got from 0 to 90% coverage in a couple of weeks! *check!*
-- Currently focusing in: improving overall UX and stabilize features - error messages, progress display, output control, presets creation, getting started, etc...
-- Next steps:
-    - Continunously improve tests coverage;
-    - Continunously improve UX based on usage feedbacks;
-    - Expand features (Proposal issues);
+We have been working in a loosely defined but clear roadmap. You can check it out [in our blog Roadmap page](https://blog.kool.dev/page/roadmap).
 
 ### Lint, formatting and tests
 
