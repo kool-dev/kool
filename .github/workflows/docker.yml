@@ -26,6 +26,13 @@ jobs:
         TAGNAME: ${{ steps.tagName.outputs.tag }}
       run: docker run kooldev/kool:$TAGNAME kool --version
 
+    - name: Scan image
+      uses: anchore/scan-action@v2
+      with:
+        image: "kooldev/kool:$TAGNAME"
+        fail-build: true
+        severity-cutoff: critical
+
     - name: Push to hub
       env:
         TAGNAME: ${{ steps.tagName.outputs.tag }}
