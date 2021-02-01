@@ -6,8 +6,13 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"os"
 
+	"github.com/agnivade/levenshtein"
 	"gopkg.in/yaml.v2"
 )
+
+// SimilarThreshold represents the minimal Levenshteindistance of two
+// script names for them to be considered similarss
+const SimilarThreshold int = 2
 
 type yamlMarshalFnType func(interface{}) ([]byte, error)
 
@@ -66,6 +71,18 @@ func (y *KoolYaml) Parse(filePath string) (err error) {
 func (y *KoolYaml) HasScript(script string) (has bool) {
 	if y.Scripts != nil {
 		_, has = y.Scripts[script]
+	}
+	return
+}
+
+// GetSimilars checks for scripts with similar name.
+func (y *KoolYaml) GetSimilars(script string) (has bool, similars []string) {
+	var name string
+	for name = range y.Scripts {
+		if levenshtein.ComputeDistance(name, script) < SimilarThreshold {
+			has = true
+			similars = append(similars, name)
+		}
 	}
 	return
 }

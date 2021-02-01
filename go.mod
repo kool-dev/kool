@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.1.1
+	github.com/agnivade/levenshtein v1.1.0
 	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/creack/pty v1.1.11
