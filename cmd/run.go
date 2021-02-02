@@ -14,9 +14,9 @@ import (
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
-	parser     parser.Parser
-	envStorage environment.EnvStorage
-	commands   []builder.Command
+	parser   parser.Parser
+	env      environment.EnvStorage
+	commands []builder.Command
 }
 
 // ErrExtraArguments Extra arguments error
@@ -54,9 +54,9 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	)
 
 	// look for kool.yml on current working directory
-	_ = r.parser.AddLookupPath(r.envStorage.Get("PWD"))
+	_ = r.parser.AddLookupPath(r.env.Get("PWD"))
 	// look for kool.yml on kool folder within user home directory
-	_ = r.parser.AddLookupPath(path.Join(r.envStorage.Get("HOME"), "kool"))
+	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
 	if r.commands, err = r.parser.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
@@ -126,12 +126,12 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 		)
 
 		// look for kool.yml on current working directory
-		_ = run.parser.AddLookupPath(run.envStorage.Get("PWD"))
+		_ = run.parser.AddLookupPath(run.env.Get("PWD"))
 		// look for kool.yml on kool folder within user home directory
-		_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
+		_ = run.parser.AddLookupPath(path.Join(run.env.Get("HOME"), "kool"))
 
 		if scripts, err = run.parser.ParseAvailableScripts(""); err != nil {
-			if run.envStorage.IsTrue("KOOL_VERBOSE") {
+			if run.env.IsTrue("KOOL_VERBOSE") {
 				run.Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
 			}
 			return
@@ -155,9 +155,9 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 func compListScripts(toComplete string, run *KoolRun) (scripts []string) {
 	var err error
 	// look for kool.yml on current working directory
-	_ = run.parser.AddLookupPath(run.envStorage.Get("PWD"))
+	_ = run.parser.AddLookupPath(run.env.Get("PWD"))
 	// look for kool.yml on kool folder within user home directory
-	_ = run.parser.AddLookupPath(path.Join(run.envStorage.Get("HOME"), "kool"))
+	_ = run.parser.AddLookupPath(path.Join(run.env.Get("HOME"), "kool"))
 
 	if scripts, err = run.parser.ParseAvailableScripts(toComplete); err != nil {
 		return nil

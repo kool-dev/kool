@@ -47,6 +47,7 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
+	e.composeExec.Reset()
 	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
 		// we have a KOOL_ASUSER env; now we need to know whether
 		// the image of the target service have such user

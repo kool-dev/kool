@@ -7,6 +7,7 @@ type FakeCommand struct {
 	CalledString       bool
 	CalledCmd          bool
 	CalledArgs         bool
+	CalledReset        bool
 	CalledParseCommand bool
 
 	MockCmd              string
@@ -33,6 +34,11 @@ func (f *FakeCommand) String() string {
 func (f *FakeCommand) Args() []string {
 	f.CalledArgs = true
 	return f.ArgsAppend
+}
+
+// Reset resets arguments
+func (f *FakeCommand) Reset() {
+	f.CalledReset = true
 }
 
 // Cmd returns the command executable

@@ -260,3 +260,26 @@ func TestRecursiveCall(t *testing.T) {
 		t.Errorf("fail calling recursive command: %v", err)
 	}
 }
+
+func TestMultipleRecursiveCall(t *testing.T) {
+	recursive := &cobra.Command{
+		Use: "recursive",
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if err = shell.Interactive("kool", "-v"); err != nil {
+				return
+			}
+			err = shell.Interactive("kool", "-v")
+			return
+		},
+	}
+
+	rootCmd.AddCommand(recursive)
+
+	rootCmd.SetArgs([]string{"recursive"})
+
+	err := Execute()
+
+	if err != nil {
+		t.Errorf("fail calling recursive command: %v", err)
+	}
+}

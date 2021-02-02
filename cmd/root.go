@@ -15,7 +15,7 @@ var version string = "0.0.0-dev"
 var rootCmd = NewRootCmd(environment.NewEnvStorage())
 
 // NewRootCmd creates the root command
-func NewRootCmd(envStorage environment.EnvStorage) (cmd *cobra.Command) {
+func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "kool",
 		Short: "kool - Kool stuff",
@@ -26,7 +26,7 @@ Complete documentation is available at https://kool.dev/docs`,
 		DisableAutoGenTag: true,
 		PersistentPreRun: func(cmf *cobra.Command, args []string) {
 			if verbose := cmf.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
-				envStorage.Set("KOOL_VERBOSE", verbose.Value.String())
+				env.Set("KOOL_VERBOSE", verbose.Value.String())
 			}
 		},
 	}

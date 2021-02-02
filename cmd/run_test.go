@@ -3,12 +3,16 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 func newFakeKoolRun(mockParsedCommands []builder.Command, mockParseError error) *KoolRun {
@@ -252,7 +256,7 @@ func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
 	f := newFakeKoolRun([]builder.Command{}, nil)
 	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
 	f.parser.(*parser.FakeParser).MockParseAvailableScriptsError = errors.New("error parse avaliable scripts")
-	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_VERBOSE"] = "1"
+	f.env.(*environment.FakeEnvStorage).Envs["KOOL_VERBOSE"] = "1"
 
 	cmd := NewRunCommand(f)
 	SetRunUsageFunc(f, cmd)
@@ -322,5 +326,65 @@ func TestNewRunCommandFailingCompletion(t *testing.T) {
 
 	if scripts != nil {
 		t.Errorf("expecting no suggestion, got %v", scripts)
+	}
+}
+
+func TestRunRecursiveCalls(t *testing.T) {
+	makeKoolRoot := func() *cobra.Command {
+		k := NewKoolRun()
+		k.env = environment.NewFakeEnvStorage()
+		k.env.Set("HOME", "")
+		tmp := t.TempDir()
+		k.env.Set("PWD", tmp)
+
+		kooYml := []byte(`scripts:
+  show-version: kool -v
+  recursive: kool run show-version
+  recursive:multi:
+    - kool run recursive
+    - kool run recursive
+`)
+
+		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
+		}
+
+		root := NewRootCmd(k.env)
+		root.AddCommand(NewRunCommand(k))
+
+		shell.RecursiveCall = func(args []string) error {
+			fmt.Printf("called RecursiveCall args: %v\n", args)
+			root.SetArgs(args)
+			return root.Execute()
+		}
+
+		return root
+	}
+
+	defer func() {
+		// clear up shell.RecursiveCall
+		shell.RecursiveCall = nil
+	}()
+
+	root := makeKoolRoot()
+
+	root.SetArgs([]string{"run", "show-version"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run show-version; error: %v", err)
+	}
+
+	root = makeKoolRoot()
+	root.SetArgs([]string{"run", "recursive"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run recursive; error: %v", err)
+	}
+
+	root = makeKoolRoot()
+	root.SetArgs([]string{"run", "recursive:multi"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run recursive; error: %v", err)
 	}
 }

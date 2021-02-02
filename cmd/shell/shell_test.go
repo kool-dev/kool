@@ -107,13 +107,13 @@ func TestExecDefaultShell(t *testing.T) {
 
 func TestExecDockerComposeDefaultShell(t *testing.T) {
 	s := &DefaultShell{
-		inStream:   os.Stdin,
-		outStream:  ioutil.Discard,
-		errStream:  os.Stderr,
-		envStorage: environment.NewFakeEnvStorage(),
+		inStream:  os.Stdin,
+		outStream: ioutil.Discard,
+		errStream: os.Stderr,
+		env:       environment.NewFakeEnvStorage(),
 	}
 
-	s.envStorage.Set("KOOL_NAME", "kool_test")
+	s.env.Set("KOOL_NAME", "kool_test")
 
 	command := &builder.FakeCommand{MockCmd: "docker-compose"}
 	command.AppendArgs("ps")
@@ -186,13 +186,13 @@ func TestInteractiveDefaultShell(t *testing.T) {
 
 func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
 	s := &DefaultShell{
-		inStream:   os.Stdin,
-		outStream:  ioutil.Discard,
-		errStream:  os.Stderr,
-		envStorage: environment.NewFakeEnvStorage(),
+		inStream:  os.Stdin,
+		outStream: ioutil.Discard,
+		errStream: os.Stderr,
+		env:       environment.NewFakeEnvStorage(),
 	}
 
-	s.envStorage.Set("KOOL_NAME", "kool_test")
+	s.env.Set("KOOL_NAME", "kool_test")
 
 	command := &builder.FakeCommand{MockCmd: "docker-compose"}
 	command.AppendArgs("ps")

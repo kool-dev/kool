@@ -30,11 +30,11 @@ var RecursiveCall func([]string) error
 
 // DefaultShell holds data for handling a shell
 type DefaultShell struct {
-	inStream   io.Reader
-	outStream  io.Writer
-	errStream  io.Writer
-	lookedUp   map[string]error
-	envStorage environment.EnvStorage
+	inStream  io.Reader
+	outStream io.Writer
+	errStream io.Writer
+	lookedUp  map[string]error
+	env       environment.EnvStorage
 }
 
 // Shell implements functions for handling a shell
@@ -58,10 +58,10 @@ type Shell interface {
 // NewShell creates a new shell
 func NewShell() Shell {
 	return &DefaultShell{
-		inStream:   os.Stdin,
-		outStream:  os.Stdout,
-		errStream:  os.Stderr,
-		envStorage: environment.NewEnvStorage(),
+		inStream:  os.Stdin,
+		outStream: os.Stdout,
+		errStream: os.Stderr,
+		env:       environment.NewEnvStorage(),
 	}
 }
 
@@ -128,7 +128,6 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 	)
 
 	if exe == "kool" && RecursiveCall != nil {
-		// it is a recursive call! let's try to avoid creating a new process...
 		return RecursiveCall(args)
 	}
 
@@ -136,7 +135,7 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 		args = append(args, extraArgs...)
 	}
 
-	if s.envStorage.IsTrue("KOOL_VERBOSE") {
+	if s.env.IsTrue("KOOL_VERBOSE") {
 		fmt.Println("$", exe, strings.Join(args, " "))
 	}
 
