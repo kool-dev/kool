@@ -33,7 +33,7 @@ type DefaultShell struct {
 	inStream  io.Reader
 	outStream io.Writer
 	errStream io.Writer
-	lookedUp  map[string]error
+	lookedUp  *lookupCache
 	env       environment.EnvStorage
 }
 
@@ -62,6 +62,7 @@ func NewShell() Shell {
 		outStream: os.Stdout,
 		errStream: os.Stderr,
 		env:       environment.NewEnvStorage(),
+		lookedUp:  newLookupCache(),
 	}
 }
 
@@ -194,11 +195,7 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 		hasLooked bool
 	)
 
-	if s.lookedUp == nil {
-		s.lookedUp = make(map[string]error)
-	}
-
-	if err, hasLooked = s.lookedUp[exe]; err != nil {
+	if hasLooked, err = s.lookedUp.fetch(exe); err != nil {
 		return
 	}
 
@@ -206,7 +203,7 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 		// non-absolute/relative path... let's look it up on PATH
 		_, err = execLookPathFn(exe)
 
-		s.lookedUp[exe] = err
+		s.lookedUp.set(exe, err)
 	}
 
 	return

@@ -111,6 +111,7 @@ func TestExecDockerComposeDefaultShell(t *testing.T) {
 		outStream: ioutil.Discard,
 		errStream: os.Stderr,
 		env:       environment.NewFakeEnvStorage(),
+		lookedUp:  newLookupCache(),
 	}
 
 	s.env.Set("KOOL_NAME", "kool_test")
@@ -190,6 +191,7 @@ func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
 		outStream: ioutil.Discard,
 		errStream: os.Stderr,
 		env:       environment.NewFakeEnvStorage(),
+		lookedUp:  newLookupCache(),
 	}
 
 	s.env.Set("KOOL_NAME", "kool_test")
