@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/environment"
@@ -59,7 +58,6 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	// look for kool.yml on kool folder within user home directory
 	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
-	fmt.Println("run - parse script " + script)
 	if r.commands, err = r.parser.Parse(script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
 			// we should just warn the user about multiple finds for the script
@@ -85,7 +83,6 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 			command.AppendArgs(args...)
 		}
 
-		fmt.Printf("run - call interactive %v\n", command)
 		if err = r.Interactive(command); err != nil {
 			return
 		}

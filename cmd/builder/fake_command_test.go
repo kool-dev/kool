@@ -37,4 +37,8 @@ func TestFakeCommand(t *testing.T) {
 	if !f.CalledParseCommand || err == nil || err.Error() != "parse error" {
 		t.Errorf("failed to use mocked Parse function on FakeCommand")
 	}
+
+	if f.Reset(); !f.CalledReset {
+		t.Error("failed asserting that called Reset")
+	}
 }

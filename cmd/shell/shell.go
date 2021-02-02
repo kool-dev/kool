@@ -127,10 +127,7 @@ func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string)
 		args           []string = command.Args()
 	)
 
-	// fmt.Printf("checking for recursive calling %v %v\n", exe, args)
 	if exe == "kool" && RecursiveCall != nil {
-		// fmt.Printf("DOING recursive call %v %v\n", exe, args)
-		// it is a recursive call! let's try to avoid creating a new process...
 		return RecursiveCall(args)
 	}
 

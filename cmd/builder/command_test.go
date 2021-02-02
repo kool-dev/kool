@@ -71,6 +71,17 @@ func TestAppendArgs(t *testing.T) {
 	}
 }
 
+func TestResetArgs(t *testing.T) {
+	cmd := NewCommand("echo", "x1")
+
+	cmd.AppendArgs("x2")
+	cmd.Reset()
+
+	if len(cmd.args) != 1 || cmd.args[0] != "x1" {
+		t.Errorf("Reset failed to return args")
+	}
+}
+
 func TestString(t *testing.T) {
 	cmd := NewCommand("echo", "x1", "x2")
 
