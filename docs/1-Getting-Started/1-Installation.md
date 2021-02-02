@@ -2,37 +2,37 @@
 
 ### Requirements
 
-Kool is powered by **[Docker](https://docs.docker.com/get-docker/)**, you need to have it installed on your machine.
+Kool is powered by **[Docker](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)**. You need to have them installed on your machine.
 
 ### For Linux and MacOS
 
-To install **kool** simply run the following script.
+To install **kool**, simply run the following script.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
 ```
 
-All this script will do is download latest kool bin from https://github.com/kool-dev/kool/releases for your OS and put in your `/usr/local/bin` folder.
+All this script will do is download the latest kool bin from https://github.com/kool-dev/kool/releases for your OS and put it in your `/usr/local/bin` folder.
 
 ### For Windows
 
-Download the installer [here](https://github.com/kool-dev/kool/releases)
+Download the installer [here](https://github.com/kool-dev/kool/releases).
 
-To check if everything looks good simply run **kool** to see the list of available commands.
+To check if everything looks good, simply run **kool** to see the list of available commands.
 
-## Updating to a newer version
+## Updating to a Newer Version
 
-When a new version is released you can obtain it with the builtin command `self-update`:
+When a new version is released, you can obtain it with the builtin command `self-update`:
 
 ```bash
 sudo kool self-update
 ```
 
-This will check the latest realease and download/install it case there is a newer version.
+This will check the latest release and download/install it if there's a newer version.
 
-**Alternative**: in order to get a new release you can always repeat the installation steps provided above as well, which should get you the latest version.
+**Alternative**: in order to get a new release, you can always repeat the installation steps provided above, which should get you the latest version.
 
-> We suggest that you *start* and sign up for new releases notifications on our Github main repository so you always will stay up to date with our latest features!
+> We suggest you *start* and sign up for new release notifications on our Github main repository so you always stay up-to-date with our latest features!
 
 ## Autocompletion
 
