@@ -1,0 +1,25 @@
+name: scan
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  grype:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@master
+
+    - name: Build image
+      run: docker build --pull -t kooldev/kool:4scan .
+
+    - name: Scan image
+      uses: anchore/scan-action@v2
+      with:
+        image: "kooldev/kool:4scan"
+        fail-build: true
+        severity-cutoff: critical
