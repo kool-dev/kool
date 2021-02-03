@@ -28,6 +28,8 @@ jobs:
 
     - name: Scan image
       uses: anchore/scan-action@v2
+      env:
+        TAGNAME: ${{ steps.tagName.outputs.tag }}
       with:
         image: "kooldev/kool:$TAGNAME"
         fail-build: true
