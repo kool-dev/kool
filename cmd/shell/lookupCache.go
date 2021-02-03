@@ -13,8 +13,8 @@ func newLookupCache() *lookupCache {
 }
 
 func (l *lookupCache) fetch(key string) (exists bool, err error) {
-	l.mtx.Lock()
-	defer l.mtx.Unlock()
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
 
 	if l.cache != nil {
 		err, exists = l.cache[key]
