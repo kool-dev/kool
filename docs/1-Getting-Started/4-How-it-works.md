@@ -62,7 +62,7 @@ There is just one caveat we need to be aware of - the commands within a script o
 
 #### Input and output redirects on `kool.yml`
 
-Although the previous notice about commands within a script at `kool.yml` is not straight out a bash script, we do support some bash helping syntax like input and output redirects.
+Although the previous warning about commands within a script at `kool.yml` not running under an actual *shell*, we do support some *shell* helping syntax like input and output redirects.
 
 So you are totally able to do things like:
 
@@ -70,13 +70,16 @@ kool.yml
 ```yaml
 scripts:
   # performing input injection from files
-  import-db: kool docker mysql:8 -h$DB_HOST -u$DB_USER -p $DB_NAME < path/to/some/file.sql
+  import-db: kool docker mysql:8 -hhost -uuser -p db < path/to/some/file.sql
 
   # redirecting standard output to a file
   write-output: echo "writing something" > output.txt
 
   # redirecting standard output to a file in append mode
   append-output: echo "something else in a new line" >> output.txt
+
+  # is supports multi redirecting within a single command
+  input-and-output: cat < some-file > some-new-file
 ```
 
 Again, of course the syntax is not as flexible as you would have in straight out `bash`, please notice:
@@ -84,6 +87,6 @@ Again, of course the syntax is not as flexible as you would have in straight out
 - The redirect key must be a single argument (not glued to the other arguments).
     - Correct: `write: echo "something" > output`
     - Wrong: `write: echo "something">output`
-- When performing a redirect, the last argument after the redirect key must be a single file destination.
+- When performing am output redirect, the last argument after the redirect key must be a single file destination.
 
 Hope you enjoy this feature! Take a look at the presets which already contain good examples of `kool.yml` files ready to be used in a handlful of different stacks. In case you need help yo create your own based on your needs make sure to ask for help on Github.
