@@ -265,7 +265,6 @@ func TestInteractive(t *testing.T) {
 
 func TestInteractiveLookPathErrorDefaultShell(t *testing.T) {
 	s := NewShell()
-	// s.SetOutStream(ioutil.Discard)
 
 	originalExecLookPath := execLookPathFn
 	execLookPathFn = func(exe string) (string, error) {

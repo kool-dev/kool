@@ -87,6 +87,6 @@ Again, of course the syntax is not as flexible as you would have in straight out
 - The redirect key must be a single argument (not glued to the other arguments).
     - Correct: `write: echo "something" > output`
     - Wrong: `write: echo "something">output`
-- When performing am output redirect, the last argument after the redirect key must be a single file destination.
+- When performing a output redirect, the last argument after the redirect key must be a single file destination.
 
 Hope you enjoy this feature! Take a look at the presets which already contain good examples of `kool.yml` files ready to be used in a handlful of different stacks. In case you need help yo create your own based on your needs make sure to ask for help on Github.
