@@ -523,6 +523,10 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 	root = makeRoot()
 	root.SetArgs([]string{"run", "bothatsametime"})
 	if err := root.Execute(); err != nil {
-		// 	t.Errorf("unexpected error executing run show-version; error: %v", err)
+		t.Errorf("unexpected error executing run show-version; error: %v", err)
+	}
+
+	if _, err := os.Stat(outputFilePath3); err != nil && os.IsNotExist(err) {
+		t.Error("failed to create output3_file")
 	}
 }
