@@ -389,7 +389,7 @@ func TestRecursiveInteractiveCommand(t *testing.T) {
 	}()
 
 	// set published RecursiveCall handler
-	RecursiveCall = func(args []string) error {
+	RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
 		calledRecursive = true
 		calledRecursiveArgs = args
 		return nil

@@ -26,7 +26,7 @@ var ErrLookPath = errors.New("command not found")
 
 // RecursiveCall is used to proxy self-executaion commands internally
 // instead of creating a whole new OS process
-var RecursiveCall func([]string) error
+var RecursiveCall func([]string, io.Reader, io.Writer, io.Writer) error
 
 // DefaultShell holds data for handling a shell
 type DefaultShell struct {
@@ -122,33 +122,43 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 // which makes it interactive for running even something like `bash`.
 func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string) (err error) {
 	var (
-		cmd            *exec.Cmd
-		parsedRedirect *DefaultParsedRedirect
-		exe            string   = command.Cmd()
-		args           []string = command.Args()
+		cmd     *exec.Cmd
+		pr      *DefaultParsedRedirect
+		exe     string   = command.Cmd()
+		args    []string = command.Args()
+		verbose bool     = s.env.IsTrue("KOOL_VERBOSE")
 	)
-
-	if exe == "kool" && RecursiveCall != nil {
-		return RecursiveCall(args)
-	}
 
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
 	}
 
-	if s.env.IsTrue("KOOL_VERBOSE") {
-		fmt.Println("$", exe, strings.Join(args, " "))
+	if verbose {
+		checker := NewTerminalChecker()
+		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %s\n",
+			checker.IsTerminal(s.InStream()),
+			checker.IsTerminal(s.OutStream()),
+			exe,
+			strings.Join(args, " "),
+		)
 	}
 
 	// soon should refactor this onto a struct with methods
 	// so we can remove this too long list of returned values.
-	if parsedRedirect, err = parseRedirects(args, s); err != nil {
+	if pr, err = parseRedirects(args, s); err != nil {
 		return
 	}
 
-	defer parsedRedirect.Close()
+	defer pr.Close()
 
-	cmd = parsedRedirect.CreateCommand(exe)
+	if exe == "kool" && RecursiveCall != nil {
+		if verbose {
+			fmt.Fprintln(s.ErrStream(), "[recursive call]")
+		}
+		return RecursiveCall(args, pr.shell.InStream(), pr.shell.OutStream(), pr.shell.ErrStream())
+	}
+
+	cmd = pr.CreateCommand(exe)
 
 	if err = s.LookPath(command); err != nil {
 		err = ErrLookPath
