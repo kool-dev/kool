@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"kool-dev/kool/cmd/builder"
 	"os"
 	"path/filepath"
 	"testing"
@@ -26,14 +27,14 @@ func (f *fakeReaderWriterCloser) Write(p []byte) (n int, err error) {
 func TestParseRedirectParseNoRedirects(t *testing.T) {
 	f := &FakeShell{}
 	// test no redirects
-	p, err := parseRedirects([]string{"foo", "bar"}, f)
+	p, err := parseRedirects(builder.NewCommand("foo", "bar"), f)
 
 	if err != nil {
-		t.Errorf("unexpected error parsing redirects")
+		t.Error("unexpected error parsing redirects")
 	}
 
-	if p.closeStdin || p.closeStdout {
-		t.Errorf("bad parse - should not close in/outs")
+	if p.hasCustomStdin || p.hasCustomStdout {
+		t.Error("bad parse - should not custom in/outs")
 	}
 
 	// test input redirect
@@ -43,90 +44,92 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 
 	s := NewShell()
 	s.SetInStream(file)
-	p, err = parseRedirects([]string{"foo", "<", input}, s)
+	p, err = parseRedirects(builder.NewCommand("foo", "<", input), s)
 
 	if err != nil {
-		t.Errorf("unexpected error parsing redirects")
+		t.Error("unexpected error parsing redirects")
 	}
 
-	if !p.closeStdin || p.closeStdout {
-		t.Errorf("bad parse - should close in; not out")
+	if !p.hasCustomStdin || p.hasCustomStdout {
+		t.Errorf("bad parse - should have custom in; not out")
 	}
 
 	p.Close()
 
 	// test output
 	output := filepath.Join(t.TempDir(), "output")
-	file, _ = os.Create(output)
-	file.Close()
+	// file, _ = os.Create(output)
+	// file.Close()
 
 	s = NewShell()
 	s.SetOutStream(file)
-	p, err = parseRedirects([]string{"foo", ">", output}, s)
+	p, err = parseRedirects(builder.NewCommand("foo", ">", output), s)
 
 	if err != nil {
 		t.Errorf("unexpected error parsing redirects")
 	}
 
-	if p.closeStdin || !p.closeStdout {
-		t.Errorf("bad parse - should close in; not out")
+	if p.hasCustomStdin || !p.hasCustomStdout {
+		t.Errorf("bad parse - should have custom in; not out")
 	}
 
 	p.Close()
 }
 
-func TestParsedRedirectCreateCommand(t *testing.T) {
-	p := &DefaultParsedRedirect{
-		shell:       &FakeShell{},
-		args:        []string{"arg1", "arg2"},
-		closeStdin:  false,
-		closeStdout: false,
+func TestCommandWithPointers(t *testing.T) {
+	ptr := &CommandWithPointers{
+		Command: builder.NewCommand("foo", "bar"),
+		in:      &fakeReaderWriterCloser{},
+		out:     &fakeReaderWriterCloser{},
 	}
 
-	exe := "foo"
-	cmd := p.CreateCommand(exe)
+	cmd := ptr.Cmd()
 
 	if cmd == nil {
 		t.Errorf("failed to create command")
 		return
 	}
 
-	if cmd.Args == nil || cmd.Args[0] != exe || cmd.Args[1] != "arg1" || cmd.Args[2] != "arg2" {
+	if cmd.Args == nil || cmd.Args[0] != "foo" || cmd.Args[1] != "bar" {
 		t.Errorf("bad command/arguments for created Commands")
-	}
-}
-
-func TestParsedRedirectCloses(t *testing.T) {
-	s := NewShell()
-	s.SetInStream(&fakeReaderWriterCloser{})
-	s.SetOutStream(&fakeReaderWriterCloser{})
-
-	p := &DefaultParsedRedirect{
-		shell:       s,
-		closeStdin:  false,
-		closeStdout: false,
 	}
 
 	// calls close - should not clode in/out
-	p.Close()
+	ptr.Close()
 
-	if s.InStream().(*fakeReaderWriterCloser).calledClose {
+	if ptr.in.(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not expect to call close on Stdin")
 	}
-	if s.OutStream().(*fakeReaderWriterCloser).calledClose {
+	if ptr.out.(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not expect to call close on Stdout")
 	}
 
-	p.closeStdin = true
-	p.closeStdout = true
+	ptr.hasCustomStdin = true
+	ptr.hasCustomStdout = true
 
-	// calls close - should close in/out
-	p.Close()
+	// calls close - should have custom in/out
+	ptr.Close()
 
-	if !s.InStream().(*fakeReaderWriterCloser).calledClose {
+	if !ptr.in.(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not get expected call to close on Stdin")
 	}
-	if !s.OutStream().(*fakeReaderWriterCloser).calledClose {
+	if !ptr.out.(*fakeReaderWriterCloser).calledClose {
 		t.Errorf("did not get expected call to close on Stdout")
+	}
+}
+
+func TestHasRedirect(t *testing.T) {
+	if !hasRedirect(builder.NewCommand("cmd", ">", "out")) {
+		t.Error("failed telling redirection >")
+	}
+	if !hasRedirect(builder.NewCommand("cmd", "<", "in")) {
+		t.Error("failed telling redirection <")
+	}
+	if !hasRedirect(builder.NewCommand("cmd", ">>", "in")) {
+		t.Error("failed telling redirection >>")
+	}
+
+	if hasRedirect(builder.NewCommand("cmd")) || hasRedirect(builder.NewCommand("cmd", "arg")) {
+		t.Error("false positive for redirection")
 	}
 }

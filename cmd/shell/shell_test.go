@@ -265,7 +265,7 @@ func TestInteractive(t *testing.T) {
 
 func TestInteractiveLookPathErrorDefaultShell(t *testing.T) {
 	s := NewShell()
-	s.SetOutStream(ioutil.Discard)
+	// s.SetOutStream(ioutil.Discard)
 
 	originalExecLookPath := execLookPathFn
 	execLookPathFn = func(exe string) (string, error) {
@@ -280,9 +280,9 @@ func TestInteractiveLookPathErrorDefaultShell(t *testing.T) {
 	err := s.Interactive(command)
 
 	if err == nil {
-		t.Errorf("expecting error %v, got none", ErrLookPath)
-	} else if err != ErrLookPath {
-		t.Errorf("expecting error %v, got %v", ErrLookPath, err)
+		t.Errorf("expecting error '%v', got none", ErrLookPath)
+	} else if !errors.Is(err, ErrLookPath) {
+		t.Errorf("expecting error '%v', got '%v'", ErrLookPath, err)
 	}
 }
 

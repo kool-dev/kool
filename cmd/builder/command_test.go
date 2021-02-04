@@ -150,3 +150,20 @@ func TestErrorParseCommand(t *testing.T) {
 		t.Errorf("expecting error 'split error', got %v", err)
 	}
 }
+
+func TestCopy(t *testing.T) {
+	c := NewCommand("cmd", "arg1")
+
+	cp := c.Copy()
+
+	if cp.Cmd() != c.Cmd() || len(cp.Args()) != len(c.Args()) {
+		t.Error("bad copy - differente cmd/args")
+	}
+
+	countArgs := len(c.Args())
+	cp.AppendArgs("arg2", "arg3")
+
+	if len(c.Args()) != countArgs {
+		t.Error("unintended change on original command by changing the copy")
+	}
+}
