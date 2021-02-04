@@ -162,6 +162,15 @@ func TestExec(t *testing.T) {
 
 func TestInteractiveDefaultShell(t *testing.T) {
 	s := NewShell()
+
+	if err := s.Interactive(builder.NewCommand("./test", "<", "x")); err == nil || !strings.Contains(err.Error(), "no such file") {
+		t.Error("should get of unexpected redirect")
+	}
+
+	if err := s.Interactive(builder.NewCommand("something-does-no-exists")); err == nil || !strings.Contains(err.Error(), "command not found") {
+		t.Error("should get of command not found")
+	}
+
 	command := builder.NewCommand("echo", "x")
 
 	r, w, _ := os.Pipe()
@@ -265,6 +274,16 @@ func TestInteractive(t *testing.T) {
 
 func TestInteractiveLookPathErrorDefaultShell(t *testing.T) {
 	s := NewShell()
+
+	if err := s.LookPath(builder.NewCommand("./relative")); err != nil {
+		t.Errorf("unexpected lookPath error on relative: %v", err)
+	}
+	if err := s.LookPath(builder.NewCommand("../relative2")); err != nil {
+		t.Errorf("unexpected lookPath error on relative2: %v", err)
+	}
+	if err := s.LookPath(builder.NewCommand("/absolute")); err != nil {
+		t.Errorf("unexpected lookPath error on absolute: %v", err)
+	}
 
 	originalExecLookPath := execLookPathFn
 	execLookPathFn = func(exe string) (string, error) {

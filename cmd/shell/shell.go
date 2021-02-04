@@ -170,7 +170,7 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 		hasLooked bool
 	)
 
-	if strings.HasPrefix(exe, "./") || strings.HasPrefix(exe, "/") {
+	if strings.HasPrefix(exe, "./") || strings.HasPrefix(exe, "/") || strings.HasPrefix(exe, "../") {
 		// either absolute/relative path... don't need to check
 		return
 	}
