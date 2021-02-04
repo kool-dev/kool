@@ -405,3 +405,47 @@ func TestRecursiveInteractiveCommand(t *testing.T) {
 		t.Errorf("unexpected recursive call - args: %v", calledRecursiveArgs)
 	}
 }
+
+func TestVerbose(t *testing.T) {
+	s := NewShell()
+
+	s.(*DefaultShell).env = environment.NewFakeEnvStorage()
+	s.(*DefaultShell).env.Set("KOOL_VERBOSE", "true")
+
+	cmd := &builder.FakeCommand{MockCmd: "some-command"}
+
+	buff := bytes.NewBuffer([]byte(""))
+	s.SetErrStream(buff)
+
+	_ = s.Interactive(cmd, "arg1")
+
+	verboseOutput := buff.String()
+	if !strings.Contains(verboseOutput, "TTY in") || !strings.Contains(verboseOutput, "some-command") || !strings.Contains(verboseOutput, "arg1") {
+		t.Errorf("unexpected StdErr verbose output: %v", verboseOutput)
+	}
+}
+func TestVerboseRecursive(t *testing.T) {
+	s := NewShell()
+
+	s.(*DefaultShell).env = environment.NewFakeEnvStorage()
+	s.(*DefaultShell).env.Set("KOOL_VERBOSE", "true")
+
+	cmd := &builder.FakeCommand{MockCmd: "kool", ArgsAppend: []string{"something"}}
+
+	buff := bytes.NewBuffer([]byte(""))
+	s.SetErrStream(buff)
+
+	RecursiveCall = func(s []string, r io.Reader, w1, w2 io.Writer) error {
+		if len(s) != 1 || s[0] != "something" {
+			t.Errorf("bad recursive call parameters: %v", s)
+		}
+		return nil
+	}
+
+	_ = s.Interactive(cmd)
+
+	verboseOutput := buff.String()
+	if !strings.Contains(verboseOutput, "[recursive call]") {
+		t.Errorf("unexpected StdErr verbose output: %v", verboseOutput)
+	}
+}
