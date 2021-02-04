@@ -483,7 +483,7 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 			Run: func(cmd *cobra.Command, args []string) {
 				if sb, err := ioutil.ReadAll(cmd.InOrStdin()); err != nil {
 					t.Errorf("fail reading input: %v", err)
-				} else if _, err = fmt.Fprintf(cmd.OutOrStdout(), string(sb)); err != nil {
+				} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
 					t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))
 				}
 			},
