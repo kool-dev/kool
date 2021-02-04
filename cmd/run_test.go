@@ -1,8 +1,11 @@
+// +build !windows
+
 package cmd
 
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
@@ -352,7 +355,7 @@ func TestRunRecursiveCalls(t *testing.T) {
 		root := NewRootCmd(k.env)
 		root.AddCommand(NewRunCommand(k))
 
-		shell.RecursiveCall = func(args []string) error {
+		shell.RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
 			fmt.Printf("called RecursiveCall args: %v\n", args)
 			root.SetArgs(args)
 			return root.Execute()
@@ -386,5 +389,64 @@ func TestRunRecursiveCalls(t *testing.T) {
 
 	if err := root.Execute(); err != nil {
 		t.Errorf("unexpected error executing run recursive; error: %v", err)
+	}
+}
+
+const inputContent string = "input file"
+
+func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
+	makeKoolRoot := func() *cobra.Command {
+		k := NewKoolRun()
+		k.env = environment.NewFakeEnvStorage()
+		k.env.Set("HOME", "")
+		tmp := t.TempDir()
+		inputFilePath := fmt.Sprintf("%s/input_file", tmp)
+		k.env.Set("PWD", tmp)
+
+		kooYml := []byte(fmt.Sprintf(`scripts:
+  input: kool receive-file < %s
+`, inputFilePath))
+
+		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
+		}
+		if err := ioutil.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
+			t.Fatalf("failed creating temp %v for testing: %v", inputFilePath, err)
+		}
+
+		root := NewRootCmd(k.env)
+		root.AddCommand(NewRunCommand(k))
+		root.AddCommand(&cobra.Command{
+			Use: "receive-file",
+			Run: func(cmd *cobra.Command, args []string) {
+				if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
+					t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
+				}
+				if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
+					t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
+				} else if input, err := ioutil.ReadAll(file); err != nil {
+					t.Errorf("failed reading input file: %v", err)
+				} else if string(input) != inputContent {
+					t.Errorf("unexpcted content on input file: %v", input)
+				}
+			},
+		})
+
+		setRecursiveCall(root)
+
+		return root
+	}
+
+	defer func() {
+		// clear up shell.RecursiveCall
+		shell.RecursiveCall = nil
+	}()
+
+	root := makeKoolRoot()
+
+	root.SetArgs([]string{"run", "input"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run show-version; error: %v", err)
 	}
 }
