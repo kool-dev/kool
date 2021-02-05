@@ -26,6 +26,7 @@ type Command interface {
 	Args() []string
 	Reset()
 	Cmd() string
+	Copy() Command
 }
 
 // Parser holds available methods for parse commands
@@ -84,4 +85,9 @@ func (c *DefaultCommand) Parse(line string) (err error) {
 	}
 
 	return
+}
+
+// Copy clones the pointer to avoid unintended modifications
+func (c *DefaultCommand) Copy() Command {
+	return NewCommand(c.command, c.args...)
 }

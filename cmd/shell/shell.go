@@ -120,82 +120,47 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 
 // Interactive runs the given command proxying current Stdin/Stdout/Stderr
 // which makes it interactive for running even something like `bash`.
-func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string) (err error) {
+func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...string) (err error) {
 	var (
-		cmd     *exec.Cmd
-		pr      *DefaultParsedRedirect
-		exe     string   = command.Cmd()
-		args    []string = command.Args()
-		verbose bool     = s.env.IsTrue("KOOL_VERBOSE")
+		cmdptr  *CommandWithPointers
+		verbose bool = s.env.IsTrue("KOOL_VERBOSE")
+		command      = originalCmd.Copy()
 	)
 
-	if len(extraArgs) > 0 {
-		args = append(args, extraArgs...)
+	command.AppendArgs(extraArgs...)
+
+	// soon should refactor this onto a struct with methods
+	// so we can remove this too long list of returned values.
+	if cmdptr, err = parseRedirects(command, s); err != nil {
+		return
 	}
 
 	if verbose {
 		checker := NewTerminalChecker()
-		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %s\n",
-			checker.IsTerminal(s.InStream()),
-			checker.IsTerminal(s.OutStream()),
-			exe,
-			strings.Join(args, " "),
+		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %v\n",
+			checker.IsTerminal(cmdptr.in),
+			checker.IsTerminal(cmdptr.out),
+			cmdptr.Command.Cmd(),
+			cmdptr.Command.Args(),
 		)
 	}
 
-	// soon should refactor this onto a struct with methods
-	// so we can remove this too long list of returned values.
-	if pr, err = parseRedirects(args, s); err != nil {
-		return
-	}
-
-	defer pr.Close()
-
-	if exe == "kool" && RecursiveCall != nil {
+	if cmdptr.Command.Cmd() == "kool" && RecursiveCall != nil {
 		if verbose {
 			fmt.Fprintln(s.ErrStream(), "[recursive call]")
 		}
-		return RecursiveCall(args, pr.shell.InStream(), pr.shell.OutStream(), pr.shell.ErrStream())
-	}
-
-	cmd = pr.CreateCommand(exe)
-
-	if err = s.LookPath(command); err != nil {
-		err = ErrLookPath
-		return
-	}
-
-	err = cmd.Start()
-
-	if err != nil {
-		return
-	}
-
-	waitCh := make(chan error, 1)
-	go func() {
-		waitCh <- cmd.Wait()
-		close(waitCh)
-	}()
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan)
-
-	// You need a for loop to handle multiple signals
-	for {
-		select {
-		case err = <-waitCh:
-			if err != nil {
-				log.Fatal(err)
-			}
+		err = RecursiveCall(cmdptr.Command.Args(), cmdptr.in, cmdptr.out, cmdptr.err)
+	} else {
+		if err = s.LookPath(cmdptr.Command); err != nil {
+			err = ErrLookPath
 			return
-		case sig := <-sigChan:
-			if err := cmd.Process.Signal(sig); err != nil {
-				// check if it is something we should care about
-				if err.Error() != "os: process already finished" {
-					s.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
-				}
-			}
 		}
+
+		err = s.execute(cmdptr.Cmd())
+
+		defer cmdptr.Close()
 	}
+	return
 }
 
 // LookPath returns if the command exists
@@ -205,12 +170,16 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 		hasLooked bool
 	)
 
+	if strings.HasPrefix(exe, "./") || strings.HasPrefix(exe, "/") || strings.HasPrefix(exe, "../") {
+		// either absolute/relative path... don't need to check
+		return
+	}
+
 	if hasLooked, err = s.lookedUp.fetch(exe); err != nil {
 		return
 	}
 
-	if !hasLooked && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
-		// non-absolute/relative path... let's look it up on PATH
+	if !hasLooked {
 		_, err = execLookPathFn(exe)
 
 		s.lookedUp.set(exe, err)
@@ -287,4 +256,37 @@ func Warning(out ...interface{}) {
 // Success success message
 func Success(out ...interface{}) {
 	NewShell().Success(out)
+}
+
+func (s *DefaultShell) execute(cmd *exec.Cmd) (err error) {
+	if err = cmd.Start(); err != nil {
+		return
+	}
+
+	waitCh := make(chan error, 1)
+	go func() {
+		waitCh <- cmd.Wait()
+		close(waitCh)
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan)
+
+	// You need a for loop to handle multiple signals
+	for {
+		select {
+		case err = <-waitCh:
+			if err != nil {
+				log.Fatal(err)
+			}
+			return
+		case sig := <-sigChan:
+			if err := cmd.Process.Signal(sig); err != nil {
+				// check if it is something we should care about
+				if err.Error() != "os: process already finished" {
+					s.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
+				}
+			}
+		}
+	}
 }
