@@ -42,3 +42,13 @@ func TestFakeCommand(t *testing.T) {
 		t.Error("failed asserting that called Reset")
 	}
 }
+
+func TestFakeCopy(t *testing.T) {
+	f := &FakeCommand{}
+
+	cp := f.Copy()
+
+	if ptr, ok := cp.(*FakeCommand); !ok || ptr != f {
+		t.Error("unexpected fake copy")
+	}
+}

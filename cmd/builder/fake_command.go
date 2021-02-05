@@ -53,3 +53,8 @@ func (f *FakeCommand) Parse(line string) (err error) {
 	err = f.MockError
 	return
 }
+
+// Copy mocks a copy be returning itself
+func (f *FakeCommand) Copy() Command {
+	return f
+}

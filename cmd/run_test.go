@@ -414,45 +414,101 @@ func TestRunRecursiveCalls(t *testing.T) {
 const inputContent string = "input file"
 
 func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
-	makeKoolRoot := func() *cobra.Command {
-		k := NewKoolRun()
-		k.env = environment.NewFakeEnvStorage()
-		k.env.Set("HOME", "")
-		tmp := t.TempDir()
-		inputFilePath := fmt.Sprintf("%s/input_file", tmp)
-		k.env.Set("PWD", tmp)
+	k := NewKoolRun()
+	k.env = environment.NewFakeEnvStorage()
+	k.env.Set("HOME", "")
+	tmp := t.TempDir()
+	inputFilePath := fmt.Sprintf("%s/input_file", tmp)
+	k.env.Set("PWD", tmp)
 
-		kooYml := []byte(fmt.Sprintf(`scripts:
+	kooYml := []byte(fmt.Sprintf(`scripts:
   input: kool receive-file < %s
 `, inputFilePath))
 
+	if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+		t.Fatalf("failed creating temp kool.yml for testing: %v", err)
+	}
+	if err := ioutil.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
+		t.Fatalf("failed creating temp %v for testing: %v", inputFilePath, err)
+	}
+
+	root := NewRootCmd(k.env)
+	root.AddCommand(NewRunCommand(k))
+	root.AddCommand(&cobra.Command{
+		Use: "receive-file",
+		Run: func(cmd *cobra.Command, args []string) {
+			if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
+				t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
+			}
+			if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
+				t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
+			} else if input, err := ioutil.ReadAll(file); err != nil {
+				t.Errorf("failed reading input file: %v", err)
+			} else if string(input) != inputContent {
+				t.Errorf("unexpcted content on input file: %v", input)
+			}
+		},
+	})
+
+	setRecursiveCall(root)
+
+	defer func() {
+		// clear up shell.RecursiveCall
+		shell.RecursiveCall = nil
+	}()
+
+	root.SetArgs([]string{"run", "input"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run show-version; error: %v", err)
+	}
+}
+
+func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
+	tmp := t.TempDir()
+	outputFilePath := fmt.Sprintf("%s/output_file", tmp)
+	outputFilePath2 := fmt.Sprintf("%s/output2_file", tmp)
+	outputFilePath3 := fmt.Sprintf("%s/output3_file", tmp)
+
+	os.Setenv("KOOL_VERBOSE", "true")
+
+	var makeRoot = func() *cobra.Command {
+		k := NewKoolRun()
+		k.env = environment.NewFakeEnvStorage()
+		k.env.Set("HOME", "")
+		k.env.Set("PWD", tmp)
+
+		kooYml := []byte(fmt.Sprintf(`scripts:
+  out: kool echo "content" > %s
+  in: kool catin < %s
+  both: kool run in > %s
+  bothatsametime: kool run in < %s > %s
+`, outputFilePath, outputFilePath, outputFilePath2, outputFilePath, outputFilePath3))
+
 		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
-		}
-		if err := ioutil.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
-			t.Fatalf("failed creating temp %v for testing: %v", inputFilePath, err)
 		}
 
 		root := NewRootCmd(k.env)
 		root.AddCommand(NewRunCommand(k))
 		root.AddCommand(&cobra.Command{
-			Use: "receive-file",
+			Use: "echo",
 			Run: func(cmd *cobra.Command, args []string) {
-				if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
-					t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
-				}
-				if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
-					t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
-				} else if input, err := ioutil.ReadAll(file); err != nil {
-					t.Errorf("failed reading input file: %v", err)
-				} else if string(input) != inputContent {
-					t.Errorf("unexpected content on input file: %v", input)
+				fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
+			},
+		})
+		root.AddCommand(&cobra.Command{
+			Use: "catin",
+			Run: func(cmd *cobra.Command, args []string) {
+				if sb, err := ioutil.ReadAll(cmd.InOrStdin()); err != nil {
+					t.Errorf("fail reading input: %v", err)
+				} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
+					t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))
 				}
 			},
 		})
 
 		setRecursiveCall(root)
-
 		return root
 	}
 
@@ -461,12 +517,36 @@ func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
 		shell.RecursiveCall = nil
 	}()
 
-	root := makeKoolRoot()
+	root := makeRoot()
+	root.SetArgs([]string{"run", "out"})
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run out; error: %v", err)
+	}
 
-	root.SetArgs([]string{"run", "input"})
+	root = makeRoot()
+	root.SetArgs([]string{"run", "in"})
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run in; error: %v", err)
+	}
 
+	root = makeRoot()
+	root.SetArgs([]string{"run", "both"})
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing run both; error: %v", err)
+	}
+
+	if _, err := os.Stat(outputFilePath2); err != nil && os.IsNotExist(err) {
+		t.Error("failed to create output2_file")
+	}
+
+	root = makeRoot()
+	root.SetArgs([]string{"run", "bothatsametime"})
 	if err := root.Execute(); err != nil {
 		t.Errorf("unexpected error executing run show-version; error: %v", err)
+	}
+
+	if _, err := os.Stat(outputFilePath3); err != nil && os.IsNotExist(err) {
+		t.Error("failed to create output3_file")
 	}
 }
 
