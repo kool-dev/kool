@@ -22,9 +22,9 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/go/pkg
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-kool-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-
+          ${{ runner.os }}-kool-
     - name: Download dependencies
       run: |
         go mod download
