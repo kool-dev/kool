@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/presets"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/cmd/templates"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
 )
@@ -89,21 +90,7 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 		Use:   "preset [PRESET]",
 		Short: "Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.",
 		Args:  cobra.MaximumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			preset.SetOutStream(cmd.OutOrStdout())
-			preset.SetInStream(cmd.InOrStdin())
-			preset.SetErrStream(cmd.ErrOrStderr())
-
-			if err := preset.Execute(args); err != nil {
-				if err.Error() == shell.ErrPromptSelectInterrupted.Error() {
-					preset.Warning("Operation Cancelled")
-					preset.Exit(0)
-				} else {
-					preset.Error(err)
-					preset.Exit(1)
-				}
-			}
-		},
+		Run:   DefaultCommandRunFunction(preset),
 	}
 
 	return

@@ -79,8 +79,13 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 			service.SetErrStream(cmd.ErrOrStderr())
 
 			if err := service.Execute(args); err != nil {
-				service.Error(err)
-				service.Exit(1)
+				if err.Error() == shell.ErrPromptSelectInterrupted.Error() {
+					service.Warning("Operation Cancelled")
+					service.Exit(0)
+				} else {
+					service.Error(err)
+					service.Exit(1)
+				}
 			}
 		}
 	}

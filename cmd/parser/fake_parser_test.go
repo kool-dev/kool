@@ -8,7 +8,11 @@ import (
 
 func TestFakeParser(t *testing.T) {
 	f := &FakeParser{
-		MockParsedCommands: []builder.Command{&builder.FakeCommand{}},
+		MockParsedCommands: map[string][]builder.Command{
+			"script": {
+				&builder.FakeCommand{},
+			},
+		},
 	}
 
 	_ = f.AddLookupPath("path")
@@ -52,7 +56,9 @@ func TestFakeParser(t *testing.T) {
 
 func TestFakeFailedParser(t *testing.T) {
 	f := &FakeParser{
-		MockParseError:                 errors.New("parser error"),
+		MockParseError: map[string]error{
+			"script": errors.New("parser error"),
+		},
 		MockParseAvailableScriptsError: errors.New("get scripts error"),
 	}
 

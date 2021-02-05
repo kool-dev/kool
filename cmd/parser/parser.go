@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path"
 	"sort"
@@ -10,22 +9,6 @@ import (
 
 	"kool-dev/kool/cmd/builder"
 )
-
-// ErrPossibleTypo implements error interface and can be used
-// to determine specific situations of not-found scripts but
-// where similar names exist, indicating a possible typo
-type ErrPossibleTypo struct {
-	similars []string
-}
-
-// Error formats a default string with the similar names found
-func (e *ErrPossibleTypo) Error() string {
-	if len(e.similars) == 1 {
-		return fmt.Sprintf("did you mean '%s'?", e.similars[0])
-	}
-
-	return fmt.Sprintf("did you mean one of ['%s']?", strings.Join(e.similars, "', '"))
-}
 
 // Parser defines the functions required for handling kool.yml files.
 type Parser interface {
@@ -112,7 +95,7 @@ func (p *DefaultParser) Parse(script string) (commands []builder.Command, err er
 				err = ErrMultipleDefinedScript
 			}
 		} else {
-			// we could not find the intented script so let's check for a typo
+			// we could not find the intended script so let's check for a typo
 			if foundSimilar, similars := parsedFile.GetSimilars(script); foundSimilar {
 				similarScripts = append(similarScripts, similars...)
 			}

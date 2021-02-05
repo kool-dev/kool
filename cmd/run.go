@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"path"
 	"strings"
@@ -14,9 +15,10 @@ import (
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
-	parser   parser.Parser
-	env      environment.EnvStorage
-	commands []builder.Command
+	parser       parser.Parser
+	env          environment.EnvStorage
+	promptSelect shell.PromptSelect
+	commands     []builder.Command
 }
 
 // ErrExtraArguments Extra arguments error
@@ -42,6 +44,7 @@ func NewKoolRun() *KoolRun {
 		*newDefaultKoolService(),
 		parser.NewParser(),
 		environment.NewEnvStorage(),
+		shell.NewPromptSelect(),
 		[]builder.Command{},
 	}
 }
@@ -58,9 +61,8 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	// look for kool.yml on kool folder within user home directory
 	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
-	if r.commands, err = r.parser.Parse(script); err != nil {
+	if r.commands, err = parseScript(r, script); err != nil {
 		if parser.IsMultipleDefinedScriptError(err) {
-			// we should just warn the user about multiple finds for the script
 			r.Warning("Attention: the script was found in more than one kool.yml file")
 			err = nil
 		} else {
@@ -161,6 +163,32 @@ func compListScripts(toComplete string, run *KoolRun) (scripts []string) {
 
 	if scripts, err = run.parser.ParseAvailableScripts(toComplete); err != nil {
 		return nil
+	}
+
+	return
+}
+
+func parseScript(run *KoolRun, script string) (commands []builder.Command, err error) {
+	var (
+		similarIsCorrect string
+		chosenSimilar    string
+	)
+
+	if commands, err = run.parser.Parse(script); err != nil {
+		if parser.IsPossibleTypoError(err) && run.IsTerminal() {
+			if similarIsCorrect, _ = run.promptSelect.Ask(err.Error(), []string{"Yes", "No"}); similarIsCorrect != "Yes" {
+				err = ErrKoolScriptNotFound
+				return
+			}
+
+			if possibleScripts := err.(*parser.ErrPossibleTypo).Similars(); len(possibleScripts) == 1 {
+				chosenSimilar = possibleScripts[0]
+			} else {
+				chosenSimilar, _ = run.promptSelect.Ask("which one did you mean?", possibleScripts)
+			}
+
+			commands, err = run.parser.Parse(chosenSimilar)
+		}
 	}
 
 	return
