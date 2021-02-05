@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -163,8 +164,13 @@ func TestExec(t *testing.T) {
 func TestInteractiveDefaultShell(t *testing.T) {
 	s := NewShell()
 
-	if err := s.Interactive(builder.NewCommand("./test", "<", "x")); err == nil || !strings.Contains(err.Error(), "no such file") {
-		t.Errorf("should get error of unexpected redirect, but got: '%v'", err)
+	var errFileNotFound = "no such file"
+	if runtime.GOOS == "windows" {
+		errFileNotFound = "The system cannot find the file specified"
+	}
+
+	if err := s.Interactive(builder.NewCommand("./test", "<", "x")); err == nil || !strings.Contains(err.Error(), errFileNotFound) {
+		t.Errorf("should get error of file not found, but got: '%v'", err)
 	}
 
 	if err := s.Interactive(builder.NewCommand("something-does-no-exists")); err == nil || !strings.Contains(err.Error(), "command not found") {
