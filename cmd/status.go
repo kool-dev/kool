@@ -165,14 +165,13 @@ func (s *KoolStatus) getServiceInfo(service string, chStatus chan *statusService
 
 	defer wg.Done()
 
-	ss := &statusService{service: service}
+	ss := &statusService{service: service, running: "Not running"}
 
 	if serviceID, err = s.Exec(s.getServiceIDCmd, service); err != nil {
 		ss.err = err
 	} else if serviceID != "" {
 		status, port = s.getStatusPort(serviceID)
 
-		ss.running = "Not running"
 		if strings.HasPrefix(status, "Up") {
 			ss.running = "Running"
 		}
