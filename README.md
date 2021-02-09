@@ -1,20 +1,21 @@
-# kool
+<p align="center"><a href="https://kool.dev" target="_blank"><img src="https://kool.dev/img/logo.png" width="400" alt="kool - cloud native"></a></p>
 
-[![Kool.dev](https://kool.dev/img/logo.png)](https://kool.dev)
 
----
+<p align="center">
+<a href="https://goreportcard.com/report/github.com/kool-dev/kool"><img src="https://goreportcard.com/badge/github.com/kool-dev/kool" alt="Go Report Card"></a>
+<a href="https://codecov.io/gh/kool-dev/kool"><img src="https://codecov.io/gh/kool-dev/kool/branch/master/graph/badge.svg" alt="codecov"></a>
+<a href="https://github.com/kool-dev/kool/workflows/docker"><img src="https://github.com/kool-dev/kool/workflows/docker/badge.svg" alt="Docker Hub"></a>
+<a href="https://github.com/kool-dev/kool/workflows/golangci-lint"><img src="https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg" alt="Golang CI Lint"></a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield" alt="FOSSA Status"></a>
+<a href="https://codeclimate.com/github/kool-dev/kool/maintainability"><img src="https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability" alt="Maintainability"></a>
+<a href="https://join.slack.com/t/kool-dev/shared_invite/zt-jeh36s5g-kVFHUsyLjFENUUH4ucrxPg"><img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack" alt="Join Slack Kool community"></a>
+</p>
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/kool-dev/kool)](https://goreportcard.com/report/github.com/kool-dev/kool)
-[![codecov](https://codecov.io/gh/kool-dev/kool/branch/master/graph/badge.svg)](https://codecov.io/gh/kool-dev/kool)
-![Docker Hub](https://github.com/kool-dev/kool/workflows/docker/badge.svg)
-![Golang CI Lint](https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield)
-[![Maintainability](https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability)](https://codeclimate.com/github/kool-dev/kool/maintainability)
-[<img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack">](https://join.slack.com/t/kool-dev/shared_invite/zt-jeh36s5g-kVFHUsyLjFENUUH4ucrxPg)
+## About `kool`
 
 **kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environments - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging _Kubernetes_ cloud deployment for staging and production deployments.
 
-Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provide all flexibility the DevOps team needs to tailor up everything.
+Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provides all flexibility the DevOps team needs to tailor up everything.
 
 ### Why adopt kool for your development environment?
 
@@ -60,7 +61,6 @@ $ cd my-laravel-project/
 $ kool preset laravel
 $ # make sure your `.env` points to the proper database and Redis hosts (`database` and `cache`)
 $ kool start
-$ kool run reset
 ```
 
 
