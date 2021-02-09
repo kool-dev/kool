@@ -115,3 +115,8 @@ func (c *DockerCompose) Cmd() string {
 func (c *DockerCompose) String() string {
 	return strings.Trim(fmt.Sprintf("%s %s", c.Cmd(), strings.Join(c.Args(), " ")), " ")
 }
+
+// Copy clones the pointer to avoid unintended modifications
+func (c *DockerCompose) Copy() builder.Command {
+	return NewDockerCompose(c.Command.Cmd(), c.Command.Args()...)
+}

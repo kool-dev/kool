@@ -99,4 +99,8 @@ func TestDockerComposeArgsParsing(t *testing.T) {
 	if dc.Cmd() != "docker" {
 		t.Error("unexpected Cmd() return")
 	}
+
+	if cp, ok := dc.Copy().(*DockerCompose); !ok || cp == nil || cp.Command.Cmd() != dc.Command.Cmd() || len(cp.Command.Args()) != len(dc.Command.Args()) {
+		t.Error("bad copy")
+	}
 }
