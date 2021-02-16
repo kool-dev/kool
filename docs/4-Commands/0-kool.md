@@ -28,5 +28,5 @@ Complete documentation is available at https://kool.dev/docs
 * [kool self-update](kool-self-update.md)	 - Update kool to latest version
 * [kool start](kool-start.md)	 - Start the specified Kool environment containers. If no service is specified, start all.
 * [kool status](kool-status.md)	 - Shows the status for containers
-* [kool stop](kool-stop.md)	 - Stop all running containers started with 'kool start' command
+* [kool stop](kool-stop.md)	 - Stop and destroy running containers started with 'kool start' command. If not SERVICE is specified as argument all containers will be stopped.
 

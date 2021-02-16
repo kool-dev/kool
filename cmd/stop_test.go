@@ -15,6 +15,7 @@ func newFakeKoolStop() *KoolStop {
 		&KoolStopFlags{false},
 		&checker.FakeChecker{},
 		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 	}
 }
 
@@ -43,12 +44,12 @@ func TestNewKoolStop(t *testing.T) {
 		t.Errorf("unexpected checker.Checker on default KoolStop instance")
 	}
 
-	if _, ok := k.doStop.(*compose.DockerCompose); !ok {
+	if _, ok := k.down.(*compose.DockerCompose); !ok {
 		t.Errorf("unexpected compose.DockerCompose on default KoolStop instance")
 	}
 
-	if k.doStop.(*compose.DockerCompose).Command.String() != "down" {
-		t.Errorf("unexpected compose.DockerCompose.Command.String() on default KoolStop instance doStop")
+	if k.down.(*compose.DockerCompose).Command.String() != "down" {
+		t.Errorf("unexpected compose.DockerCompose.Command.String() on default KoolStop instance down")
 	}
 }
 
@@ -64,8 +65,31 @@ func TestNewStopCommand(t *testing.T) {
 		t.Errorf("did not call Check")
 	}
 
-	if f.doStop.(*builder.FakeCommand).CalledAppendArgs {
-		t.Errorf("did not expect to call AppendArgs on KoolStop.doStop Command")
+	if f.down.(*builder.FakeCommand).CalledAppendArgs {
+		t.Errorf("did not expect to call AppendArgs on KoolStop.down Command")
+	}
+}
+
+func TestNewStopCommandWithArgument(t *testing.T) {
+	f := newFakeKoolStop()
+	cmd := NewStopCommand(f)
+	cmd.SetArgs([]string{"a", "b"})
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing stop command; error: %v", err)
+	}
+
+	if !f.rm.(*builder.FakeCommand).CalledAppendArgs {
+		t.Error("should have called AppendArgs on KoolStop.rm Command")
+	}
+	appended := f.rm.(*builder.FakeCommand).ArgsAppend
+	if len(appended) != 3 {
+		t.Errorf("unexpected number of appended args; got %d expected 3", len(appended))
+	}
+	if appended[0] != "-s" {
+		t.Error("expected to have set -s flag")
+	}
+	if appended[1] != "a" && appended[2] != "b" {
+		t.Error("unexpected arguments on services list")
 	}
 }
 
@@ -78,13 +102,32 @@ func TestNewStopPurgeCommand(t *testing.T) {
 		t.Errorf("unexpected error executing stop command with args; error: %v", err)
 	}
 
-	if !f.doStop.(*builder.FakeCommand).CalledAppendArgs {
-		t.Errorf("did not call AppendArgs on KoolStop.doStop Command")
+	if !f.down.(*builder.FakeCommand).CalledAppendArgs {
+		t.Errorf("did not call AppendArgs on KoolStop.down Command")
 	}
 
-	argsAppend := f.doStop.(*builder.FakeCommand).ArgsAppend
+	argsAppend := f.down.(*builder.FakeCommand).ArgsAppend
 	if len(argsAppend) != 2 || argsAppend[0] != "--volumes" || argsAppend[1] != "--remove-orphans" {
-		t.Errorf("bad arguments to KoolStop.doStop Command when passing --purge flag")
+		t.Errorf("bad arguments to KoolStop.down Command when passing --purge flag")
+	}
+}
+
+func TestNewStopPurgeCommandWithServices(t *testing.T) {
+	f := newFakeKoolStop()
+	cmd := NewStopCommand(f)
+
+	cmd.SetArgs([]string{"--purge", "a", "b"})
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing stop command with args; error: %v", err)
+	}
+
+	if !f.rm.(*builder.FakeCommand).CalledAppendArgs {
+		t.Errorf("did not call AppendArgs on KoolStop.rm Command")
+	}
+
+	appended := f.rm.(*builder.FakeCommand).ArgsAppend
+	if len(appended) != 4 || appended[0] != "-s" || appended[1] != "-v" {
+		t.Errorf("bad arguments to KoolStop.rm Command when passing --purge flag")
 	}
 }
 
