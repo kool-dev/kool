@@ -61,7 +61,7 @@ func (s *KoolStop) Execute(args []string) (err error) {
 		stopCommand = s.down
 	} else {
 		// we should only stop some services!
-		s.rm.AppendArgs("-s") // stops containers
+		s.rm.AppendArgs("-s", "-f") // stops containers; no interactive
 		if s.Flags.Purge {
 			s.rm.AppendArgs("-v") // removes volumes
 		}

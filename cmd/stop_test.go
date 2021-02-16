@@ -82,13 +82,13 @@ func TestNewStopCommandWithArgument(t *testing.T) {
 		t.Error("should have called AppendArgs on KoolStop.rm Command")
 	}
 	appended := f.rm.(*builder.FakeCommand).ArgsAppend
-	if len(appended) != 3 {
+	if len(appended) != 4 {
 		t.Errorf("unexpected number of appended args; got %d expected 3", len(appended))
 	}
-	if appended[0] != "-s" {
-		t.Error("expected to have set -s flag")
+	if appended[0] != "-s" || appended[1] != "-f" {
+		t.Error("expected to have set -s -f flags")
 	}
-	if appended[1] != "a" && appended[2] != "b" {
+	if appended[2] != "a" && appended[3] != "b" {
 		t.Error("unexpected arguments on services list")
 	}
 }
@@ -126,7 +126,7 @@ func TestNewStopPurgeCommandWithServices(t *testing.T) {
 	}
 
 	appended := f.rm.(*builder.FakeCommand).ArgsAppend
-	if len(appended) != 4 || appended[0] != "-s" || appended[1] != "-v" {
+	if len(appended) != 5 || appended[0] != "-s" || appended[1] != "-f" || appended[2] != "-v" {
 		t.Errorf("bad arguments to KoolStop.rm Command when passing --purge flag")
 	}
 }
