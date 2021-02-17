@@ -5,6 +5,7 @@ import (
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
 	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -49,7 +50,7 @@ func NewKoolShare() *KoolShare {
 
 // validSubdomain runs the stop logic with incoming arguments.
 func (s *KoolShare) validSubdomain(subdomain string) bool {
-	return regexp.MustCompile("^[a-z]+[a-z0-9]+$").MatchString(subdomain)
+	return regexp.MustCompile("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$").MatchString(subdomain)
 }
 
 // Execute runs the stop logic with incoming arguments.
@@ -71,6 +72,7 @@ func (s *KoolShare) Execute(args []string) (err error) {
 	s.share.AppendArgs("--server-host", "kool.live")
 
 	if s.Flags.Subdomain != "" {
+		s.Flags.Subdomain = strings.ToLower(s.Flags.Subdomain)
 		if !s.validSubdomain(s.Flags.Subdomain) {
 			err = fmt.Errorf("invalid subdomain '%s'", s.Flags.Subdomain)
 			return
