@@ -14,6 +14,15 @@ import (
 type KoolShareFlags struct {
 	Service   string
 	Subdomain string
+	Port      uint
+}
+
+func (f *KoolShareFlags) parseServiceURI() string {
+	if f.Port != 0 {
+		return fmt.Sprintf("%s:%d", f.Service, f.Port)
+	}
+
+	return f.Service
 }
 
 // KoolShare holds handlers and functions to implement the stop command logic
@@ -41,7 +50,7 @@ func NewKoolShare() *KoolShare {
 	defaultKoolService := newDefaultKoolService()
 	return &KoolShare{
 		*defaultKoolService,
-		&KoolShareFlags{"app", ""},
+		&KoolShareFlags{"app", "", 0},
 		environment.NewEnvStorage(),
 		NewKoolStatus(),
 		builder.NewCommand("docker", "run", "--rm", "--init"),
@@ -68,7 +77,7 @@ func (s *KoolShare) Execute(args []string) (err error) {
 
 	s.share.AppendArgs("--network", s.env.Get("KOOL_GLOBAL_NETWORK"))
 	s.share.AppendArgs("beyondcodegmbh/expose-server:1.4.1", "share")
-	s.share.AppendArgs(s.Flags.Service)
+	s.share.AppendArgs(s.Flags.parseServiceURI())
 	s.share.AppendArgs("--server-host", "kool.live")
 
 	if s.Flags.Subdomain != "" {
@@ -96,5 +105,6 @@ func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 
 	shareCmd.Flags().StringVarP(&share.Flags.Service, "service", "", "app", "The name of the local service container we want to share.")
 	shareCmd.Flags().StringVarP(&share.Flags.Subdomain, "subdomain", "", "", "The subdomain desired for subdomain.kool.dev.")
+	shareCmd.Flags().UintVarP(&share.Flags.Port, "port", "", 0, "The port from the target service that should be shared. If not provided it will default to port 80.")
 	return
 }

@@ -28,10 +28,24 @@ func TestShareDefaults(t *testing.T) {
 func newFakeShareService() *KoolShare {
 	return &KoolShare{
 		*newFakeKoolService(),
-		&KoolShareFlags{"default-service", "default-subdomain"},
+		&KoolShareFlags{"default-service", "default-subdomain", 0},
 		environment.NewFakeEnvStorage(),
 		newFakeKoolStatus(),
 		&builder.FakeCommand{},
+	}
+}
+
+func TestFlagParseServiceURI(t *testing.T) {
+	f := &KoolShareFlags{"service", "", 10}
+
+	if f.parseServiceURI() != "service:10" {
+		t.Errorf("bad service URI generated from flags; expected service:10 but got: %s", f.parseServiceURI())
+	}
+
+	f.Port = 0
+
+	if f.parseServiceURI() != "service" {
+		t.Errorf("bad service URI generated from flags; expected service but got: %s", f.parseServiceURI())
 	}
 }
 
@@ -53,7 +67,7 @@ func TestShareCommandBadDomain(t *testing.T) {
 	share.status.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
 
 	cmd := NewShareCommand(share)
-	cmd.SetArgs([]string{"--subdomain", "000"})
+	cmd.SetArgs([]string{"--subdomain", "-sub"})
 	if err := cmd.Execute(); err != nil {
 		t.Error("unexpected error on running command")
 	} else if err = share.shell.(*shell.FakeShell).Err; err == nil {
