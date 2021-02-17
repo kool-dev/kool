@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// KoolShareFlags holds the flags for the kool stop command
+// KoolShareFlags holds the flags for the kool share command
 type KoolShareFlags struct {
 	Service   string
 	Subdomain string
@@ -25,7 +25,7 @@ func (f *KoolShareFlags) parseServiceURI() string {
 	return f.Service
 }
 
-// KoolShare holds handlers and functions to implement the stop command logic
+// KoolShare holds handlers and functions to implement the share command logic
 type KoolShare struct {
 	DefaultKoolService
 	Flags *KoolShareFlags
@@ -57,12 +57,11 @@ func NewKoolShare() *KoolShare {
 	}
 }
 
-// validSubdomain runs the stop logic with incoming arguments.
 func (s *KoolShare) validSubdomain(subdomain string) bool {
 	return regexp.MustCompile("^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$").MatchString(subdomain)
 }
 
-// Execute runs the stop logic with incoming arguments.
+// Execute runs the share logic.
 func (s *KoolShare) Execute(args []string) (err error) {
 	var isRunning bool
 
@@ -94,7 +93,7 @@ func (s *KoolShare) Execute(args []string) (err error) {
 	return
 }
 
-// NewShareCommand initializes new kool stop command
+// NewShareCommand initializes new kool share command
 func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 	shareCmd = &cobra.Command{
 		Use:   "share",
