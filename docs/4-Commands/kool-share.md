@@ -10,6 +10,7 @@ kool share [flags]
 
 ```
   -h, --help               help for share
+      --port uint          The port from the target service that should be shared. If not provided it will default to port 80.
       --service string     The name of the local service container we want to share. (default "app")
       --subdomain string   The subdomain desired for subdomain.kool.dev.
 ```
