@@ -26,6 +26,7 @@ Complete documentation is available at https://kool.dev/docs
 * [kool restart](kool-restart.md)	 - Restart containers - the same as stop followed by start.
 * [kool run](kool-run.md)	 - Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
 * [kool self-update](kool-self-update.md)	 - Update kool to latest version
+* [kool share](kool-share.md)	 - Live share your local environment through an HTTP tunnel with anyone, anywhere.
 * [kool start](kool-start.md)	 - Start the specified Kool environment containers. If no service is specified, start all.
 * [kool status](kool-status.md)	 - Shows the status for containers
 * [kool stop](kool-stop.md)	 - Stop all running containers started with 'kool start' command
