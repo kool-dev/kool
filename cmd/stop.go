@@ -81,7 +81,7 @@ func (s *KoolStop) Execute(args []string) (err error) {
 func NewStopCommand(stop *KoolStop) (stopCmd *cobra.Command) {
 	stopCmd = &cobra.Command{
 		Use:   "stop [SERVICE]",
-		Short: "Stop and destroy running containers started with 'kool start' command. If not SERVICE is specified as argument all containers will be stopped.",
+		Short: "Stop and destroy running containers started with 'kool start' command. If no SERVICE is specified as an argument all containers will be stopped.",
 		Run:   DefaultCommandRunFunction(stop),
 	}
 
