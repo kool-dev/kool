@@ -28,7 +28,6 @@ var ErrUnexpectedResponse error
 
 // ErrAPI reprents a default error returned from the API
 type ErrAPI struct {
-	// {"message":"The given data was invalid.","errors":{"domain":["The domain field is required."]}}
 	Status  int
 	Message string `json:"message"`
 
@@ -37,7 +36,10 @@ type ErrAPI struct {
 
 // Error returns the string representation for the error
 func (e *ErrAPI) Error() string {
-	return fmt.Sprintf("%d - %s (%v)", e.Status, e.Message, e.Errors)
+	if e.Errors != nil {
+		return fmt.Sprintf("%d - %s (%v)", e.Status, e.Message, e.Errors)
+	}
+	return fmt.Sprintf("%d - %s", e.Status, e.Message)
 }
 
 func init() {
