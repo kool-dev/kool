@@ -59,6 +59,10 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 	service = args[0]
 	args = args[1:]
 
+	if url := e.env.Get("KOOL_API_URL"); url != "" {
+		api.SetBaseURL(url)
+	}
+
 	if domain = e.env.Get("KOOL_DEPLOY_DOMAIN"); domain == "" {
 		err = fmt.Errorf("missing deploy domain (env KOOL_DEPLOY_DOMAIN)")
 		return

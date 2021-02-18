@@ -8,6 +8,7 @@ import (
 	"kool-dev/kool/environment"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -102,6 +103,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		resp    *http.Response
 		raw     []byte
 		body    io.Reader
+		verbose = e.env.IsTrue("KOOL_VERBOSE")
 	)
 
 	if e.method == "POST" {
@@ -113,7 +115,12 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		}
 	}
 
-	reqURL := fmt.Sprintf("%s/%s", apiBaseURL, e.path)
+	reqURL := fmt.Sprintf("%s/%s?%s", apiBaseURL, e.path, e.query.Encode())
+
+	if verbose {
+		fmt.Fprintf(os.Stderr, "api - calling URL: %s\n", reqURL)
+	}
+
 	if request, err = http.NewRequest(e.method, reqURL, body); err != nil {
 		return
 	}
@@ -132,6 +139,21 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 	e.statusCode = resp.StatusCode
 
 	if raw, err = ioutil.ReadAll(resp.Body); err != nil {
+		return
+	}
+
+	if verbose {
+		fmt.Fprintf(os.Stderr, "api - got response: %s\n", string(raw))
+	}
+
+	if e.statusCode >= 400 {
+		// something went wrong
+		apiErr := new(ErrAPI)
+		if err = json.Unmarshal(raw, apiErr); err != nil {
+			err = fmt.Errorf("%v (parse error: %v", ErrUnexpectedResponse, err)
+		}
+		apiErr.Status = e.statusCode
+		err = apiErr
 		return
 	}
 
