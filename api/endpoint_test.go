@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"io"
 	"kool-dev/kool/environment"
 	"net/http"
 	"net/url"
@@ -94,6 +95,33 @@ func (f *fakeHTTP) Do(r *http.Request) (*http.Response, error) {
 	return f.resp, f.err
 }
 
+type fakeIOReader struct {
+	data []byte
+	err  error
+}
+
+func (r *fakeIOReader) Read(p []byte) (n int, err error) {
+	copy(p, r.data)
+	n = len(r.data)
+	err = r.err
+	if err == nil {
+		err = io.EOF
+	}
+	return
+}
+
+type fakeIOReaderCloser struct {
+	fakeIOReader
+
+	closeErr    error
+	calledClose bool
+}
+
+func (c *fakeIOReaderCloser) Close() error {
+	c.calledClose = true
+	return c.closeErr
+}
+
 func TestDoRequest(t *testing.T) {
 	e := newFakeDefaultEndpoint("GET")
 
@@ -121,5 +149,95 @@ func TestDoRequest(t *testing.T) {
 
 	if !strings.Contains(request.Header.Get("Authorization"), "fake token") {
 		t.Error("failed setting Authorization header")
+	}
+}
+
+func TestDoCall(t *testing.T) {
+	e := newFakeDefaultEndpoint("GET")
+
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+
+	oldHTTPRequester := httpRequester
+	defer func() {
+		httpRequester = oldHTTPRequester
+	}()
+
+	httpErr := errors.New("fake http error")
+	httpRequester = &fakeHTTP{err: httpErr}
+
+	apiBaseURL = "base-url"
+	e.SetContentType("content-type")
+	e.SetPath("/path")
+	e.Query().Set("foo", "bar")
+
+	if err := e.DoCall(); !errors.Is(err, httpErr) {
+		t.Errorf("unexpected error returned from DoCall: %v", err)
+	}
+
+	httpRequester.(*fakeHTTP).err = nil
+	httpRequester.(*fakeHTTP).resp = &http.Response{StatusCode: 200, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{data: []byte("test bad response")},
+	}}
+
+	e.SetResponseReceiver(struct{}{})
+
+	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "parse error") {
+		t.Errorf("unexpected error return from DoCall; expected parse error got: %v", err)
+	}
+
+	if e.StatusCode() != 200 {
+		t.Errorf("bad status code %d", e.StatusCode())
+	}
+
+	httpRequester.(*fakeHTTP).resp = &http.Response{StatusCode: 400, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{data: []byte(`still bad response`)},
+	}}
+
+	e.SetResponseReceiver(struct{}{})
+
+	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "parse error") {
+		t.Errorf("unexpected error return from DoCall; expected parse error got: %v", err)
+	}
+
+	if e.StatusCode() != 400 {
+		t.Errorf("bad status code %d", e.StatusCode())
+	}
+
+	httpRequester.(*fakeHTTP).resp = &http.Response{StatusCode: 403, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{data: []byte(`{"message":"err-message"}`)},
+	}}
+
+	e.SetResponseReceiver(struct{}{})
+
+	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "err-message") {
+		t.Errorf("unexpected error return from DoCall; expected err-message got: %v", err)
+	}
+
+	if e.StatusCode() != 403 {
+		t.Errorf("bad status code %d", e.StatusCode())
+	}
+
+	e.env.Set("KOOL_VERBOSE", "1")
+
+	httpRequester.(*fakeHTTP).resp = &http.Response{StatusCode: 200, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{data: []byte(`{"foo":"bar"}`)},
+	}}
+
+	resp := &struct{ Foo string }{}
+	httpRequester.(*fakeHTTP).resp.Body.(*fakeIOReaderCloser).calledClose = false
+	e.SetResponseReceiver(resp)
+
+	if err := e.DoCall(); err != nil {
+		t.Errorf("unexpected error return from DoCall: %v", err)
+	}
+
+	if e.StatusCode() != 200 {
+		t.Errorf("bad status code %d", e.StatusCode())
+	}
+	if resp.Foo != "bar" {
+		t.Errorf("response did not get parsed properly %v", resp)
+	}
+	if !httpRequester.(*fakeHTTP).resp.Body.(*fakeIOReaderCloser).calledClose {
+		t.Errorf("response was not closed")
 	}
 }
