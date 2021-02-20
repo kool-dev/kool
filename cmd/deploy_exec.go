@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var authTempPath = "/tmp"
+
 // KoolDeployExec holds handlers and functions for using Deploy API
 type KoolDeployExec struct {
 	DefaultKoolService
@@ -80,7 +82,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 		return
 	}
 
-	CAPath := filepath.Join("/tmp", ".kool-cluster-CA")
+	CAPath := filepath.Join(authTempPath, ".kool-cluster-CA")
 	defer func() {
 		if err := os.Remove(CAPath); err != nil {
 			e.Warning("failed to clear up temporary file; error:", err.Error())
