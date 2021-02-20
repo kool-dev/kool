@@ -20,7 +20,7 @@ func newFakeDefaultEndpoint(method string) *DefaultEndpoint {
 
 func TestNewDefaultEndpoint(t *testing.T) {
 	var method = "GET"
-	e := newDefaultEndpoint(method)
+	e := NewDefaultEndpoint(method)
 
 	if e.method != method {
 		t.Error("unexpected method")

@@ -43,7 +43,8 @@ type DefaultEndpoint struct {
 	statusCode   int
 }
 
-func newDefaultEndpoint(method string) *DefaultEndpoint {
+// NewDefaultEndpoint creates an Endpoint with given method
+func NewDefaultEndpoint(method string) *DefaultEndpoint {
 	return &DefaultEndpoint{
 		method: method,
 		query:  url.Values{},

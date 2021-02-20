@@ -32,7 +32,7 @@ type DeployResponse struct {
 // Kool Dev API for deploying your application.
 func NewDeploy(tarballPath string) *Deploy {
 	return &Deploy{
-		Endpoint:    newDefaultEndpoint("POST"),
+		Endpoint:    NewDefaultEndpoint("POST"),
 		env:         environment.NewEnvStorage(),
 		tarballPath: tarballPath,
 	}

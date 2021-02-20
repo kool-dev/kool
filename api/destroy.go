@@ -22,7 +22,7 @@ type DestroyResponse struct {
 // NewDefaultDestroyCall creates a new caller for Deploy API exec endpoint
 func NewDefaultDestroyCall() *DefaultDestroyCall {
 	return &DefaultDestroyCall{
-		Endpoint: newDefaultEndpoint("DELETE"),
+		Endpoint: NewDefaultEndpoint("DELETE"),
 	}
 }
 
