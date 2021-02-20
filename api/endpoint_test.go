@@ -152,9 +152,8 @@ func TestDoRequest(t *testing.T) {
 	}
 }
 
-func TestDoCall(t *testing.T) {
+func TestDoCallGet(t *testing.T) {
 	e := newFakeDefaultEndpoint("GET")
-
 	e.env.Set("KOOL_API_TOKEN", "fake token")
 
 	oldHTTPRequester := httpRequester
@@ -167,7 +166,7 @@ func TestDoCall(t *testing.T) {
 
 	apiBaseURL = "base-url"
 	e.SetContentType("content-type")
-	e.SetPath("/path")
+	e.SetPath("path")
 	e.Query().Set("foo", "bar")
 
 	if err := e.DoCall(); !errors.Is(err, httpErr) {
@@ -239,5 +238,51 @@ func TestDoCall(t *testing.T) {
 	}
 	if !httpRequester.(*fakeHTTP).resp.Body.(*fakeIOReaderCloser).calledClose {
 		t.Errorf("response was not closed")
+	}
+
+	e = newFakeDefaultEndpoint(" ")
+	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "invalid method") {
+		t.Errorf("unexpected error return from DoCall: %v", err)
+	}
+
+	e = newFakeDefaultEndpoint("GET")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+	httpRequester.(*fakeHTTP).err = errors.New("read error")
+	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "read error") {
+		t.Errorf("unexpected error return from DoCall: %v", err)
+	}
+}
+
+func TestDoCallPost(t *testing.T) {
+	e := newFakeDefaultEndpoint("POST")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+
+	oldHTTPRequester := httpRequester
+	defer func() {
+		httpRequester = oldHTTPRequester
+	}()
+
+	httpRequester = &fakeHTTP{resp: &http.Response{StatusCode: 200, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{data: []byte(`"response"`)},
+	}}}
+
+	e.SetRawBody(&fakeIOReader{})
+
+	var resp string
+	e.SetResponseReceiver(&resp)
+
+	if err := e.DoCall(); err != nil || resp != "response" {
+		t.Errorf("unexpected error; unexpected response: %v - %s", err, resp)
+	}
+
+	e.SetRawBody(nil)
+	e.Body().Set("foo", "bar")
+
+	if err := e.DoCall(); err != nil || resp != "response" {
+		t.Errorf("unexpected error; unexpected response: %v - %s", err, resp)
+	}
+
+	if e.contentType != "application/x-www-form-urlencoded" {
+		t.Errorf("bad contentType: %s", e.contentType)
 	}
 }
