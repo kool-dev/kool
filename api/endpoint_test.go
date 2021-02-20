@@ -247,8 +247,10 @@ func TestDoCallGet(t *testing.T) {
 
 	e = newFakeDefaultEndpoint("GET")
 	e.env.Set("KOOL_API_TOKEN", "fake token")
-	httpRequester.(*fakeHTTP).err = errors.New("read error")
-	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "read error") {
+	httpRequester.(*fakeHTTP).resp = &http.Response{StatusCode: 200, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{err: errors.New("read body error")},
+	}}
+	if err := e.DoCall(); err == nil || !strings.Contains(err.Error(), "read body error") {
 		t.Errorf("unexpected error return from DoCall: %v", err)
 	}
 }
