@@ -1,6 +1,6 @@
 ## kool stop
 
-Stop and destroy running containers started with 'kool start' command. If not SERVICE is specified as argument all containers will be stopped.
+Stop and destroy running containers started with 'kool start' command. If no SERVICE is specified as an argument all containers will be stopped.
 
 ```
 kool stop [SERVICE] [flags]

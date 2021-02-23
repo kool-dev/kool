@@ -29,5 +29,5 @@ Complete documentation is available at https://kool.dev/docs
 * [kool share](kool-share.md)	 - Live share your local environment through an HTTP tunnel with anyone, anywhere.
 * [kool start](kool-start.md)	 - Start the specified Kool environment containers. If no service is specified, start all.
 * [kool status](kool-status.md)	 - Shows the status for containers
-* [kool stop](kool-stop.md)	 - Stop and destroy running containers started with 'kool start' command. If not SERVICE is specified as argument all containers will be stopped.
+* [kool stop](kool-stop.md)	 - Stop and destroy running containers started with 'kool start' command. If no SERVICE is specified as an argument all containers will be stopped.
 
