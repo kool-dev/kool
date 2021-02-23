@@ -32,7 +32,7 @@ type DeployResponse struct {
 // Kool Dev API for deploying your application.
 func NewDeploy(tarballPath string) *Deploy {
 	return &Deploy{
-		Endpoint:    newDefaultEndpoint("POST"),
+		Endpoint:    NewDefaultEndpoint("POST"),
 		env:         environment.NewEnvStorage(),
 		tarballPath: tarballPath,
 	}
@@ -58,20 +58,16 @@ func (d *Deploy) SendFile() (err error) {
 	d.SetRawBody(body)
 	d.SetResponseReceiver(resp)
 	if err = d.DoCall(); err != nil {
-		return
-	}
-
-	code := d.StatusCode()
-
-	if code == http.StatusUnauthorized {
-		err = ErrUnauthorized
-	} else if code == http.StatusUnprocessableEntity {
-		err = ErrPayloadValidation
-	} else if code != http.StatusOK && code != http.StatusCreated {
-		err = ErrBadResponseStatus
-	}
-
-	if err != nil {
+		if errAPI, is := err.(*ErrAPI); is {
+			// override the error for a better message
+			if errAPI.Status == http.StatusUnauthorized {
+				err = ErrUnauthorized
+			} else if errAPI.Status == http.StatusUnprocessableEntity {
+				err = ErrPayloadValidation
+			} else if errAPI.Status != http.StatusOK && errAPI.Status != http.StatusCreated {
+				err = ErrBadResponseStatus
+			}
+		}
 		return
 	}
 

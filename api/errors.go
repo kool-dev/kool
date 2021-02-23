@@ -1,6 +1,9 @@
 package api
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // ErrBadAPIServer represents some issue in the API side
 var ErrBadAPIServer error
@@ -22,6 +25,22 @@ var ErrBadResponseStatus error
 
 // ErrUnexpectedResponse bad API response; please ask for support
 var ErrUnexpectedResponse error
+
+// ErrAPI reprents a default error returned from the API
+type ErrAPI struct {
+	Status  int
+	Message string `json:"message"`
+
+	Errors map[string]interface{} `json:"errors"`
+}
+
+// Error returns the string representation for the error
+func (e *ErrAPI) Error() string {
+	if e.Errors != nil {
+		return fmt.Sprintf("%d - %s (%v)", e.Status, e.Message, e.Errors)
+	}
+	return fmt.Sprintf("%d - %s", e.Status, e.Message)
+}
 
 func init() {
 	ErrBadAPIServer = errors.New("bad API server response")

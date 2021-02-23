@@ -33,6 +33,7 @@ func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 		Use:   "deploy",
 		Short: "Deploys your application using Kool Dev",
 		Run:   DefaultCommandRunFunction(deploy),
+		Args:  cobra.NoArgs,
 	}
 }
 
@@ -52,6 +53,7 @@ func init() {
 
 	rootCmd.AddCommand(deployCmd)
 	deployCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
+	deployCmd.AddCommand(NewDeployDestroyCommand(NewKoolDeployDestroy()))
 }
 
 // Execute runs the deploy logic.
