@@ -103,7 +103,7 @@ func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 	}
 
 	shareCmd.Flags().StringVarP(&share.Flags.Service, "service", "", "app", "The name of the local service container we want to share.")
-	shareCmd.Flags().StringVarP(&share.Flags.Subdomain, "subdomain", "", "", "The subdomain desired for subdomain.kool.dev.")
+	shareCmd.Flags().StringVarP(&share.Flags.Subdomain, "subdomain", "", "", "The subdomain desired for https://subdomain.kool.live.")
 	shareCmd.Flags().UintVarP(&share.Flags.Port, "port", "", 0, "The port from the target service that should be shared. If not provided it will default to port 80.")
 	return
 }
