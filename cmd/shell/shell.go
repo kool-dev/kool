@@ -26,14 +26,14 @@ var ErrLookPath = errors.New("command not found")
 
 // RecursiveCall is used to proxy self-executaion commands internally
 // instead of creating a whole new OS process
-var RecursiveCall func([]string) error
+var RecursiveCall func([]string, io.Reader, io.Writer, io.Writer) error
 
 // DefaultShell holds data for handling a shell
 type DefaultShell struct {
 	inStream  io.Reader
 	outStream io.Writer
 	errStream io.Writer
-	lookedUp  map[string]error
+	lookedUp  *lookupCache
 	env       environment.EnvStorage
 }
 
@@ -62,6 +62,7 @@ func NewShell() Shell {
 		outStream: os.Stdout,
 		errStream: os.Stderr,
 		env:       environment.NewEnvStorage(),
+		lookedUp:  newLookupCache(),
 	}
 }
 
@@ -99,14 +100,22 @@ func (s *DefaultShell) SetErrStream(errStream io.Writer) {
 // error/standard output, and an error if any.
 func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
 	var (
-		cmd  *exec.Cmd
-		out  []byte
-		args []string = command.Args()
-		exe  string   = command.Cmd()
+		cmd     *exec.Cmd
+		out     []byte
+		args    []string = command.Args()
+		exe     string   = command.Cmd()
+		verbose bool     = s.env.IsTrue("KOOL_VERBOSE")
 	)
 
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
+	}
+
+	if verbose {
+		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %v\n",
+			exe,
+			args,
+		)
 	}
 
 	cmd = execCmdFn(exe, args...)
@@ -114,77 +123,57 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	cmd.Stdin = s.InStream()
 	out, err = cmd.CombinedOutput()
 	outStr = strings.TrimSpace(string(out))
+	if err != nil && len(out) != 0 {
+		// let's use the actual output for error, appending practical exec error
+		// (most probably the later will be an non-zero exit status error)
+		err = fmt.Errorf("%s (%s)", outStr, err.Error())
+	}
 	return
 }
 
 // Interactive runs the given command proxying current Stdin/Stdout/Stderr
 // which makes it interactive for running even something like `bash`.
-func (s *DefaultShell) Interactive(command builder.Command, extraArgs ...string) (err error) {
+func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...string) (err error) {
 	var (
-		cmd            *exec.Cmd
-		parsedRedirect *DefaultParsedRedirect
-		exe            string   = command.Cmd()
-		args           []string = command.Args()
+		cmdptr  *CommandWithPointers
+		verbose bool = s.env.IsTrue("KOOL_VERBOSE")
+		command      = originalCmd.Copy()
 	)
 
-	if exe == "kool" && RecursiveCall != nil {
-		return RecursiveCall(args)
-	}
-
-	if len(extraArgs) > 0 {
-		args = append(args, extraArgs...)
-	}
-
-	if s.env.IsTrue("KOOL_VERBOSE") {
-		fmt.Println("$", exe, strings.Join(args, " "))
-	}
+	command.AppendArgs(extraArgs...)
 
 	// soon should refactor this onto a struct with methods
 	// so we can remove this too long list of returned values.
-	if parsedRedirect, err = parseRedirects(args, s); err != nil {
+	if cmdptr, err = parseRedirects(command, s); err != nil {
 		return
 	}
 
-	defer parsedRedirect.Close()
-
-	cmd = parsedRedirect.CreateCommand(exe)
-
-	if err = s.LookPath(command); err != nil {
-		err = ErrLookPath
-		return
+	if verbose {
+		checker := NewTerminalChecker()
+		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %v\n",
+			checker.IsTerminal(cmdptr.in),
+			checker.IsTerminal(cmdptr.out),
+			cmdptr.Command.Cmd(),
+			cmdptr.Command.Args(),
+		)
 	}
 
-	err = cmd.Start()
-
-	if err != nil {
-		return
-	}
-
-	waitCh := make(chan error, 1)
-	go func() {
-		waitCh <- cmd.Wait()
-		close(waitCh)
-	}()
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan)
-
-	// You need a for loop to handle multiple signals
-	for {
-		select {
-		case err = <-waitCh:
-			if err != nil {
-				log.Fatal(err)
-			}
-			return
-		case sig := <-sigChan:
-			if err := cmd.Process.Signal(sig); err != nil {
-				// check if it is something we should care about
-				if err.Error() != "os: process already finished" {
-					s.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
-				}
-			}
+	if cmdptr.Command.Cmd() == "kool" && RecursiveCall != nil {
+		if verbose {
+			fmt.Fprintln(s.ErrStream(), "[recursive call]")
 		}
+		err = RecursiveCall(cmdptr.Command.Args(), cmdptr.in, cmdptr.out, cmdptr.err)
+	} else {
+		if err = s.LookPath(cmdptr.Command); err != nil {
+			err = ErrLookPath
+			return
+		}
+
+		err = s.execute(cmdptr.Cmd())
+
+		defer cmdptr.Close()
 	}
+	return
 }
 
 // LookPath returns if the command exists
@@ -194,19 +183,19 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 		hasLooked bool
 	)
 
-	if s.lookedUp == nil {
-		s.lookedUp = make(map[string]error)
-	}
-
-	if err, hasLooked = s.lookedUp[exe]; err != nil {
+	if strings.HasPrefix(exe, "./") || strings.HasPrefix(exe, "/") || strings.HasPrefix(exe, "../") {
+		// either absolute/relative path... don't need to check
 		return
 	}
 
-	if !hasLooked && !strings.HasPrefix(exe, "./") && !strings.HasPrefix(exe, "/") {
-		// non-absolute/relative path... let's look it up on PATH
+	if hasLooked, err = s.lookedUp.fetch(exe); err != nil {
+		return
+	}
+
+	if !hasLooked {
 		_, err = execLookPathFn(exe)
 
-		s.lookedUp[exe] = err
+		s.lookedUp.set(exe, err)
 	}
 
 	return
@@ -280,4 +269,37 @@ func Warning(out ...interface{}) {
 // Success success message
 func Success(out ...interface{}) {
 	NewShell().Success(out)
+}
+
+func (s *DefaultShell) execute(cmd *exec.Cmd) (err error) {
+	if err = cmd.Start(); err != nil {
+		return
+	}
+
+	waitCh := make(chan error, 1)
+	go func() {
+		waitCh <- cmd.Wait()
+		close(waitCh)
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan)
+
+	// You need a for loop to handle multiple signals
+	for {
+		select {
+		case err = <-waitCh:
+			if err != nil {
+				log.Fatal(err)
+			}
+			return
+		case sig := <-sigChan:
+			if err := cmd.Process.Signal(sig); err != nil {
+				// check if it is something we should care about
+				if err.Error() != "os: process already finished" {
+					s.Error(fmt.Errorf("error sending signal to child process %v %v", sig, err))
+				}
+			}
+		}
+	}
 }

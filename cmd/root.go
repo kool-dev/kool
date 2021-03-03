@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 
@@ -37,12 +38,31 @@ Complete documentation is available at https://kool.dev/docs`,
 
 // Execute proxies the call to cobra root command
 func Execute() error {
-	shell.RecursiveCall = func(args []string) error {
-		rootCmd.SetArgs(args)
-		return rootCmd.Execute()
-	}
+	setRecursiveCall(rootCmd)
 
 	return rootCmd.Execute()
+}
+
+func setRecursiveCall(root *cobra.Command) {
+	shell.RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
+		root.SetArgs(args)
+
+		oldIn := root.InOrStdin()
+		oldOut := root.OutOrStdout()
+		oldErr := root.ErrOrStderr()
+
+		root.SetIn(in)
+		root.SetOut(out)
+		root.SetErr(err)
+
+		defer func() {
+			root.SetIn(oldIn)
+			root.SetOut(oldOut)
+			root.SetErr(oldErr)
+		}()
+
+		return root.Execute()
+	}
 }
 
 // RootCmd exposes the root command

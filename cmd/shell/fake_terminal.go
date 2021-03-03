@@ -7,7 +7,7 @@ type FakeTerminalChecker struct {
 }
 
 // IsTerminal implements fake IsTerminal
-func (f *FakeTerminalChecker) IsTerminal(in interface{}, out interface{}) (isTerminal bool) {
+func (f *FakeTerminalChecker) IsTerminal(fds ...interface{}) (isTerminal bool) {
 	f.CalledIsTerminal = true
 	isTerminal = f.MockIsTerminal
 	return

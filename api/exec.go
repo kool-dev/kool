@@ -24,7 +24,7 @@ type ExecResponse struct {
 // NewDefaultExecCall creates a new caller for Deploy API exec endpoint
 func NewDefaultExecCall() *DefaultExecCall {
 	return &DefaultExecCall{
-		Endpoint: newDefaultEndpoint("POST"),
+		Endpoint: NewDefaultEndpoint("POST"),
 	}
 }
 

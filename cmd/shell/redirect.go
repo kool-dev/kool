@@ -2,6 +2,7 @@ package shell
 
 import (
 	"io"
+	"kool-dev/kool/cmd/builder"
 	"os"
 	"os/exec"
 )
@@ -21,12 +22,21 @@ const OutputRedirect string = ">"
 // written in append mode to the destiny pointed by the right part.
 const OutputRedirectAppend string = ">>"
 
-// DefaultParsedRedirect holds parsed redirect data
-type DefaultParsedRedirect struct {
-	args        []string
-	shell       Shell
-	closeStdin  bool
-	closeStdout bool
+// OutputPipe holds the key to indicate the output from
+// the left command up to this key is meant to be
+// written as input the command in the right part of it.
+const OutputPipe string = "|"
+
+// CommandWithPointers holds the set of file descriptors to be used for
+// executing the given command.
+type CommandWithPointers struct {
+	builder.Command
+
+	in       io.Reader
+	out, err io.Writer
+
+	hasCustomStdin  bool
+	hasCustomStdout bool
 }
 
 // ParsedRedirect holds logic for parsed redirect
@@ -35,69 +45,121 @@ type ParsedRedirect interface {
 }
 
 // Close closes reader and writer if necessary
-func (p *DefaultParsedRedirect) Close() {
-	if p.closeStdin {
-		p.shell.InStream().(io.WriteCloser).Close()
+func (c *CommandWithPointers) Close() {
+	if c.hasCustomStdin {
+		if cl, ok := c.in.(io.Closer); ok {
+			cl.Close()
+		}
 	}
-	if p.closeStdout {
-		p.shell.OutStream().(io.WriteCloser).Close()
+	if c.hasCustomStdout {
+		if cl, ok := c.out.(io.WriteCloser); ok {
+			cl.Close()
+		}
 	}
 }
 
-// CreateCommand creates a new *exec.Command for given executable
-func (p *DefaultParsedRedirect) CreateCommand(executable string) (cmd *exec.Cmd) {
-	cmd = execCmdFn(executable, p.args...)
+// Cmd creates a new *exec.Command for given command
+func (c *CommandWithPointers) Cmd() (cmd *exec.Cmd) {
+	cmd = execCmdFn(c.Command.Cmd(), c.Command.Args()...)
 	cmd.Env = os.Environ()
-	cmd.Stdout = p.shell.OutStream()
-	cmd.Stderr = p.shell.ErrStream()
-	cmd.Stdin = p.shell.InStream()
+	cmd.Stdout = c.out
+	cmd.Stderr = c.err
+	cmd.Stdin = c.in
 	return
 }
 
-func parseRedirects(originalArgs []string, originalShell Shell) (parsed *DefaultParsedRedirect, err error) {
+func hasRedirect(command builder.Command) bool {
+	var count int = len(command.Args())
+
+	if count < 2 {
+		return false
+	}
+
+	check := command.Args()[count-2]
+
+	return check == InputRedirect || check == OutputRedirect || check == OutputRedirectAppend
+}
+
+func parseRedirects(command builder.Command, sh Shell) (cmdptr *CommandWithPointers, err error) {
+	if !hasRedirect(command) {
+		// lastly command which does not have a redirect
+		cmdptr = &CommandWithPointers{
+			Command: command,
+			in:      sh.InStream(),
+			out:     sh.OutStream(),
+			err:     sh.ErrStream(),
+		}
+		return
+	}
+
+	if cmdptr, err = splitRedirect(command); err != nil {
+		return
+	}
+
+	var chainedCmdptr *CommandWithPointers
+	// process chained redirects like "cmd < input > output"
+	if chainedCmdptr, err = parseRedirects(cmdptr.Command, sh); err != nil {
+		return
+	}
+
+	if cmdptr.hasCustomStdin {
+		chainedCmdptr.in = cmdptr.in
+		chainedCmdptr.hasCustomStdin = cmdptr.hasCustomStdin
+	}
+	if cmdptr.hasCustomStdout {
+		chainedCmdptr.out = cmdptr.out
+		chainedCmdptr.hasCustomStdout = cmdptr.hasCustomStdout
+	}
+
+	cmdptr = chainedCmdptr
+
+	return
+}
+
+func splitRedirect(cmd builder.Command) (cmdptr *CommandWithPointers, err error) {
 	var (
-		numArgs int
+		args    = cmd.Args()
+		numArgs = len(args)
 		inFile  io.ReadCloser
 		outFile io.WriteCloser
 	)
 
-	parsed = &DefaultParsedRedirect{originalArgs, originalShell, false, false}
-
-	if numArgs = len(parsed.args); numArgs < 2 {
-		return
-	}
-
 	// check the before-last position of the command
 	// for some redirect key and properly handle them.
-	switch parsed.args[numArgs-2] {
+
+	switch args[numArgs-2] {
 	case InputRedirect:
 		{
-			if inFile, err = os.OpenFile(parsed.args[numArgs-1], os.O_RDONLY, os.ModePerm); err != nil {
+			if inFile, err = os.OpenFile(args[numArgs-1], os.O_RDONLY, os.ModePerm); err != nil {
 				return
 			}
-			parsed.shell.SetInStream(inFile)
-			parsed.closeStdin = true
 		}
 	case OutputRedirect, OutputRedirectAppend:
 		{
 			var mode int = os.O_CREATE | os.O_WRONLY
-			if parsed.args[numArgs-2] == OutputRedirectAppend {
+			if args[numArgs-2] == OutputRedirectAppend {
 				mode |= os.O_APPEND
 			} else {
 				mode |= os.O_TRUNC
 			}
 
-			if outFile, err = os.OpenFile(parsed.args[numArgs-1], mode, os.ModePerm); err != nil {
+			if outFile, err = os.OpenFile(args[numArgs-1], mode, os.ModePerm); err != nil {
 				return
 			}
-			parsed.shell.SetOutStream(outFile)
-			parsed.closeStdout = true
 		}
 	}
 
-	if parsed.closeStdin || parsed.closeStdout {
-		// fix arguments removing the redirect
-		parsed.args = parsed.args[:numArgs-2]
+	cmdptr = &CommandWithPointers{
+		Command: builder.NewCommand(cmd.Cmd(), args[:numArgs-2]...),
+	}
+
+	if inFile != nil {
+		cmdptr.in = inFile
+		cmdptr.hasCustomStdin = true
+	}
+	if outFile != nil {
+		cmdptr.out = outFile
+		cmdptr.hasCustomStdout = true
 	}
 
 	return

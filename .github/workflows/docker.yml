@@ -6,7 +6,7 @@ on:
     - '*'
 
 jobs:
-  build:
+  docker-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +19,7 @@ jobs:
     - name: Build image
       env:
         TAGNAME: ${{ steps.tagName.outputs.tag }}
-      run: docker build --build-arg BUILD_VERSION=$TAGNAME --pull -t kooldev/kool:$TAGNAME .
+      run: docker build --build-arg BUILD_VERSION=$TAGNAME --pull -t kooldev/kool:$TAGNAME -t kooldev/kool:4scan .
 
     - name: Test image
       env:
@@ -29,7 +29,7 @@ jobs:
     - name: Scan image
       uses: anchore/scan-action@v2
       with:
-        image: "kooldev/kool:$TAGNAME"
+        image: "kooldev/kool:4scan"
         fail-build: true
         severity-cutoff: critical
 

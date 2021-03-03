@@ -4,19 +4,21 @@ import "github.com/moby/term"
 
 // TerminalChecker holds logic to check if environment is a terminal
 type TerminalChecker interface {
-	IsTerminal(interface{}, interface{}) bool
+	IsTerminal(...interface{}) bool
 }
 
-// DefaultTerminalChecker holds data to check if environment is a terminal
+// DefaultTerminalChecker holds logic to check if file descriptors are a TTY
 type DefaultTerminalChecker struct{}
 
 // IsTerminal checks if input is a terminal
-func (t *DefaultTerminalChecker) IsTerminal(in interface{}, out interface{}) (isTerminal bool) {
-	_, inIsTerminal := term.GetFdInfo(in)
-	_, outIsTerminal := term.GetFdInfo(out)
+func (t *DefaultTerminalChecker) IsTerminal(fds ...interface{}) bool {
+	for i := range fds {
+		if _, isTerminal := term.GetFdInfo(fds[i]); !isTerminal {
+			return false
+		}
+	}
 
-	isTerminal = inIsTerminal && outIsTerminal
-	return
+	return true
 }
 
 // NewTerminalChecker creates a new terminal checker

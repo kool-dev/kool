@@ -18,8 +18,9 @@ type KoolStop struct {
 	DefaultKoolService
 	Flags *KoolStopFlags
 
-	check  checker.Checker
-	doStop builder.Command
+	check checker.Checker
+	down  builder.Command
+	rm    builder.Command
 }
 
 func init() {
@@ -39,29 +40,48 @@ func NewKoolStop() *KoolStop {
 		&KoolStopFlags{false},
 		checker.NewChecker(defaultKoolService.shell),
 		compose.NewDockerCompose("down"),
+		compose.NewDockerCompose("rm"),
 	}
 }
 
 // Execute runs the stop logic with incoming arguments.
 func (s *KoolStop) Execute(args []string) (err error) {
+	var stopCommand builder.Command
+
 	if err = s.check.Check(); err != nil {
 		return
 	}
 
-	if s.Flags.Purge {
-		s.doStop.AppendArgs("--volumes", "--remove-orphans")
+	if len(args) == 0 {
+		// no specific services passed in, so we gonna 'docker-compose down'
+		if s.Flags.Purge {
+			s.down.AppendArgs("--volumes", "--remove-orphans")
+		}
+
+		stopCommand = s.down
+	} else {
+		// we should only stop some services!
+		s.rm.AppendArgs("-s", "-f") // stops containers; no interactive
+		if s.Flags.Purge {
+			s.rm.AppendArgs("-v") // removes volumes
+
+			s.Warning("Attention: when stopping specific services, only anonymous volumes will be removed.")
+		}
+
+		s.rm.AppendArgs(args...)
+
+		stopCommand = s.rm
 	}
 
-	err = s.Interactive(s.doStop)
+	err = s.Interactive(stopCommand)
 	return
 }
 
 // NewStopCommand initializes new kool stop command
 func NewStopCommand(stop *KoolStop) (stopCmd *cobra.Command) {
 	stopCmd = &cobra.Command{
-		Use:   "stop",
-		Short: "Stop all running containers started with 'kool start' command",
-		Args:  cobra.NoArgs,
+		Use:   "stop [SERVICE]",
+		Short: "Stop and destroy running containers started with 'kool start' command. If no SERVICE is specified as an argument all containers will be stopped.",
 		Run:   DefaultCommandRunFunction(stop),
 	}
 

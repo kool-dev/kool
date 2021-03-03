@@ -22,9 +22,13 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/go/pkg
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-kool-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-
+          ${{ runner.os }}-kool-
+    - name: Download dependencies
+      run: |
+        go mod download
+        go install
     - name: Test
       if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
       run: go test ./...
