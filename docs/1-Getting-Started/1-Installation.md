@@ -2,7 +2,7 @@
 
 ### Requirements
 
-**kool** is powered by **Docker**. To use **kool**, you need to **[install the Docker Engine](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)** on your machine, and make sure they're both running.
+**kool** is powered by **Docker**. To use **kool**, you need to **[install the Docker Engine](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)** on your local machine, and make sure they're both running.
 
 > Docker Compose is included with **Docker Desktop for Mac** and **Docker Desktop for Windows**.
 
@@ -22,9 +22,9 @@ Install **kool** by downloading the appropriate installer from [https://github.c
 
 Verify **kool** is installed correctly by running `kool` in your terminal to see a list of available commands.
 
-## Update to a Newer Version
+## Stay Up-to-Date
 
-Update **kool** using the `self-update` command. This command will compare your local version with the latest release, and, if a newer version is available, automatically download and install it.
+Update **kool** to a newer version using the `self-update` command. This command will compare your local version with the latest release, and, if a newer version is available, automatically download and install it.
 
 ```bash
 $ kool self-update
@@ -90,4 +90,4 @@ Permanently enable autocompletion for **all sessions**:
 $ kool completion fish > ~/.config/fish/completions/kool.fish
 ```
 
-> After running the above command, remember to start a new shell for autocompletion to take effect.
+> After running one of the above commands, remember to start a new shell for autocompletion to take effect.
