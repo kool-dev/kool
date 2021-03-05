@@ -5,6 +5,8 @@ services:
       - cache:/data:delegated
     networks:
       - kool_local
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
 
 volumes:
   cache:
