@@ -20,6 +20,8 @@ Use the `kool create <preset> <project-name>` command to create your new project
 $ kool create laravel my-project
 ```
 
+Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist laravel/laravel <project-name>` (using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:7.4</a>).
+
 After installing Laravel, `kool create` automatically runs the `kool preset laravel` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
@@ -78,14 +80,6 @@ MySQL 5.7 and 8.0
 ```diff
 -DB_HOST=127.0.0.1
 +DB_HOST=database
-
-# Connect as the `root` user
--DB_PASSWORD=
-+DB_PASSWORD=rootpass
-
-# OPTIONAL: Change the name of your database
--DB_DATABASE=laravel
-+DB_DATABASE=myproject
 ```
 
 PostgreSQL 13.0
@@ -155,12 +149,12 @@ scripts:
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project.
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
-
 ```bash
 # CAUTION: this script will reset your `.env` file with `.env.example`
 $ kool run setup
 ```
+
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
 
 Once `kool run setup` finishes, you should be able to access your site at [http://localhost](http://localhost).
 
