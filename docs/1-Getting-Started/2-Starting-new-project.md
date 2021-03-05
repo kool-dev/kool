@@ -1,18 +1,18 @@
+> We use Laravel as an example, but **kool** is a **multi-stack** tool that can be used with any language and framework. [Check out our presets](/docs/presets/introduction) for easily creating projects using other frameworks (e.g. WordPress, Symfony, Next.js, Nuxt.js, NestJS, Adonis, Hugo, etc).
+
 ## Start a New Project with Docker in 3 Easy Steps
 
 1. Run `kool create`
 2. Update **.env.example**
-3. Run`kool run setup`
+3. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new projects is that easy!
+> Yes, using **kool** + Docker to create, work on, and switch between projects is that easy!
 
 ### Requirements
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
 ### 1. Run `kool create`
-
-> We'll use Laravel as an example, but **kool** is a **multi-stack** tool that can be used with any language and framework. [Check out our presets](/docs/presets/introduction) for easily creating projects using other frameworks (e.g. WordPress, Symfony, Next.js, Nuxt.js, NestJS, and Adonis).
 
 Use the `kool create <preset> <project-name>` command to create your new project.
 
@@ -51,7 +51,7 @@ Preset laravel is initializing!
 $ Preset laravel initialized!
 ```
 
-Now, move into your new project:
+Now, move into your new project.
 
 ```bash
 $ cd my-project
@@ -69,7 +69,7 @@ The `kool preset` command auto-generated the following configuration files and a
 
 ### 2. Update .env.example
 
-You need to update Laravel's **.env.example** file with default values that match the services in your **docker-compose.yml** file.
+You need to update Laravel's **.env.example** file with some default values that match the services in your **docker-compose.yml** file.
 
 #### Database Services
 
@@ -121,9 +121,9 @@ Memcached
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-As mentioned above, the `kool preset` command added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run <script>` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in a sequence (see `setup` below).
+As mentioned above, the `kool preset` command added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run <script>` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
-To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the wizard).
+To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard).
 
 ```yaml
 scripts:
@@ -151,7 +151,7 @@ scripts:
   yarn: kool docker kooldev/node:14 yarn
 ```
 
-**kool.yml** always includes a script called `setup`, which helps you start a project for the first time.
+**kool.yml** always includes a script called `setup`, which helps you spin up a project for the first time.
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project.
 
@@ -164,7 +164,7 @@ $ kool run setup
 
 Once `kool run setup` finishes, you should be able to access your site at [http://localhost](http://localhost).
 
-> Now, you can also connect to your database container using `kool run mysql` or `kool run psql`. W00t!
+> Now, you can easily start a new SQL shell inside your Docker database container using `kool run mysql` or `kool run psql`. W00t!
 
 ### Staying kool
 
