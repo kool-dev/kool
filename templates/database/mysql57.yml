@@ -10,9 +10,11 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-    - database:/var/lib/mysql:delegated
+      - database:/var/lib/mysql:delegated
     networks:
-    - kool_local
+      - kool_local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
 
 volumes:
   database:

@@ -68,6 +68,8 @@ volumes:
       - cache:/data:delegated
     networks:
       - kool_local
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
 
 volumes:
   cache:
@@ -80,21 +82,23 @@ volumes:
     ports:
       - "${KOOL_DATABASE_PORT:-3306}:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
-      MYSQL_DATABASE: "${DB_DATABASE:-database}"
-      MYSQL_USER: "${DB_USERNAME:-user}"
-      MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE-database}"
+      MYSQL_USER: "${DB_USERNAME-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-    - database:/var/lib/mysql:delegated
+      - database:/var/lib/mysql:delegated
     networks:
-    - kool_local
+      - kool_local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
 
 volumes:
   database:
 
 scripts:
-  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USERNAME $DB_DATABASE
 `,
 		"mysql8.yml": `services:
   database:
@@ -103,42 +107,46 @@ scripts:
     ports:
       - "${KOOL_DATABASE_PORT:-3306}:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
-      MYSQL_DATABASE: "${DB_DATABASE:-database}"
-      MYSQL_USER: "${DB_USERNAME:-user}"
-      MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE-database}"
+      MYSQL_USER: "${DB_USERNAME-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD-pass}"
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     volumes:
-    - database:/var/lib/mysql:delegated
+      - database:/var/lib/mysql:delegated
     networks:
-    - kool_local
+      - kool_local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
 
 volumes:
   database:
 
 scripts:
-  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USERNAME $DB_DATABASE
 `,
 		"postgresql13.yml": `services:
   database:
     image: postgres:13-alpine
     ports:
-      - "${KOOL_DATABASE_PORT:-3306}:3306"
+      - "${KOOL_DATABASE_PORT:-5432}:5432"
     environment:
-      POSTGRES_DB: "${DB_DATABASE:-database}"
-      POSTGRES_USER: "${DB_USERNAME:-user}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD:-pass}"
+      POSTGRES_DB: "${DB_DATABASE-database}"
+      POSTGRES_USER: "${DB_USERNAME-user}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD-pass}"
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
-    - database:/var/lib/postgresql/data:delegated
+      - database:/var/lib/postgresql/data:delegated
     networks:
-    - kool_local
+      - kool_local
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "$DB_DATABASE", "-U", "$DB_USERNAME"]
 
 volumes:
   database:
 
 scripts:
-  psql: kool exec --env=PGPASSWORD=${DB_PASSWORD} database psql --username=${DB_USERNAME}
+  psql: kool exec -e PGPASSWORD=$DB_PASSWORD database psql -U $DB_USERNAME $DB_DATABASE
 `,
 	}
 	templates["scripts"] = map[string]string{

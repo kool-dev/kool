@@ -9,9 +9,11 @@ services:
       POSTGRES_PASSWORD: "${DB_PASSWORD-pass}"
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
-    - database:/var/lib/postgresql/data:delegated
+      - database:/var/lib/postgresql/data:delegated
     networks:
-    - kool_local
+      - kool_local
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "$DB_DATABASE", "-U", "$DB_USERNAME"]
 
 volumes:
   database:
