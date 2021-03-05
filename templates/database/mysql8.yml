@@ -19,4 +19,4 @@ volumes:
   database:
 
 scripts:
-  mysql: kool exec -e MYSQL_PWD=${DB_PASSWORD} database mysql -uroot
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USERNAME $DB_DATABASE
