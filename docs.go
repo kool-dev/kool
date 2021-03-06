@@ -48,7 +48,12 @@ func main() {
 
 		cmdOutput := new(bytes.Buffer)
 
-		err = doc.GenMarkdown(childCmd, cmdOutput)
+		linkHandler := func(cmdName string) string {
+			base := strings.TrimSuffix(cmdName, filepath.Ext(cmdName))
+			return strings.ToLower(base)
+		}
+
+		err = doc.GenMarkdownCustom(childCmd, cmdOutput, linkHandler)
 
 		if err != nil {
 			log.Fatal(err)
