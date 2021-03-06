@@ -97,13 +97,13 @@ func (s *KoolShare) Execute(args []string) (err error) {
 func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 	shareCmd = &cobra.Command{
 		Use:   "share",
-		Short: "Live share your local environment through an HTTP tunnel with anyone, anywhere.",
+		Short: "Live share your local environment with anyone, anywhere using an HTTP tunnel.",
 		Args:  cobra.NoArgs,
 		Run:   DefaultCommandRunFunction(share),
 	}
 
-	shareCmd.Flags().StringVarP(&share.Flags.Service, "service", "", "app", "The name of the local service container we want to share.")
-	shareCmd.Flags().StringVarP(&share.Flags.Subdomain, "subdomain", "", "", "The subdomain desired for https://subdomain.kool.live.")
-	shareCmd.Flags().UintVarP(&share.Flags.Port, "port", "", 0, "The port from the target service that should be shared. If not provided it will default to port 80.")
+	shareCmd.Flags().StringVarP(&share.Flags.Service, "service", "", "app", "The name of the local service container you want to share.")
+	shareCmd.Flags().StringVarP(&share.Flags.Subdomain, "subdomain", "", "", "The subdomain used to generate your public https://subdomain.kool.live URL.")
+	shareCmd.Flags().UintVarP(&share.Flags.Port, "port", "", 0, "The port from the target service that should be shared. If not provided, it will default to port 80.")
 	return
 }

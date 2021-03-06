@@ -86,14 +86,14 @@ func (e *KoolExec) Execute(args []string) (err error) {
 func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 	execCmd = &cobra.Command{
 		Use:   "exec [options] [service] [command]",
-		Short: "Execute a command within a running service container",
+		Short: "Execute a [command] inside the specified [service] container.",
 		Args:  cobra.MinimumNArgs(2),
 		Run:   DefaultCommandRunFunction(exec),
 	}
 
-	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
-	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
-	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
+	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")
+	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
+	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background.")
 
 	//After a non-flag arg, stop parsing flags
 	execCmd.Flags().SetInterspersed(false)

@@ -21,7 +21,7 @@ func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 		Use:   "kool",
 		Short: "kool - Kool stuff",
 		Long: `An easy and robust software development environment
-tool helping you from project creation until deployment.
+tool helping you from project creation through deployment.
 Complete documentation is available at https://kool.dev/docs`,
 		Version:           version,
 		DisableAutoGenTag: true,
