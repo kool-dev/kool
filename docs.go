@@ -24,11 +24,16 @@ func main() {
 		koolFile   *os.File
 	)
 
+	linkHandler := func(filename string) string {
+		base := strings.TrimSuffix(filename, filepath.Ext(filename))
+		return strings.ToLower(base)
+	}
+
 	fmt.Println("Going to generate cobra docs in markdown...")
 
 	koolOutput = new(bytes.Buffer)
 
-	err = doc.GenMarkdown(cmd.RootCmd(), koolOutput)
+	err = doc.GenMarkdownCustom(cmd.RootCmd(), koolOutput, linkHandler)
 
 	if err != nil {
 		log.Fatal(err)
@@ -47,11 +52,6 @@ func main() {
 		koolMarkdown = strings.Replace(koolMarkdown, cmdName, newName, -1)
 
 		cmdOutput := new(bytes.Buffer)
-
-		linkHandler := func(cmdName string) string {
-			base := strings.TrimSuffix(cmdName, filepath.Ext(cmdName))
-			return strings.ToLower(base)
-		}
 
 		err = doc.GenMarkdownCustom(childCmd, cmdOutput, linkHandler)
 
