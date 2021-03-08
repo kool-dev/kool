@@ -2,69 +2,92 @@
 
 ### Requirements
 
-Kool is powered by **[Docker](https://docs.docker.com/get-docker/)**, you need to have it installed on your machine.
+**kool** is powered by **Docker**. To use **kool**, you need to **[install the Docker Engine](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)** on your local machine, and make sure they're both running.
 
-### For Linux and MacOS
+> Docker Compose is included with **Docker Desktop for Mac** and **Docker Desktop for Windows**.
 
-To install **kool** simply run the following script.
+### For Linux and macOS
+
+Install **kool** by running the following script. It will download the latest **kool** binary from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases), and save it in your `/usr/local/bin` folder.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kool-dev/kool/master/install.sh | sudo bash
+$ curl -fsSL https://kool.dev/install | bash
 ```
-
-All this script will do is download latest kool bin from https://github.com/kool-dev/kool/releases for your OS and put in your `/usr/local/bin` folder.
 
 ### For Windows
 
-Download the installer [here](https://github.com/kool-dev/kool/releases)
+Install **kool** by downloading the appropriate installer from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases). At the bottom of the release notes for the latest version, expand the list of "Assets", and download the installer that matches your machine.
 
-To check if everything looks good simply run **kool** to see the list of available commands.
+### Verification
 
-## Updating to a newer version
+Verify **kool** is installed correctly by running `kool` in your terminal to see a list of available commands.
 
-When a new version is released you can obtain it with the builtin command `self-update`:
+## Stay Up-to-Date
+
+Update **kool** to a newer version using the `self-update` command. This command will compare your local version with the latest release, and, if a newer version is available, automatically download and install it.
 
 ```bash
-sudo kool self-update
+$ kool self-update
 ```
 
-This will check the latest realease and download/install it case there is a newer version.
-
-**Alternative**: in order to get a new release you can always repeat the installation steps provided above as well, which should get you the latest version.
-
-> We suggest that you *start* and sign up for new releases notifications on our Github main repository so you always will stay up to date with our latest features!
+> Sign up for new release notifications and stay up-to-date on our latest features! [Go to our main GitHub repository](https://github.com/kool-dev/kool), click on "Watch" at the top, select the "Custom" option, check "Releases", and hit Apply.
 
 ## Autocompletion
 
-To load completions:
+If you want to use **kool** autocompletion in your Unix shell, follow the appropriate instructions below.
 
 ### Bash
 
-`$ source <(kool completion bash)`
+Temporarily enable autocompletion for your **current session only**:
 
-To load completions for each session, execute once:
+```bash
+$ source <(kool completion bash)
+```
+
+Permanently enable autocompletion for **all sessions**:
 
 Linux:
-  `$ kool completion bash > /etc/bash_completion.d/kool`
-MacOS:
-  `$ kool completion bash > /usr/local/etc/bash_completion.d/kool`
+
+```bash
+$ kool completion bash > /etc/bash_completion.d/kool
+```
+
+macOS:
+
+```bash
+$ kool completion bash > /usr/local/etc/bash_completion.d/kool
+```
+
+> After running one of the above commands, remember to start a new shell for autocompletion to take effect.
 
 ### Zsh
 
-**If shell completion is not already enabled in your environment you will need to enable it**.  You can execute the following once:
+If Zsh tab completion is not already initialized on your machine, run the following command to turn it on.
 
-`$ echo "autoload -U compinit; compinit" >> ~/.zshrc`
+```bash
+$ echo "autoload -U compinit; compinit" >> ~/.zshrc
+```
 
-To load completions for each session, execute once:
+Permanently enable autocompletion for **all sessions**:
 
-`$ kool completion zsh > "${fpath[1]}/_kool"`
+```bash
+$ kool completion zsh > "${fpath[1]}/_kool"
+```
 
-**You will need to start a new shell for this setup to take effect**.
+> After running the above command, remember to start a new shell for autocompletion to take effect.
 
 ### Fish
 
-`$ kool completion fish | source`
+Temporarily enable autocompletion for your **current session only**:
 
-To load completions for each session, execute once:
+```bash
+$ kool completion fish | source
+```
 
-`$ kool completion fish > ~/.config/fish/completions/kool.fish`
+Permanently enable autocompletion for **all sessions**:
+
+```bash
+$ kool completion fish > ~/.config/fish/completions/kool.fish
+```
+
+> After running one of the above commands, remember to start a new shell for autocompletion to take effect.
