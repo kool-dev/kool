@@ -22,5 +22,5 @@ kool logs [options] [service...] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - kool - Kool stuff
 
