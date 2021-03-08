@@ -35,7 +35,7 @@ commands:
 	configs["laravel"] = `language: php
 commands:
   create:
-  - kool docker kooldev/php:7.4 composer create-project --prefer-dist laravel/laravel $CREATE_DIRECTORY
+  - kool docker kooldev/php:7.4 composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
 questions:
   compose:
     - key: app
