@@ -30,3 +30,4 @@ Complete documentation is available at https://kool.dev/docs
 * [kool start](kool-start)	 - Start the specified [service] containers. If no [service] is provided, all containers will be started.
 * [kool status](kool-status)	 - Show the status of all service containers.
 * [kool stop](kool-stop)	 - Stop and destroy running [service] containers started with the 'kool start' command. If no [service] is provided, all containers will be stopped.
+
