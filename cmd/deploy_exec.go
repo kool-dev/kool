@@ -27,8 +27,8 @@ type KoolDeployExec struct {
 // NewDeployExecCommand initializes new kool deploy Cobra command
 func NewDeployExecCommand(deployExec *KoolDeployExec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "exec [service]",
-		Short: "Executes a command in a service from your deployed application on Kool cloud",
+		Use:   "exec [service] [command]",
+		Short: "Execute a [command] in the specified [service] container running in the Kool Cloud.",
 		Args:  cobra.MinimumNArgs(1),
 		Run:   DefaultCommandRunFunction(deployExec),
 	}

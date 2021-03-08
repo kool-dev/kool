@@ -24,7 +24,7 @@ type KoolStart struct {
 // NewStartCommand initializes new kool start Cobra command
 func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
-		Use:                   "start [service]",
+		Use:                   "start [service...]",
 		Short:                 "Start the specified [service] containers. If no [service] is provided, all containers will be started.",
 		Run:                   DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd})),
 		DisableFlagsInUseLine: true,
