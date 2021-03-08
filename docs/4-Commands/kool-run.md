@@ -1,9 +1,9 @@
 ## kool run
 
-Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
+Run the specified [command], which are defined as scripts in a kool.yml file located in the working directory or in the kool folder of the user's home directory.
 
 ```
-kool run [SCRIPT] [flags]
+kool run [command] [flags]
 ```
 
 ### Options
@@ -20,5 +20,5 @@ kool run [SCRIPT] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - kool - Kool stuff
 

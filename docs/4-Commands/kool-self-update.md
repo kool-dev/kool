@@ -1,10 +1,10 @@
 ## kool self-update
 
-Update kool to latest version
+Update kool to the latest version.
 
 ### Synopsis
 
-Checks for the latest release of Kool on Github Releases, downloads and replaces the local binary if a newer version is available.
+Checks the latest release of Kool in GitHub Releases, and downloads and replaces the local binary if a newer version is available.
 
 ```
 kool self-update [flags]
@@ -24,5 +24,5 @@ kool self-update [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - kool - Kool stuff
 

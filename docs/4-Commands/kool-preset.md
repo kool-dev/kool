@@ -1,9 +1,9 @@
 ## kool preset
 
-Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
+Initialize the specified kool [preset] in the current working directory. If no [preset] argument is provided, you'll be prompted to pick an existing option.
 
 ```
-kool preset [PRESET] [flags]
+kool preset [preset] [flags]
 ```
 
 ### Options
@@ -20,5 +20,5 @@ kool preset [PRESET] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - kool - Kool stuff
 

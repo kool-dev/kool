@@ -1,9 +1,9 @@
 ## kool start
 
-Start the specified Kool environment containers. If no service is specified, start all.
+Start the specified [service] containers. If no [service] is provided, all containers will be started.
 
 ```
-kool start [SERVICE]
+kool start [service...]
 ```
 
 ### Options
@@ -20,5 +20,5 @@ kool start [SERVICE]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - kool - Kool stuff
 
