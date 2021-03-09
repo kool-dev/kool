@@ -18,7 +18,7 @@ type KoolInfo struct {
 func NewInfoCmd(info *KoolInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "info",
-		Short: "Prints out information about kool setup (like environment variables)",
+		Short: "Print out information about the kool setup (such as environment variables).",
 		Run:   DefaultCommandRunFunction(info),
 		Args:  cobra.MaximumNArgs(1),
 	}

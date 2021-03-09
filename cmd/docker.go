@@ -83,20 +83,20 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 // NewDockerCommand initializes new kool docker command
 func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
-		Use:   "docker [options] [image] [command]",
+		Use:   "docker [option...] [image] [command]",
 		Args:  cobra.MinimumNArgs(1),
-		Short: "Creates a new container and runs the command in it.",
-		Long: `This command acts as a helper for docker run.
-You can start with options that go before the image name
-for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
-the image name and the command you want to execute on that image.`,
+		Short: "Create a new container using the specified [image] and run a [command] inside it.",
+		Long: `This command acts as a helper for 'docker run'.
+You can provide one or more [option...] before the [image] name that will be used
+by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
+the [image] name and the [command] you want to execute on that [image].`,
 		Run: DefaultCommandRunFunction(docker),
 	}
 
-	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
-	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
-	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
-	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")
+	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
 
 	//After a non-flag arg, stop parsing flags
 	cmd.Flags().SetInterspersed(false)

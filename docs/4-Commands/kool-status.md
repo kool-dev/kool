@@ -1,6 +1,6 @@
 ## kool status
 
-Shows the status for containers
+Show the status of all service containers.
 
 ```
 kool status [flags]

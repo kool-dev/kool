@@ -1,17 +1,17 @@
 ## kool exec
 
-Execute a command within a running service container
+Execute a [command] inside the specified [service] container.
 
 ```
-kool exec [options] [service] [command] [flags]
+kool exec [option...] [service] [command] [flags]
 ```
 
 ### Options
 
 ```
-  -d, --detach            Detached mode: Run command in the background
-  -T, --disable-tty       Deprecated - no effect
-  -e, --env stringArray   Environment variables
+  -d, --detach            Detached mode: Run command in the background.
+  -T, --disable-tty       Deprecated - no effect.
+  -e, --env stringArray   Environment variables.
   -h, --help              help for exec
 ```
 

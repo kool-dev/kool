@@ -1,6 +1,6 @@
 ## kool info
 
-Prints out information about kool setup (like environment variables)
+Print out information about the kool setup (such as environment variables).
 
 ```
 kool info [flags]
