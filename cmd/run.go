@@ -93,8 +93,8 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 // NewRunCommand initializes new kool stop command
 func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	runCmd = &cobra.Command{
-		Use:   "run [command]",
-		Short: "Run the specified [command], which are defined as scripts in a kool.yml file located in the working directory or in the kool folder of the user's home directory.",
+		Use:   "run [script] [command]",
+		Short: "Run the specified [script] (as defined in the kool.yml file). For single-line scripts, run the [script] with an optional [command].",
 		Args:  cobra.MinimumNArgs(1),
 		Run:   DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
