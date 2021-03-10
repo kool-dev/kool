@@ -12,6 +12,12 @@
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
+Also, make sure you're running the latest version of **kool**. Run the following command to compare your local version of **kool** with the latest release, and, if a newer version is available, automatically download and install it.
+
+```bash
+$ kool self-update
+```
+
 ### 1. Run `kool create`
 
 Use the `kool create <preset> <project-name>` command to create your new project.
