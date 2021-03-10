@@ -8,7 +8,7 @@
 <a href="https://github.com/kool-dev/kool/workflows/golangci-lint"><img src="https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg" alt="Golang CI Lint"></a>
 <a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield" alt="FOSSA Status"></a>
 <a href="https://codeclimate.com/github/kool-dev/kool/maintainability"><img src="https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability" alt="Maintainability"></a>
-<a href="https://join.slack.com/t/kool-dev/shared_invite/zt-jeh36s5g-kVFHUsyLjFENUUH4ucrxPg"><img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack" alt="Join Slack Kool community"></a>
+<a href="https://join.slack.com/t/kool-dev/shared_invite/zt-ntmkyjog-DHOiddbBnhY796KaABUhzg"><img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack" alt="Join Slack Kool community"></a>
 </p>
 
 ## About `kool`
