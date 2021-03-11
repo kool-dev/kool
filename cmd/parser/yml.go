@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/cmd/builder"
 	"os"
 
@@ -46,7 +46,7 @@ func ParseKoolYaml(filePath string) (parsed *KoolYaml, err error) {
 
 	defer file.Close()
 
-	if raw, err = ioutil.ReadAll(file); err != nil {
+	if raw, err = io.ReadAll(file); err != nil {
 		return
 	}
 

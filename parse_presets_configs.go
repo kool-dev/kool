@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -33,7 +32,7 @@ func main() {
 
 	defer configs.Close()
 
-	folders, err = ioutil.ReadDir("presets")
+	folders, err = os.ReadDir("presets")
 
 	if err != nil {
 		log.Fatal(err)
@@ -62,7 +61,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		filebytes, err := ioutil.ReadAll(configFile)
+		filebytes, err := io.ReadAll(configFile)
 
 		if err != nil {
 			log.Fatal(err)

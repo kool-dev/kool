@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/environment"
 	"net/http"
 	"net/url"
@@ -133,7 +132,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 
 	e.statusCode = resp.StatusCode
 
-	if raw, err = ioutil.ReadAll(resp.Body); err != nil {
+	if raw, err = io.ReadAll(resp.Body); err != nil {
 		return
 	}
 

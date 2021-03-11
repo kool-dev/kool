@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/cmd/updater"
 	"testing"
@@ -20,7 +20,7 @@ func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, errU, er
 		},
 	}
 
-	selfUpdate.shell.(*shell.FakeShell).MockOutStream = ioutil.Discard
+	selfUpdate.shell.(*shell.FakeShell).MockOutStream = io.Discard
 	return selfUpdate
 }
 

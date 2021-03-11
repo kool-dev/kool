@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
@@ -348,7 +347,7 @@ func TestRunRecursiveCalls(t *testing.T) {
     - kool run recursive
 `)
 
-		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+		if err := os.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
 		}
 
@@ -406,10 +405,10 @@ func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
   input: kool receive-file < %s
 `, inputFilePath))
 
-	if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+	if err := os.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 		t.Fatalf("failed creating temp kool.yml for testing: %v", err)
 	}
-	if err := ioutil.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
+	if err := os.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
 		t.Fatalf("failed creating temp %v for testing: %v", inputFilePath, err)
 	}
 
@@ -423,7 +422,7 @@ func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
 			}
 			if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
 				t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
-			} else if input, err := ioutil.ReadAll(file); err != nil {
+			} else if input, err := io.ReadAll(file); err != nil {
 				t.Errorf("failed reading input file: %v", err)
 			} else if string(input) != inputContent {
 				t.Errorf("unexpcted content on input file: %v", input)
@@ -466,7 +465,7 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
   bothatsametime: kool run in < %s > %s
 `, outputFilePath, outputFilePath, outputFilePath2, outputFilePath, outputFilePath3))
 
-		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+		if err := os.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
 		}
 
@@ -481,7 +480,7 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 		root.AddCommand(&cobra.Command{
 			Use: "catin",
 			Run: func(cmd *cobra.Command, args []string) {
-				if sb, err := ioutil.ReadAll(cmd.InOrStdin()); err != nil {
+				if sb, err := io.ReadAll(cmd.InOrStdin()); err != nil {
 					t.Errorf("fail reading input: %v", err)
 				} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
 					t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))

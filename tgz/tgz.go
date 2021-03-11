@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"os"
 	"path/filepath"
@@ -27,7 +26,7 @@ type TarGz struct {
 // with Gzip compression in a temporary file.
 func NewTemp() (tgz *TarGz, err error) {
 	tgz = new(TarGz)
-	tgz.file, err = ioutil.TempFile(os.TempDir(), "*.tgz")
+	tgz.file, err = os.CreateTemp(os.TempDir(), "*.tgz")
 	if err != nil {
 		tgz = nil
 		return

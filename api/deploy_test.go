@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"io/ioutil"
 	"kool-dev/kool/environment"
 	"net/http"
 	"os"
@@ -54,7 +53,7 @@ func TestNewDeploy(t *testing.T) {
 
 func TestSendFile(t *testing.T) {
 	tarball := filepath.Join(t.TempDir(), "test.tgz")
-	_ = ioutil.WriteFile(tarball, []byte("test"), os.ModePerm)
+	_ = os.WriteFile(tarball, []byte("test"), os.ModePerm)
 
 	d := NewDeploy(tarball)
 

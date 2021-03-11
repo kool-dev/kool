@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"kool-dev/kool/api"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
@@ -88,7 +87,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 			e.Warning("failed to clear up temporary file; error:", err.Error())
 		}
 	}()
-	if err = ioutil.WriteFile(CAPath, []byte(resp.CA), os.ModePerm); err != nil {
+	if err = os.WriteFile(CAPath, []byte(resp.CA), os.ModePerm); err != nil {
 		return
 	}
 

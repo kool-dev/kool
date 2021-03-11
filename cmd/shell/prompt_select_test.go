@@ -1,7 +1,7 @@
 package shell
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -27,7 +27,7 @@ func TestAskPromptSelect(t *testing.T) {
 	_, _ = p.Ask("testing_question", []string{"testing_option1", "testing_option2"})
 
 	w.Close()
-	out, err := ioutil.ReadAll(r)
+	out, err := io.ReadAll(r)
 	os.Stdout = oldStdout
 
 	if err != nil {
