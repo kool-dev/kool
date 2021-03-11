@@ -12,6 +12,7 @@ For generating a new release we follow the steps:
 - Build all artifacts - `bash build_artifacts.sh`
 - Draft new release
 - Go through all PRs merged and write the changelog (Added / Fixed / Removed / Changed / Notes)
+- Review if documentation is updated accordinly (docs/)
 - Upload to the release all the artifacts built at dist/ folder.
 - Publish the new version (which will create the tag as well)
 - In case of version bumping, check if we need to update `SECURITY.md` to show what version we currently support.
