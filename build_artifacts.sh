@@ -41,6 +41,7 @@ mkdir -p dist
 # because self-update relies on this pattern to work.
 BUILD=(\
   "dist/kool-darwin-amd64|--env GOOS=darwin --env GOARCH=amd64" \
+  "dist/kool-darwin-arm64|--env GOOS=darwin --env GOARCH=arm64" \
   "dist/kool-linux-amd64|--env GOOS=linux --env GOARCH=amd64" \
   "dist/kool-linux-arm6|--env GOOS=linux --env GOARCH=arm --env GOARM=6" \
   "dist/kool-linux-arm7|--env GOOS=linux --env GOARCH=arm --env GOARM=7" \
