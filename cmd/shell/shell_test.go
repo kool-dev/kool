@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
 	"os"
@@ -20,7 +19,7 @@ import (
 func readOutput(r io.Reader) (output string, err error) {
 	var out []byte
 
-	if out, err = ioutil.ReadAll(r); err != nil {
+	if out, err = io.ReadAll(r); err != nil {
 		return
 	}
 
@@ -109,7 +108,7 @@ func TestExecDefaultShell(t *testing.T) {
 func TestExecDockerComposeDefaultShell(t *testing.T) {
 	s := &DefaultShell{
 		inStream:  os.Stdin,
-		outStream: ioutil.Discard,
+		outStream: io.Discard,
 		errStream: os.Stderr,
 		env:       environment.NewFakeEnvStorage(),
 		lookedUp:  newLookupCache(),
@@ -203,7 +202,7 @@ func TestInteractiveDefaultShell(t *testing.T) {
 func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
 	s := &DefaultShell{
 		inStream:  os.Stdin,
-		outStream: ioutil.Discard,
+		outStream: io.Discard,
 		errStream: os.Stderr,
 		env:       environment.NewFakeEnvStorage(),
 		lookedUp:  newLookupCache(),

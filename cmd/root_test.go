@@ -3,7 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"os"
@@ -129,7 +129,7 @@ func TestVersionFlagCommand(t *testing.T) {
 		err error
 	)
 
-	if out, err = ioutil.ReadAll(b); err != nil {
+	if out, err = io.ReadAll(b); err != nil {
 		t.Fatal(err)
 	}
 

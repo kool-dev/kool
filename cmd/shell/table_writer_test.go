@@ -2,7 +2,7 @@ package shell
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 )
@@ -31,7 +31,7 @@ func TestTableWriter(t *testing.T) {
 		err error
 	)
 
-	if out, err = ioutil.ReadAll(b); err != nil {
+	if out, err = io.ReadAll(b); err != nil {
 		t.Fatal(err)
 	}
 
@@ -70,7 +70,7 @@ func TestSortByTableWriter(t *testing.T) {
 		err error
 	)
 
-	if out, err = ioutil.ReadAll(b); err != nil {
+	if out, err = io.ReadAll(b); err != nil {
 		t.Fatal(err)
 	}
 

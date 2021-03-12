@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
@@ -23,7 +22,7 @@ func newFakeKoolCompletion() *KoolCompletion {
 func readOutput(r io.Reader) (output string, err error) {
 	var out []byte
 
-	if out, err = ioutil.ReadAll(r); err != nil {
+	if out, err = io.ReadAll(r); err != nil {
 		return
 	}
 

@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/spf13/cobra"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/environment"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 const testingEnv string = `
@@ -74,7 +75,7 @@ func execInfoCommand(cmd *cobra.Command) (output string, err error) {
 	}
 
 	var out []byte
-	if out, err = ioutil.ReadAll(b); err != nil {
+	if out, err = io.ReadAll(b); err != nil {
 		return
 	}
 

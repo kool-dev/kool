@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
@@ -144,7 +143,7 @@ func TestRunOutputNewKoolTask(t *testing.T) {
 
 	_ = task.Run([]string{})
 
-	bufBytes, err := ioutil.ReadAll(task.taskShell.OutStream().(io.Reader))
+	bufBytes, err := io.ReadAll(task.taskShell.OutStream().(io.Reader))
 
 	if err != nil {
 		t.Fatal(err)

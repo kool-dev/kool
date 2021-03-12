@@ -2,7 +2,6 @@ package parser
 
 import (
 	"errors"
-	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"os"
 	"path"
@@ -28,7 +27,7 @@ func TestParseKoolYaml(t *testing.T) {
 
 	tmpPath = path.Join(t.TempDir(), "kool.yml")
 
-	err = ioutil.WriteFile(tmpPath, []byte(KoolYmlOK), os.ModePerm)
+	err = os.WriteFile(tmpPath, []byte(KoolYmlOK), os.ModePerm)
 
 	if err != nil {
 		t.Fatal("failed creating temporary file for test", err)
@@ -147,7 +146,7 @@ func TestParseKoolYamlStruct(t *testing.T) {
 
 	tmpPath = path.Join(t.TempDir(), "kool.yml")
 
-	err = ioutil.WriteFile(tmpPath, []byte(KoolYmlOK), os.ModePerm)
+	err = os.WriteFile(tmpPath, []byte(KoolYmlOK), os.ModePerm)
 
 	if err != nil {
 		t.Fatal("failed creating temporary file for test", err)
@@ -179,7 +178,7 @@ func TestErrorParseKoolYamlStruct(t *testing.T) {
 
 	invalidKoolYml := "	invalid"
 
-	err = ioutil.WriteFile(tmpPath, []byte(invalidKoolYml), os.ModePerm)
+	err = os.WriteFile(tmpPath, []byte(invalidKoolYml), os.ModePerm)
 
 	if err != nil {
 		t.Fatal("failed creating temporary file for test", err)
