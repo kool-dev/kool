@@ -51,9 +51,9 @@ func TestNewKoolCreateCommand(t *testing.T) {
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.KoolPreset.presetsParser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{
+		"laravel": {
 			Commands: map[string][]string{
-				"create": []string{"kool docker create command"},
+				"create": {"kool docker create command"},
 			},
 		},
 	}
@@ -110,7 +110,7 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 		t.Error("did not call Error")
 	}
 
-	expected := "Unknown preset invalid"
+	expected := "unknown preset invalid"
 	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if expected != output {
@@ -171,7 +171,7 @@ func TestNoCreateCommandsCreateCommand(t *testing.T) {
 
 	f.parser.(*presets.FakeParser).MockExists = true
 	f.parser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{
+		"laravel": {
 			Commands: make(map[string][]string),
 		},
 	}
@@ -188,7 +188,7 @@ func TestNoCreateCommandsCreateCommand(t *testing.T) {
 		t.Error("did not call Error")
 	}
 
-	expected := "No create commands were found for preset laravel"
+	expected := "no create commands were found for preset laravel"
 	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if expected != output {

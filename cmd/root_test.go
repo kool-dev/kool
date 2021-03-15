@@ -283,3 +283,44 @@ func TestMultipleRecursiveCall(t *testing.T) {
 		t.Errorf("fail calling recursive command: %v", err)
 	}
 }
+
+func TestAddCommands(t *testing.T) {
+	root := NewRootCmd(environment.NewFakeEnvStorage())
+
+	AddCommands(root)
+
+	var subcommands map[string]bool = map[string]bool{
+		"completion":  false,
+		"create":      false,
+		"deploy":      false,
+		"docker":      false,
+		"exec":        false,
+		"info":        false,
+		"init":        false,
+		"logs":        false,
+		"preset":      false,
+		"restart":     false,
+		"run":         false,
+		"self-update": false,
+		"share":       false,
+		"start":       false,
+		"status":      false,
+		"stop":        false,
+	}
+
+	for _, subCmd := range root.Commands() {
+		name := subCmd.Name()
+		if _, ok := subcommands[name]; !ok {
+			t.Errorf("unexpected command was added: %s", name)
+			continue
+		}
+
+		subcommands[name] = true
+	}
+
+	for cmd, added := range subcommands {
+		if !added {
+			t.Errorf("expected command is missing: %s", cmd)
+		}
+	}
+}

@@ -1,12 +1,15 @@
 package cmd
 
-import "github.com/gookit/color"
+import (
+	"github.com/gookit/color"
+	"github.com/spf13/cobra"
+)
 
-func init() {
+func AddKoolInit(root *cobra.Command) {
 	initCmd := NewPresetCommand(NewKoolPreset())
 	initCmd.Use = "init [PRESET]"
 	initCmd.Short = "[DEPRECATED] Proxies preset command"
 	initCmd.Deprecated = color.New(color.Yellow).Sprint("use the \"preset\" command instead.")
 
-	rootCmd.AddCommand(initCmd)
+	root.AddCommand(initCmd)
 }

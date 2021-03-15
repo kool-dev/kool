@@ -23,13 +23,13 @@ type KoolStop struct {
 	rm    builder.Command
 }
 
-func init() {
+func AddKoolStop(root *cobra.Command) {
 	var (
 		stop    = NewKoolStop()
 		stopCmd = NewStopCommand(stop)
 	)
 
-	rootCmd.AddCommand(stopCmd)
+	root.AddCommand(stopCmd)
 }
 
 // NewKoolStop creates a new handler for stop logic with default dependencies

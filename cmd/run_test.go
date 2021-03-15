@@ -413,22 +413,31 @@ func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
 	}
 
 	root := NewRootCmd(k.env)
-	root.AddCommand(NewRunCommand(k))
-	root.AddCommand(&cobra.Command{
-		Use: "receive-file",
-		Run: func(cmd *cobra.Command, args []string) {
-			if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
-				t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
-			}
-			if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
-				t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
-			} else if input, err := io.ReadAll(file); err != nil {
-				t.Errorf("failed reading input file: %v", err)
-			} else if string(input) != inputContent {
-				t.Errorf("unexpcted content on input file: %v", input)
-			}
-		},
-	})
+
+	originalAddCommandsFn := AddCommands
+
+	AddCommands = func(rootArg *cobra.Command) {
+		rootArg.AddCommand(NewRunCommand(k))
+		rootArg.AddCommand(&cobra.Command{
+			Use: "receive-file",
+			Run: func(cmd *cobra.Command, args []string) {
+				if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
+					t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
+				}
+				if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
+					t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
+				} else if input, err := io.ReadAll(file); err != nil {
+					t.Errorf("failed reading input file: %v", err)
+				} else if string(input) != inputContent {
+					t.Errorf("unexpcted content on input file: %v", input)
+				}
+			},
+		})
+	}
+
+	defer func() { AddCommands = originalAddCommandsFn }()
+
+	AddCommands(root)
 
 	setRecursiveCall(root)
 
@@ -452,6 +461,9 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 
 	os.Setenv("KOOL_VERBOSE", "true")
 
+	originalAddCommandsFn := AddCommands
+	defer func() { AddCommands = originalAddCommandsFn }()
+
 	var makeRoot = func() *cobra.Command {
 		k := NewKoolRun()
 		k.env = environment.NewFakeEnvStorage()
@@ -470,23 +482,28 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 		}
 
 		root := NewRootCmd(k.env)
-		root.AddCommand(NewRunCommand(k))
-		root.AddCommand(&cobra.Command{
-			Use: "echo",
-			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
-			},
-		})
-		root.AddCommand(&cobra.Command{
-			Use: "catin",
-			Run: func(cmd *cobra.Command, args []string) {
-				if sb, err := io.ReadAll(cmd.InOrStdin()); err != nil {
-					t.Errorf("fail reading input: %v", err)
-				} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
-					t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))
-				}
-			},
-		})
+
+		AddCommands = func(rootArg *cobra.Command) {
+			rootArg.AddCommand(NewRunCommand(k))
+			rootArg.AddCommand(&cobra.Command{
+				Use: "echo",
+				Run: func(cmd *cobra.Command, args []string) {
+					fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
+				},
+			})
+			rootArg.AddCommand(&cobra.Command{
+				Use: "catin",
+				Run: func(cmd *cobra.Command, args []string) {
+					if sb, err := io.ReadAll(cmd.InOrStdin()); err != nil {
+						t.Errorf("fail reading input: %v", err)
+					} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
+						t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))
+					}
+				},
+			})
+		}
+
+		AddCommands(root)
 
 		setRecursiveCall(root)
 		return root

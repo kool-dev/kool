@@ -25,13 +25,13 @@ type KoolDocker struct {
 	dockerRun  builder.Command
 }
 
-func init() {
+func AddKoolDocker(root *cobra.Command) {
 	var (
 		docker    = NewKoolDocker()
 		dockerCmd = NewDockerCommand(docker)
 	)
 
-	rootCmd.AddCommand(dockerCmd)
+	root.AddCommand(dockerCmd)
 }
 
 // NewKoolDocker creates a new handler for docker logic

@@ -48,10 +48,10 @@ func NewKoolDeploy() *KoolDeploy {
 	}
 }
 
-func init() {
+func AddKoolDeploy(root *cobra.Command) {
 	deployCmd := NewDeployCommand(NewKoolDeploy())
 
-	rootCmd.AddCommand(deployCmd)
+	root.AddCommand(deployCmd)
 	deployCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
 	deployCmd.AddCommand(NewDeployDestroyCommand(NewKoolDeployDestroy()))
 }
