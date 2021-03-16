@@ -44,8 +44,8 @@ func NewKoolStart() *KoolStart {
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(NewStartCommand(NewKoolStart()))
+func AddKoolStart(root *cobra.Command) {
+	root.AddCommand(NewStartCommand(NewKoolStart()))
 }
 
 // Execute runs the start logic with incoming arguments.

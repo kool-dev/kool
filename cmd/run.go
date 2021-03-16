@@ -25,13 +25,13 @@ var ErrExtraArguments = errors.New("error: you cannot pass in extra arguments to
 // ErrKoolScriptNotFound means that the given script was not found
 var ErrKoolScriptNotFound = errors.New("script was not found in any kool.yml file")
 
-func init() {
+func AddKoolRun(root *cobra.Command) {
 	var (
 		run    = NewKoolRun()
 		runCmd = NewRunCommand(run)
 	)
 
-	rootCmd.AddCommand(runCmd)
+	root.AddCommand(runCmd)
 
 	SetRunUsageFunc(run, runCmd)
 }

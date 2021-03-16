@@ -11,9 +11,35 @@ import (
 // CobraRunFN Cobra command run function
 type CobraRunFN func(*cobra.Command, []string)
 
+// AddCommandsFN function to add subcommands
+type AddCommandsFN func(*cobra.Command)
+
+var AddCommands AddCommandsFN = func(root *cobra.Command) {
+	AddKoolCompletion(root)
+	AddKoolCreate(root)
+	AddKoolDeploy(root)
+	AddKoolDocker(root)
+	AddKoolExec(root)
+	AddKoolInfo(root)
+	AddKoolInit(root)
+	AddKoolLogs(root)
+	AddKoolPreset(root)
+	AddKoolRestart(root)
+	AddKoolRun(root)
+	AddKoolSelfUpdate(root)
+	AddKoolShare(root)
+	AddKoolStart(root)
+	AddKoolStatus(root)
+	AddKoolStop(root)
+}
+
 var version string = "0.0.0-dev"
 
 var rootCmd = NewRootCmd(environment.NewEnvStorage())
+
+func init() {
+	AddCommands(rootCmd)
+}
 
 // NewRootCmd creates the root command
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
@@ -45,23 +71,17 @@ func Execute() error {
 
 func setRecursiveCall(root *cobra.Command) {
 	shell.RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
-		root.SetArgs(args)
+		childRoot := NewRootCmd(environment.NewEnvStorage())
 
-		oldIn := root.InOrStdin()
-		oldOut := root.OutOrStdout()
-		oldErr := root.ErrOrStderr()
+		childRoot.SetArgs(args)
 
-		root.SetIn(in)
-		root.SetOut(out)
-		root.SetErr(err)
+		childRoot.SetIn(in)
+		childRoot.SetOut(out)
+		childRoot.SetErr(err)
 
-		defer func() {
-			root.SetIn(oldIn)
-			root.SetOut(oldOut)
-			root.SetErr(oldErr)
-		}()
+		AddCommands(childRoot)
 
-		return root.Execute()
+		return childRoot.Execute()
 	}
 }
 

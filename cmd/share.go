@@ -36,13 +36,13 @@ type KoolShare struct {
 	share  builder.Command
 }
 
-func init() {
+func AddKoolShare(root *cobra.Command) {
 	var (
 		share    = NewKoolShare()
 		shareCmd = NewShareCommand(share)
 	)
 
-	rootCmd.AddCommand(shareCmd)
+	root.AddCommand(shareCmd)
 }
 
 // NewKoolShare creates a new handler for sharing local environment with default dependencies

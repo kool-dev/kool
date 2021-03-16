@@ -32,8 +32,8 @@ func NewKoolInfo() *KoolInfo {
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(NewInfoCmd(NewKoolInfo()))
+func AddKoolInfo(root *cobra.Command) {
+	root.AddCommand(NewInfoCmd(NewKoolInfo()))
 }
 
 // Execute executes info logic

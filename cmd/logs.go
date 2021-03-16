@@ -24,13 +24,13 @@ type KoolLogs struct {
 	logs builder.Command
 }
 
-func init() {
+func AddKoolLogs(root *cobra.Command) {
 	var (
 		logs    = NewKoolLogs()
 		logsCmd = NewLogsCommand(logs)
 	)
 
-	rootCmd.AddCommand(logsCmd)
+	root.AddCommand(logsCmd)
 }
 
 // NewKoolLogs creates a new handler for logs logic

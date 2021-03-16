@@ -93,7 +93,7 @@ func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
+		"laravel": {},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -177,7 +177,7 @@ func TestInvalidScriptPresetCommand(t *testing.T) {
 		t.Error("did not call Error")
 	}
 
-	expected := "Unknown preset invalid"
+	expected := "unknown preset invalid"
 	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if expected != output {
@@ -194,7 +194,7 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockFoundFiles = []string{"kool.yml"}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
+		"laravel": {},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -230,7 +230,7 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockError = errors.New("write error")
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
+		"laravel": {},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -245,7 +245,7 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 		t.Error("did not call Error")
 	}
 
-	expected := "Failed to write preset file : write error"
+	expected := "failed to write preset file : write error"
 	output := f.shell.(*shell.FakeShell).Err.Error()
 
 	if output != expected {
@@ -269,7 +269,7 @@ func TestNoArgsPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
+		"laravel": {},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -295,7 +295,7 @@ func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
+		"laravel": {},
 	}
 
 	mockError := make(map[string]error)
@@ -334,7 +334,7 @@ func TestFailingPresetNoArgsPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockLanguages = []string{"php"}
 	f.presetsParser.(*presets.FakeParser).MockPresets = []string{"laravel"}
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": &presets.PresetConfig{},
+		"laravel": {},
 	}
 
 	mockAnswer := make(map[string]string)
@@ -436,13 +436,13 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 
 	config := &presets.PresetConfig{
 		Questions: map[string][]presets.PresetConfigQuestion{
-			"compose": []presets.PresetConfigQuestion{
+			"compose": {
 				presets.PresetConfigQuestion{
 					Key:     "database",
 					Message: "What database service do you want to use",
 					Options: []presets.PresetConfigQuestionOption{
-						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+						{Name: "mysql", Template: "mysql.yml"},
+						{Name: "postgresql", Template: "postgresql.yml"},
 					},
 				},
 			},
@@ -455,7 +455,7 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 		"What database service do you want to use": "mysql",
 	}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"database": map[string]string{
+		"database": {
 			"mysql.yml": mysqlTemplate,
 		},
 	}
@@ -469,7 +469,7 @@ func TestCustomDockerComposePresetCommand(t *testing.T) {
 	}
 
 	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
-		"script": []string{"script"},
+		"script": {"script"},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -515,13 +515,13 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 
 	config := &presets.PresetConfig{
 		Questions: map[string][]presets.PresetConfigQuestion{
-			"compose": []presets.PresetConfigQuestion{
+			"compose": {
 				presets.PresetConfigQuestion{
 					Key:     "database",
 					Message: "What database service do you want to use",
 					Options: []presets.PresetConfigQuestionOption{
-						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+						{Name: "mysql", Template: "mysql.yml"},
+						{Name: "postgresql", Template: "postgresql.yml"},
 					},
 				},
 			},
@@ -534,7 +534,7 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 		"What database service do you want to use": "mysql",
 	}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"database": map[string]string{
+		"database": {
 			"mysql.yml": mysqlTemplate,
 		},
 	}
@@ -555,7 +555,7 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 
 	err := f.shell.(*shell.FakeShell).Err
 
-	expectedErr := "Failed to write preset file docker-compose.yml: parse error"
+	expectedErr := "failed to write preset file docker-compose.yml: parse error"
 
 	if err == nil {
 		t.Error("expecting an error, got none")
@@ -574,14 +574,14 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 
 	config := &presets.PresetConfig{
 		Questions: map[string][]presets.PresetConfigQuestion{
-			"compose": []presets.PresetConfigQuestion{
+			"compose": {
 				presets.PresetConfigQuestion{
 					Key:     "database",
 					Message: "What database service do you want to use",
 					Options: []presets.PresetConfigQuestionOption{
-						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
-						presets.PresetConfigQuestionOption{Name: "none", Template: "none"},
+						{Name: "mysql", Template: "mysql.yml"},
+						{Name: "postgresql", Template: "postgresql.yml"},
+						{Name: "none", Template: "none"},
 					},
 				},
 			},
@@ -594,7 +594,7 @@ func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
 		"What database service do you want to use": "none",
 	}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"database": map[string]string{
+		"database": {
 			"mysql.yml": mysqlTemplate,
 		},
 	}
@@ -639,13 +639,13 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 
 	config := &presets.PresetConfig{
 		Questions: map[string][]presets.PresetConfigQuestion{
-			"compose": []presets.PresetConfigQuestion{
+			"compose": {
 				presets.PresetConfigQuestion{
 					Key:     "database",
 					Message: "What database service do you want to use",
 					Options: []presets.PresetConfigQuestionOption{
-						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+						{Name: "mysql", Template: "mysql.yml"},
+						{Name: "postgresql", Template: "postgresql.yml"},
 					},
 				},
 			},
@@ -687,13 +687,13 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 
 	config := &presets.PresetConfig{
 		Questions: map[string][]presets.PresetConfigQuestion{
-			"compose": []presets.PresetConfigQuestion{
+			"compose": {
 				presets.PresetConfigQuestion{
 					Key:     "database",
 					Message: "What database service do you want to use",
 					Options: []presets.PresetConfigQuestionOption{
-						presets.PresetConfigQuestionOption{Name: "mysql", Template: "mysql.yml"},
-						presets.PresetConfigQuestionOption{Name: "postgresql", Template: "postgresql.yml"},
+						{Name: "mysql", Template: "mysql.yml"},
+						{Name: "postgresql", Template: "postgresql.yml"},
 					},
 				},
 			},
@@ -706,7 +706,7 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 		"What database service do you want to use": "mysql",
 	}
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"database": map[string]string{
+		"database": {
 			"mysql.yml": mysqlTemplate,
 		},
 	}
@@ -729,8 +729,8 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 
 	if err == nil {
 		t.Error("expecting an error, got none")
-	} else if err.Error() != "Failed to write preset file docker-compose.yml: compose string error" {
-		t.Errorf("expecting error 'Failed to write preset file docker-compose.yml: compose string error', got %v", err)
+	} else if err.Error() != "failed to write preset file docker-compose.yml: compose string error" {
+		t.Errorf("expecting error 'failed to write preset file docker-compose.yml: compose string error', got %v", err)
 	}
 }
 
@@ -782,9 +782,9 @@ func TestDefaultTemplatesPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"preset": &presets.PresetConfig{
+		"preset": {
 			Templates: []presets.PresetConfigTemplate{
-				presets.PresetConfigTemplate{
+				{
 					Key:      "scripts",
 					Template: "template.yml",
 				},
@@ -793,7 +793,7 @@ func TestDefaultTemplatesPresetCommand(t *testing.T) {
 	}
 
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"scripts": map[string]string{
+		"scripts": {
 			"template.yml": defaultTemplate,
 		},
 	}
@@ -809,7 +809,7 @@ func TestDefaultTemplatesPresetCommand(t *testing.T) {
 	}
 
 	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
-		"script": []string{"script"},
+		"script": {"script"},
 	}
 
 	cmd := NewPresetCommand(f)
@@ -868,9 +868,9 @@ func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"preset": &presets.PresetConfig{
+		"preset": {
 			Templates: []presets.PresetConfigTemplate{
-				presets.PresetConfigTemplate{
+				{
 					Key:      "scripts",
 					Template: "template.yml",
 				},
@@ -879,7 +879,7 @@ func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
 	}
 
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"scripts": map[string]string{
+		"scripts": {
 			"template.yml": defaultTemplate,
 		},
 	}
@@ -902,8 +902,8 @@ func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
 
 	if err == nil {
 		t.Error("expecting an error, got none")
-	} else if err.Error() != "Failed to load default preset templates: template parse error" {
-		t.Errorf("expecting error 'Failed to load default preset templates: template parse error', got %v", err)
+	} else if err.Error() != "failed to load default preset templates: template parse error" {
+		t.Errorf("expecting error 'failed to load default preset templates: template parse error', got %v", err)
 	}
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {
@@ -923,19 +923,19 @@ func TestCustomKoolYmlPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"preset": &presets.PresetConfig{
+		"preset": {
 			Questions: map[string][]presets.PresetConfigQuestion{
-				"kool": []presets.PresetConfigQuestion{
+				"kool": {
 					presets.PresetConfigQuestion{
 						Key:           "scripts",
 						DefaultAnswer: "npm",
 						Message:       "What javascript package manager do you want to use",
 						Options: []presets.PresetConfigQuestionOption{
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "npm",
 								Template: "npm.yml",
 							},
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "yarn",
 								Template: "yarn.yml",
 							},
@@ -951,14 +951,14 @@ func TestCustomKoolYmlPresetCommand(t *testing.T) {
 	}
 
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"scripts": map[string]string{
+		"scripts": {
 			"yarn.yml": yarnTemplate,
 		},
 	}
 
 	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
-		"yarn":       []string{"kool docker kooldev/node:14 yarn"},
-		"node-setup": []string{"kool run yarn install", "kool run yarn dev"},
+		"yarn":       {"kool docker kooldev/node:14 yarn"},
+		"node-setup": {"kool run yarn install", "kool run yarn dev"},
 	}
 
 	f.koolYamlParser.(*parser.FakeKoolYaml).MockString = "kool content"
@@ -1010,19 +1010,19 @@ func TestAskErrorCustomKoolYmlPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"preset": &presets.PresetConfig{
+		"preset": {
 			Questions: map[string][]presets.PresetConfigQuestion{
-				"kool": []presets.PresetConfigQuestion{
+				"kool": {
 					presets.PresetConfigQuestion{
 						Key:           "scripts",
 						DefaultAnswer: "npm",
 						Message:       "What javascript package manager do you want to use",
 						Options: []presets.PresetConfigQuestionOption{
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "npm",
 								Template: "npm.yml",
 							},
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "yarn",
 								Template: "yarn.yml",
 							},
@@ -1034,7 +1034,7 @@ func TestAskErrorCustomKoolYmlPresetCommand(t *testing.T) {
 	}
 
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"scripts": map[string]string{
+		"scripts": {
 			"yarn.yml": "template",
 		},
 	}
@@ -1074,19 +1074,19 @@ func TestTemplateParseErrorCustomKoolYmlPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"preset": &presets.PresetConfig{
+		"preset": {
 			Questions: map[string][]presets.PresetConfigQuestion{
-				"kool": []presets.PresetConfigQuestion{
+				"kool": {
 					presets.PresetConfigQuestion{
 						Key:           "scripts",
 						DefaultAnswer: "npm",
 						Message:       "What javascript package manager do you want to use",
 						Options: []presets.PresetConfigQuestionOption{
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "npm",
 								Template: "npm.yml",
 							},
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "yarn",
 								Template: "yarn.yml",
 							},
@@ -1098,7 +1098,7 @@ func TestTemplateParseErrorCustomKoolYmlPresetCommand(t *testing.T) {
 	}
 
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"scripts": map[string]string{
+		"scripts": {
 			"yarn.yml": "template",
 		},
 	}
@@ -1125,8 +1125,8 @@ func TestTemplateParseErrorCustomKoolYmlPresetCommand(t *testing.T) {
 
 	if err == nil {
 		t.Error("expecting an error, got none")
-	} else if err.Error() != "Failed to write preset file kool.yml: parse error" {
-		t.Errorf("expecting error 'Failed to write preset file kool.yml: parse error', got %v", err)
+	} else if err.Error() != "failed to write preset file kool.yml: parse error" {
+		t.Errorf("expecting error 'failed to write preset file kool.yml: parse error', got %v", err)
 	}
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {
@@ -1146,19 +1146,19 @@ func TestStringErrorCustomKoolYmlPresetCommand(t *testing.T) {
 	f.presetsParser.(*presets.FakeParser).MockExists = true
 
 	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"preset": &presets.PresetConfig{
+		"preset": {
 			Questions: map[string][]presets.PresetConfigQuestion{
-				"kool": []presets.PresetConfigQuestion{
+				"kool": {
 					presets.PresetConfigQuestion{
 						Key:           "scripts",
 						DefaultAnswer: "npm",
 						Message:       "What javascript package manager do you want to use",
 						Options: []presets.PresetConfigQuestionOption{
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "npm",
 								Template: "npm.yml",
 							},
-							presets.PresetConfigQuestionOption{
+							{
 								Name:     "yarn",
 								Template: "yarn.yml",
 							},
@@ -1174,14 +1174,14 @@ func TestStringErrorCustomKoolYmlPresetCommand(t *testing.T) {
 	}
 
 	f.presetsParser.(*presets.FakeParser).MockTemplates = map[string]map[string]string{
-		"scripts": map[string]string{
+		"scripts": {
 			"yarn.yml": yarnTemplate,
 		},
 	}
 
 	f.templateParser.(*templates.FakeParser).MockGetScripts = map[string][]string{
-		"yarn":       []string{"kool docker kooldev/node:14 yarn"},
-		"node-setup": []string{"kool run yarn install", "kool run yarn dev"},
+		"yarn":       {"kool docker kooldev/node:14 yarn"},
+		"node-setup": {"kool run yarn install", "kool run yarn dev"},
 	}
 
 	f.koolYamlParser.(*parser.FakeKoolYaml).MockStringError = errors.New("string error")
@@ -1202,8 +1202,8 @@ func TestStringErrorCustomKoolYmlPresetCommand(t *testing.T) {
 
 	if err == nil {
 		t.Error("expecting an error, got none")
-	} else if err.Error() != "Failed to write preset file kool.yml: string error" {
-		t.Errorf("expecting error 'Failed to write preset file kool.yml: string error', got %v", err)
+	} else if err.Error() != "failed to write preset file kool.yml: string error" {
+		t.Errorf("expecting error 'failed to write preset file kool.yml: string error', got %v", err)
 	}
 
 	if !f.exiter.(*shell.FakeExiter).Exited() {

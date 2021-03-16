@@ -8,20 +8,20 @@ type KoolCompletion struct {
 	rootCmd *cobra.Command
 }
 
-func init() {
+func AddKoolCompletion(root *cobra.Command) {
 	var (
-		completion    = NewKoolCompletion()
+		completion    = NewKoolCompletion(root)
 		completionCmd = NewCompletionCommand(completion)
 	)
 
-	rootCmd.AddCommand(completionCmd)
+	root.AddCommand(completionCmd)
 }
 
 // NewKoolCompletion creates a new handler for completion logic
-func NewKoolCompletion() *KoolCompletion {
+func NewKoolCompletion(root *cobra.Command) *KoolCompletion {
 	return &KoolCompletion{
 		*newDefaultKoolService(),
-		rootCmd,
+		root,
 	}
 }
 

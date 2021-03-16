@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"kool-dev/kool/cmd/compose"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/presets"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // KoolPreset holds handlers and functions to implement the preset command logic
@@ -23,13 +23,13 @@ type KoolPreset struct {
 	promptSelect   shell.PromptSelect
 }
 
-func init() {
+func AddKoolPreset(root *cobra.Command) {
 	var (
 		preset    = NewKoolPreset()
 		presetCmd = NewPresetCommand(preset)
 	)
 
-	rootCmd.AddCommand(presetCmd)
+	root.AddCommand(presetCmd)
 }
 
 // NewKoolPreset creates a new handler for preset logic
@@ -55,7 +55,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 	}
 
 	if !p.presetsParser.Exists(preset) {
-		err = fmt.Errorf("Unknown preset %s", preset)
+		err = fmt.Errorf("unknown preset %s", preset)
 		return
 	}
 
@@ -75,7 +75,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 	}
 
 	if fileError, err = p.presetsParser.WriteFiles(preset); err != nil {
-		err = fmt.Errorf("Failed to write preset file %s: %v", fileError, err)
+		err = fmt.Errorf("failed to write preset file %s: %v", fileError, err)
 		return
 	}
 
@@ -160,7 +160,7 @@ func (p *KoolPreset) setDefaultTemplates(config *presets.PresetConfig) (err erro
 
 	for _, template := range config.Templates {
 		if err = p.templateParser.Parse(allTemplates[template.Key][template.Template]); err != nil {
-			err = fmt.Errorf("Failed to load default preset templates: %v", err)
+			err = fmt.Errorf("failed to load default preset templates: %v", err)
 			return
 		}
 
@@ -207,7 +207,7 @@ func (p *KoolPreset) customizeCompose(preset string, config *presets.PresetConfi
 
 			if selectedOption != "none" {
 				if err = p.templateParser.Parse(optionTemplate[selectedOption]); err != nil {
-					err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
+					err = fmt.Errorf("failed to write preset file docker-compose.yml: %v", err)
 					return
 				}
 
@@ -226,7 +226,7 @@ func (p *KoolPreset) customizeCompose(preset string, config *presets.PresetConfi
 		}
 
 		if newCompose, err = p.composeParser.String(); err != nil {
-			err = fmt.Errorf("Failed to write preset file docker-compose.yml: %v", err)
+			err = fmt.Errorf("failed to write preset file docker-compose.yml: %v", err)
 			return
 		}
 
@@ -262,7 +262,7 @@ func (p *KoolPreset) customizeKoolYaml(preset string, config *presets.PresetConf
 
 			if selectedOption != "none" {
 				if err = p.templateParser.Parse(optionTemplate[selectedOption]); err != nil {
-					err = fmt.Errorf("Failed to write preset file kool.yml: %v", err)
+					err = fmt.Errorf("failed to write preset file kool.yml: %v", err)
 					return
 				}
 
@@ -273,7 +273,7 @@ func (p *KoolPreset) customizeKoolYaml(preset string, config *presets.PresetConf
 		}
 
 		if newKoolYaml, err = p.koolYamlParser.String(); err != nil {
-			err = fmt.Errorf("Failed to write preset file kool.yml: %v", err)
+			err = fmt.Errorf("failed to write preset file kool.yml: %v", err)
 			return
 		}
 

@@ -34,13 +34,13 @@ type statusService struct {
 	err                   error
 }
 
-func init() {
+func AddKoolStatus(root *cobra.Command) {
 	var (
 		status    = NewKoolStatus()
 		statusCmd = NewStatusCommand(status)
 	)
 
-	rootCmd.AddCommand(statusCmd)
+	root.AddCommand(statusCmd)
 }
 
 // NewKoolStatus creates a new handler for status logic

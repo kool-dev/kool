@@ -19,13 +19,13 @@ type KoolCreate struct {
 	KoolPreset
 }
 
-func init() {
+func AddKoolCreate(root *cobra.Command) {
 	var (
 		create    = NewKoolCreate()
 		createCmd = NewCreateCommand(create)
 	)
 
-	rootCmd.AddCommand(createCmd)
+	root.AddCommand(createCmd)
 }
 
 // NewKoolCreate creates a new handler for create logic
@@ -56,7 +56,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 	c.parser.LoadConfigs(presets.GetConfigs())
 
 	if !c.parser.Exists(preset) {
-		err = fmt.Errorf("Unknown preset %s", preset)
+		err = fmt.Errorf("unknown preset %s", preset)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 	}
 
 	if createCmds, ok = presetConfig.Commands["create"]; !ok || len(createCmds) <= 0 {
-		err = fmt.Errorf("No create commands were found for preset %s", preset)
+		err = fmt.Errorf("no create commands were found for preset %s", preset)
 		return
 	}
 

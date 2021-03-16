@@ -14,13 +14,13 @@ type KoolSelfUpdate struct {
 	updater updater.Updater
 }
 
-func init() {
+func AddKoolSelfUpdate(root *cobra.Command) {
 	var (
 		selfUpdate    = NewKoolSelfUpdate()
 		selfUpdateCmd = NewSelfUpdateCommand(selfUpdate)
 	)
 
-	rootCmd.AddCommand(selfUpdateCmd)
+	root.AddCommand(selfUpdateCmd)
 }
 
 // NewKoolSelfUpdate creates a new handler for self-update logic with default dependencies
