@@ -6,14 +6,16 @@ import (
 
 // FakeEnvStorage holds fake environment variables
 type FakeEnvStorage struct {
-	Envs       map[string]string
-	CalledLoad bool
+	Envs        map[string]string
+	CalledLoad  bool
+	EnvsHistory map[string][]string
 }
 
 // NewFakeEnvStorage creates a new FakeEnvStorage
 func NewFakeEnvStorage() *FakeEnvStorage {
 	return &FakeEnvStorage{
-		Envs: make(map[string]string),
+		Envs:        make(map[string]string),
+		EnvsHistory: make(map[string][]string),
 	}
 }
 
@@ -25,6 +27,7 @@ func (f *FakeEnvStorage) Get(key string) string {
 // Set set environment variable value (fake behavior)
 func (f *FakeEnvStorage) Set(key string, value string) {
 	f.Envs[key] = value
+	f.EnvsHistory[key] = append(f.EnvsHistory[key], value)
 }
 
 // Load load environment file (fake behavior)

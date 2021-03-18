@@ -20,6 +20,7 @@ import (
 func newFakeKoolRun(mockParsedCommands []builder.Command, mockParseError error) *KoolRun {
 	return &KoolRun{
 		*newFakeKoolService(),
+		&KoolRunFlags{[]string{}},
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
 		environment.NewFakeEnvStorage(),
 		[]builder.Command{},
@@ -544,5 +545,61 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 
 	if _, err := os.Stat(outputFilePath3); err != nil && os.IsNotExist(err) {
 		t.Error("failed to create output3_file")
+	}
+}
+
+func TestNewRunCommandWithEnvVariable(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"--env=VAR_TEST=1", "script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	envsHistory := f.env.(*environment.FakeEnvStorage).EnvsHistory
+	history, ok := envsHistory["VAR_TEST"]
+
+	if !ok || len(history) == 0 {
+		t.Error("failed to set the environment variable 'VAR_TEST'")
+		return
+	}
+
+	if len(history) != 2 {
+		t.Error("failed to set '$VAR_TEST' to its original state")
+		return
+	}
+
+	if history[0] != "1" {
+		t.Errorf("expected to set '1' into '$VAR_TEST', did set '%s'", history[0])
+	}
+
+	if history[1] != "" {
+		t.Errorf("expected to set '$VAR_TEST' to an empty value after using it, did set to '%s'", history[0])
+	}
+}
+
+func TestNewRunCommandExtraEnvVarsError(t *testing.T) {
+	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}, &builder.FakeCommand{}}
+	f := newFakeKoolRun(fakeParsedCommands, nil)
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"--env=VAR_TEST=1", "script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error for extra environment variables")
+	}
+
+	if gotError := f.shell.(*shell.FakeShell).Err; !errors.Is(gotError, ErrExtraEnvMultiLines) {
+		t.Errorf("expecting error '%v', got '%v'", ErrExtraEnvMultiLines, gotError)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("got an extra arguments error, but command did not exit")
 	}
 }
