@@ -97,7 +97,7 @@ You can check out a couple of sample commands in action at [asciinema.org/~koold
 You are most welcome to contribute and help in our missiong of making software development *kool* for everyone.
 
 - [Issues](/issues) are the primary channel for bringing up and tracking issues or proposals.
-- [Kool community on Slack](https://kool-dev.slack.com) is the a great place to get help and reach Kool developers.
+- [Kool community on Slack](https://join.slack.com/t/kool-dev/shared_invite/zt-ntmkyjog-DHOiddbBnhY796KaABUhzg) is the a great place to get help and reach Kool developers.
 - Check out our draft on [contributing guide](CONTRIBUTING.md) for getting involved.
 
 ### Roadmap
