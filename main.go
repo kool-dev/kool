@@ -10,7 +10,7 @@ import (
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	environment.InitEnvironmentVariables(environment.NewEnvStorage(), environment.DefaultEnv)
+	environment.InitEnvironmentVariables(environment.NewEnvStorage())
 
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)

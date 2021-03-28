@@ -5,16 +5,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fireworkweb/godotenv"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-var envFile string = ".env"
+var envFiles = []string{".env.local", ".env"}
 
 // InitEnvironmentVariables handles the reading of .env files and
 // setting up important environment variables necessary for kool
 // to operate as expected.
-func InitEnvironmentVariables(envStorage EnvStorage, defaultEnvValues string) {
+func InitEnvironmentVariables(envStorage EnvStorage) {
 	var (
 		homeDir, workDir string
 		err              error
@@ -38,24 +37,14 @@ func InitEnvironmentVariables(envStorage EnvStorage, defaultEnvValues string) {
 		envStorage.Set("PWD", workDir)
 	}
 
-	if _, err = os.Stat(envFile); !os.IsNotExist(err) {
+	for _, envFile := range envFiles {
+		if _, err = os.Stat(envFile); os.IsNotExist(err) {
+			continue
+		}
+
 		err = envStorage.Load(envFile)
 		if err != nil {
 			log.Fatal("Failure loading environment file ", envFile, " error: '", err, "'")
-		}
-	}
-
-	// After loading all files, we should complemente the non-overwritten
-	// default variables to their expected distribution values
-	allEnv := os.Environ()
-	currentEnv := map[string]bool{}
-	for _, env := range allEnv {
-		currentEnv[strings.Split(env, "=")[0]] = true
-	}
-	defaultEnv, _ := godotenv.Unmarshal(defaultEnvValues)
-	for k, v := range defaultEnv {
-		if _, exists := currentEnv[k]; !exists {
-			envStorage.Set(k, v)
 		}
 	}
 

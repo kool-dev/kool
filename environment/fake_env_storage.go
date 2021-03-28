@@ -2,6 +2,8 @@ package environment
 
 import (
 	"fmt"
+
+	"github.com/fireworkweb/godotenv"
 )
 
 // FakeEnvStorage holds fake environment variables
@@ -30,6 +32,12 @@ func (f *FakeEnvStorage) Set(key string, value string) {
 // Load load environment file (fake behavior)
 func (f *FakeEnvStorage) Load(filename string) error {
 	f.CalledLoad = true
+	envs, _ := godotenv.Read(filename)
+	for k, v := range envs {
+		if _, exists := f.Envs[k]; !exists {
+			f.Envs[k] = v
+		}
+	}
 	return nil
 }
 
