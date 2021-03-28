@@ -1,35 +1,28 @@
-Kool works with Docker / Docker Compose under the hood, and comes with some cool presets to help you get started, everything is configurable / extendable.
+Kool works with Docker and Docker Compose under the hood to power up small, fast and reproduceable local development environms. We also ship out of the box a collection of what we call *presets* to help you get started local development on some popular frameworks and stacks.
 
-Let's use **Laravel** preset as example and explain how it works.
+We aim at bringing easiness and no-brainer solutions while still keeping open and accessible to you absolute all the power and flexibity of Docker and Docker Compose. We make them simple to use, but we do not toll this facilitation on lack of control - you continue in charge of everything that is going on.
 
-When you run **kool preset laravel** all it does is create a few files for you:
-
-```bash
-$ kool preset laravel
-Preset laravel is initializing!
-  Preset file Dockerfile.build created.
-  Preset file docker-compose.yml created.
-  Preset file kool.yml created.
-Preset laravel initialized!
-```
-
-### Dockerfile.build
-
-This is a file you can use in case you want to build your application to use in production, in Docker world every release is usually a new image built with your application on it.
-
-Soon we will give more examples on how to use Docker in production or use it with **Kool Cloud**.
+Check out our [**Laravel** preset as example](https://kool.dev/docs/presets/laravel) to get the feeling on the experience we offer.
 
 ### docker-compose.yml
 
-This file defines all services that runs your application, docker images to use, ports, volume mounts, etc.
+This file defines all services that runs your application, docker images to use, ports, volume mounts, etc. This file is the configuration file for Docker Compose and follow its [reference for content and formatting](https://docs.docker.com/compose/compose-file/) to define our service containers.
 
-You can add/change/remove services as you will.
+This file belongs to your project and should be versioned with it. As such you are can and probably eventually will make tweaks and improvements to it, to better suit your project specific needs.
+
+#### Environment variables
+
+`kool` will load environment variables from a `.env` file (if there is a `.env.local` file, it gets loaded first). This is helpful for setting up host specific settings you don't want to tie up to your setup.
+
+Previously defined variables never get overriden.
 
 ### kool.yml
 
-This is where most of the magic happens, a way to make your life easy, encapsulating scripts for you to use on your local environment or CI/CDs. It is created in your working directory when you run **kool preset**, but you can also create it inside a folder named **kool** in your user's home directory.
+This is Kool configuration file. Your best usage for it is to encapsule scripts for you to use on your local environment or CI/CDs. It is a YML file with `scripts:` root key, where you should define *scripts* (single line or an array with several lines). You are then able to call this scripts with `kool run my-script`.
 
-The **scripts** defined can be used with **kool run <script>** command.
+Each of our *presets* comes with a helpful `kool.yml` suggestion for that stack. Of course you are encouraged to expand it with your own custom scripts to help along the development process and knowledge sharing across the team. This file should also be versioned along the project.
+
+> Using **environment variables** within your scripts gives them an extra bit of power and flexibility. You are encouraged to use them in order to **parameterize your scripts**.
 
 kool.yml:
 ```yaml
@@ -46,7 +39,9 @@ Usage:
 kool run artisan tinker
 ```
 
-You can pass in after kool run any options or arguments you wish to pass down the encapsulated command.
+You can pass in after `kool run my-script` any other arguments you wish to pass down the encapsulated command.
+
+> The arguments passing at this moment is limited to single-line scripts only.
 
 #### Arguments to kool run <script>
 
@@ -58,7 +53,9 @@ Multiple commands like **setup** will not forward your input, so **kool run setu
 
 This is not meant only for `kool` commands, you can add any type commands as you usually run them in your shell like `cat`, `cp`, `mv`, etc.
 
-There is just one caveat we need to be aware of - the commands within a script on `kool.yml` are parsed and executed by `kool` and not in a general `bash` context, so you **cannot** directly use bash script structures like `if []; then fi`. In case you need something for that effect, you should use a `kool docker <some bash image> bash -c ""` which then parses any bash script you need.
+There is just one caveat we need to be aware of - the commands within a script on `kool.yml` are parsed and executed by `kool` and not in a general `bash` context, so you **cannot** directly use bash script structures like `if []; then fi` or redirection with pipes (`cmd | cmd2`). Although, we support output redirection (see below).
+
+> In case you need some more complex shell command, you can use something like `kool docker <some bash image> bash -c ""` which then parses any bash script you need.
 
 #### Input and output redirects on `kool.yml`
 
