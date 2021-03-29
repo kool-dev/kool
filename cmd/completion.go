@@ -44,7 +44,7 @@ func (c *KoolCompletion) Execute(args []string) (err error) {
 func NewCompletionCommand(completion *KoolCompletion) *cobra.Command {
 	return &cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",
-		Short: "Generate completion script.",
+		Short: "Generate shell completion configuration script.",
 		Long: `Autocompletion:
 
 If you want to use kool autocompletion in your Unix shell, follow the appropriate instructions below.

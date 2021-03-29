@@ -25,7 +25,8 @@ type KoolStart struct {
 func NewStartCommand(start *KoolStart) *cobra.Command {
 	return &cobra.Command{
 		Use:                   "start [SERVICE...]",
-		Short:                 "Start the specified [SERVICE] containers. If no [SERVICE] is provided, all containers will be started. If the containers are already running they are recreated.",
+		Short:                 "Start your service containers from docker-compose.yml",
+		Long:                  "Start the specified [SERVICE] containers. If no [SERVICE] is provided, all containers will be started. If the containers are already running they are recreated.",
 		Run:                   DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd})),
 		DisableFlagsInUseLine: true,
 	}

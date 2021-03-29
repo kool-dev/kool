@@ -91,7 +91,8 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 	createCmd = &cobra.Command{
 		Use:   "create PRESET FOLDER",
-		Short: "Create a new project using the specified PRESET in a directory named FOLDER.",
+		Short: "Create a new project using a preset",
+		Long:  "Create a new project using the specified PRESET in a directory named FOLDER.",
 		Args:  cobra.ExactArgs(2),
 		Run:   DefaultCommandRunFunction(create),
 	}

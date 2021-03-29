@@ -45,9 +45,11 @@ func init() {
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "kool",
-		Short: "kool - Kool stuff",
+		Short: "Development environments made easy",
 		Long: `An easy and robust software development environment
 tool helping you from project creation through deployment.
+Maing containers adoption easy and affordable. Powering cloud native applications development.
+
 Complete documentation is available at https://kool.dev/docs`,
 		Version:           version,
 		DisableAutoGenTag: true,

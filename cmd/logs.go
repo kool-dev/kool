@@ -74,7 +74,7 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 func NewLogsCommand(logs *KoolLogs) (logsCmd *cobra.Command) {
 	logsCmd = &cobra.Command{
 		Use:   "logs [OPTIONS] [SERVICE...]",
-		Short: "Display log output from all or a specific [SERVICE] container.",
+		Short: "Display log output from all or a specific service container",
 		Run:   DefaultCommandRunFunction(logs),
 	}
 

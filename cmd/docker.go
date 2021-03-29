@@ -85,7 +85,7 @@ func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "docker [OPTIONS] IMAGE [COMMAND] -- [ARG...]",
 		Args:  cobra.MinimumNArgs(1),
-		Short: "Create a new container using the specified IMAGE and run a [COMMAND] inside it.",
+		Short: "Create a new container (a powered up 'docker run')",
 		Long: `This command acts as a helper for 'docker run'.
 You can provide one or more [OPTIONS] before the IMAGE name that will be used
 by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
