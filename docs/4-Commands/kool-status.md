@@ -1,6 +1,6 @@
 ## kool status
 
-Show the status of all service containers.
+Show the status of all service containers
 
 ```
 kool status [flags]
@@ -20,5 +20,5 @@ kool status [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

@@ -1,9 +1,13 @@
 ## kool run
 
-Run the specified [script] (as defined in the kool.yml file). For single-line scripts, run the [script] with an optional [command].
+Executes a script defined by kool.yml
+
+### Synopsis
+
+Run the specified SCRIPT (as defined in the kool.yml file). For single-line scripts, you can run the SCRIPT with optional arguments.
 
 ```
-kool run [script] [command] [flags]
+kool run SCRIPT -- [ARG...] [flags]
 ```
 
 ### Options
@@ -20,5 +24,5 @@ kool run [script] [command] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

@@ -1,9 +1,13 @@
 ## kool start
 
-Start the specified [service] containers. If no [service] is provided, all containers will be started.
+Start your service containers from docker-compose.yml
+
+### Synopsis
+
+Start the specified [SERVICE] containers. If no [SERVICE] is provided, all containers will be started. If the containers are already running they are recreated.
 
 ```
-kool start [service...]
+kool start [SERVICE...]
 ```
 
 ### Options
@@ -20,5 +24,5 @@ kool start [service...]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

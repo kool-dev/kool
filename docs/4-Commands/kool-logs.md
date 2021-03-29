@@ -1,9 +1,9 @@
 ## kool logs
 
-Display log output from the specified [service] containers.
+Display log output from all or a specific service container
 
 ```
-kool logs [option...] [service...] [flags]
+kool logs [OPTIONS] [SERVICE...] [flags]
 ```
 
 ### Options
@@ -22,5 +22,5 @@ kool logs [option...] [service...] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

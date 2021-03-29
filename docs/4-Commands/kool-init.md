@@ -2,6 +2,10 @@
 
 [DEPRECATED] Proxies preset command
 
+### Synopsis
+
+Initialize the specified project PRESET in the current working directory. If no PRESET argument is provided, you'll be interactively prompted to pick one of the available options.
+
 ```
 kool init [PRESET] [flags]
 ```
@@ -20,5 +24,5 @@ kool init [PRESET] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

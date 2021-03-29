@@ -1,6 +1,6 @@
 ## kool self-update
 
-Update kool to the latest version.
+Update kool to the latest version
 
 ### Synopsis
 
@@ -24,5 +24,5 @@ kool self-update [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

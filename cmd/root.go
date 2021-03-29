@@ -48,7 +48,7 @@ func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 		Short: "Development environments made easy",
 		Long: `An easy and robust software development environment
 tool helping you from project creation through deployment.
-Maing containers adoption easy and affordable. Powering cloud native applications development.
+Making containers adoption easy and affordable. Powering cloud native applications development.
 
 Complete documentation is available at https://kool.dev/docs`,
 		Version:           version,

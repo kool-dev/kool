@@ -1,16 +1,16 @@
 ## kool docker
 
-Create a new container using the specified [image] and run a [command] inside it.
+Create a new container (a powered up 'docker run')
 
 ### Synopsis
 
 This command acts as a helper for 'docker run'.
-You can provide one or more [option...] before the [image] name that will be used
+You can provide one or more [OPTIONS] before the IMAGE name that will be used
 by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
-the [image] name and the [command] you want to execute on that [image].
+the IMAGE name and the [COMMAND] you want to execute on that IMAGE. After that you can use -- and follow with any extra arguments that command may require.
 
 ```
-kool docker [option...] [image] [command] [flags]
+kool docker [OPTIONS] IMAGE [COMMAND] -- [ARG...] [flags]
 ```
 
 ### Options
@@ -31,5 +31,5 @@ kool docker [option...] [image] [command] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 

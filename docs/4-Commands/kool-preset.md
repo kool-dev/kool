@@ -1,9 +1,13 @@
 ## kool preset
 
-Initialize the specified kool [preset] in the current working directory. If no [preset] argument is provided, you'll be prompted to pick an existing option.
+Install Kool's tailored configuration files in the current directory
+
+### Synopsis
+
+Initialize the specified project PRESET in the current working directory. If no PRESET argument is provided, you'll be interactively prompted to pick one of the available options.
 
 ```
-kool preset [preset] [flags]
+kool preset [PRESET] [flags]
 ```
 
 ### Options
@@ -20,5 +24,5 @@ kool preset [preset] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Development environments made easy
 
