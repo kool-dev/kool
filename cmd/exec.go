@@ -84,8 +84,9 @@ func (e *KoolExec) Execute(args []string) (err error) {
 // NewExecCommand initializes new kool exec command
 func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 	execCmd = &cobra.Command{
-		Use:   "exec [option...] [service] [command]",
-		Short: "Execute a [command] inside the specified [service] container.",
+		Use:   "exec [OPTIONS] SERVICE COMMAND -- [ARG...]",
+		Short: "Execute a COMMAND inside the specified SERVICE container.",
+		Long:  `This command allows to spawn a new process (COMMAND) within a running service container (SERVICE).`,
 		Args:  cobra.MinimumNArgs(2),
 		Run:   DefaultCommandRunFunction(exec),
 	}
