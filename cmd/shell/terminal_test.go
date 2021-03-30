@@ -45,7 +45,7 @@ func TestPtyIsTerminal(t *testing.T) {
 
 	terminalChecker := NewTerminalChecker()
 
-	if !terminalChecker.IsTerminal(f, f) {
+	if !terminalChecker.IsTerminal(f) {
 		t.Error("expecting tty terminal on command")
 	}
 }

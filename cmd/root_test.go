@@ -1,3 +1,5 @@
+// +build !windows
+
 package cmd
 
 import (
@@ -10,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/creack/pty"
 	"github.com/spf13/cobra"
 )
 
@@ -322,5 +325,73 @@ func TestAddCommands(t *testing.T) {
 		if !added {
 			t.Errorf("expected command is missing: %s", cmd)
 		}
+	}
+}
+
+func TestDevelopmentVersionWarning(t *testing.T) {
+	fakeEnv := environment.NewFakeEnvStorage()
+	root := NewRootCmd(fakeEnv)
+
+	fakecmd := &cobra.Command{
+		Use: "fakecmd",
+		Run: func(cmd *cobra.Command, args []string) {},
+	}
+	root.AddCommand(fakecmd)
+
+	// default test NOT A TTY
+	b := bytes.NewBufferString("")
+	root.SetOut(b)
+
+	root.SetArgs([]string{"fakecmd"})
+	version = DEV_VERSION
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing command; error: %v", err)
+	}
+
+	var (
+		out []byte
+		err error
+	)
+
+	if out, err = io.ReadAll(b); err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "you are executing a development version"
+	output := strings.TrimSpace(string(out))
+
+	if strings.Contains(output, expected) {
+		t.Errorf("bad warning under non-TTY: %s", output)
+	}
+
+	if hasWarnedDevelopmentVersion {
+		t.Error("bar warning under non-TTY")
+	}
+
+	if pty, tty, err := pty.Open(); err != nil {
+		t.Fatalf("failed creting PTY for testing: %v", err)
+	} else {
+		root.SetOut(tty)
+
+		defer pty.Close()
+		defer tty.Close()
+	}
+	version = DEV_VERSION
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing command; error: %v", err)
+	}
+
+	if !hasWarnedDevelopmentVersion {
+		t.Error("failed to warn about development version")
+	}
+
+	hasWarnedDevelopmentVersion = false
+	version = "100.100.100"
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing command; error: %v", err)
+	}
+
+	if hasWarnedDevelopmentVersion {
+		t.Error("should not have warned on non-dev version")
 	}
 }
