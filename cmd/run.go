@@ -31,9 +31,6 @@ var ErrExtraArguments = errors.New("error: you cannot pass in extra arguments to
 // ErrKoolScriptNotFound means that the given script was not found
 var ErrKoolScriptNotFound = errors.New("script was not found in any kool.yml file")
 
-// ErrExtraEnvMultiLines Extra environment variables error
-var ErrExtraEnvMultiLines = errors.New("error: you cannot pass in extra environment variables to multiple commands scripts")
-
 func AddKoolRun(root *cobra.Command) {
 	var (
 		run    = NewKoolRun()
@@ -79,11 +76,6 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 
 	if len(args) > 0 && len(r.commands) > 1 {
 		err = ErrExtraArguments
-		return
-	}
-
-	if len(r.Flags.EnvVariables) > 0 && len(r.commands) > 1 {
-		err = ErrExtraEnvMultiLines
 		return
 	}
 

@@ -579,27 +579,3 @@ func TestNewRunCommandWithEnvVariable(t *testing.T) {
 		t.Errorf("expected to set '$VAR_TEST' to an empty value after using it, did set to '%s'", history[0])
 	}
 }
-
-func TestNewRunCommandExtraEnvVarsError(t *testing.T) {
-	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}, &builder.FakeCommand{}}
-	f := newFakeKoolRun(fakeParsedCommands, nil)
-	cmd := NewRunCommand(f)
-
-	cmd.SetArgs([]string{"--env=VAR_TEST=1", "script"})
-
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error for extra environment variables")
-	}
-
-	if gotError := f.shell.(*shell.FakeShell).Err; !errors.Is(gotError, ErrExtraEnvMultiLines) {
-		t.Errorf("expecting error '%v', got '%v'", ErrExtraEnvMultiLines, gotError)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("got an extra arguments error, but command did not exit")
-	}
-}
