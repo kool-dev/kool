@@ -9,7 +9,8 @@ kool run [script] [command] [flags]
 ### Options
 
 ```
-  -h, --help   help for run
+  -e, --env stringArray   Environment variables.
+  -h, --help              help for run
 ```
 
 ### Options inherited from parent commands
