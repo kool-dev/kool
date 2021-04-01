@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	koolDeployEnv = "kool.deploy.env"
+	koolDeployEnv  = "kool.deploy.env"
+	koolDeployFile = "kool.deploy.yml"
 )
 
 // KoolDeploy holds handlers and functions for using Deploy API
@@ -62,6 +63,10 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		filename string
 		deploy   *api.Deploy
 	)
+
+	if err = d.validate(); err != nil {
+		return
+	}
 
 	if url := d.env.Get("KOOL_API_URL"); url != "" {
 		api.SetBaseURL(url)
@@ -204,7 +209,9 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 }
 
 func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err error) {
-	var output string
+	var (
+		output, file string
+	)
 
 	output, err = d.Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
 	if err != nil {
@@ -213,7 +220,13 @@ func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err e
 	}
 
 	// -z parameter returns the utf-8 file names separated by 0 bytes
-	files = strings.Split(output, string(rune(0x00)))
+	for _, file = range strings.Split(output, string(rune(0x00))) {
+		if file == "" {
+			continue
+		}
+
+		files = append(files, file)
+	}
 	return
 }
 
@@ -241,4 +254,14 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 	}
 
 	return files
+}
+
+func (d *KoolDeploy) validate() (err error) {
+	var path = filepath.Join(d.env.Get("PWD"), koolDeployFile)
+
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		err = fmt.Errorf("could not find required file (%s) on current working directory", koolDeployFile)
+	}
+
+	return
 }
