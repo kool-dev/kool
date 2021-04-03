@@ -51,7 +51,7 @@ However, there is one important caveat - the commands you add to **kool.yml** ar
 
 At the end of single line scripts like `kool run <script-name>`, you can also add arguments you want to pass down to the encapsulated command. Single line commands, such as `artisan`, are like aliases, whereby additional arguments are forwarded to the actual command. For example, `kool run artisan key:generate` basically becomes `kool exec app php artisan key:generate`.
 
-At this time, adding arguments is only supported by **single line** scripts. **Multi-line** commands like `setup` will **not** forward your arguments. This means `kool run setup something` will run each script in sequence, and completely ignore the `something` argument added to the end.
+At this time, adding arguments is **only supported** by **single line** commands. **Multi-line** commands (like `setup`) will return an error if an extra argument is added to the end (i.e. `kool run setup something`).
 
 #### Input and Output Redirects
 
