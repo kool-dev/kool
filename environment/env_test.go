@@ -2,24 +2,27 @@ package environment
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-const defaultEnvTesting string = `
-VAR_DEFAULT_ENV=1
-`
-
 func TestInitEnvironmentVariables(t *testing.T) {
 	f := NewFakeEnvStorage()
 
-	envFile = ".env.testing"
+	originalEnvFiles := envFiles
+	defer func() { envFiles = originalEnvFiles }()
 
-	defer func() { envFile = ".env" }()
+	testEnvFile := filepath.Join(t.TempDir(), ".env.test")
+	envFiles = []string{testEnvFile}
 
-	InitEnvironmentVariables(f, defaultEnvTesting)
+	if err := os.WriteFile(testEnvFile, []byte("FOO=bar\n"), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	InitEnvironmentVariables(f)
 
 	homeDir, _ := homedir.Dir()
 
@@ -43,8 +46,8 @@ func TestInitEnvironmentVariables(t *testing.T) {
 		t.Error("did not call Load on EnvSotrage")
 	}
 
-	if defaultEnv := f.Envs["VAR_DEFAULT_ENV"]; defaultEnv != "1" {
-		t.Errorf("expecting $VAR_DEFAULT_ENV value '1', got '%s'", defaultEnv)
+	if foo := f.Envs["FOO"]; foo != "bar" {
+		t.Errorf("expected FOO to be bar: %v", foo)
 	}
 
 	pieces := strings.Split(workDir, string(os.PathSeparator))
