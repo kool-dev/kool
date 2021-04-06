@@ -13,7 +13,7 @@ import (
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker"},
 	}
@@ -22,7 +22,7 @@ func newFakeKoolDocker() *KoolDocker {
 func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
