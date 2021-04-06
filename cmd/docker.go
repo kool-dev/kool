@@ -98,6 +98,8 @@ You can provide one or more [OPTIONS] before the IMAGE name that will be used
 by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
 the IMAGE name and the [COMMAND] you want to execute on that IMAGE. After that you can use -- and follow with any extra arguments that command may require.`,
 		Run: DefaultCommandRunFunction(docker),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")

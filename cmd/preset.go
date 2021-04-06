@@ -105,6 +105,7 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 				}
 			}
 		},
+		DisableFlagsInUseLine: true,
 	}
 
 	return

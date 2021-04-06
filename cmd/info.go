@@ -21,6 +21,8 @@ func NewInfoCmd(info *KoolInfo) *cobra.Command {
 		Short: "Print out information about your local setup",
 		Run:   DefaultCommandRunFunction(info),
 		Args:  cobra.MaximumNArgs(1),
+
+		DisableFlagsInUseLine: true,
 	}
 }
 

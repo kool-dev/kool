@@ -106,6 +106,7 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 
 			return compListScripts(toComplete, run), cobra.ShellCompDirectiveNoFileComp
 		},
+		DisableFlagsInUseLine: true,
 	}
 
 	runCmd.Flags().StringArrayVarP(&run.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")

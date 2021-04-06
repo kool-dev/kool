@@ -76,6 +76,8 @@ func NewLogsCommand(logs *KoolLogs) (logsCmd *cobra.Command) {
 		Use:   "logs [OPTIONS] [SERVICE...]",
 		Short: "Display log output from all or a specific service container",
 		Run:   DefaultCommandRunFunction(logs),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. A value equal to 0 will show all lines.")

@@ -23,6 +23,8 @@ func NewDeployDestroyCommand(destroy *KoolDeployDestroy) *cobra.Command {
 		Short: "Destroy a deployment made with 'kool deploy'",
 		Args:  cobra.NoArgs,
 		Run:   DefaultCommandRunFunction(destroy),
+
+		DisableFlagsInUseLine: true,
 	}
 }
 

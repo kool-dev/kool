@@ -64,5 +64,7 @@ func NewSelfUpdateCommand(selfUpdate *KoolSelfUpdate) *cobra.Command {
 		Long:  "Checks the latest release of Kool in GitHub Releases, and downloads and replaces the local binary if a newer version is available.",
 		Args:  cobra.NoArgs,
 		Run:   LongTaskCommandRunFunction(selfUpdateTask),
+
+		DisableFlagsInUseLine: true,
 	}
 }

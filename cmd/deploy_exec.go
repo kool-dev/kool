@@ -31,6 +31,8 @@ func NewDeployExecCommand(deployExec *KoolDeployExec) *cobra.Command {
 		Long:  `When you have deployed your application with 'kool deploy' you can use the same credentials (KOOL_API_TOKEN environment variable) to issue any command (similiar like an SSH session) within a container you deployed to the cloud.`,
 		Args:  cobra.MinimumNArgs(1),
 		Run:   DefaultCommandRunFunction(deployExec),
+
+		DisableFlagsInUseLine: true,
 	}
 }
 

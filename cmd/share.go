@@ -100,6 +100,8 @@ func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 		Short: "Live share your local environment to the internet using an HTTP tunnel",
 		Args:  cobra.NoArgs,
 		Run:   DefaultCommandRunFunction(share),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	shareCmd.Flags().StringVarP(&share.Flags.Service, "service", "", "app", "The name of the local service container you want to share.")

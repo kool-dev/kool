@@ -56,8 +56,9 @@ tool helping you from project creation through deployment.
 Making containers adoption easy and affordable. Powering cloud native applications development.
 
 Complete documentation is available at https://kool.dev/docs`,
-		Version:           version,
-		DisableAutoGenTag: true,
+		Version:               version,
+		DisableAutoGenTag:     true,
+		DisableFlagsInUseLine: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				env.Set("KOOL_VERBOSE", verbose.Value.String())

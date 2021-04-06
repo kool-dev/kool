@@ -89,6 +89,8 @@ func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 		Long:  `This command allows to spawn a new process (specified by COMMAND) within a running service container (specified by SERVICE).`,
 		Args:  cobra.MinimumNArgs(2),
 		Run:   DefaultCommandRunFunction(exec),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")

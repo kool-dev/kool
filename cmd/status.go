@@ -206,5 +206,7 @@ func NewStatusCommand(status *KoolStatus) *cobra.Command {
 		Use:   "status",
 		Short: "Show the status of all service containers",
 		Run:   DefaultCommandRunFunction(status),
+
+		DisableFlagsInUseLine: true,
 	}
 }

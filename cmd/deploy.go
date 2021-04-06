@@ -35,6 +35,8 @@ func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 		Short: "Deploy your local application to Kool Cloud",
 		Run:   DefaultCommandRunFunction(deploy),
 		Args:  cobra.NoArgs,
+
+		DisableFlagsInUseLine: true,
 	}
 }
 
