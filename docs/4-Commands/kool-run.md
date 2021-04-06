@@ -7,7 +7,7 @@ Executes a script defined by kool.yml
 Run the specified SCRIPT (as defined in the kool.yml file). For single-line scripts, you can run the SCRIPT with optional arguments.
 
 ```
-kool run SCRIPT -- [ARG...] [flags]
+kool run SCRIPT [--] [ARG...]
 ```
 
 ### Options

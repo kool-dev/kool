@@ -7,7 +7,7 @@ Execute a new command inside a running service container
 This command allows to spawn a new process (specified by COMMAND) within a running service container (specified by SERVICE).
 
 ```
-kool exec [OPTIONS] SERVICE COMMAND -- [ARG...] [flags]
+kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
 ```
 
 ### Options

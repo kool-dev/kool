@@ -3,7 +3,7 @@
 Show the status of all service containers
 
 ```
-kool status [flags]
+kool status
 ```
 
 ### Options

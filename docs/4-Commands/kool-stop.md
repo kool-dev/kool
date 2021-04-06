@@ -7,7 +7,7 @@ Stop and destroy the service containers
 Stop and destroy running [SERVICE] containers started with the 'kool start' command. If no [SERVICE] is provided, all containers will be stopped.
 
 ```
-kool stop [SERVICE...] [flags]
+kool stop [SERVICE...]
 ```
 
 ### Options

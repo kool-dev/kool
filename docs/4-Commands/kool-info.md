@@ -3,7 +3,7 @@
 Print out information about your local setup
 
 ```
-kool info [flags]
+kool info
 ```
 
 ### Options

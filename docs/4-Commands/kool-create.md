@@ -7,7 +7,7 @@ Create a new project using a preset
 Create a new project using the specified PRESET in a directory named FOLDER.
 
 ```
-kool create PRESET FOLDER [flags]
+kool create PRESET FOLDER
 ```
 
 ### Options

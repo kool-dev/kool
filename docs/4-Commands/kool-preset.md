@@ -7,7 +7,7 @@ Install Kool's tailored configuration files in the current directory
 Initialize the specified project PRESET in the current working directory. If no PRESET argument is provided, you'll be interactively prompted to pick one of the available options.
 
 ```
-kool preset [PRESET] [flags]
+kool preset [PRESET]
 ```
 
 ### Options

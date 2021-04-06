@@ -7,7 +7,7 @@ Update kool to the latest version
 Checks the latest release of Kool in GitHub Releases, and downloads and replaces the local binary if a newer version is available.
 
 ```
-kool self-update [flags]
+kool self-update
 ```
 
 ### Options

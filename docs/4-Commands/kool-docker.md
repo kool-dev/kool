@@ -10,7 +10,7 @@ by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
 the IMAGE name and the [COMMAND] you want to execute on that IMAGE. After that you can use -- and follow with any extra arguments that command may require.
 
 ```
-kool docker [OPTIONS] IMAGE [COMMAND] -- [ARG...] [flags]
+kool docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]
 ```
 
 ### Options

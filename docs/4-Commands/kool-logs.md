@@ -3,7 +3,7 @@
 Display log output from all or a specific service container
 
 ```
-kool logs [OPTIONS] [SERVICE...] [flags]
+kool logs [OPTIONS] [SERVICE...]
 ```
 
 ### Options

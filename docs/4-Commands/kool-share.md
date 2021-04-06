@@ -3,7 +3,7 @@
 Live share your local environment to the internet using an HTTP tunnel
 
 ```
-kool share [flags]
+kool share
 ```
 
 ### Options

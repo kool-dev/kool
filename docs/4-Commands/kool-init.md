@@ -7,7 +7,7 @@
 Initialize the specified project PRESET in the current working directory. If no PRESET argument is provided, you'll be interactively prompted to pick one of the available options.
 
 ```
-kool init [PRESET] [flags]
+kool init [PRESET]
 ```
 
 ### Options
