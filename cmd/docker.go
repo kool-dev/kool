@@ -14,6 +14,7 @@ type KoolDockerFlags struct {
 	EnvVariables []string
 	Volumes      []string
 	Publish      []string
+	Network      []string
 }
 
 // KoolDocker holds handlers and functions to implement the docker command logic
@@ -38,7 +39,7 @@ func AddKoolDocker(root *cobra.Command) {
 func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -76,6 +77,12 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 		}
 	}
 
+	if len(d.Flags.Network) > 0 {
+		for _, network := range d.Flags.Network {
+			d.dockerRun.AppendArgs("--network", network)
+		}
+	}
+
 	err = d.Interactive(d.dockerRun, args...)
 	return
 }
@@ -97,6 +104,7 @@ the [image] name and the [command] you want to execute on that [image].`,
 	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Network, "network", "n", []string{}, "Connect a container to a network.")
 
 	//After a non-flag arg, stop parsing flags
 	cmd.Flags().SetInterspersed(false)
