@@ -26,7 +26,7 @@ type KoolDeployExec struct {
 // NewDeployExecCommand initializes new kool deploy Cobra command
 func NewDeployExecCommand(deployExec *KoolDeployExec) *cobra.Command {
 	return &cobra.Command{
-		Use:   "exec SERVICE COMMAND -- [ARG...]",
+		Use:   "exec SERVICE COMMAND [--] [ARG...]",
 		Short: "Execute a command in a specified container deployed by 'kool deploy'",
 		Long:  `When you have deployed your application with 'kool deploy' you can use the same credentials (KOOL_API_TOKEN environment variable) to issue any command (similiar like an SSH session) within a container you deployed to the cloud.`,
 		Args:  cobra.MinimumNArgs(1),

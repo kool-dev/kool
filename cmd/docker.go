@@ -90,7 +90,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 // NewDockerCommand initializes new kool docker command
 func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
-		Use:   "docker [OPTIONS] IMAGE [COMMAND] -- [ARG...]",
+		Use:   "docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]",
 		Args:  cobra.MinimumNArgs(1),
 		Short: "Create a new container (a powered up 'docker run')",
 		Long: `This command acts as a helper for 'docker run'.
