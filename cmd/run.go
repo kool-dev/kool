@@ -11,9 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// KoolRunFlags holds the flags for the run command
+type KoolRunFlags struct {
+	EnvVariables []string
+}
+
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
+	Flags    *KoolRunFlags
 	parser   parser.Parser
 	env      environment.EnvStorage
 	commands []builder.Command
@@ -40,6 +46,7 @@ func AddKoolRun(root *cobra.Command) {
 func NewKoolRun() *KoolRun {
 	return &KoolRun{
 		*newDefaultKoolService(),
+		&KoolRunFlags{[]string{}},
 		parser.NewParser(),
 		environment.NewEnvStorage(),
 		[]builder.Command{},
@@ -58,14 +65,8 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	// look for kool.yml on kool folder within user home directory
 	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
-	if r.commands, err = r.parser.Parse(script); err != nil {
-		if parser.IsMultipleDefinedScriptError(err) {
-			// we should just warn the user about multiple finds for the script
-			r.Warning("Attention: the script was found in more than one kool.yml file")
-			err = nil
-		} else {
-			return
-		}
+	if err = r.parseScript(script); err != nil {
+		return
 	}
 
 	if len(r.commands) == 0 {
@@ -107,6 +108,8 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 		},
 	}
 
+	runCmd.Flags().StringArrayVarP(&run.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
+
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
 
@@ -117,6 +120,30 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 func SetRunUsageFunc(run *KoolRun, runCmd *cobra.Command) {
 	originalUsageText := runCmd.UsageString()
 	runCmd.SetUsageFunc(getRunUsageFunc(run, originalUsageText))
+}
+
+func (r *KoolRun) parseScript(script string) (err error) {
+	var originalEnvs map[string]string = make(map[string]string)
+
+	for _, envVar := range r.Flags.EnvVariables {
+		pair := strings.SplitN(envVar, "=", 2)
+		originalEnvs[pair[0]] = r.env.Get(pair[0])
+		r.env.Set(pair[0], pair[1])
+	}
+
+	defer func() {
+		for k, v := range originalEnvs {
+			r.env.Set(k, v)
+		}
+	}()
+
+	if r.commands, err = r.parser.Parse(script); err != nil && parser.IsMultipleDefinedScriptError(err) {
+		// we should just warn the user about multiple finds for the script
+		r.Warning("Attention: the script was found in more than one kool.yml file")
+		err = nil
+	}
+
+	return
 }
 
 func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command) error {

@@ -19,6 +19,7 @@ kool docker [OPTIONS] IMAGE [COMMAND] -- [ARG...] [flags]
   -T, --disable-tty           Deprecated - no effect.
   -e, --env stringArray       Environment variables.
   -h, --help                  help for docker
+  -n, --network stringArray   Connect a container to a network.
   -p, --publish stringArray   Publish a container's port(s) to the host.
   -v, --volume stringArray    Bind mount a volume.
 ```

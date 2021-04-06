@@ -14,6 +14,8 @@ type CobraRunFN func(*cobra.Command, []string)
 // AddCommandsFN function to add subcommands
 type AddCommandsFN func(*cobra.Command)
 
+var hasWarnedDevelopmentVersion = false
+
 var AddCommands AddCommandsFN = func(root *cobra.Command) {
 	AddKoolCompletion(root)
 	AddKoolCreate(root)
@@ -33,7 +35,10 @@ var AddCommands AddCommandsFN = func(root *cobra.Command) {
 	AddKoolStop(root)
 }
 
-var version string = "0.0.0-dev"
+// DEV_VERSION holds the static version shown for development time builds
+const DEV_VERSION = "0.0.0-dev"
+
+var version string = DEV_VERSION
 
 var rootCmd = NewRootCmd(environment.NewEnvStorage())
 
@@ -53,9 +58,14 @@ Making containers adoption easy and affordable. Powering cloud native applicatio
 Complete documentation is available at https://kool.dev/docs`,
 		Version:           version,
 		DisableAutoGenTag: true,
-		PersistentPreRun: func(cmf *cobra.Command, args []string) {
-			if verbose := cmf.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				env.Set("KOOL_VERBOSE", verbose.Value.String())
+			}
+
+			if !hasWarnedDevelopmentVersion && version == DEV_VERSION && shell.NewTerminalChecker().IsTerminal(cmd.OutOrStdout()) {
+				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
+				hasWarnedDevelopmentVersion = true
 			}
 		},
 	}
