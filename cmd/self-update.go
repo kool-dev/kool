@@ -60,9 +60,11 @@ func NewSelfUpdateCommand(selfUpdate *KoolSelfUpdate) *cobra.Command {
 
 	return &cobra.Command{
 		Use:   "self-update",
-		Short: "Update kool to the latest version.",
+		Short: "Update kool to the latest version",
 		Long:  "Checks the latest release of Kool in GitHub Releases, and downloads and replaces the local binary if a newer version is available.",
 		Args:  cobra.NoArgs,
 		Run:   LongTaskCommandRunFunction(selfUpdateTask),
+
+		DisableFlagsInUseLine: true,
 	}
 }

@@ -204,7 +204,9 @@ func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string
 func NewStatusCommand(status *KoolStatus) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "Show the status of all service containers.",
+		Short: "Show the status of all service containers",
 		Run:   DefaultCommandRunFunction(status),
+
+		DisableFlagsInUseLine: true,
 	}
 }

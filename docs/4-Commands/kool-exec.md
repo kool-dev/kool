@@ -1,9 +1,13 @@
 ## kool exec
 
-Execute a [command] inside the specified [service] container.
+Execute a command inside a running service container
+
+### Synopsis
+
+Execute a COMMAND inside the specified SERVICE container (similar to an SSH session).
 
 ```
-kool exec [option...] [service] [command] [flags]
+kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
 ```
 
 ### Options
@@ -23,5 +27,5 @@ kool exec [option...] [service] [command] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

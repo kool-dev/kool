@@ -50,12 +50,15 @@ func init() {
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "kool",
-		Short: "kool - Kool stuff",
-		Long: `An easy and robust software development environment
-tool helping you from project creation through deployment.
+		Short: "Cloud native environments made easy",
+		Long: `From development to production, a robust and easy-to-use developer tool
+that makes Docker container adoption quick and easy for building and deploying cloud native
+applications.
+
 Complete documentation is available at https://kool.dev/docs`,
-		Version:           version,
-		DisableAutoGenTag: true,
+		Version:               version,
+		DisableAutoGenTag:     true,
+		DisableFlagsInUseLine: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				env.Set("KOOL_VERBOSE", verbose.Value.String())

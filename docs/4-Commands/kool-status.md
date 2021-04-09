@@ -1,9 +1,9 @@
 ## kool status
 
-Show the status of all service containers.
+Show the status of all service containers
 
 ```
-kool status [flags]
+kool status
 ```
 
 ### Options
@@ -20,5 +20,5 @@ kool status [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

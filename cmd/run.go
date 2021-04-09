@@ -94,10 +94,12 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 // NewRunCommand initializes new kool stop command
 func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	runCmd = &cobra.Command{
-		Use:   "run [script] [command]",
-		Short: "Run the specified [script] (as defined in the kool.yml file). For single-line scripts, run the [script] with an optional [command].",
-		Args:  cobra.MinimumNArgs(1),
-		Run:   DefaultCommandRunFunction(run),
+		Use:   "run SCRIPT [--] [ARG...]",
+		Short: "Execute a script defined in kool.yml",
+		Long: `Execute the specified SCRIPT, as defined in the kool.yml file.
+A single-line SCRIPT can be run with optional arguments.`,
+		Args: cobra.MinimumNArgs(1),
+		Run:  DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) != 0 {
 				return nil, cobra.ShellCompDirectiveNoFileComp
@@ -105,6 +107,7 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 
 			return compListScripts(toComplete, run), cobra.ShellCompDirectiveNoFileComp
 		},
+		DisableFlagsInUseLine: true,
 	}
 
 	runCmd.Flags().StringArrayVarP(&run.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")

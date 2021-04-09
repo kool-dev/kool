@@ -90,10 +90,13 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 // NewCreateCommand initializes new kool create command
 func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 	createCmd = &cobra.Command{
-		Use:   "create [preset] [project]",
-		Short: "Create a new project using the specified [preset] in a directory named [project].",
+		Use:   "create PRESET FOLDER",
+		Short: "Create a new project using a preset",
+		Long:  "Create a new project using the specified PRESET in a directory named FOLDER.",
 		Args:  cobra.ExactArgs(2),
 		Run:   DefaultCommandRunFunction(create),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	return

@@ -90,14 +90,16 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 // NewDockerCommand initializes new kool docker command
 func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
-		Use:   "docker [option...] [image] [command]",
+		Use:   "docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]",
 		Args:  cobra.MinimumNArgs(1),
-		Short: "Create a new container using the specified [image] and run a [command] inside it.",
-		Long: `This command acts as a helper for 'docker run'.
-You can provide one or more [option...] before the [image] name that will be used
-by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
-the [image] name and the [command] you want to execute on that [image].`,
+		Short: "Create a new container (a powered up 'docker run')",
+		Long: `A helper for 'docker run'. Any [OPTIONS] added before the
+IMAGE name will be used by 'docker run' itself (i.e. --env='VAR=VALUE').
+Add an optional [COMMAND] to execute on the IMAGE, and use [--] after
+the [COMMAND] to provide optional arguments required by the COMMAND.`,
 		Run: DefaultCommandRunFunction(docker),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")

@@ -2,8 +2,14 @@
 
 [DEPRECATED] Proxies preset command
 
+### Synopsis
+
+Initialize a project using the specified [PRESET] by installing configuration
+files customized for Kool in the current working directory. If no [PRESET] is provided,
+an interactive wizard will present the available options.
+
 ```
-kool init [PRESET] [flags]
+kool init [PRESET]
 ```
 
 ### Options
@@ -20,5 +26,5 @@ kool init [PRESET] [flags]
 
 ### SEE ALSO
 
-* [kool](kool)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

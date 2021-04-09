@@ -97,9 +97,11 @@ func (s *KoolShare) Execute(args []string) (err error) {
 func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 	shareCmd = &cobra.Command{
 		Use:   "share",
-		Short: "Live share your local environment with anyone, anywhere using an HTTP tunnel.",
+		Short: "Live share your local environment on the Internet using an HTTP tunnel",
 		Args:  cobra.NoArgs,
 		Run:   DefaultCommandRunFunction(share),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	shareCmd.Flags().StringVarP(&share.Flags.Service, "service", "", "app", "The name of the local service container you want to share.")
