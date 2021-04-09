@@ -32,7 +32,7 @@ type KoolDeploy struct {
 func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 	return &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy your local application to Kool Cloud",
+		Short: "Deploy a local application to a Kool Cloud environment",
 		Run:   DefaultCommandRunFunction(deploy),
 		Args:  cobra.NoArgs,
 

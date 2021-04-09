@@ -1,6 +1,6 @@
 ## kool restart
 
-Restart the service containers (the same as 'stop' followed by 'start')
+Restart running service containers (the same as 'kool stop' followed by 'kool start')
 
 ```
 kool restart
@@ -20,5 +20,5 @@ kool restart
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

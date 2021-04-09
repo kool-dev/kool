@@ -4,7 +4,9 @@
 
 ### Synopsis
 
-Initialize the specified project PRESET in the current working directory. If no PRESET argument is provided, you'll be interactively prompted to pick one of the available options.
+Initialize a project using the specified [PRESET] by installing configuration
+files customized for Kool in the current working directory. If no [PRESET] is provided,
+an interactive wizard will present the available options.
 
 ```
 kool init [PRESET]
@@ -24,5 +26,5 @@ kool init [PRESET]
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

@@ -24,5 +24,5 @@ kool create PRESET FOLDER
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

@@ -87,9 +87,11 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 	presetCmd = &cobra.Command{
 		Use:   "preset [PRESET]",
-		Short: "Install Kool's tailored configuration files in the current directory",
-		Long:  "Initialize the specified project PRESET in the current working directory. If no PRESET argument is provided, you'll be interactively prompted to pick one of the available options.",
-		Args:  cobra.MaximumNArgs(1),
+		Short: "Install configuration files customized for Kool in the current directory",
+		Long: `Initialize a project using the specified [PRESET] by installing configuration
+files customized for Kool in the current working directory. If no [PRESET] is provided,
+an interactive wizard will present the available options.`,
+		Args: cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			preset.SetOutStream(cmd.OutOrStdout())
 			preset.SetInStream(cmd.InOrStdin())

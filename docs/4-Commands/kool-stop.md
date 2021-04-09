@@ -1,10 +1,11 @@
 ## kool stop
 
-Stop and destroy the service containers
+Stop and destroy running service containers
 
 ### Synopsis
 
-Stop and destroy running [SERVICE] containers started with the 'kool start' command. If no [SERVICE] is provided, all containers will be stopped.
+Stop and destroy the specified [SERVICE] containers, which were started
+using 'kool start'. If no [SERVICE] is provided, all running containers are stopped.
 
 ```
 kool stop [SERVICE...]
@@ -25,5 +26,5 @@ kool stop [SERVICE...]
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

@@ -1,6 +1,6 @@
 ## kool completion
 
-Generate shell completion configuration script.
+Generate shell completion configuration script
 
 ### Synopsis
 
@@ -65,5 +65,5 @@ kool completion [bash|zsh|fish|powershell]
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 
