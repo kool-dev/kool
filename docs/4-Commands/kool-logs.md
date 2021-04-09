@@ -5,8 +5,8 @@ Display log output from running service containers
 ### Synopsis
 
 Display log output from all running service containers,
-or one or more specified [SERVICE...] containers. Add a '-f' flag to the
-end of the command to follow the log output (i.e. 'kool logs [SERVICE...] -f').
+or one or more specified [SERVICE...] containers. Add a '-f' option to the
+the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').
 
 ```
 kool logs [OPTIONS] [SERVICE...]
