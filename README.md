@@ -94,35 +94,15 @@ You can check out a couple of sample commands in action at [asciinema.org/~koold
 
 ## Community, Contributing and Support
 
-You are most welcome to contribute and help in our missiong of making software development *kool* for everyone.
+You are most welcome to contribute and help in our mission of making software development *kool* for everyone.
 
 - [Issues](/issues) are the primary channel for bringing up and tracking issues or proposals.
 - [Kool community on Slack](https://join.slack.com/t/kool-dev/shared_invite/zt-ntmkyjog-DHOiddbBnhY796KaABUhzg) is the a great place to get help and reach Kool developers.
-- Check out our draft on [contributing guide](CONTRIBUTING.md) for getting involved.
+- Check out our [contributing guide](CONTRIBUTING.md) for getting involved.
 
 ### Roadmap
 
 We have been working in a loosely defined but clear roadmap. You can check it out [in our blog Roadmap page](https://blog.kool.dev/page/roadmap).
-
-### Lint, formatting and tests
-
-Before submitting a PR make sure to run `fmt` and linters.
-
-```bash
-kool run fmt
-kool run lint
-kool run test
-```
-
-### Updating commands signature documentation
-
-The Cobra library offers a simple solution for getting markdown documentation for usage of its commands. In order to generate update the generated markdown files do as follow:
-
-```bash
-kool run make-docs
-git add .
-git commit -m "Updated commands docs"
-```
 
 ## Security
 
