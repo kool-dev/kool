@@ -8,7 +8,7 @@ import (
 func NewRestartCommand(stop KoolService, start KoolService) *cobra.Command {
 	return &cobra.Command{
 		Use:   "restart",
-		Short: "Restart the service containers (the same as 'stop' followed by 'start')",
+		Short: "Restart running service containers (the same as 'kool stop' followed by 'kool start')",
 		Run:   DefaultCommandRunFunction(stop, start),
 
 		DisableFlagsInUseLine: true,

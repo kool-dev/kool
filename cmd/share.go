@@ -97,7 +97,7 @@ func (s *KoolShare) Execute(args []string) (err error) {
 func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 	shareCmd = &cobra.Command{
 		Use:   "share",
-		Short: "Live share your local environment to the internet using an HTTP tunnel",
+		Short: "Live share your local environment on the Internet using an HTTP tunnel",
 		Args:  cobra.NoArgs,
 		Run:   DefaultCommandRunFunction(share),
 

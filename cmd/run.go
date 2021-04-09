@@ -95,10 +95,11 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	runCmd = &cobra.Command{
 		Use:   "run SCRIPT [--] [ARG...]",
-		Short: "Executes a script defined by kool.yml",
-		Long:  "Run the specified SCRIPT (as defined in the kool.yml file). For single-line scripts, you can run the SCRIPT with optional arguments.",
-		Args:  cobra.MinimumNArgs(1),
-		Run:   DefaultCommandRunFunction(run),
+		Short: "Execute a script defined in kool.yml",
+		Long: `Execute the specified SCRIPT, as defined in the kool.yml file.
+A single-line SCRIPT can be run with optional arguments.`,
+		Args: cobra.MinimumNArgs(1),
+		Run:  DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) != 0 {
 				return nil, cobra.ShellCompDirectiveNoFileComp

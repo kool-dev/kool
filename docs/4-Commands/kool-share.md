@@ -1,6 +1,6 @@
 ## kool share
 
-Live share your local environment to the internet using an HTTP tunnel
+Live share your local environment on the Internet using an HTTP tunnel
 
 ```
 kool share
@@ -23,5 +23,5 @@ kool share
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

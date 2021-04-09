@@ -1,10 +1,10 @@
 ## kool exec
 
-Execute a new command inside a running service container
+Execute a command inside a running service container
 
 ### Synopsis
 
-This command allows to spawn a new process (specified by COMMAND) within a running service container (specified by SERVICE).
+Execute a COMMAND inside the specified SERVICE container (similar to an SSH session).
 
 ```
 kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
@@ -27,5 +27,5 @@ kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

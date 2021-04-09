@@ -1,6 +1,10 @@
 ## kool info
 
-Print out information about your local setup
+Print out information about the local environment
+
+### Synopsis
+
+Print out information about the local environment, such as environment variables.
 
 ```
 kool info
@@ -20,5 +24,5 @@ kool info
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

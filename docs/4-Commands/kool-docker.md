@@ -4,10 +4,10 @@ Create a new container (a powered up 'docker run')
 
 ### Synopsis
 
-This command acts as a helper for 'docker run'.
-You can provide one or more [OPTIONS] before the IMAGE name that will be used
-by 'docker run' itself (i.e --env='VAR=VALUE'). Then you must pass
-the IMAGE name and the [COMMAND] you want to execute on that IMAGE. After that you can use -- and follow with any extra arguments that command may require.
+A helper for 'docker run'. Any [OPTIONS] added before the
+IMAGE name will be used by 'docker run' itself (i.e. --env='VAR=VALUE').
+Add an optional [COMMAND] to execute on the IMAGE, and use [--] after
+the [COMMAND] to provide optional arguments required by the COMMAND.
 
 ```
 kool docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]
@@ -32,5 +32,5 @@ kool docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

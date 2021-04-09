@@ -1,6 +1,12 @@
 ## kool logs
 
-Display log output from all or a specific service container
+Display log output from running service containers
+
+### Synopsis
+
+Display log output from all running service containers,
+or one or more specified [SERVICE...] containers. Add a '-f' flag to the
+end of the command to follow the log output (i.e. 'kool logs [SERVICE...] -f').
 
 ```
 kool logs [OPTIONS] [SERVICE...]
@@ -22,5 +28,5 @@ kool logs [OPTIONS] [SERVICE...]
 
 ### SEE ALSO
 
-* [kool](kool)	 - Development environments made easy
+* [kool](kool)	 - Cloud native environments made easy
 

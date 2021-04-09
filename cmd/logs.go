@@ -74,8 +74,11 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 func NewLogsCommand(logs *KoolLogs) (logsCmd *cobra.Command) {
 	logsCmd = &cobra.Command{
 		Use:   "logs [OPTIONS] [SERVICE...]",
-		Short: "Display log output from all or a specific service container",
-		Run:   DefaultCommandRunFunction(logs),
+		Short: "Display log output from running service containers",
+		Long: `Display log output from all running service containers,
+or one or more specified [SERVICE...] containers. Add a '-f' flag to the
+end of the command to follow the log output (i.e. 'kool logs [SERVICE...] -f').`,
+		Run: DefaultCommandRunFunction(logs),
 
 		DisableFlagsInUseLine: true,
 	}
