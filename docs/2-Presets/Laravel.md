@@ -18,7 +18,7 @@ $ kool self-update
 
 ### 1. Run `kool create laravel my-project`
 
-Use the `kool create <preset> <project-name>` command to create your new Laravel project.
+Use the [`kool create <preset> <project-name>` command](docs/commands/kool-create) to create your new Laravel project.
 
 ```bash
 $ kool create laravel my-project
@@ -63,7 +63,7 @@ Now, move into your new Laravel project.
 $ cd my-project
 ```
 
-The `kool preset` command auto-generated the following configuration files and added them to your project, which you can modify and extend.
+The [`kool preset` command](docs/commands/kool-preset) auto-generated the following configuration files and added them to your project, which you can modify and extend.
 
 ```bash
 +.dockerignore
@@ -119,7 +119,7 @@ Memcached
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-As mentioned above, the `kool preset` command added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run <script>` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
+As mentioned above, the [`kool preset` command](docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run <script>` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
 To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard).
 
@@ -164,11 +164,23 @@ Once `kool run setup` finishes, you should be able to access your site at [http:
 
 ---
 
-#### How to Open Container Sessions
+#### Run a Container Command
+
+Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a running service container:
+
+```bash
+# kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
+
+$ kool exec app ls
+```
+
+#### Connect to your Database Container
 
 You can easily start a new SQL client session inside your Docker `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
 
-Similar to SSH, if you want to open a Bash session in your `app` container, run `kool exec app bash`, where `app` is the name of the container service in **docker-compose.yml** (or `kool exec database bash` to open a `database` session). If you prefer, you can use `sh` instead of `bash` (`kool exec app sh`).
+#### Open a Container Session
+
+Similar to SSH, if you want to open a Bash session in your `app` container, run `kool exec app bash`, where `app` is the name of the service container in **docker-compose.yml**. If you prefer, you can use `sh` instead of `bash` (`kool exec app sh`).
 
 ```bash
 $ kool exec app bash

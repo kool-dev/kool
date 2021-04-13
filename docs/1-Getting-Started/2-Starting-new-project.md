@@ -1,10 +1,12 @@
-> We use PHP for our Hello World example, but **kool** is a **multi-stack** tool that can be used with any language and framework. For instance, [check out our presets](/docs/presets/introduction) for easily creating projects using JavaScript frameworks like Next.js, Nuxt.js, NestJS, and AdonisJs.
+> We use PHP for our Hello World example, but **kool** is a **stack agnostic** tool that can be used with any language and framework. For instance, [check out our presets](/docs/presets/introduction) for easily creating projects using JavaScript frameworks like Next.js, Nuxt.js, NestJS, and AdonisJs.
 
 ## Start a New Project with Docker in 4 Easy Steps
 
 ### Requirements
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
+
+> Please note that you'll need a basic understanding of how Docker and Docker Compose work in order to build a new project from scratch using Kool with Docker. Alternatively, minimize your learning curve by using [one of our presets](/docs/presets/introduction), which provide pre-configured environments for popular frameworks.
 
 Also, make sure you're running the latest version of **kool**. Run the following command to compare your local version of **kool** with the latest release, and, if a newer version is available, automatically download and install it.
 
@@ -14,7 +16,7 @@ $ kool self-update
 
 ### 1. Create a New Project
 
-Create a working directory for your new project, and move into it.
+Create a working directory for your new project, and move into it:
 
 ```bash
 $ mkdir my-app
@@ -23,13 +25,13 @@ $ cd my-app
 
 ### 2. Add docker-compose.yml
 
-Create a **docker-compose.yml** file in the root of your working directory, and then copy/paste one of the YAML templates provided below into **docker-compose.yml**.
+Create a **docker-compose.yml** file in the root of your working directory:
 
 ```bash
 $ touch docker-compose.yml
 ```
 
-Here's a simple, generic setup for **docker-compose.yml**:
+Copy/paste into this **docker-compose.yml** file a simple, generic Docker Compose configuration for an `app` service container:
 
 ```yaml
 version: "3.8"  # optional since v1.27.0
@@ -42,49 +44,18 @@ services:
       - .:/app:delegated
 ```
 
-Here's a more extensible, **Kool-optimized** setup for **docker-compose.yml** into which you can easily add additional services (i.e. database, cache, etc):
-
-```yaml
-version: "3.8"  # optional since v1.27.0
-services:
-  app:
-    image: kooldev/php:8.0-nginx
-    ports:
-      - ${KOOL_APP_PORT:-80}:80
-    environment:
-      ASUSER: ${KOOL_ASUSER:-0}
-      UID: ${UID:-0}
-    volumes:
-      - .:/app:delegated
-    networks:
-      - kool_local
-      - kool_global
-networks:
-  kool_local: null
-  kool_global:
-    external: true
-    name: ${KOOL_GLOBAL_NETWORK:-kool_global}
-```
-
 > As you can see, we're using a [Kool-optimized Docker image](https://github.com/kool-dev/docker-php) for **PHP 8** (using `php:8.0-fpm-alpine`as its base), which also includes an NGINX web server. We're mapping **localhost** to container port `80`.
 
 ### 3. Hello World!
 
-Create a `/public` sub-directory, and an **index.php** file inside it, and then copy/paste the code provided below into **index.php**.
+Create a `/public` sub-directory (in order to match NGINX's **default** root `/app/public`), and then `echo` some code into a new **index.php** file inside it:
 
 ```bash
-$ mkdir public # in order to match NGINX's default root /app/public
-$ touch public/index.php
+$ mkdir public
+$ echo "<?php echo 'Hello World!'; ?>" > public/index.php
 ```
 
-```php
-<?php
-
-echo "Hello World! <br>";
-echo "Yes, using Kool to create a new project running on Docker is super easy!";
-```
-
-> TIP: If you don't want to create a `/public` sub-directory for your **index.php** file (which matches NGINX's default setup), you can change the NGINX root by setting an `NGINX_ROOT` environment variable to `/app` in your **docker-compose.yml** file.
+> If you don't want to create a `/public` sub-directory, you can change the NGINX root by setting the `NGINX_ROOT` environment variable to `/app` in your **docker-compose.yml** file.
 
 ```yaml
 services:
@@ -95,13 +66,13 @@ services:
 
 ### 4. Run Your App
 
-Use the `kool start` command to start up the service containers defined in your **docker-compose.yml** file.
+Use the [`kool start` command](/docs/commands/kool-start) to start up the service container defined in your **docker-compose.yml** file.
 
 ```bash
 $ kool start
 ```
 
-Verify your Docker containers are running using the `kool status` command:
+Verify your Docker container is running using the [`kool status` command](docs/commands/kool-status):
 
 ```bash
 $ kool status
@@ -113,13 +84,23 @@ $ kool status
 +---------+---------+------------------------------+--------------+
 ```
 
-You should now be able to access your new Hello World! app at [http://localhost](http://localhost). Hooray!
+You should now be able to access your new app at [http://localhost](http://localhost) and see "Hello World!". Hooray!
 
 ---
 
-#### How to Open Container Sessions
+#### Run a Container Command
 
-Similar to SSH, if you want to open a Bash session in your `app` container, run `kool exec app bash`, where `app` is the name of the container service in **docker-compose.yml**. If you prefer, you can use `sh` instead of `bash` (`kool exec app sh`).
+Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a running service container:
+
+```bash
+# kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
+
+$ kool exec app ls
+```
+
+#### Open a Container Session
+
+Similar to SSH, if you want to open a Bash session in your `app` container, run `kool exec app bash`, where `app` is the name of the service container in **docker-compose.yml**. If you prefer, you can use `sh` instead of `bash` (`kool exec app sh`).
 
 ```bash
 $ kool exec app bash
@@ -143,7 +124,9 @@ When you're ready to start work again:
 $ kool start
 ```
 
-### BONUS: Add kool.yml
+## Diving Deeper
+
+### Add kool.yml
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
@@ -173,3 +156,29 @@ scripts:
 ```
 
 > As you can see in this **kool.yml** example, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
+
+### Kool-Optimized docker-compose.yml
+
+Here's a more extensible, **Kool-optimized** setup for **docker-compose.yml** into which you can easily add additional services (i.e. database, cache, etc):
+
+```yaml
+version: "3.8"  # optional since v1.27.0
+services:
+  app:
+    image: kooldev/php:8.0-nginx
+    ports:
+      - ${KOOL_APP_PORT:-80}:80
+    environment:
+      ASUSER: ${KOOL_ASUSER:-0}
+      UID: ${UID:-0}
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+networks:
+  kool_local: null
+  kool_global:
+    external: true
+    name: ${KOOL_GLOBAL_NETWORK:-kool_global}
+```
