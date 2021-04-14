@@ -79,11 +79,13 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 		return
 	}
 
+	// finish building exec command
 	kubectl.AppendArgs("exec", "-i")
 	if e.IsTerminal() {
 		kubectl.AppendArgs("-t")
 	}
-	kubectl.AppendArgs(e.cloud.CloudService(), "--")
+	kubectl.AppendArgs(e.cloud.CloudService(), "-c", "default")
+	kubectl.AppendArgs("--")
 	if len(args) == 0 {
 		args = []string{"bash"}
 	}
