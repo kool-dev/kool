@@ -3,29 +3,23 @@ package cmd
 import (
 	"fmt"
 	"kool-dev/kool/api"
+	"kool-dev/kool/cloud/k8s"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/environment"
-	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
 
-var authTempPath = "/tmp"
-
 // KoolDeployExec holds handlers and functions for using Deploy API
 type KoolDeployExec struct {
 	DefaultKoolService
-
-	kubectl, kool builder.Command
-
-	env     environment.EnvStorage
-	apiExec api.ExecCall
+	env   environment.EnvStorage
+	cloud k8s.K8S
 }
 
-// NewDeployExecCommand initializes new kool deploy Cobra command
-func NewDeployExecCommand(deployExec *KoolDeployExec) *cobra.Command {
-	return &cobra.Command{
+// NewDeployExecCommand inits Cobra command for kool deploy exec
+func NewDeployExecCommand(deployExec *KoolDeployExec) (cmd *cobra.Command) {
+	cmd = &cobra.Command{
 		Use:   "exec SERVICE COMMAND [--] [ARG...]",
 		Short: "Execute a command inside a running service container deployed to Kool Cloud",
 		Long: `After deploying an application to Kool Cloud using 'kool deploy',
@@ -36,16 +30,17 @@ Must use a KOOL_API_TOKEN environment variable for authentication.`,
 
 		DisableFlagsInUseLine: true,
 	}
+
+	cmd.Flags().SetInterspersed(false)
+	return
 }
 
 // NewKoolDeployExec creates a new pointer with default KoolDeployExec service dependencies
 func NewKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
 		*newDefaultKoolService(),
-		builder.NewCommand("kubectl"),
-		builder.NewCommand("kool"),
 		environment.NewEnvStorage(),
-		api.NewDefaultExecCall(),
+		k8s.NewDefaultK8S(),
 	}
 }
 
@@ -54,7 +49,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 	var (
 		domain  string
 		service string
-		resp    *api.ExecResponse
+		kubectl builder.Command
 	)
 
 	if len(args) == 0 {
@@ -74,57 +69,26 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 		return
 	}
 
-	e.apiExec.Body().Set("domain", domain)
-	e.apiExec.Body().Set("service", service)
-
-	if resp, err = e.apiExec.Call(); err != nil {
+	if err = e.cloud.Authenticate(domain, service); err != nil {
 		return
 	}
 
-	if resp.Token == "" {
-		err = fmt.Errorf("failed to generate access credentials to cloud deploy")
+	defer e.cloud.Cleanup(e)
+
+	if kubectl, err = e.cloud.Kubectl(e); err != nil {
 		return
 	}
 
-	CAPath := filepath.Join(authTempPath, ".kool-cluster-CA")
-	defer func() {
-		if err := os.Remove(CAPath); err != nil {
-			e.Warning("failed to clear up temporary file; error:", err.Error())
-		}
-	}()
-	if err = os.WriteFile(CAPath, []byte(resp.CA), os.ModePerm); err != nil {
-		return
-	}
-
-	e.kubectl.AppendArgs("--server", resp.Server)
-	e.kubectl.AppendArgs("--token", resp.Token)
-	e.kubectl.AppendArgs("--namespace", resp.Namespace)
-	e.kubectl.AppendArgs("--certificate-authority", CAPath)
-	e.kubectl.AppendArgs("exec", "-i")
+	kubectl.AppendArgs("exec", "-i")
 	if e.IsTerminal() {
-		e.kubectl.AppendArgs("-t")
+		kubectl.AppendArgs("-t")
 	}
-	e.kubectl.AppendArgs(resp.Path, "--")
+	kubectl.AppendArgs(e.cloud.CloudService(), "--")
 	if len(args) == 0 {
 		args = []string{"bash"}
 	}
-	e.kubectl.AppendArgs(args...)
+	kubectl.AppendArgs(args...)
 
-	if e.LookPath(e.kubectl) == nil {
-		// the command is available on current PATH, so let's use it
-		err = e.Interactive(e.kubectl)
-		return
-	}
-
-	// we do not have 'kubectl' on current path... let's use a container!
-	e.kool.AppendArgs(
-		"docker", "--",
-		"-v", fmt.Sprintf("%s:%s", CAPath, CAPath),
-		"kooldev/toolkit:full",
-		e.kubectl.Cmd(),
-	)
-	e.kool.AppendArgs(e.kubectl.Args()...)
-
-	err = e.Interactive(e.kool)
+	err = e.Interactive(kubectl)
 	return
 }

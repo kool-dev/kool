@@ -37,8 +37,22 @@ type DefaultShell struct {
 	env       environment.EnvStorage
 }
 
+// OutputWritter implements basic output for CLIss
+type OutputWritter interface {
+	Println(...interface{})
+	Printf(string, ...interface{})
+	Warning(...interface{})
+	Success(...interface{})
+}
+
+type PathChecker interface {
+	LookPath(builder.Command) error
+}
+
 // Shell implements functions for handling a shell
 type Shell interface {
+	OutputWritter
+	PathChecker
 	InStream() io.Reader
 	SetInStream(io.Reader)
 	OutStream() io.Writer
@@ -47,12 +61,7 @@ type Shell interface {
 	SetErrStream(io.Writer)
 	Exec(builder.Command, ...string) (string, error)
 	Interactive(builder.Command, ...string) error
-	LookPath(builder.Command) error
-	Println(...interface{})
-	Printf(string, ...interface{})
 	Error(error)
-	Warning(...interface{})
-	Success(...interface{})
 }
 
 // NewShell creates a new shell
