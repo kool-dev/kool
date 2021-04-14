@@ -20,7 +20,7 @@ type KoolDeployExec struct {
 // NewDeployExecCommand inits Cobra command for kool deploy exec
 func NewDeployExecCommand(deployExec *KoolDeployExec) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
-		Use:   "exec SERVICE COMMAND [--] [ARG...]",
+		Use:   "exec SERVICE [COMMAND] [--] [ARG...]",
 		Short: "Execute a command inside a running service container deployed to Kool Cloud",
 		Long: `After deploying an application to Kool Cloud using 'kool deploy',
 execute a COMMAND inside the specified SERVICE container (similar to an SSH session).
