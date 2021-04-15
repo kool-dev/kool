@@ -10,6 +10,8 @@
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
+> Please note that you'll need a basic understanding of how Docker and Docker Compose work in order to build a new project from scratch using Kool with Docker.
+
 Also, make sure you're running the latest version of **kool**. Run the following command to compare your local version of **kool** with the latest release, and, if a newer version is available, automatically download and install it.
 
 ```bash
@@ -18,7 +20,7 @@ $ kool self-update
 
 ### 1. Run `kool create laravel my-project`
 
-Use the [`kool create <preset> <project-name>` command](docs/commands/kool-create) to create your new Laravel project.
+Use the [`kool create <preset> <project-name>` command](docs/commands/kool-create) to create your new Laravel project:
 
 ```bash
 $ kool create laravel my-project
@@ -29,7 +31,7 @@ Under the hood, this command will run `composer create-project --no-install --no
 After installing Laravel, `kool create` automatically runs the `kool preset laravel` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
-Preset laravel is initializing!
+$ Preset laravel is initializing!
 
 ? What app service do you want to use [Use arrows to move, type to filter]
   PHP 7.4
@@ -57,7 +59,7 @@ Preset laravel is initializing!
 $ Preset laravel initialized!
 ```
 
-Now, move into your new Laravel project.
+Now, move into your new Laravel project:
 
 ```bash
 $ cd my-project
@@ -71,7 +73,7 @@ The [`kool preset` command](docs/commands/kool-preset) auto-generated the follow
 +kool.yml
 ```
 
-> Open the **docker-compose.yml** file to review the services and verify they match the choices you made earlier using the wizard.
+> Now's a good time to open the **docker-compose.yml** file to review the services and verify they match the choices you made earlier using the wizard.
 
 ### 2. Update .env.example
 
@@ -149,9 +151,11 @@ scripts:
   yarn: kool docker kooldev/node:14 yarn
 ```
 
+> Try `kool run artisan --help` to execute the `kool exec app php artisan --help` command in your running `app` container and print out information about Laravel's CLI commands.
+
 **kool.yml** always includes a script called `setup`, which helps you spin up a project for the first time.
 
-Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project.
+Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
 
 ```bash
 # CAUTION: this script will reset your `.env` file with `.env.example`
@@ -174,10 +178,6 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app ls
 ```
 
-#### Connect to your Database Container
-
-You can easily start a new SQL client session inside your Docker `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
-
 #### Open a Container Session
 
 Similar to SSH, if you want to open a Bash session in your `app` container, run `kool exec app bash`, where `app` is the name of the service container in **docker-compose.yml**. If you prefer, you can use `sh` instead of `bash` (`kool exec app sh`).
@@ -189,6 +189,10 @@ bash-5.1#
 $ kool exec app sh
 /app #
 ```
+
+#### Connect to your Database Container
+
+You can easily start a new SQL client session inside your Docker `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
 
 ### Staying kool
 

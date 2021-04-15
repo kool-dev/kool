@@ -1,0 +1,3 @@
+scripts:
+  adonis: kool exec app adonis
+  node: kool exec app node
