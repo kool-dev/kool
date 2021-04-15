@@ -6,6 +6,21 @@ package presets
 func GetTemplates() map[string]map[string]string {
 	var templates = make(map[string]map[string]string)
 	templates["app"] = map[string]string{
+		"node14-adonis.yml": `services:
+  app:
+    image: kooldev/node:14-adonis
+    command: ["adonis", "serve", "--dev"]
+    ports:
+      - "${KOOL_APP_PORT:-3333}:3333"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+`,
 		"php74.yml": `services:
   app:
     image: kooldev/php:7.4-nginx
@@ -150,11 +165,35 @@ scripts:
 `,
 	}
 	templates["scripts"] = map[string]string{
+		"adonis.yml": `scripts:
+  adonis: kool exec app adonis
+  node: kool exec app node
+`,
 		"composer.yml": `scripts:
   composer: kool exec app composer
 `,
 		"composer2.yml": `scripts:
   composer: kool exec app composer2
+`,
+		"js-framework-npm.yml": `scripts:
+  npm: kool docker kooldev/node:14 npm
+  node-setup:
+    - kool run npm install
+    - kool run npm run dev
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
+		"js-framework-yarn.yml": `scripts:
+  yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
+
+  setup:
+    - kool docker kooldev/node:14 yarn install
+    - kool start
 `,
 		"laravel.yml": `scripts:
   artisan: kool exec app php artisan
