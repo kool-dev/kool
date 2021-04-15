@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,8 +18,8 @@ const presetsTemplate string = `package presets
 
 func main() {
 	var (
-		folders []os.FileInfo
-		files   []os.FileInfo
+		folders []os.DirEntry
+		files   []os.DirEntry
 		err     error
 	)
 
