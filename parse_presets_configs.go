@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,7 +18,7 @@ const configsTemplate string = `package presets
 
 func main() {
 	var (
-		folders    []os.FileInfo
+		folders    []os.DirEntry
 		configFile *os.File
 		err        error
 	)
