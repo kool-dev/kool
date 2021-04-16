@@ -142,7 +142,7 @@ func TestKubectl(t *testing.T) {
 		t.Error("should get error before authenticating")
 	}
 
-	k.Authenticate("foo", "bar")
+	_, _ = k.Authenticate("foo", "bar")
 
 	if cmd, _ := k.Kubectl(fakeShell); cmd.Cmd() != "kubectl" {
 		t.Error("should use kubectl")
