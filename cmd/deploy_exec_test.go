@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"errors"
 	"kool-dev/kool/cloud/k8s"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"strings"
 	"testing"
@@ -11,7 +14,7 @@ func newFakeKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
 		*newFakeKoolService(),
 		environment.NewFakeEnvStorage(),
-		nil,
+		&fakeK8S{},
 	}
 }
 
@@ -34,13 +37,52 @@ func TestKoolDeployExec(t *testing.T) {
 		t.Errorf("expected: missing required parameter; got something else")
 	}
 
-	var service string = "my-service"
-	err = e.Execute([]string{service})
+	var args = []string{"my-service"}
 
-	if err == nil || !strings.Contains(err.Error(), "missing deploy domain") {
+	if err = e.Execute(args); err == nil || !strings.Contains(err.Error(), "missing deploy domain") {
 		t.Errorf("expected: missing deploy domain; got something else")
 	}
 
-	// var domain string = "example.com"
-	// e.env.Set("KOOL_DEPLOY_DOMAIN", domain)
+	var domain string = "example.com"
+	e.env.Set("KOOL_DEPLOY_DOMAIN", domain)
+
+	mock := e.cloud.(*fakeK8S)
+	mock.MockAuthenticateErr = errors.New("auth error")
+
+	if err = e.Execute(args); !errors.Is(err, mock.MockAuthenticateErr) {
+		t.Error("should return auth error")
+	}
+
+	mock.MockAuthenticateErr = nil
+	mock.MockAuthenticateCloudService = "cloud-service"
+	mock.MockKubectlErr = errors.New("kube error")
+
+	if err = e.Execute(args); !errors.Is(err, mock.MockKubectlErr) {
+		t.Error("should return kube error")
+	}
+
+	fakeKubectl := &builder.FakeCommand{}
+	mock.MockKubectlErr = nil
+	mock.MockKubectlKube = fakeKubectl
+
+	fakeKubectl.MockInteractiveError = errors.New("interactive error")
+
+	if err = e.Execute(args); !errors.Is(err, fakeKubectl.MockInteractiveError) {
+		t.Error("should return interactive error")
+	}
+
+	fakeKubectl = &builder.FakeCommand{}
+	mock.MockKubectlKube = fakeKubectl
+	fakeKubectl.MockInteractiveError = nil
+	e.term.(*shell.FakeTerminalChecker).MockIsTerminal = true
+
+	if err = e.Execute(args); err != nil {
+		t.Error("unexpected error")
+	}
+
+	str := strings.Join(fakeKubectl.ArgsAppend, " ")
+
+	if !strings.Contains(str, "exec -i -t cloud-service -c default -- bash") {
+		t.Error("bad kubectl command args")
+	}
 }

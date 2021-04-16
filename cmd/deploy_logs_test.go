@@ -16,7 +16,7 @@ type fakeK8S struct {
 	CalledAuthenticateParamDomain  string
 	CalledAuthenticateParamService string
 	MockAuthenticateCloudService   string
-	MockAuthenticateError          error
+	MockAuthenticateErr            error
 
 	// Kubectl
 	CalledKubectl            bool
@@ -35,7 +35,7 @@ func (f *fakeK8S) Authenticate(domain, service string) (cloudService string, err
 	f.CalledAuthenticateParamService = service
 
 	cloudService = f.MockAuthenticateCloudService
-	err = f.MockAuthenticateError
+	err = f.MockAuthenticateErr
 	return
 }
 
@@ -105,13 +105,13 @@ func TestKoolDeployLogsExecute(t *testing.T) {
 
 	l.env.Set("KOOL_DEPLOY_DOMAIN", "deploy.domain")
 
-	l.cloud.(*fakeK8S).MockAuthenticateError = errors.New("authenticate error")
+	l.cloud.(*fakeK8S).MockAuthenticateErr = errors.New("authenticate error")
 
-	if err := l.Execute(args); !errors.Is(err, l.cloud.(*fakeK8S).MockAuthenticateError) {
+	if err := l.Execute(args); !errors.Is(err, l.cloud.(*fakeK8S).MockAuthenticateErr) {
 		t.Error("should get error on authenticate")
 	}
 
-	l.cloud.(*fakeK8S).MockAuthenticateError = nil
+	l.cloud.(*fakeK8S).MockAuthenticateErr = nil
 	l.cloud.(*fakeK8S).MockAuthenticateCloudService = "app"
 	l.cloud.(*fakeK8S).MockKubectlErr = errors.New("kubectl error")
 
