@@ -2,49 +2,30 @@ package cmd
 
 import (
 	"errors"
-	"kool-dev/kool/api"
+	"kool-dev/kool/cloud/k8s"
 	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"strings"
 	"testing"
 )
 
-type fakeExecCall struct {
-	api.DefaultEndpoint
-
-	err  error
-	resp *api.ExecResponse
-}
-
-func (d *fakeExecCall) Call() (*api.ExecResponse, error) {
-	return d.resp, d.err
-}
-
 func newFakeKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
 		*newFakeKoolService(),
-		&builder.FakeCommand{}, // kubectl
-		&builder.FakeCommand{}, // kool
+		&KoolDeployExecFlags{},
 		environment.NewFakeEnvStorage(),
-		&fakeExecCall{
-			DefaultEndpoint: *api.NewDefaultEndpoint(""),
-		},
+		&fakeK8S{},
 	}
 }
 
 func TestNewKoolDeployExec(t *testing.T) {
 	e := NewKoolDeployExec()
 
-	if _, ok := e.kubectl.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected type for kubectl command")
-	}
-	if _, ok := e.kool.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected type for kool command")
-	}
 	if _, ok := e.env.(*environment.DefaultEnvStorage); !ok {
 		t.Errorf("unexpected type for env storage")
 	}
-	if _, ok := e.apiExec.(*api.DefaultExecCall); !ok {
+	if _, ok := e.cloud.(*k8s.DefaultK8S); !ok {
 		t.Errorf("unexpected type for apiExec endpoint")
 	}
 }
@@ -57,65 +38,53 @@ func TestKoolDeployExec(t *testing.T) {
 		t.Errorf("expected: missing required parameter; got something else")
 	}
 
-	var service string = "my-service"
-	err = e.Execute([]string{service})
+	var args = []string{"my-service"}
 
-	if err == nil || !strings.Contains(err.Error(), "missing deploy domain") {
+	if err = e.Execute(args); err == nil || !strings.Contains(err.Error(), "missing deploy domain") {
 		t.Errorf("expected: missing deploy domain; got something else")
 	}
 
 	var domain string = "example.com"
 	e.env.Set("KOOL_DEPLOY_DOMAIN", domain)
 
-	e.apiExec.(*fakeExecCall).err = errors.New("call error")
+	mock := e.cloud.(*fakeK8S)
+	mock.MockAuthenticateErr = errors.New("auth error")
 
-	if err = e.Execute([]string{service}); !errors.Is(err, e.apiExec.(*fakeExecCall).err) {
-		t.Errorf("unexpected error from DeployExec call: %v", err)
+	if err = e.Execute(args); !errors.Is(err, mock.MockAuthenticateErr) {
+		t.Error("should return auth error")
 	}
 
-	e.apiExec.(*fakeExecCall).err = nil
-	e.apiExec.(*fakeExecCall).resp = &api.ExecResponse{
-		Server:    "server",
-		Namespace: "ns",
-		Path:      "path",
-		Token:     "",
-		CA:        "ca",
+	mock.MockAuthenticateErr = nil
+	mock.MockAuthenticateCloudService = "cloud-service"
+	mock.MockKubectlErr = errors.New("kube error")
+
+	if err = e.Execute(args); !errors.Is(err, mock.MockKubectlErr) {
+		t.Error("should return kube error")
 	}
 
-	if err = e.Execute([]string{service}); !strings.Contains(err.Error(), "failed to generate access credentials") {
-		t.Errorf("unexpected error from DeployExec call: %v", err)
+	fakeKubectl := &builder.FakeCommand{}
+	mock.MockKubectlErr = nil
+	mock.MockKubectlKube = fakeKubectl
+
+	fakeKubectl.MockInteractiveError = errors.New("interactive error")
+
+	if err = e.Execute(args); !errors.Is(err, fakeKubectl.MockInteractiveError) {
+		t.Error("should return interactive error")
 	}
 
-	e.apiExec.(*fakeExecCall).resp.Token = "token"
-	authTempPath = t.TempDir()
+	fakeKubectl = &builder.FakeCommand{}
+	mock.MockKubectlKube = fakeKubectl
+	fakeKubectl.MockInteractiveError = nil
+	e.term.(*shell.FakeTerminalChecker).MockIsTerminal = true
+	e.Flags.Container = "foo"
 
-	if err = e.Execute([]string{service, "foo", "bar"}); err != nil {
-		t.Errorf("unexpected error from DeployExec call: %v", err)
+	if err = e.Execute(args); err != nil {
+		t.Error("unexpected error")
 	}
 
-	args := e.kubectl.(*builder.FakeCommand).ArgsAppend
-	if args[1] != "server" || args[3] != "token" || args[5] != "ns" || !strings.Contains(args[7], ".kool-cluster-CA") {
-		t.Errorf("unexpected arguments to kubectl: %v", args)
-	}
+	str := strings.Join(fakeKubectl.ArgsAppend, " ")
 
-	if len(e.kool.(*builder.FakeCommand).ArgsAppend) > 0 {
-		t.Errorf("should not have used kool")
-	}
-
-	e.kubectl.(*builder.FakeCommand).MockLookPathError = errors.New("not found")
-	e.kubectl.(*builder.FakeCommand).MockCmd = "kub-foo"
-
-	if err = e.Execute([]string{service, "foo", "bar"}); err != nil {
-		t.Errorf("unexpected error from DeployExec call: %v", err)
-	}
-
-	args = e.kool.(*builder.FakeCommand).ArgsAppend
-
-	if len(args) == 0 {
-		t.Errorf("should have used kool")
-	}
-
-	if args[5] != "kub-foo" {
-		t.Errorf("unexpected kubectl Cmd on kool: %v", args)
+	if !strings.Contains(str, "exec -i -t cloud-service -c foo -- bash") {
+		t.Error("bad kubectl command args")
 	}
 }
