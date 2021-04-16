@@ -13,6 +13,7 @@ import (
 func newFakeKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
 		*newFakeKoolService(),
+		&KoolDeployExecFlags{},
 		environment.NewFakeEnvStorage(),
 		&fakeK8S{},
 	}
@@ -75,6 +76,7 @@ func TestKoolDeployExec(t *testing.T) {
 	mock.MockKubectlKube = fakeKubectl
 	fakeKubectl.MockInteractiveError = nil
 	e.term.(*shell.FakeTerminalChecker).MockIsTerminal = true
+	e.Flags.Container = "foo"
 
 	if err = e.Execute(args); err != nil {
 		t.Error("unexpected error")
@@ -82,7 +84,7 @@ func TestKoolDeployExec(t *testing.T) {
 
 	str := strings.Join(fakeKubectl.ArgsAppend, " ")
 
-	if !strings.Contains(str, "exec -i -t cloud-service -c default -- bash") {
+	if !strings.Contains(str, "exec -i -t cloud-service -c foo -- bash") {
 		t.Error("bad kubectl command args")
 	}
 }

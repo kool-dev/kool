@@ -13,8 +13,14 @@ import (
 // KoolDeployExec holds handlers and functions for using Deploy API
 type KoolDeployExec struct {
 	DefaultKoolService
+	Flags *KoolDeployExecFlags
 	env   environment.EnvStorage
 	cloud k8s.K8S
+}
+
+// KoolDeployExecFlags holds flags to kool deploy exec command
+type KoolDeployExecFlags struct {
+	Container string
 }
 
 // NewDeployExecCommand inits Cobra command for kool deploy exec
@@ -32,6 +38,7 @@ Must use a KOOL_API_TOKEN environment variable for authentication.`,
 	}
 
 	cmd.Flags().SetInterspersed(false)
+	cmd.Flags().StringVarP(&deployExec.Flags.Container, "container", "c", "default", "Container target.")
 	return
 }
 
@@ -39,6 +46,7 @@ Must use a KOOL_API_TOKEN environment variable for authentication.`,
 func NewKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
 		*newDefaultKoolService(),
+		&KoolDeployExecFlags{"default"},
 		environment.NewEnvStorage(),
 		k8s.NewDefaultK8S(),
 	}
@@ -84,7 +92,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 	if e.IsTerminal() {
 		kubectl.AppendArgs("-t")
 	}
-	kubectl.AppendArgs(cloudService, "-c", "default")
+	kubectl.AppendArgs(cloudService, "-c", e.Flags.Container)
 	kubectl.AppendArgs("--")
 	if len(args) == 0 {
 		args = []string{"bash"}

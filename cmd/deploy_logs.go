@@ -13,9 +13,15 @@ import (
 // KoolDeployLogs holds handlers and functions for using Deploy API
 type KoolDeployLogs struct {
 	DefaultKoolService
-	Flags *KoolLogsFlags
+	Flags *KoolDeployLogsFlags
 	env   environment.EnvStorage
 	cloud k8s.K8S
+}
+
+// KoolDeployLogsFlags holds flags to kool deploy logs command
+type KoolDeployLogsFlags struct {
+	KoolLogsFlags
+	Container string
 }
 
 // NewDeployLogsCommand inits Cobra command for kool deploy logs
@@ -34,6 +40,7 @@ Must use a KOOL_API_TOKEN environment variable for authentication.`,
 
 	cmd.Flags().IntVarP(&deployLogs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. A value equal to 0 will show all lines.")
 	cmd.Flags().BoolVarP(&deployLogs.Flags.Follow, "follow", "f", false, "Follow log output.")
+	cmd.Flags().StringVarP(&deployLogs.Flags.Container, "container", "c", "default", "Container target.")
 	return
 }
 
@@ -41,7 +48,7 @@ Must use a KOOL_API_TOKEN environment variable for authentication.`,
 func NewKoolDeployLogs() *KoolDeployLogs {
 	return &KoolDeployLogs{
 		*newDefaultKoolService(),
-		&KoolLogsFlags{25, false},
+		&KoolDeployLogsFlags{KoolLogsFlags{25, false}, "default"},
 		environment.NewEnvStorage(),
 		k8s.NewDefaultK8S(),
 	}
@@ -83,7 +90,7 @@ func (e *KoolDeployLogs) Execute(args []string) (err error) {
 	if e.Flags.Tail > 0 {
 		kubectl.AppendArgs("--tail", fmt.Sprintf("%d", e.Flags.Tail))
 	}
-	kubectl.AppendArgs(cloudService, "-c", "default")
+	kubectl.AppendArgs(cloudService, "-c", e.Flags.Container)
 
 	err = e.Interactive(kubectl)
 	return
