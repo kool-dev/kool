@@ -50,15 +50,10 @@ func NewKoolDeployLogs() *KoolDeployLogs {
 // Execute runs the deploy logs logic - integrating with API and K8S
 func (e *KoolDeployLogs) Execute(args []string) (err error) {
 	var (
-		domain  string
-		service string
+		domain, service, cloudService string
+
 		kubectl builder.Command
 	)
-
-	if len(args) == 0 {
-		err = fmt.Errorf("KoolDeployLogs.Execute: required at least one argument")
-		return
-	}
 
 	service = args[0]
 
@@ -71,7 +66,7 @@ func (e *KoolDeployLogs) Execute(args []string) (err error) {
 		return
 	}
 
-	if err = e.cloud.Authenticate(domain, service); err != nil {
+	if cloudService, err = e.cloud.Authenticate(domain, service); err != nil {
 		return
 	}
 
@@ -88,8 +83,7 @@ func (e *KoolDeployLogs) Execute(args []string) (err error) {
 	if e.Flags.Tail > 0 {
 		kubectl.AppendArgs("--tail", fmt.Sprintf("%d", e.Flags.Tail))
 	}
-	kubectl.AppendArgs(e.cloud.CloudService())
-	kubectl.AppendArgs("-c", "default")
+	kubectl.AppendArgs(cloudService, "-c", "default")
 
 	err = e.Interactive(kubectl)
 	return

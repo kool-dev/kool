@@ -47,8 +47,8 @@ func NewKoolDeployExec() *KoolDeployExec {
 // Execute runs the deploy exec logic - integrating with Deploy API
 func (e *KoolDeployExec) Execute(args []string) (err error) {
 	var (
-		domain  string
-		service string
+		domain, service, cloudService string
+
 		kubectl builder.Command
 	)
 
@@ -69,7 +69,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 		return
 	}
 
-	if err = e.cloud.Authenticate(domain, service); err != nil {
+	if cloudService, err = e.cloud.Authenticate(domain, service); err != nil {
 		return
 	}
 
@@ -84,7 +84,7 @@ func (e *KoolDeployExec) Execute(args []string) (err error) {
 	if e.IsTerminal() {
 		kubectl.AppendArgs("-t")
 	}
-	kubectl.AppendArgs(e.cloud.CloudService(), "-c", "default")
+	kubectl.AppendArgs(cloudService, "-c", "default")
 	kubectl.AppendArgs("--")
 	if len(args) == 0 {
 		args = []string{"bash"}

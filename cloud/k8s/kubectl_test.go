@@ -60,7 +60,7 @@ func TestAuthenticate(t *testing.T) {
 	expectedErr := errors.New("call error")
 	k.apiExec.(*fakeExecCall).err = expectedErr
 
-	if err := k.Authenticate("foo", "bar"); !errors.Is(err, expectedErr) {
+	if _, err := k.Authenticate("foo", "bar"); !errors.Is(err, expectedErr) {
 		t.Error("unexpected error return from Authenticate")
 	}
 
@@ -73,32 +73,17 @@ func TestAuthenticate(t *testing.T) {
 		CA:        "ca",
 	}
 
-	if err := k.Authenticate("foo", "bar"); !strings.Contains(err.Error(), "failed to generate access credentials") {
+	if _, err := k.Authenticate("foo", "bar"); !strings.Contains(err.Error(), "failed to generate access credentials") {
 		t.Errorf("unexpected error from DeployExec call: %v", err)
 	}
 
 	k.apiExec.(*fakeExecCall).resp.Token = "token"
 	authTempPath = t.TempDir()
 
-	if err := k.Authenticate("foo", "bar"); err != nil {
+	if cloudService, err := k.Authenticate("foo", "bar"); err != nil {
 		t.Errorf("unexpected error from Authenticate call: %v", err)
-	}
-}
-
-func TestCloudService(t *testing.T) {
-	k := &DefaultK8S{
-		apiExec: newFakeExecCall(),
-	}
-
-	k.apiExec.(*fakeExecCall).resp = &api.ExecResponse{
-		Path:  "path",
-		Token: "foo",
-	}
-
-	k.Authenticate("foo", "bar")
-
-	if k.CloudService() != "path" {
-		t.Errorf("unexpected CloudService return: %v", k.CloudService())
+	} else if cloudService != "path" {
+		t.Errorf("unexpected cloudService return: %s", cloudService)
 	}
 }
 

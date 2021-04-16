@@ -11,9 +11,8 @@ import (
 )
 
 type K8S interface {
-	Authenticate(string, string) (err error)
+	Authenticate(string, string) (string, error)
 	Kubectl(shell.PathChecker) (builder.Command, error)
-	CloudService() string
 	Cleanup(shell.OutputWritter)
 }
 
@@ -31,7 +30,7 @@ func NewDefaultK8S() *DefaultK8S {
 	}
 }
 
-func (k *DefaultK8S) Authenticate(domain, service string) (err error) {
+func (k *DefaultK8S) Authenticate(domain, service string) (cloudService string, err error) {
 	k.apiExec.Body().Set("domain", domain)
 	k.apiExec.Body().Set("service", service)
 
@@ -43,6 +42,8 @@ func (k *DefaultK8S) Authenticate(domain, service string) (err error) {
 		err = fmt.Errorf("failed to generate access credentials to cloud deploy")
 		return
 	}
+
+	cloudService = k.resp.Path
 
 	err = os.WriteFile(k.getTempCAPath(), []byte(k.resp.CA), os.ModePerm)
 	return
@@ -75,10 +76,6 @@ func (k *DefaultK8S) Kubectl(looker shell.PathChecker) (kube builder.Command, er
 	}
 
 	return
-}
-
-func (k *DefaultK8S) CloudService() string {
-	return k.resp.Path
 }
 
 func (k *DefaultK8S) Cleanup(out shell.OutputWritter) {
