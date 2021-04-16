@@ -1,18 +1,63 @@
 package cmd
 
 import (
+	"errors"
 	"kool-dev/kool/cloud/k8s"
+	"kool-dev/kool/cmd/builder"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"strings"
 	"testing"
 )
+
+type fakeK8S struct {
+	// Authenticate
+	CalledAuthenticate             bool
+	CalledAuthenticateParamDomain  string
+	CalledAuthenticateParamService string
+	MockAuthenticateCloudService   string
+	MockAuthenticateError          error
+
+	// Kubectl
+	CalledKubectl            bool
+	CalledKubectlParamLooker shell.PathChecker
+	MockKubectlKube          builder.Command
+	MockKubectlErr           error
+
+	// Cleanup
+	CalledCleanup         bool
+	CalledCleanupParamOut shell.OutputWritter
+}
+
+func (f *fakeK8S) Authenticate(domain, service string) (cloudService string, err error) {
+	f.CalledAuthenticate = true
+	f.CalledAuthenticateParamDomain = domain
+	f.CalledAuthenticateParamService = service
+
+	cloudService = f.MockAuthenticateCloudService
+	err = f.MockAuthenticateError
+	return
+}
+
+func (f *fakeK8S) Kubectl(looker shell.PathChecker) (kube builder.Command, err error) {
+	f.CalledKubectl = true
+	f.CalledKubectlParamLooker = looker
+	kube = f.MockKubectlKube
+	err = f.MockKubectlErr
+	return
+}
+
+func (f *fakeK8S) Cleanup(out shell.OutputWritter) {
+	f.CalledCleanup = true
+	f.CalledCleanupParamOut = out
+}
 
 func fakeKoolDeployLogs() *KoolDeployLogs {
 	return &KoolDeployLogs{
 		*newFakeKoolService(),
 		&KoolLogsFlags{},
 		environment.NewFakeEnvStorage(),
-		nil,
+		&fakeK8S{},
 	}
 }
 
@@ -58,5 +103,43 @@ func TestKoolDeployLogsExecute(t *testing.T) {
 		t.Error("should get error on missing domain")
 	}
 
-	// l.env.Set("KOOL_DEPLOY_DOMAIN", "deploy.domain")
+	l.env.Set("KOOL_DEPLOY_DOMAIN", "deploy.domain")
+
+	l.cloud.(*fakeK8S).MockAuthenticateError = errors.New("authenticate error")
+
+	if err := l.Execute(args); !errors.Is(err, l.cloud.(*fakeK8S).MockAuthenticateError) {
+		t.Error("should get error on authenticate")
+	}
+
+	l.cloud.(*fakeK8S).MockAuthenticateError = nil
+	l.cloud.(*fakeK8S).MockAuthenticateCloudService = "app"
+	l.cloud.(*fakeK8S).MockKubectlErr = errors.New("kubectl error")
+
+	if err := l.Execute(args); !errors.Is(err, l.cloud.(*fakeK8S).MockKubectlErr) {
+		t.Error("should get error on kubectl")
+	}
+
+	l.cloud.(*fakeK8S).MockKubectlErr = nil
+	l.cloud.(*fakeK8S).MockKubectlKube = &builder.FakeCommand{
+		MockInteractiveError: errors.New("interactive error"),
+	}
+
+	if err := l.Execute(args); !errors.Is(err, l.cloud.(*fakeK8S).MockKubectlKube.(*builder.FakeCommand).MockInteractiveError) {
+		t.Error("should get error on kubectl - interactive")
+	}
+
+	fakeKubectl := &builder.FakeCommand{}
+	l.cloud.(*fakeK8S).MockKubectlKube = fakeKubectl
+	l.Flags.Follow = true
+	l.Flags.Tail = 25
+
+	if err := l.Execute(args); err != nil {
+		t.Error("unexpected error")
+	}
+
+	str := strings.Join(fakeKubectl.ArgsAppend, " ")
+
+	if !strings.Contains(str, "logs -f --tail 25") {
+		t.Error("bad kubectl command - missing logs -f : " + str)
+	}
 }
