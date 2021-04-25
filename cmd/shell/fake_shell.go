@@ -31,6 +31,7 @@ type FakeShell struct {
 	MockOutStream io.Writer
 	MockErrStream io.Writer
 	MockInStream  io.Reader
+	MockLookPath  error
 }
 
 // InStream is a mocked testing function
@@ -111,7 +112,10 @@ func (f *FakeShell) LookPath(command builder.Command) (err error) {
 
 	if _, ok := command.(*builder.FakeCommand); ok {
 		err = command.(*builder.FakeCommand).MockLookPathError
+		return
 	}
+
+	err = f.MockLookPath
 
 	return
 }

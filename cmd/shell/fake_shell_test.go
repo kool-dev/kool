@@ -79,6 +79,15 @@ func TestFakeShell(t *testing.T) {
 		t.Error("failed to use mocked LookPath function on FakeShell")
 	}
 
+	if val, ok := f.CalledLookPath["cmd"]; !val || !ok || lookPathError != command.MockLookPathError {
+		t.Error("failed to use mocked LookPath function on FakeShell")
+	}
+
+	f.MockLookPath = errors.New("mock look path err")
+	if err := f.LookPath(builder.NewCommand("")); !errors.Is(err, f.MockLookPath) {
+		t.Error("failed returning MockLookPath")
+	}
+
 	f.Println()
 
 	if !f.CalledPrintln {

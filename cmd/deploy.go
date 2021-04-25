@@ -57,6 +57,7 @@ func AddKoolDeploy(root *cobra.Command) {
 	root.AddCommand(deployCmd)
 	deployCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
 	deployCmd.AddCommand(NewDeployDestroyCommand(NewKoolDeployDestroy()))
+	deployCmd.AddCommand(NewDeployLogsCommand(NewKoolDeployLogs()))
 }
 
 // Execute runs the deploy logic.
