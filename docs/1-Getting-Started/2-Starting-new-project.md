@@ -1,8 +1,8 @@
 > We use PHP for our Hello World example, but **kool** is a **stack agnostic** tool that can be used with any language and framework. For instance, [check out our presets](/docs/presets/introduction) for easily creating projects using JavaScript frameworks like Next.js, Nuxt.js, NestJS, and AdonisJs.
 
-## Start a New Project with Docker in 4 Easy Steps
+# Start a New Project with Docker in 4 Easy Steps
 
-### Requirements
+## Requirements
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
@@ -14,16 +14,16 @@ Also, make sure you're running the latest version of **kool**. Run the following
 $ kool self-update
 ```
 
-### 1. Create a New Project
+## 1. Create a New Project
 
 Create a working directory for your new project, and move into it:
 
 ```bash
-$ mkdir my-app
-$ cd my-app
+$ mkdir my-project
+$ cd my-project
 ```
 
-### 2. Add docker-compose.yml
+## 2. Add docker-compose.yml
 
 Create a **docker-compose.yml** file in the root of your working directory:
 
@@ -46,7 +46,7 @@ services:
 
 > As you can see, we're using a [Kool-optimized Docker image](https://github.com/kool-dev/docker-php) for **PHP 8** (using `php:8.0-fpm-alpine`as its base), which also includes an NGINX web server. We're mapping **localhost** to container port `80`.
 
-### 3. Hello World!
+## 3. Hello World!
 
 Create a `/public` sub-directory (in order to match NGINX's **default** root `/app/public`), and then `echo` some code into a new **index.php** file inside it:
 
@@ -64,13 +64,15 @@ services:
       NGINX_ROOT: "/app"
 ```
 
-### 4. Run Your App
+## 4. Run Your App
 
 Use the [`kool start` command](/docs/commands/kool-start) to start up the service container defined in your **docker-compose.yml** file.
 
 ```bash
 $ kool start
 ```
+
+Once `kool start` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see "Hello World!". Hooray!
 
 Verify your Docker container is running using the [`kool status` command](docs/commands/kool-status):
 
@@ -84,11 +86,23 @@ $ kool status
 +---------+---------+------------------------------+--------------+
 ```
 
-You should now be able to access your new app at [http://localhost](http://localhost) and see "Hello World!". Hooray!
+Run `kool logs app` to see the logs from the running `app` container.
+
+> Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
+
+```
+$ kool logs app
+Attaching to my-project_app_1
+app_1  |
+app_1  |  SERVER STARTED
+app_1  | > Watching files for changes...
+app_1  |
+app_1  | info: serving app on http://0.0.0.0
+```
 
 ---
 
-#### Run a Container Command
+### Run Commands in Docker Containers
 
 Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a running service container:
 
@@ -98,7 +112,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app ls
 ```
 
-#### Open a Container Session
+### Open Sessions in Docker Containers
 
 Similar to SSH, if you want to open a Bash session in your `app` container, run `kool exec app bash`, where `app` is the name of the service container in **docker-compose.yml**. If you prefer, you can use `sh` instead of `bash` (`kool exec app sh`).
 
@@ -110,7 +124,7 @@ $ kool exec app sh
 /app #
 ```
 
-### Staying kool
+## Staying kool
 
 When it's time to stop working on the project:
 
@@ -130,7 +144,7 @@ $ kool start
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run <script>` (e.g. `kool run setup`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
+Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run setup`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
 Create a **kool.yml** file in the root of your working directory, and then copy/paste the code provided below into **kool.yml**.
 

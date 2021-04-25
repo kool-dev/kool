@@ -5,19 +5,19 @@ commands:
 questions:
   compose:
     - key: database
-      default_answer: none
+      default_answer: MySQL 8.0
       message: What database service do you want to use
       options:
         - name: MySQL 8.0
-          template: mysql8.yml
+          template: mysql8-adonis.yml
         - name: MySQL 5.7
-          template: mysql57.yml
+          template: mysql57-adonis.yml
         - name: PostgreSQL 13.0
-          template: postgresql13.yml
+          template: postgresql13-adonis.yml
         - name: none
           template: none
     - key: cache
-      default_answer: none
+      default_answer: Redis 6.0
       message: What cache service do you want to use
       options:
         - name: Redis 6.0
@@ -32,11 +32,9 @@ questions:
       message: What javascript package manager do you want to use
       options:
         - name: npm
-          template: js-framework-npm.yml
+          template: npm-adonis.yml
         - name: yarn
-          template: js-framework-yarn.yml
+          template: yarn-adonis.yml
 templates:
   - key: app
     template: node14-adonis.yml
-  - key: scripts
-    template: adonis.yml

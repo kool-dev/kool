@@ -21,6 +21,22 @@ func GetTemplates() map[string]map[string]string {
       - kool_local
       - kool_global
 `,
+		"node14-nestjs.yml": `services:
+  app:
+    image: kooldev/node:14-nest
+    command: ["npm", "run", "start:dev"]
+    ports:
+      - "${KOOL_APP_PORT:-3000}:3000"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    #  - $HOME/.ssh:/home/kool/.ssh:delegated ???
+    networks:
+      - kool_local
+      - kool_global
+`,
 		"php74.yml": `services:
   app:
     image: kooldev/php:7.4-nginx
@@ -91,6 +107,30 @@ volumes:
 `,
 	}
 	templates["database"] = map[string]string{
+		"mysql57-adonis.yml": `services:
+  database:
+    image: mysql:5.7
+    ports:
+      - "${KOOL_DATABASE_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE-database}"
+      MYSQL_USER: "${DB_USER-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD-pass}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - database:/var/lib/mysql:delegated
+    networks:
+      - kool_local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
+
+volumes:
+  database:
+
+scripts:
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USER $DB_DATABASE
+`,
 		"mysql57.yml": `services:
   database:
     image: mysql:5.7
@@ -114,6 +154,31 @@ volumes:
 
 scripts:
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USERNAME $DB_DATABASE
+`,
+		"mysql8-adonis.yml": `services:
+  database:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "${KOOL_DATABASE_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD-rootpass}"
+      MYSQL_DATABASE: "${DB_DATABASE-database}"
+      MYSQL_USER: "${DB_USER-user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD-pass}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - database:/var/lib/mysql:delegated
+    networks:
+      - kool_local
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]
+
+volumes:
+  database:
+
+scripts:
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USER $DB_DATABASE
 `,
 		"mysql8.yml": `services:
   database:
@@ -140,6 +205,29 @@ volumes:
 scripts:
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USERNAME $DB_DATABASE
 `,
+		"postgresql13-adonis.yml": `services:
+  database:
+    image: postgres:13-alpine
+    ports:
+      - "${KOOL_DATABASE_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: "${DB_DATABASE-database}"
+      POSTGRES_USER: "${DB_USER-user}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD-pass}"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    volumes:
+      - database:/var/lib/postgresql/data:delegated
+    networks:
+      - kool_local
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "$DB_DATABASE", "-U", "$DB_USER"]
+
+volumes:
+  database:
+
+scripts:
+  psql: kool exec -e PGPASSWORD=$DB_PASSWORD database psql -U $DB_USER $DB_DATABASE
+`,
 		"postgresql13.yml": `services:
   database:
     image: postgres:13-alpine
@@ -165,39 +253,14 @@ scripts:
 `,
 	}
 	templates["scripts"] = map[string]string{
-		"adonis.yml": `scripts:
-  adonis: kool exec app adonis
-  node: kool exec app node
-`,
 		"composer.yml": `scripts:
   composer: kool exec app composer
 `,
 		"composer2.yml": `scripts:
   composer: kool exec app composer2
 `,
-		"js-framework-npm.yml": `scripts:
-  npm: kool docker kooldev/node:14 npm
-  node-setup:
-    - kool run npm install
-    - kool run npm run dev
-
-  setup:
-    - kool docker kooldev/node:14 npm install
-    - kool start
-`,
-		"js-framework-yarn.yml": `scripts:
-  yarn: kool docker kooldev/node:14 yarn
-  node-setup:
-    - kool run yarn install
-    - kool run yarn dev
-
-  setup:
-    - kool docker kooldev/node:14 yarn install
-    - kool start
-`,
 		"laravel.yml": `scripts:
   artisan: kool exec app php artisan
-  node: kool docker kooldev/node:14 node
 
   setup:
     - cp .env.example .env
@@ -211,8 +274,44 @@ scripts:
     - kool run artisan migrate:fresh --seed
     - kool run node-setup
 `,
+		"npm-adonis.yml": `scripts:
+  adonis: kool exec app adonis
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
+		"npm-nestjs.yml": `scripts:
+  nest: kool exec app nest
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
+		"npm-nextjs.yml": `scripts:
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
+		"npm-nuxtjs.yml": `scripts:
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
 		"npm.yml": `scripts:
-  npm: kool docker kooldev/node:14 npm
+  npm: kool exec app npm
+  npx: kool exec app npx
+
   node-setup:
     - kool run npm install
     - kool run npm run dev
@@ -220,8 +319,6 @@ scripts:
 		"symfony.yml": `scripts:
   console: kool exec app php ./bin/console
   phpunit: kool exec app php ./bin/phpunit
-
-  node: kool docker kooldev/node:14 node
 
   setup:
     - kool start
@@ -232,8 +329,39 @@ scripts:
   php: kool exec app php
   wp: kool exec app wp
 `,
+		"yarn-adonis.yml": `scripts:
+  adonis: kool exec app adonis
+  yarn: kool exec app yarn
+
+  setup:
+    - kool docker kooldev/node:14 yarn install
+    - kool start
+`,
+		"yarn-nestjs.yml": `scripts:
+  nest: kool exec app nest
+  yarn: kool exec app yarn
+
+  setup:
+    - kool docker kooldev/node:14 yarn install
+    - kool start
+`,
+		"yarn-nextjs.yml": `scripts:
+  yarn: kool exec app yarn
+
+  setup:
+    - kool docker kooldev/node:14 yarn install
+    - kool start
+`,
+		"yarn-nuxtjs.yml": `scripts:
+  yarn: kool exec app yarn
+
+  setup:
+    - kool docker kooldev/node:14 yarn install
+    - kool start
+`,
 		"yarn.yml": `scripts:
-  yarn: kool docker kooldev/node:14 yarn
+  yarn: kool exec app yarn
+
   node-setup:
     - kool run yarn install
     - kool run yarn dev

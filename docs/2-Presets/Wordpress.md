@@ -1,13 +1,13 @@
 ### Start from Scratch
 
-If you want to create a project from scratch, just go to the directory you wanna have the new Wordpress install and run:
+If you want to create a project from scratch, just go to the directory in which you want to install a new WordPress project and run:
 
 ```bash
 $ kool preset wordpress
 $ kool start
 ```
 
-Upon first start, if the current working directory is not an existing Wordpress source code, it will create it for you.
+Upon first start, if the current working directory is not an existing WordPress source code, it will create it for you.
 
 ### Start with existing project
 
@@ -29,7 +29,7 @@ $ kool start
 
 Now you can see your site at **http://localhost**.
 
-To install wordpress, it will ask database credentials, the default ones are:
+To install WordPress, it will ask database credentials, the default ones are:
 
 | Field         | Value    |
 |---------------|----------|
@@ -48,6 +48,6 @@ For publishing we recommend using [Updraft Plus](https://wordpress.org/plugins/u
 * Install Plugin on your local
 * Create Backup
 * Download Backup
-* Install Plugin on the destination with a fresh Wordpress Instalation
+* Install Plugin on the destination with a fresh WordPress Installation
 * Upload Backup
 * Restore it

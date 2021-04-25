@@ -2,8 +2,6 @@ scripts:
   console: kool exec app php ./bin/console
   phpunit: kool exec app php ./bin/phpunit
 
-  node: kool docker kooldev/node:14 node
-
   setup:
     - kool start
     - cp .env.example .env

@@ -1,6 +1,5 @@
 scripts:
   artisan: kool exec app php artisan
-  node: kool docker kooldev/node:14 node
 
   setup:
     - cp .env.example .env

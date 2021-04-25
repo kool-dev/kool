@@ -1,5 +1,0 @@
-language: javascript
-commands:
-  create:
-  - kool docker kooldev/node:14 yarn create nuxt-app $CREATE_DIRECTORY
-

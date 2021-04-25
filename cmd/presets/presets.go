@@ -5,10 +5,7 @@ package presets
 // GetAll get all presets
 func GetAll() map[string]map[string]string {
 	var presets = make(map[string]map[string]string)
-	presets["adonis"] = map[string]string{
-		".dockerignore": `/node_modules
-`,
-	}
+	presets["adonis"] = map[string]string{}
 	presets["golang-cli"] = map[string]string{
 		"kool.yml": `scripts:
   # Helper for local development - compiling and installing locally
@@ -60,120 +57,9 @@ networks:
   dev: kool run hugo server -D
 `,
 	}
-	presets["laravel"] = map[string]string{
-		".dockerignore": `/node_modules
-/vendor
-`,
-	}
-	presets["nestjs"] = map[string]string{
-		".dockerignore": `/node_modules
-`,
-		"Dockerfile.build": `FROM kooldev/node:14-nest AS build
-
-COPY . /app
-
-RUN npm install
-
-FROM kooldev/node:14-nest
-
-COPY --from=build --chown=kool:kool /app /app
-
-EXPOSE 3000
-
-CMD [ "npm", "start" ]
-`,
-		"docker-compose.yml": `version: "3.7"
-services:
-  app:
-    image: kooldev/node:14-nest
-    command: ["npm", "run", "start:dev"]
-    ports:
-     - "${KOOL_APP_PORT:-3000}:3000"
-    environment:
-      ASUSER: "${KOOL_ASUSER:-0}"
-      UID: "${UID:-0}"
-    volumes:
-     - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
-    networks:
-     - kool_local
-     - kool_global
-#   database:
-#     image: mysql:8.0
-#     ports:
-#      - "${KOOL_DATABASE_PORT:-3306}:3306"
-#     environment:
-#       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD:-rootpass}"
-#       MYSQL_DATABASE: "${DB_DATABASE:-database}"
-#       MYSQL_USER: "${DB_USERNAME:-user}"
-#       MYSQL_PASSWORD: "${DB_PASSWORD:-pass}"
-#       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-#     volumes:
-#      - database:/var/lib/mysql:delegated
-#     networks:
-#      - kool_local
-#   cache:
-#     image: redis:6-alpine
-#     volumes:
-#      - cache:/data:delegated
-#   mongo:
-#     image: mongo:4
-#     ports:
-#      - "${KOOL_MONGO_PORT:-27017}:27017"
-#     environment:
-#       MONGO_INITDB_ROOT_USERNAME: "${MONGO_USERNAME:-root}"
-#       MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD:-rootpass}"
-#       MONGO_INITDB_DATABASE: "${MONGO_DATABASE:-database}"
-#     volumes:
-#      - mongo:/data/db:delegated
-#     networks:
-#      - kool_local
-#
-# volumes:
-#   database:
-#   cache:
-#   mongo:
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
-`,
-		"kool.yml": `scripts:
-  node: kool exec app node
-  npm: kool exec app npm # can change to: yarn,pnpm
-  nest: kool exec app nest
-
-  mysql: kool exec -e MYSQL_PWD=rootpass mysql -uroot
-
-  mongo: kool exec mongo mongo -uroot -prootpass
-
-  setup:
-    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start
-`,
-	}
+	presets["laravel"] = map[string]string{}
+	presets["nestjs"] = map[string]string{}
 	presets["nextjs"] = map[string]string{
-		".dockerignore": `/.next
-/out
-/build
-/node_modules
-`,
-		"Dockerfile.build": `FROM kooldev/node:14 AS build
-
-COPY . /app
-
-RUN npm install && npm run build
-
-FROM kooldev/node:14
-
-COPY --from=build --chown=kool:kool /app /app
-
-EXPOSE 3000
-
-CMD [ "npm", "start" ]
-`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -196,85 +82,9 @@ networks:
   kool_global:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
-`,
-		"kool.yml": `scripts:
-  node: kool exec app node
-  npm: kool exec app npm # can change to: yarn,pnpm
-
-  setup:
-    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start
-`,
-	}
-	presets["nextjs-static"] = map[string]string{
-		".dockerignore": `/.next
-/out
-/build
-/node_modules
-`,
-		"Dockerfile.build": `FROM kooldev/node:14 AS node
-
-COPY . /app
-
-RUN npm install && npm run build && npm run export
-
-FROM kooldev/http:static
-
-ENV ROOT=/app/out
-
-COPY --from=node /app/out /app/out
-`,
-		"docker-compose.yml": `version: "3.7"
-services:
-  app:
-    image: kooldev/node:14
-    command: ["npm", "run", "dev"]
-    ports:
-     - "${KOOL_APP_PORT:-3000}:3000"
-    environment:
-      ASUSER: "${KOOL_ASUSER:-0}"
-      UID: "${UID:-0}"
-    volumes:
-     - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
-    networks:
-     - kool_local
-     - kool_global
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
-`,
-		"kool.yml": `scripts:
-  node: kool exec app node
-  npm: kool exec app npm # can change to: yarn,pnpm
-
-  setup:
-    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start
 `,
 	}
 	presets["nuxtjs"] = map[string]string{
-		".dockerignore": `/.nuxt
-/dist
-/node_modules
-`,
-		"Dockerfile.build": `FROM kooldev/node:14 AS build
-
-COPY . /app
-
-RUN npm install && npm run build
-
-FROM kooldev/node:14
-
-COPY --from=build --chown=kool:kool /app /app
-
-EXPOSE 3000
-
-CMD [ "npm", "start" ]
-`,
 		"docker-compose.yml": `version: "3.7"
 services:
   app:
@@ -297,81 +107,9 @@ networks:
   kool_global:
     external: true
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
-`,
-		"kool.nuxt.config.js": `export default {
-  server: {
-    host: '0.0.0.0',
-  }
-}
-`,
-		"kool.yml": `scripts:
-  node: kool exec app node
-  npm: kool exec app npm # can change to: yarn,pnpm
-
-  setup:
-    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start
-`,
-	}
-	presets["nuxtjs-static"] = map[string]string{
-		".dockerignore": `/.nuxt
-/dist
-/node_modules
-`,
-		"Dockerfile.build": `FROM kooldev/node:14 AS node
-
-COPY . /app
-
-RUN npm install && npm run build && npm run export
-
-FROM kooldev/http:static
-
-ENV ROOT=/app/dist
-
-COPY --from=node /app/dist /app/dist
-`,
-		"docker-compose.yml": `version: "3.7"
-services:
-  app:
-    image: kooldev/node:14
-    command: ["npm", "run", "dev"]
-    ports:
-     - "${KOOL_APP_PORT:-3000}:3000"
-    environment:
-      ASUSER: "${KOOL_ASUSER:-0}"
-      UID: "${UID:-0}"
-    volumes:
-     - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
-    networks:
-     - kool_local
-     - kool_global
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
-`,
-		"kool.nuxt.config.js": `export default {
-  server: {
-    host: '0.0.0.0',
-  }
-}
-`,
-		"kool.yml": `scripts:
-  node: kool exec app node
-  npm: kool exec app npm # can change to: yarn,pnpm
-
-  setup:
-    - kool docker kooldev/node:14 npm install # can change to: yarn,pnpm
-    - kool start
 `,
 	}
 	presets["symfony"] = map[string]string{
-		".dockerignore": `/node_modules
-/vendor
-`,
 		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
 
 COPY . /app
