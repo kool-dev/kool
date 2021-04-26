@@ -6,7 +6,6 @@
 <a href="https://codecov.io/gh/kool-dev/kool"><img src="https://codecov.io/gh/kool-dev/kool/branch/master/graph/badge.svg" alt="codecov"></a>
 <a href="https://github.com/kool-dev/kool/workflows/docker"><img src="https://github.com/kool-dev/kool/workflows/docker/badge.svg" alt="Docker Hub"></a>
 <a href="https://github.com/kool-dev/kool/workflows/golangci-lint"><img src="https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg" alt="Golang CI Lint"></a>
-<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_shield"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=shield" alt="FOSSA Status"></a>
 <a href="https://codeclimate.com/github/kool-dev/kool/maintainability"><img src="https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability" alt="Maintainability"></a>
 <a href="https://join.slack.com/t/kool-dev/shared_invite/zt-ntmkyjog-DHOiddbBnhY796KaABUhzg"><img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack" alt="Join Slack Kool community"></a>
 </p>
@@ -111,6 +110,3 @@ If you find security issue please let us know ahead of making it public like in 
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
-
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fkool-dev%2Fkool.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fkool-dev%2Fkool?ref=badge_large)
