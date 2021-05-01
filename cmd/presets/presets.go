@@ -25,7 +25,42 @@ func GetAll() map[string]map[string]string {
   lint: kool docker --volume=gopath:/go golangci/golangci-lint:v1.31.0 golangci-lint run -v
 `,
 	}
-	presets["hugo"] = map[string]string{}
+	presets["hugo"] = map[string]string{
+		"docker-compose.yml": `version: "3.8"
+services:
+  app:
+    image: klakegg/hugo
+    command: ["server", "-p", "80", "-D"]
+    working_dir: /app
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+  static:
+    image: kooldev/nginx:static
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
+		"kool.yml": `scripts:
+  hugo: kool docker -p 1313:1313 klakegg/hugo
+  dev: kool run hugo server -D
+
+  setup:
+    - kool start
+    - kool run dev
+`,
+	}
 	presets["laravel"] = map[string]string{}
 	presets["nestjs"] = map[string]string{}
 	presets["nextjs"] = map[string]string{
