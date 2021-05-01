@@ -66,16 +66,54 @@ services:
     image: kooldev/node:14
     command: ["npm", "run", "dev"]
     ports:
-     - "${KOOL_APP_PORT:-3000}:3000"
+      - "${KOOL_APP_PORT:-3000}:3000"
     environment:
       ASUSER: "${KOOL_ASUSER:-0}"
       UID: "${UID:-0}"
     volumes:
-     - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
+      - .:/app:delegated
     networks:
-     - kool_local
-     - kool_global
+      - kool_local
+      - kool_global
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
+	}
+	presets["nodejs"] = map[string]string{
+		"app.js": `const http = require("http");
+
+const hostname = "0.0.0.0";
+const port = 3000;
+
+const server = http.createServer((req, res) => {
+	res.statusCode = 200;
+	res.setHeader("Content-Type", "text/plain");
+	res.end("Hello World");
+});
+
+server.listen(port, hostname, () => {
+	console.log("Server running at http://localhost:"+port+"/");
+});
+`,
+		"docker-compose.yml": `version: "3.7"
+services:
+  app:
+    image: kooldev/node:14
+    command: ["node", "app.js"]
+    ports:
+      - "${KOOL_APP_PORT:-3000}:3000"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
 
 networks:
   kool_local:
@@ -97,7 +135,6 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
     networks:
      - kool_local
      - kool_global
@@ -109,22 +146,8 @@ networks:
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
 `,
 	}
-	presets["symfony"] = map[string]string{
-		"Dockerfile.build": `FROM kooldev/php:7.4 AS composer
-
-COPY . /app
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --quiet
-
-FROM kooldev/node:14 AS node
-
-COPY --from=composer /app /app
-RUN yarn install && yarn prod
-
-FROM kooldev/php:7.4-nginx
-
-COPY --from=node --chown=kool:kool /app /app
-`,
-	}
+	presets["php"] = map[string]string{}
+	presets["symfony"] = map[string]string{}
 	presets["wordpress"] = map[string]string{}
 	return presets
 }

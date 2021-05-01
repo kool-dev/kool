@@ -32,7 +32,6 @@ func GetTemplates() map[string]map[string]string {
       UID: "${UID:-0}"
     volumes:
       - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated ???
     networks:
       - kool_local
       - kool_global
@@ -259,8 +258,21 @@ scripts:
 		"composer2.yml": `scripts:
   composer: kool exec app composer2
 `,
-		"laravel.yml": `scripts:
+		"npm-adonis.yml": `scripts:
+  adonis: kool exec app adonis
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
+		"npm-laravel.yml": `scripts:
   artisan: kool exec app php artisan
+
+  node-setup:
+    - kool run npm install
+    - kool run npm run dev
 
   setup:
     - cp .env.example .env
@@ -273,15 +285,6 @@ scripts:
     - kool run composer install
     - kool run artisan migrate:fresh --seed
     - kool run node-setup
-`,
-		"npm-adonis.yml": `scripts:
-  adonis: kool exec app adonis
-  npm: kool exec app npm
-  npx: kool exec app npx
-
-  setup:
-    - kool docker kooldev/node:14 npm install
-    - kool start
 `,
 		"npm-nestjs.yml": `scripts:
   nest: kool exec app nest
@@ -300,6 +303,15 @@ scripts:
     - kool docker kooldev/node:14 npm install
     - kool start
 `,
+		"npm-nodejs.yml": `scripts:
+  node: kool exec app node
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool start
+    # - add more setup commands
+`,
 		"npm-nuxtjs.yml": `scripts:
   npm: kool exec app npm
   npx: kool exec app npx
@@ -311,10 +323,13 @@ scripts:
 		"npm.yml": `scripts:
   npm: kool exec app npm
   npx: kool exec app npx
+`,
+		"php.yml": `scripts:
+  php: kool exec app php
 
-  node-setup:
-    - kool run npm install
-    - kool run npm run dev
+  setup:
+    - kool start
+    # - add more setup commands
 `,
 		"symfony.yml": `scripts:
   console: kool exec app php ./bin/console
@@ -322,8 +337,8 @@ scripts:
 
   setup:
     - kool start
-    - cp .env.example .env
     - kool run composer install
+    #- kool run console doctrine:migrations:migrate -n
 `,
 		"wordpress.yml": `scripts:
   php: kool exec app php
@@ -336,6 +351,25 @@ scripts:
   setup:
     - kool docker kooldev/node:14 yarn install
     - kool start
+`,
+		"yarn-laravel.yml": `scripts:
+  artisan: kool exec app php artisan
+
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
+
+  setup:
+    - cp .env.example .env
+    - kool start
+    - kool run composer install
+    - kool run artisan key:generate
+    - kool run node-setup
+
+  reset:
+    - kool run composer install
+    - kool run artisan migrate:fresh --seed
+    - kool run node-setup
 `,
 		"yarn-nestjs.yml": `scripts:
   nest: kool exec app nest
@@ -352,6 +386,14 @@ scripts:
     - kool docker kooldev/node:14 yarn install
     - kool start
 `,
+		"yarn-nodejs.yml": `scripts:
+  node: kool exec app node
+  yarn: kool exec app yarn
+
+  setup:
+    - kool start
+    # - add more setup commands
+`,
 		"yarn-nuxtjs.yml": `scripts:
   yarn: kool exec app yarn
 
@@ -361,10 +403,6 @@ scripts:
 `,
 		"yarn.yml": `scripts:
   yarn: kool exec app yarn
-
-  node-setup:
-    - kool run yarn install
-    - kool run yarn dev
 `,
 	}
 	return templates

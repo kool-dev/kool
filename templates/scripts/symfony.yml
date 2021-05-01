@@ -4,5 +4,5 @@ scripts:
 
   setup:
     - kool start
-    - cp .env.example .env
     - kool run composer install
+    #- kool run console doctrine:migrations:migrate -n

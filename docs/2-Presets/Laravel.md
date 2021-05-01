@@ -159,7 +159,7 @@ $ kool run setup
 
 > As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost).
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the Laravel welcome page. Hooray!.
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 
@@ -196,6 +196,16 @@ $ kool exec app sh
 ### Connect to Docker Database Container
 
 You can easily start a new SQL client session inside your running `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
+
+### Access Private Repos and Packages in Docker Containers
+
+If you need your `app` container to use your local SSH keys to pull private repositories and/or install private packages (which have been added as dependencies in your `composer.json` or `package.json` file), you can simply add `$HOME/.ssh:/home/kool/.ssh:delegated` under the `volumes` key of the `app` service in your **docker-compose.yml** file. This maps a `.ssh` folder in the container to the `.ssh` folder on your host machine.
+
+```diff
+volumes:
+  - .:/app:delegated
++ - $HOME/.ssh:/home/kool/.ssh:delegated
+```
 
 ## Staying kool
 

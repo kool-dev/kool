@@ -188,6 +188,16 @@ $ kool exec app sh
 
 If you added a database service, you can easily start a new SQL client session inside your running `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
 
+### Access Private Repos and Packages in Docker Containers
+
+If you need your `app` container to use your local SSH keys to pull private repositories and/or install private packages (which have been added as dependencies in your `composer.json` or `package.json` file), you can simply add `$HOME/.ssh:/home/kool/.ssh:delegated` under the `volumes` key of the `app` service in your **docker-compose.yml** file. This maps a `.ssh` folder in the container to the `.ssh` folder on your host machine.
+
+```diff
+volumes:
+  - .:/app:delegated
++ - $HOME/.ssh:/home/kool/.ssh:delegated
+```
+
 ## Staying kool
 
 When it's time to stop working on the project:

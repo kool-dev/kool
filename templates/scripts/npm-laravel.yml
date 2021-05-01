@@ -1,6 +1,10 @@
 scripts:
   artisan: kool exec app php artisan
 
+  node-setup:
+    - kool run npm install
+    - kool run npm run dev
+
   setup:
     - cp .env.example .env
     - kool start

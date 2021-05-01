@@ -10,7 +10,6 @@ services:
       UID: "${UID:-0}"
     volumes:
      - .:/app:delegated
-    #  - $HOME/.ssh:/home/kool/.ssh:delegated
     networks:
      - kool_local
      - kool_global

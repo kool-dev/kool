@@ -110,9 +110,9 @@ questions:
       message: What javascript package manager do you want to use
       options:
         - name: npm
-          template: npm.yml
+          template: npm-laravel.yml
         - name: yarn
-          template: yarn.yml
+          template: yarn-laravel.yml
     - key: scripts
       default_answer: 1.x
       message: What composer version do you want to use
@@ -121,9 +121,6 @@ questions:
           template: composer.yml
         - name: 2.x
           template: composer2.yml
-templates:
-  - key: scripts
-    template: laravel.yml
 `
 	configs["nestjs"] = `language: javascript
 commands:
@@ -181,6 +178,21 @@ questions:
         - name: yarn
           template: yarn-nextjs.yml
 `
+	configs["nodejs"] = `language: javascript
+commands:
+  create:
+    - mkdir $CREATE_DIRECTORY
+questions:
+  kool:
+    - key: scripts
+      default_answer: npm
+      message: What javascript package manager do you want to use
+      options:
+        - name: npm
+          template: npm-nodejs.yml
+        - name: yarn
+          template: yarn-nodejs.yml
+`
 	configs["nuxtjs"] = `language: javascript
 commands:
   create:
@@ -195,6 +207,34 @@ questions:
           template: npm-nuxtjs.yml
         - name: yarn
           template: yarn-nuxtjs.yml
+`
+	configs["php"] = `language: php
+commands:
+  create:
+    - mkdir -p $CREATE_DIRECTORY/public
+    - echo "<?php echo 'Hello World!';" > $CREATE_DIRECTORY/public/index.php
+questions:
+  compose:
+    - key: app
+      default_answer: PHP 7.4
+      message: Which version of PHP do you want to use
+      options:
+        - name: PHP 7.4
+          template: php74.yml
+        - name: PHP 8.0
+          template: php8.yml
+  kool:
+    - key: scripts
+      default_answer: 1.x
+      message: What composer version do you want to use
+      options:
+        - name: 1.x
+          template: composer.yml
+        - name: 2.x
+          template: composer2.yml
+templates:
+  - key: scripts
+    template: php.yml
 `
 	configs["symfony"] = `language: php
 commands:

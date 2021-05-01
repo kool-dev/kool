@@ -1,7 +1,7 @@
 # Start a Symfony Project with Docker in 3 Easy Steps
 
 1. Run `kool create symfony my-project`
-2. Update **.env.example**
+2. Update **.env**
 3. Run `kool run setup`
 
 > Yes, using **kool** + Docker to create and work on new Symfony projects is that easy!
@@ -82,45 +82,56 @@ You need to update some default values in Symfony's **.env** file to match the s
 
 MySQL 5.7 and 8.0
 
+> Set `DB_VERSION` to the same MySQL version you selected in the preset wizard.
+
 ```diff
--DB_HOST=127.0.0.1
+-# DATABASE_URL="mysql://db_user:db_password@127.0.0.1:3306/db_name?serverVersion=5.7"
+-DATABASE_URL="postgresql://db_user:db_password@127.0.0.1:5432/db_name?serverVersion=13&charset=utf8"
++DB_USERNAME=user
++DB_PASSWORD=pass
 +DB_HOST=database
++DB_PORT=3306
++DB_DATABASE=database
++DB_VERSION=7.4
++DATABASE_URL="mysql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?serverVersion=${DB_VERSION}"
++# DATABASE_URL="postgresql://db_user:db_password@127.0.0.1:5432/db_name?serverVersion=13&charset=utf8"
 ```
 
 PostgreSQL 13.0
 
 ```diff
--DB_CONNECTION=mysql
-+DB_CONNECTION=pgsql
-
--DB_HOST=127.0.0.1
++DB_USERNAME=user
++DB_PASSWORD=pass
 +DB_HOST=database
-
--DB_PORT=3306
 +DB_PORT=5432
++DB_DATABASE=database
++DB_VERSION=13
+# DATABASE_URL="mysql://db_user:db_password@127.0.0.1:3306/db_name?serverVersion=5.7"
+-DATABASE_URL="postgresql://db_user:db_password@127.0.0.1:5432/db_name?serverVersion=13&charset=utf8"
++DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?serverVersion=${DB_VERSION}&charset=utf8"
 ```
 
 ### Cache Services
 
+> You need to use `cache` as the host for your chosen cache service. Refer to the Symfony docs to complete the set up.
+
 Redis
 
 ```diff
--REDIS_HOST=127.0.0.1
-+REDIS_HOST=cache
++REDIS_DSN=redis://cache:6379
 ```
 
 Memcached
 
 ```diff
--MEMCACHED_HOST=127.0.0.1
-+MEMCACHED_HOST=cache
++MEMCACHED_DSN=memcached://cache:11211
 ```
 
 ## 3. Run `kool run setup`
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
+As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run composer`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
 To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard), including a script called `setup`, which helps you spin up a project for the first time.
 
@@ -131,12 +142,7 @@ scripts:
   composer: kool exec app composer
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
 
-  node-setup:
-    - kool run npm install
-    - kool run npm run dev
-
   setup:
-    - cp .env.example .env
     - kool start
     - kool run composer install
 
@@ -153,7 +159,7 @@ $ kool run setup
 
 > As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost).
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the Symfony welcome page. Hooray!.
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 
@@ -173,7 +179,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app ls
 ```
 
-Try `kool run artisan --help` to execute the `kool exec app php artisan --help` command in your running `app` container and print out information about Symfony's CLI commands.
+Try `kool run console list` to execute the `kool exec app php ./bin/console list` command in your running `app` container and print out a list of Symfony's `console` commands.
 
 ### Open Sessions in Docker Containers
 
@@ -190,6 +196,16 @@ $ kool exec app sh
 ### Connect to Docker Database Container
 
 You can easily start a new SQL client session inside your running `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
+
+### Access Private Repos and Packages in Docker Containers
+
+If you need your `app` container to use your local SSH keys to pull private repositories and/or install private packages (which have been added as dependencies in your `composer.json` or `package.json` file), you can simply add `$HOME/.ssh:/home/kool/.ssh:delegated` under the `volumes` key of the `app` service in your **docker-compose.yml** file. This maps a `.ssh` folder in the container to the `.ssh` folder on your host machine.
+
+```diff
+volumes:
+  - .:/app:delegated
++ - $HOME/.ssh:/home/kool/.ssh:delegated
+```
 
 ## Staying kool
 
@@ -215,5 +231,6 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[NestJS](/docs/2-Presets/NestJS.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**
 - **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
+- **[WordPress](/docs/2-Presets/Wordpress.md)**
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/master/presets](https://github.com/kool-dev/kool/tree/master/presets) and browse the code to learn more about how presets work.
