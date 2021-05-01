@@ -137,7 +137,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app ls
 ```
 
-Try `kool run hugo version` to execute the `kool exec app hugo version` command in your running `app` container and verify your install.
+Try `kool run hugo version` to execute the `kool exec app hugo version` command in your running `app` container and verify your installation.
 
 ### Open Sessions in Docker Containers
 
