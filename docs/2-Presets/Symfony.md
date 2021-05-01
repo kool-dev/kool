@@ -141,13 +141,12 @@ scripts:
   phpunit: kool exec app php ./bin/phpunit
   composer: kool exec app composer
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
+  npm: kool exec app npm
+  npx: kool exec app npx
 
   setup:
     - kool start
     - kool run composer install
-
-  npm: kool exec app npm
-  npx: kool exec app npx
 ```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:

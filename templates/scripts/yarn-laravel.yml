@@ -1,5 +1,6 @@
 scripts:
   artisan: kool exec app php artisan
+  yarn: kool exec app yarn
 
   node-setup:
     - kool run yarn install

@@ -1,5 +1,7 @@
 scripts:
   artisan: kool exec app php artisan
+  npm: kool exec app npm
+  npx: kool exec app npx
 
   node-setup:
     - kool run npm install

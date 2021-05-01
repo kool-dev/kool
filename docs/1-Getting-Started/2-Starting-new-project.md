@@ -159,9 +159,11 @@ scripts:
   composer: kool exec app composer2
   node: kool docker kooldev/node:14 node
   yarn: kool docker kooldev/node:14 yarn
+
   node-setup:
     - kool run yarn install
     - kool run yarn dev
+
   setup:
     - cp .env.example .env
     - kool start

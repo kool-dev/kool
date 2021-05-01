@@ -130,10 +130,11 @@ scripts:
   composer: kool exec app composer2
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
   node: kool docker kooldev/node:14 node
+  npm: kool docker kooldev/node:14 npm # or yarn
 
   node-setup:
-    - kool run yarn install
-    - kool run yarn dev
+    - kool run npm install # or yarn install
+    - kool run npm run dev # or yarn dev
 
   reset:
     - kool run composer install
@@ -146,8 +147,6 @@ scripts:
     - kool run composer install
     - kool run artisan key:generate
     - kool run node-setup
-
-  yarn: kool docker kooldev/node:14 yarn
 ```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:

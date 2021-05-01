@@ -269,6 +269,8 @@ scripts:
 `,
 		"npm-laravel.yml": `scripts:
   artisan: kool exec app php artisan
+  npm: kool exec app npm
+  npx: kool exec app npx
 
   node-setup:
     - kool run npm install
@@ -354,6 +356,7 @@ scripts:
 `,
 		"yarn-laravel.yml": `scripts:
   artisan: kool exec app php artisan
+  yarn: kool exec app yarn
 
   node-setup:
     - kool run yarn install
