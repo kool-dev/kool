@@ -56,6 +56,15 @@ networks:
   hugo: kool docker -p 1313:1313 klakegg/hugo
   dev: kool run hugo server -D
 
+  # remove or modify to suit the needs of your project
+  quickstart:
+    - kool start
+    - git init
+    - git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
+    - echo theme = \"ananke\" >> config.toml
+    - kool run hugo new posts/my-first-post.md
+    - kool run dev
+
   setup:
     - kool start
     - kool run dev

@@ -42,33 +42,42 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 > Now's a good time to review the **docker-compose.yml** file and verify the services suit the needs of your project.
 
-## 2. Run `kool run setup`
+## 2. Run `kool run quickstart`
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
 As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run hugo`). You can add your own single line commands (see `hugo` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
-To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard), including a script called `setup`, which helps you spin up a project for the first time.
+To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard), including a script called `setup`, which helps you spin up a project for the first time. However, since Hugo requires a few extra steps to create a Hello World site, we've added a special `quickstart` script to make it super easy.
 
 ```yaml
 scripts:
-  hugo: kool docker -p 1313:1313 klakegg/hugo
-  dev: kool run hugo server -D
+	hugo: kool docker -p 1313:1313 klakegg/hugo
+	dev: kool run hugo server -D
 
-  setup:
-    - kool start
-    - kool run dev
+	# remove or modify to suit the needs of your project
+	quickstart:
+		- kool start
+		- git init
+		- git submodule add https://github.com/theNewDynamic/gohugo-theme-ananke.git themes/ananke
+		- echo theme = \"ananke\" >> config.toml
+		- kool run hugo new posts/my-first-post.md
+		- kool run dev
+
+	setup:
+		- kool start
+		- kool run dev
 ```
 
-Go ahead and run `kool run setup` to start your Docker environment:
+Go ahead and run `kool run quickstart` to start your Docker environment and initialize your Hugo site:
 
 ```bash
-$ kool run setup
+$ kool run quickstart
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run the `kool start` command to spin up your Docker environment; and then calls `kool run dev` to build your Hugo site.
+> As you can see in **kool.yml**, the `quickstart` script will do the following in sequence: run the `kool start` command to spin up your Docker environment; call `git init` to create a Git repository; download the Ananke theme; use an `echo` command to add the theme to your Hugo config file; add your first post; and then call `kool run dev` to build your Hugo site.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:1313](http://localhost:1313/). Hooray!.
+Once `kool run quickstart` finishes, you should be able to access your new site at [http://localhost](http://localhost/) and see the "My New Hugo Site" page. Hooray!.
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 
@@ -89,15 +98,6 @@ Run `kool logs app` to see the logs from the running `app` container.
 ```bash
 $ kool logs app
 Attaching to my-project_app_1
-app_1     | Start building sites …
-app_1     | WARN 2021/05/01 18:12:00 found no layout file for "HTML" for kind "home": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
-app_1     | WARN 2021/05/01 18:12:00 found no layout file for "HTML" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
-app_1     | WARN 2021/05/01 18:12:00 found no layout file for "HTML" for kind "taxonomy": You should create a template file which matches Hugo Layouts Lookup Rules for this combination.
-app_1     |
-app_1     |                    | EN
-app_1     | -------------------+-----
-app_1     |   Pages            |  3
-app_1     |   Paginator pages  |  0
 app_1     |   Non-page files   |  0
 app_1     |   Static files     |  0
 app_1     |   Processed images |  0
@@ -105,7 +105,7 @@ app_1     |   Aliases          |  0
 app_1     |   Sitemaps         |  1
 app_1     |   Cleaned          |  0
 app_1     |
-app_1     | Built in 8 ms
+app_1     | Built in 1 ms
 app_1     | Watching for changes in /app/{archetypes,content,data,layouts,static}
 app_1     | Watching for config changes in /app/config.toml
 app_1     | Environment: "DEV"
@@ -113,6 +113,16 @@ app_1     | Serving pages from memory
 app_1     | Running in Fast Render Mode. For full rebuilds on change: hugo server --disableFastRender
 app_1     | Web Server is available at http://localhost:80/ (bind address 0.0.0.0)
 app_1     | Press Ctrl+C to stop
+app_1     |
+app_1     | Change of config file detected, rebuilding site.
+app_1     | 2021-05-01 20:34:06.306 +0000
+app_1     | Rebuilt in 136 ms
+app_1     | adding created directory to watchlist /app/content/posts
+app_1     |
+app_1     | Change detected, rebuilding site.
+app_1     | 2021-05-01 20:34:07.305 +0000
+app_1     | Source changed "/app/content/posts/my-first-post.md": CREATE
+app_1     | Total in 26 ms
 ```
 
 ---
@@ -127,7 +137,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app ls
 ```
 
-Try `kool run composer list` to execute the `kool exec app composer list` command in your running `app` container and print out a list of Composer commands.
+Try `kool run hugo version` to execute the `kool exec app hugo version` command in your running `app` container and verify your install.
 
 ### Open Sessions in Docker Containers
 
@@ -176,50 +186,3 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[Symfony](/docs/2-Presets/Symfony.md)**
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/master/presets](https://github.com/kool-dev/kool/tree/master/presets) and browse the code to learn more about how presets work.
-
-
-
-
-### Using Hugo preset
-
-#### Creating a new Hugo website
-
-To make things easier we will use **kool** to install it for you.
-
-```console
-$ kool create hugo my-website
-
-$ cd my-website
-```
-- **kool create** already executes **kool preset** internally so you can skip the command in the next step.
-
-#### Adding kool to an existing Hugo website
-
-Go to the project folder and run:
-
-```console
-$ cd my-website/
-$ kool preset hugo
-```
-
-**kool preset** will create a few configuration files in order to enable you to configure / extend it. You don't need to execute it if you created the project with `kool create`.
-
-### Using kool for Hugo development
-
-- To start the container to serve your Hugo website:
-
-```console
-$ kool start
-```
-
-Then check out your site at `http://localhost`. If you wanna stop the container just run `kool stop`.
-
-- To create some new content:
-
-```console
-$ kool run hugo new posts/my-super-post.md
-```
-
----
-
-Check your **kool.yml** to see what scripts you can run and add more.
