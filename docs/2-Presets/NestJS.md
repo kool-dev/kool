@@ -97,7 +97,6 @@ Verify your Docker container is running using the [`kool status` command](/docs/
 
 ```bash
 $ kool status
-
 +---------+---------+------------------------+--------------+
 | SERVICE | RUNNING | PORTS                  | STATE        |
 +---------+---------+------------------------+--------------+
@@ -109,7 +108,7 @@ Run `kool logs app` to see the logs from the running `app` container, and confir
 
 > Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
 
-```
+```bash
 $ kool logs app
 Attaching to my-project_app_1
 app_1  |
@@ -221,6 +220,7 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[Laravel](/docs/2-Presets/Laravel.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**
 - **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
-- **[Symfony](/docs/2-Presets/Symfony.md)**
+- **[PHP](/docs/2-Presets/PHP.md)**
+- **[Symfony](/docs/2-Presets/Symfony.md)***
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/master/presets](https://github.com/kool-dev/kool/tree/master/presets) and browse the code to learn more about how presets work.
