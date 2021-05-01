@@ -6,6 +6,32 @@ package presets
 func GetTemplates() map[string]map[string]string {
 	var templates = make(map[string]map[string]string)
 	templates["app"] = map[string]string{
+		"hugo.yml": `version: "3.8"
+services:
+  app:
+    image: klakegg/hugo
+    command: ["server", "-p", "80", "-D"]
+    working_dir: /app
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+  static:
+    image: kooldev/nginx:static
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
 		"node14-adonis.yml": `services:
   app:
     image: kooldev/node:14-adonis
@@ -257,6 +283,14 @@ scripts:
 `,
 		"composer2.yml": `scripts:
   composer: kool exec app composer2
+`,
+		"hugo.yml": `scripts:
+  hugo: kool docker -p 1313:1313 klakegg/hugo
+  dev: kool run hugo server -D
+
+  setup:
+    - kool start
+    - kool run dev
 `,
 		"npm-adonis.yml": `scripts:
   adonis: kool exec app adonis

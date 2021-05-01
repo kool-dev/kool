@@ -1,3 +1,7 @@
 scripts:
   hugo: kool docker -p 1313:1313 klakegg/hugo
   dev: kool run hugo server -D
+
+  setup:
+    - kool start
+    - kool run dev

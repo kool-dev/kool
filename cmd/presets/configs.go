@@ -52,21 +52,21 @@ templates:
 commands:
   create:
   - kool docker klakegg/hugo new site $CREATE_DIRECTORY
-# questions:
-#   compose:
-#     - key: app
-#       template: hugo.yml
-#     - key: comments
-#       default_answer: none
-#       message: What comments service do you want to use
-#       options:
-#         - name: Commento
-#           template: commento.yml
-#         - name: none
-#           template: none
-# templates:
-#   - key: scripts
-#     template: hugo.yml
+questions:
+  compose:
+    - key: app
+      template: hugo.yml
+#   - key: comments
+#     default_answer: none
+#     message: What comments service do you want to use
+#     options:
+#       - name: Commento
+#         template: commento.yml
+#       - name: none
+#         template: none
+templates:
+  - key: scripts
+    template: hugo.yml
 `
 	configs["laravel"] = `language: php
 commands:
