@@ -144,6 +144,7 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 scripts:
   adonis: kool exec app adonis
   npm: kool exec app npm # or yarn
+  npx: kool exec app npx
 
   setup:
     - kool docker kooldev/node:14 npm install # or yarn install
@@ -249,6 +250,7 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[Laravel](/docs/2-Presets/Laravel.md)**
 - **[NestJS](/docs/2-Presets/NestJS.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**
+- **[Node.js](/docs/2-Presets/NodeJS.md)**
 - **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
 - **[PHP](/docs/2-Presets/PHP.md)**
 - **[Symfony](/docs/2-Presets/Symfony.md)**

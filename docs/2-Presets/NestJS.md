@@ -77,6 +77,7 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 scripts:
   nest: kool exec app nest
   npm: kool exec app npm # or yarn
+  npx: kool exec app npx
 
   setup:
     - kool docker kooldev/node:14 npm install # or yarn install

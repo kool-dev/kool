@@ -131,6 +131,7 @@ scripts:
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # or yarn
+  npx: kool exec app npx
 
   node-setup:
     - kool run npm install # or yarn install
@@ -228,6 +229,7 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[Hugo](/docs/2-Presets/Hugo.md)**
 - **[NestJS](/docs/2-Presets/NestJS.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**
+- **[Node.js](/docs/2-Presets/NodeJS.md)**
 - **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
 - **[PHP](/docs/2-Presets/PHP.md)**
 - **[Symfony](/docs/2-Presets/Symfony.md)**
