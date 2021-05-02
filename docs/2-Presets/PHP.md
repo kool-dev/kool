@@ -85,7 +85,7 @@ $ kool run setup
 
 > As you can see in **kool.yml**, the `setup` script will do the following in sequence: run the `kool start` command to spin up your Docker environment; and then run any additional commands you add to the list.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see "Hello world!". Hooray!.
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see "Hello world!". Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 

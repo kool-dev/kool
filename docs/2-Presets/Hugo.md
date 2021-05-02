@@ -77,7 +77,7 @@ $ kool run quickstart
 
 > As you can see in **kool.yml**, the `quickstart` script will do the following in sequence: run the `kool start` command to spin up your Docker environment; call `git init` to create a Git repository; download the Ananke theme; use an `echo` command to add the theme to your Hugo config file; add your first post; and then call `kool run dev` to build your Hugo site.
 
-Once `kool run quickstart` finishes, you should be able to access your new site at [http://localhost](http://localhost/) and see the "My New Hugo Site" page. Hooray!.
+Once `kool run quickstart` finishes, you should be able to access your new site at [http://localhost](http://localhost/) and see the "My New Hugo Site" page. Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 

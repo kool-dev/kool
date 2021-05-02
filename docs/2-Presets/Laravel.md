@@ -159,7 +159,7 @@ $ kool run setup
 
 > As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the Laravel welcome page. Hooray!.
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the Laravel welcome page. Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 

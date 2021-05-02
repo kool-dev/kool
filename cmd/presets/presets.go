@@ -161,6 +161,11 @@ networks:
 	}
 	presets["php"] = map[string]string{}
 	presets["symfony"] = map[string]string{}
-	presets["wordpress"] = map[string]string{}
+	presets["wordpress"] = map[string]string{
+		".env": `DB_USERNAME=user
+DB_PASSWORD=pass
+DB_DATABASE=wordpress
+`,
+	}
 	return presets
 }

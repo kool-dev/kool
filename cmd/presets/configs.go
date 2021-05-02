@@ -294,6 +294,9 @@ templates:
     template: symfony.yml
 `
 	configs["wordpress"] = `language: php
+commands:
+  create:
+    - mkdir $CREATE_DIRECTORY
 questions:
   compose:
     - key: app
