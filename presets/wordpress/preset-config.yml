@@ -41,14 +41,6 @@ questions:
           template: npm.yml
         - name: yarn
           template: yarn.yml
-    - key: scripts
-      default_answer: 1.x
-      message: What composer version do you want to use
-      options:
-        - name: 1.x
-          template: composer.yml
-        - name: 2.x
-          template: composer2.yml
 templates:
   - key: scripts
     template: wordpress.yml

@@ -21,6 +21,8 @@ $ kool self-update
 
 Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Hugo project:
 
+> IMPORTANT: if you're on **Windows WSL** or **Linux**, you should run `sudo kool create hugo my-project` as the superuser (via `sudo`) to avoid permissions issues when creating the project directory and files.
+
 ```bash
 $ kool create hugo my-project
 ```

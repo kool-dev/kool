@@ -46,10 +46,6 @@ $ Preset wordpress is initializing!
 > npm
   yarn
 
-? What composer version do you want to use [Use arrows to move, type to filter]
-> 1.x
-  2.x
-
 $ Preset wordpress initialized!
 ```
 
@@ -116,6 +112,8 @@ app_1       | time="2021-05-01T21:02:06Z" level=info msg="success to start progr
 
 ## 3. Update Database Information
 
+> IMPORTANT: if you're on **Windows WSL** or **Linux**, you need to run `sudo chown your-user:your-user -R ./` inside your new project directory to change the owner and group of all the WordPress files to your current user.
+
 You should now be able to access your new WordPress installation at [http://localhost](http://localhost) and see the WordPress welcome page (or, right after you select your language). Hooray!
 
 In order to get started, WordPress will ask you for some information about the database. Use the following default values to match the settings in your auto-generated **docker-compose.yml** file.
@@ -149,13 +147,12 @@ For backups and restoration, we recommend using [Updraft Plus](https://wordpress
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run wp`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence.
+As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run wp`). You can add your own single line commands (see `php` below), or add a list of commands that will be executed in sequence.
 
 To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard).
 
 ```yaml
 scripts:
-  composer: kool exec app composer
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -u $DB_USERNAME $DB_DATABASE
   npm: kool exec app npm
   npx: kool exec app npx
@@ -195,7 +192,7 @@ You can easily start a new SQL client session inside your running `database` con
 
 ### Access Private Repos and Packages in Docker Containers
 
-If you need your `app` container to use your local SSH keys to pull private repositories and/or install private packages (which have been added as dependencies in your `composer.json` or `package.json` file), you can simply add `$HOME/.ssh:/home/kool/.ssh:delegated` under the `volumes` key of the `app` service in your **docker-compose.yml** file. This maps a `.ssh` folder in the container to the `.ssh` folder on your host machine.
+If you need your `app` container to use your local SSH keys to pull private repositories and/or install private packages (which have been added as dependencies in your `package.json` file), you can simply add `$HOME/.ssh:/home/kool/.ssh:delegated` under the `volumes` key of the `app` service in your **docker-compose.yml** file. This maps a `.ssh` folder in the container to the `.ssh` folder on your host machine.
 
 ```diff
 volumes:
