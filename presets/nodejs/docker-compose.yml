@@ -2,7 +2,7 @@ version: "3.7"
 services:
   app:
     image: kooldev/node:14
-    command: ["npm", "run", "dev"]
+    command: ["node", "app.js"]
     ports:
       - "${KOOL_APP_PORT:-3000}:3000"
     environment:

@@ -1,7 +1,7 @@
 language: javascript
 commands:
   create:
-  - kool docker kooldev/node:14 yarn create next-app $CREATE_DIRECTORY
+    - mkdir $CREATE_DIRECTORY
 questions:
   kool:
     - key: scripts
@@ -9,6 +9,6 @@ questions:
       message: What javascript package manager do you want to use
       options:
         - name: npm
-          template: npm-nextjs.yml
+          template: npm-nodejs.yml
         - name: yarn
-          template: yarn-nextjs.yml
+          template: yarn-nodejs.yml

@@ -1,9 +1,9 @@
-# Start a Next.js Project with Docker in 2 Easy Steps
+# Start a Node.js Project with Docker in 2 Easy Steps
 
-1. Run `kool create nextjs my-project`
+1. Run `kool create nodejs my-project`
 2. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new Next.js projects is that easy!
+> Yes, using **kool** + Docker to create and work on new Node.js projects is that easy!
 
 ## Requirements
 
@@ -17,29 +17,29 @@ $ kool self-update
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create nextjs my-project`
+## 1. Run `kool create nodejs my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Next.js project:
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Node.js project:
 
 ```bash
-$ kool create nextjs my-project
+$ kool create nodejs my-project
 ```
 
-Under the hood, this command will run `yarn create next-app my-project` to install Next.js using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:14</a>.
+Under the hood, this command will create a "Hello world!" **app.js** file in the root of your new project directory.
 
-After installing Next.js, `kool create` automatically runs the `kool preset nextjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After installing Node.js, `kool create` automatically runs the `kool preset nodejs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
-$ Preset nextjs is initializing!
+$ Preset nodejs is initializing!
 
 ? What javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
 
-$ Preset nextjs initialized!
+$ Preset nodejs initialized!
 ```
 
-Now, move into your new Next.js project:
+Now, move into your new Node.js project:
 
 ```bash
 $ cd my-project
@@ -64,12 +64,13 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 
 ```yaml
 scripts:
+  node: kool exec app node
   npm: kool exec app npm # or yarn
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:14 npm install # or yarn install
     - kool start
+	# - add more setup commands
 ```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
@@ -78,35 +79,29 @@ Go ahead and run `kool run setup` to start your Docker environment and finish se
 $ kool run setup
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Node packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `npm run dev`).
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run the `kool start` command to spin up your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `node app.js`); and then run any additional commands you add to the list.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the Next.js welcome page. Hooray!
-
-> You may need to wait a few seconds for Next.js to compile and render the welcome page.
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the "Hello world!" page. Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
 
 ```bash
 $ kool status
-+---------+---------+------------------------+--------------+
-| SERVICE | RUNNING | PORTS                  | STATE        |
-+---------+---------+------------------------+--------------+
-| app     | Running | 0.0.0.0:3000->3000/tcp | Up 5 seconds |
-+---------+---------+------------------------+--------------+
++---------+---------+-------------------------------------------+--------------+
+| SERVICE | RUNNING | PORTS                                     | STATE        |
++---------+---------+-------------------------------------------+--------------+
+| app     | Running | 0.0.0.0:3000->3000/tcp, :::3000->3000/tcp | Up 4 seconds |
++---------+---------+-------------------------------------------+--------------+
 ```
 
-Run `kool logs app` to see the logs from the running `app` container, and confirm the Next.js server was started.
+Run `kool logs app` to see the logs from the running `app` container, and confirm the Node.js server was started.
 
 > Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
 
 ```bash
 $ kool logs app
 Attaching to my-project_app_1
-app_1  |
-app_1  | > my-project@0.1.0 dev /app
-app_1  | > next dev
-app_1  |
-app_1  | ready - started server on 0.0.0.0:3000, url: http://localhost:3000
+app_1  | Server running at http://localhost:3000/
 ```
 
 ---
@@ -121,7 +116,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app node -v
 ```
 
-Try `kool run npx next -h` (or `kool run yarn next -h`) to execute the `kool exec app npx next -h` command in your running `app` container and print out information about Next.js CLI commands.
+Try `kool run node -h` to execute the `kool exec app node -h` command in your running `app` container and print out information about Node.js.
 
 ### Open Sessions in Docker Containers
 
@@ -167,6 +162,7 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[Hugo](/docs/2-Presets/Hugo.md)**
 - **[Laravel](/docs/2-Presets/Laravel.md)**
 - **[NestJS](/docs/2-Presets/NestJS.md)**
+- **[Next.js](/docs/2-Presets/NextJS.md)**
 - **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
 - **[PHP](/docs/2-Presets/PHP.md)**
 - **[Symfony](/docs/2-Presets/Symfony.md)**

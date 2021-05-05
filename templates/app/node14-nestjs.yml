@@ -1,8 +1,7 @@
-version: "3.7"
 services:
   app:
-    image: kooldev/node:14
-    command: ["npm", "run", "dev"]
+    image: kooldev/node:14-nest
+    command: ["npm", "run", "start:dev"]
     ports:
       - "${KOOL_APP_PORT:-3000}:3000"
     environment:
@@ -13,9 +12,3 @@ services:
     networks:
       - kool_local
       - kool_global
-
-networks:
-  kool_local:
-  kool_global:
-    external: true
-    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"

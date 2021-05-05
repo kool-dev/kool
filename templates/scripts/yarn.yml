@@ -1,5 +1,2 @@
 scripts:
-  yarn: kool docker kooldev/node:14 yarn
-  node-setup:
-    - kool run yarn install
-    - kool run yarn dev
+  yarn: kool exec app yarn

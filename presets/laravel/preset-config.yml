@@ -40,9 +40,9 @@ questions:
       message: What javascript package manager do you want to use
       options:
         - name: npm
-          template: npm.yml
+          template: npm-laravel.yml
         - name: yarn
-          template: yarn.yml
+          template: yarn-laravel.yml
     - key: scripts
       default_answer: 1.x
       message: What composer version do you want to use
@@ -51,6 +51,3 @@ questions:
           template: composer.yml
         - name: 2.x
           template: composer2.yml
-templates:
-  - key: scripts
-    template: laravel.yml

@@ -1,9 +1,10 @@
-# Start a NestJS Project with Docker in 2 Easy Steps
+# Start an AdonisJs Project with Docker in 3 Easy Steps
 
-1. Run `kool create nestjs my-project`
-2. Run `kool run setup`
+1. Run `kool create adonis my-project`
+2. Update **.env**
+3. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new NestJS projects is that easy!
+> Yes, using **kool** + Docker to create and work on new AdonisJs projects is that easy!
 
 ## Requirements
 
@@ -17,20 +18,20 @@ $ kool self-update
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create nestjs my-project`
+## 1. Run `kool create adonis my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new NestJS project:
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new AdonisJs project:
 
 ```bash
-$ kool create nestjs my-project
+$ kool create adonis my-project
 ```
 
-Under the hood, this command will run `nest new my-project` to install NestJS using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:14-nest</a>.
+Under the hood, this command will run `adonis new my-project` to install the AdonisJs [fullstack blueprint](https://github.com/adonisjs/adonis-fullstack-app) using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:14-adonis</a>.
 
-After installing NestJS, `kool create` automatically runs the `kool preset nestjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After installing AdonisJs, `kool create` automatically runs the `kool preset adonis` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
-$ Preset nestjs is initializing!
+$ Preset adonis is initializing!
 
 ? What database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
@@ -43,14 +44,14 @@ $ Preset nestjs is initializing!
   Memcached 1.6
   none
 
-? Which package manager did you choose during Nest setup [Use arrows to move, type to filter]
+? What javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
 
-$ Preset nestjs initialized!
+$ Preset adonis initialized!
 ```
 
-Now, move into your new NestJS project:
+Now, move into your new AdonisJs project:
 
 ```bash
 $ cd my-project
@@ -65,86 +66,57 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 > Now's a good time to review the **docker-compose.yml** file and verify the services match the choices you made earlier using the wizard.
 
-## 2. Run `kool run setup`
+## 2. Update .env
 
-> Say hello to **kool.yml**, say goodbye to custom shell scripts!
+You need to update some default values in AdonisJs' **.env** file to match the services in your **docker-compose.yml** file.
 
-As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run nest`). You can add your own single line commands (see `nest` below), or add a list of commands that will be executed in sequence (see `setup` below).
+> We recommend you make the same changes in your **.env.example** file.
 
-To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the **preset**), including a script called `setup`, which helps you spin up a project for the first time.
+### Host
 
-```yaml
-scripts:
-  nest: kool exec app nest
-  npm: kool exec app npm # or yarn
-  npx: kool exec app npx
-
-  setup:
-    - kool docker kooldev/node:14 npm install # or yarn install
-    - kool start
+```diff
+-HOST=127.0.0.1
++HOST=0.0.0.0
 ```
 
-Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
+### Database Services
 
-```bash
-$ kool run setup
+SQLite
+
+> If you selected "none" for database service when answering the **preset** wizard questions, and you decide to use AdonisJs' default SQLite database, you'll need to install the `sqlite3` package and make this change (see "Connect to Docker Database Container" below for more info).
+
+```diff
+-DB_HOST=127.0.0.1
++DB_HOST=database
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Node packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `npm run start:dev`).
-
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the NestJS "Hello World!" welcome page. Hooray!
-
-Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
-
-```bash
-$ kool status
-+---------+---------+------------------------+--------------+
-| SERVICE | RUNNING | PORTS                  | STATE        |
-+---------+---------+------------------------+--------------+
-| app     | Running | 0.0.0.0:3000->3000/tcp | Up 5 seconds |
-+---------+---------+------------------------+--------------+
-```
-
-Run `kool logs app` to see the logs from the running `app` container, and confirm the NestJS server was started.
-
-> Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
-
-```bash
-$ kool logs app
-Attaching to my-project_app_1
-app_1  |
-app_1  | > my-project@0.0.1 start:dev /app
-app_1  | > nest start --watch
-app_1  |
-app_1  |
-[6:13:28 PM] Starting compilation in watch mode...
-app_1  |
-```
-
----
-
-### NestJS Configuration
-
-If you added a database and/or cache service when answering the **preset** wizard questions, you'll need to add some local environment variables to match the services in your **docker-compose.yml** file (see below). To set these variables, it's common to use a **.env** file in your project root directory. Learn more about [how to configure NestJS](https://docs.nestjs.com/techniques/configuration).
-
-#### Database Services
 
 MySQL 5.7 and 8.0
 
 ```diff
+-DB_CONNECTION=sqlite
 +DB_CONNECTION=mysql
+
+-DB_HOST=127.0.0.1
 +DB_HOST=database
 ```
 
 PostgreSQL 13.0
 
 ```diff
+-DB_CONNECTION=sqlite
 +DB_CONNECTION=pgsql
+
+-DB_HOST=127.0.0.1
 +DB_HOST=database
+
+-DB_PORT=3306
 +DB_PORT=5432
 ```
 
-#### Cache Services
+### Cache Services
+
+If you added a cache service to **docker-compose.yml**, you need to add these new environment variables, depending on which service you selected.
 
 Redis
 
@@ -160,6 +132,62 @@ Memcached
 +MEMCACHED_PORT=11211
 ```
 
+## 3. Run `kool run setup`
+
+> Say hello to **kool.yml**, say goodbye to custom shell scripts!
+
+As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run adonis`). You can add your own single line commands (see `adonis` below), or add a list of commands that will be executed in sequence (see `setup` below).
+
+To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the **preset**), including a script called `setup`, which helps you spin up a project for the first time.
+
+```yaml
+scripts:
+  adonis: kool exec app adonis
+  npm: kool exec app npm # or yarn
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install # or yarn install
+    - kool start
+```
+
+Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
+
+```bash
+$ kool run setup
+```
+
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Node packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `adonis serve --dev`).
+
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3333](http://localhost:3333) and see the AdonisJs "It works!" welcome page. Hooray!
+
+Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
+
+```bash
+$ kool status
++---------+---------+------------------------+--------------+
+| SERVICE | RUNNING | PORTS                  | STATE        |
++---------+---------+------------------------+--------------+
+| app     | Running | 0.0.0.0:3333->3333/tcp | Up 5 seconds |
++---------+---------+------------------------+--------------+
+```
+
+Run `kool logs app` to see the logs from the running `app` container, and confirm the AdonisJs server was started.
+
+> Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
+
+```bash
+$ kool logs app
+Attaching to my-project_app_1
+app_1  |
+app_1  |  SERVER STARTED
+app_1  | > Watching files for changes...
+app_1  |
+app_1  | info: serving app on http://0.0.0.0:3333
+```
+
+---
+
 ### Run Commands in Docker Containers
 
 Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a running service container:
@@ -170,7 +198,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app node -v
 ```
 
-Try `kool run nest --help` to execute the `kool exec app nest --help` command in your running `app` container and print out information about NestJS' commands.
+Try `kool run adonis --help` to execute the `kool exec app adonis --help` command in your running `app` container and print out information about AdonisJs' commands.
 
 ### Open Sessions in Docker Containers
 
@@ -185,6 +213,8 @@ $ kool exec app sh
 ```
 
 ### Connect to Docker Database Container
+
+> You'll need to install the appropriate Node packages to use a database service. For example, to use AdonisJs' default SQLite database, you'll need to add the `sqlite3` package by running `kool run npm install sqlite3 --save` (or `kool run yarn add sqlite3 --save`), after which you can call `kool run adonis migration:run` to run migrations (and don't forget to change `DB_HOST` to `database` in your **.env** file).
 
 If you added a database service, you can easily start a new SQL client session inside your running `database` container by executing `kool run mysql` (MySQL) or `kool run psql` (PostgreSQL) in your terminal. This runs the single-line `mysql` or `psql` script included in your **kool.yml**.
 
@@ -216,12 +246,13 @@ $ kool start
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
-- **[AdonisJs](/docs/2-Presets/AdonisJs.md)**
 - **[Hugo](/docs/2-Presets/Hugo.md)**
 - **[Laravel](/docs/2-Presets/Laravel.md)**
+- **[NestJS](/docs/2-Presets/NestJS.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**
+- **[Node.js](/docs/2-Presets/NodeJS.md)**
 - **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
 - **[PHP](/docs/2-Presets/PHP.md)**
-- **[Symfony](/docs/2-Presets/Symfony.md)***
+- **[Symfony](/docs/2-Presets/Symfony.md)**
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/master/presets](https://github.com/kool-dev/kool/tree/master/presets) and browse the code to learn more about how presets work.
