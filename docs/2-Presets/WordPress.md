@@ -31,6 +31,10 @@ Under the hood, this command will create your project directory and automaticall
 ```bash
 $ Preset wordpress is initializing!
 
+? What PHP version do you want to use  [Use arrows to move, type to filter]
+> PHP 8.0
+  PHP 7.4
+
 ? What database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
   MySQL 5.7
