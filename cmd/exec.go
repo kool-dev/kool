@@ -62,9 +62,9 @@ func (e *KoolExec) Execute(args []string) (err error) {
 		e.composeExec.AppendArgs("-T")
 	}
 
-	if _, assert := e.composeExec.(*compose.DockerCompose); assert {
+	if aware, ok := e.composeExec.(compose.TtyAware); ok {
 		// let DockerCompose know about whether we are under TTY or not
-		e.composeExec.(*compose.DockerCompose).SetIsTTY(e.IsTerminal())
+		aware.SetIsTTY(e.IsTerminal())
 	}
 
 	if len(e.Flags.EnvVariables) > 0 {
