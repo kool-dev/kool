@@ -78,6 +78,20 @@ func GetTemplates() map[string]map[string]string {
       - kool_local
       - kool_global
 `,
+		"wordpress80.yml": `services:
+  app:
+    image: kooldev/wordpress:8.0-nginx
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+`,
 	}
 	templates["cache"] = map[string]string{
 		"memcached16.yml": `services:

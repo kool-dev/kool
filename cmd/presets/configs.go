@@ -300,11 +300,13 @@ commands:
 questions:
   compose:
     - key: app
-      default_answer: PHP 7.4
+      default_answer: PHP 8.0
       message: What app service do you want to use
       options:
         - name: PHP 7.4
           template: wordpress74.yml
+        - name: PHP 8.0
+          template: wordpress80.yml
     - key: database
       default_answer: MySQL 5.7
       message: What database service do you want to use
