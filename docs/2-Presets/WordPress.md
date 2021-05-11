@@ -116,8 +116,6 @@ app_1       | time="2021-05-01T21:02:06Z" level=info msg="success to start progr
 
 ## 3. Update Database Information
 
-> IMPORTANT: if you're on **Windows WSL** or **Linux**, you need to run `sudo chown your-user:your-user -R ./` inside your new project directory to change the owner and group of all the WordPress files to your current user.
-
 You should now be able to access your new WordPress installation at [http://localhost](http://localhost) and see the WordPress welcome page (or, right after you select your language). Hooray!
 
 In order to get started, WordPress will ask you for some information about the database. Use the following default values to match the settings in your auto-generated **docker-compose.yml** file.
