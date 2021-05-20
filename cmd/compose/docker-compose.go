@@ -12,6 +12,11 @@ import (
 // DockerComposeImage holds the Docker image:tag to use for Docker Compose
 const DockerComposeImage = "docker/compose:1.28.0"
 
+// TtyAware interface holds functions for becoming aware of TTY
+type TtyAware interface {
+	SetIsTTY(bool)
+}
+
 // DockerCompose holds data and logic to wrap docker-compose command
 // within a container for flexibility
 type DockerCompose struct {
@@ -33,10 +38,8 @@ func NewDockerCompose(cmd string, args ...string) *DockerCompose {
 }
 
 // SetIsTTY sets whether we are under TTY
-func (c *DockerCompose) SetIsTTY(tty bool) *DockerCompose {
+func (c *DockerCompose) SetIsTTY(tty bool) {
 	c.isTTY = tty
-
-	return c
 }
 
 // SetShell sets the shell.Shell to be used
@@ -114,4 +117,11 @@ func (c *DockerCompose) Cmd() string {
 
 func (c *DockerCompose) String() string {
 	return strings.Trim(fmt.Sprintf("%s %s", c.Cmd(), strings.Join(c.Args(), " ")), " ")
+}
+
+// Copy clones the pointer to avoid unintended modifications
+func (c *DockerCompose) Copy() (copied builder.Command) {
+	copied = NewDockerCompose(c.Command.Cmd(), c.Command.Args()...)
+	copied.(*DockerCompose).SetIsTTY(c.isTTY)
+	return
 }

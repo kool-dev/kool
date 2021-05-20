@@ -3,7 +3,7 @@ package cmd
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/checker"
 	"kool-dev/kool/cmd/network"
@@ -150,7 +150,7 @@ func execStartCommand(cmd *cobra.Command) (output string, err error) {
 	}
 
 	var out []byte
-	if out, err = ioutil.ReadAll(b); err != nil {
+	if out, err = io.ReadAll(b); err != nil {
 		return
 	}
 

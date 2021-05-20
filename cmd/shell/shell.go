@@ -37,8 +37,22 @@ type DefaultShell struct {
 	env       environment.EnvStorage
 }
 
+// OutputWritter implements basic output for CLIss
+type OutputWritter interface {
+	Println(...interface{})
+	Printf(string, ...interface{})
+	Warning(...interface{})
+	Success(...interface{})
+}
+
+type PathChecker interface {
+	LookPath(builder.Command) error
+}
+
 // Shell implements functions for handling a shell
 type Shell interface {
+	OutputWritter
+	PathChecker
 	InStream() io.Reader
 	SetInStream(io.Reader)
 	OutStream() io.Writer
@@ -47,12 +61,7 @@ type Shell interface {
 	SetErrStream(io.Writer)
 	Exec(builder.Command, ...string) (string, error)
 	Interactive(builder.Command, ...string) error
-	LookPath(builder.Command) error
-	Println(...interface{})
-	Printf(string, ...interface{})
 	Error(error)
-	Warning(...interface{})
-	Success(...interface{})
 }
 
 // NewShell creates a new shell
@@ -100,14 +109,22 @@ func (s *DefaultShell) SetErrStream(errStream io.Writer) {
 // error/standard output, and an error if any.
 func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
 	var (
-		cmd  *exec.Cmd
-		out  []byte
-		args []string = command.Args()
-		exe  string   = command.Cmd()
+		cmd     *exec.Cmd
+		out     []byte
+		args    []string = command.Args()
+		exe     string   = command.Cmd()
+		verbose bool     = s.env.IsTrue("KOOL_VERBOSE")
 	)
 
 	if len(extraArgs) > 0 {
 		args = append(args, extraArgs...)
+	}
+
+	if verbose {
+		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %v\n",
+			exe,
+			args,
+		)
 	}
 
 	cmd = execCmdFn(exe, args...)
@@ -115,6 +132,11 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	cmd.Stdin = s.InStream()
 	out, err = cmd.CombinedOutput()
 	outStr = strings.TrimSpace(string(out))
+	if err != nil && len(out) != 0 {
+		// let's use the actual output for error, appending practical exec error
+		// (most probably the later will be an non-zero exit status error)
+		err = fmt.Errorf("%s (%s)", outStr, err.Error())
+	}
 	return
 }
 

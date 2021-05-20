@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"os"
 	"path/filepath"
@@ -27,7 +26,7 @@ type TarGz struct {
 // with Gzip compression in a temporary file.
 func NewTemp() (tgz *TarGz, err error) {
 	tgz = new(TarGz)
-	tgz.file, err = ioutil.TempFile(os.TempDir(), "*.tgz")
+	tgz.file, err = os.CreateTemp(os.TempDir(), "*.tgz")
 	if err != nil {
 		tgz = nil
 		return
@@ -49,9 +48,13 @@ func (tgz *TarGz) CompressFiles(files []string) (tmpfile string, err error) {
 			continue
 		}
 
-		fi, err = os.Stat(file)
-		if addErr := tgz.add(file, fi, err); err != nil {
-			shell.Error(fmt.Errorf("failed to add file into archive: %v", addErr))
+		if fi, err = os.Stat(file); os.IsNotExist(err) {
+			// if we listed a file that do not exist, that is probably
+			// the case where a versioned file was removed but not yet
+			// commited. Hence let's only warn about it on Stderr.
+			shell.Warning(fmt.Errorf("file not found, not including on tarball: %s", file))
+		} else if err = tgz.add(file, fi, err); err != nil {
+			shell.Error(fmt.Errorf("failed to add file into archive: %v", err))
 		}
 	}
 

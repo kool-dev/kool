@@ -12,9 +12,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// KoolRunFlags holds the flags for the run command
+type KoolRunFlags struct {
+	EnvVariables []string
+}
+
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
+	Flags        *KoolRunFlags
 	parser       parser.Parser
 	env          environment.EnvStorage
 	promptSelect shell.PromptSelect
@@ -27,13 +33,13 @@ var ErrExtraArguments = errors.New("error: you cannot pass in extra arguments to
 // ErrKoolScriptNotFound means that the given script was not found
 var ErrKoolScriptNotFound = errors.New("script was not found in any kool.yml file")
 
-func init() {
+func AddKoolRun(root *cobra.Command) {
 	var (
 		run    = NewKoolRun()
 		runCmd = NewRunCommand(run)
 	)
 
-	rootCmd.AddCommand(runCmd)
+	root.AddCommand(runCmd)
 
 	SetRunUsageFunc(run, runCmd)
 }
@@ -42,6 +48,7 @@ func init() {
 func NewKoolRun() *KoolRun {
 	return &KoolRun{
 		*newDefaultKoolService(),
+		&KoolRunFlags{[]string{}},
 		parser.NewParser(),
 		environment.NewEnvStorage(),
 		shell.NewPromptSelect(),
@@ -61,13 +68,8 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	// look for kool.yml on kool folder within user home directory
 	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
-	if r.commands, err = parseScript(r, script); err != nil {
-		if parser.IsMultipleDefinedScriptError(err) {
-			r.Warning("Attention: the script was found in more than one kool.yml file")
-			err = nil
-		} else {
-			return
-		}
+	if err = r.parseScript(script); err != nil {
+		return
 	}
 
 	if len(r.commands) == 0 {
@@ -95,10 +97,12 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 // NewRunCommand initializes new kool stop command
 func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 	runCmd = &cobra.Command{
-		Use:   "run [SCRIPT]",
-		Short: "Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory",
-		Args:  cobra.MinimumNArgs(1),
-		Run:   DefaultCommandRunFunction(run),
+		Use:   "run SCRIPT [--] [ARG...]",
+		Short: "Execute a script defined in kool.yml",
+		Long: `Execute the specified SCRIPT, as defined in the kool.yml file.
+A single-line SCRIPT can be run with optional arguments.`,
+		Args: cobra.MinimumNArgs(1),
+		Run:  DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) != 0 {
 				return nil, cobra.ShellCompDirectiveNoFileComp
@@ -106,7 +110,10 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 
 			return compListScripts(toComplete, run), cobra.ShellCompDirectiveNoFileComp
 		},
+		DisableFlagsInUseLine: true,
 	}
+
+	runCmd.Flags().StringArrayVarP(&run.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
 
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
@@ -118,6 +125,52 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 func SetRunUsageFunc(run *KoolRun, runCmd *cobra.Command) {
 	originalUsageText := runCmd.UsageString()
 	runCmd.SetUsageFunc(getRunUsageFunc(run, originalUsageText))
+}
+
+func (r *KoolRun) parseScript(script string) (err error) {
+	var (
+		originalEnvs     map[string]string = make(map[string]string)
+		similarIsCorrect string
+		chosenSimilar    string
+	)
+
+	for _, envVar := range r.Flags.EnvVariables {
+		pair := strings.SplitN(envVar, "=", 2)
+		originalEnvs[pair[0]] = r.env.Get(pair[0])
+		r.env.Set(pair[0], pair[1])
+	}
+
+	defer func() {
+		for k, v := range originalEnvs {
+			r.env.Set(k, v)
+		}
+	}()
+
+	if r.commands, err = r.parser.Parse(script); err != nil {
+		if parser.IsPossibleTypoError(err) && r.IsTerminal() {
+			if similarIsCorrect, _ = r.promptSelect.Ask(err.Error(), []string{"Yes", "No"}); similarIsCorrect != "Yes" {
+				err = ErrKoolScriptNotFound
+				return
+			}
+
+			if possibleScripts := err.(*parser.ErrPossibleTypo).Similars(); len(possibleScripts) == 1 {
+				chosenSimilar = possibleScripts[0]
+			} else {
+				chosenSimilar, _ = r.promptSelect.Ask("which one did you mean?", possibleScripts)
+			}
+
+			r.commands, err = r.parser.Parse(chosenSimilar)
+			return
+		}
+
+		if parser.IsMultipleDefinedScriptError(err) {
+			// we should just warn the user about multiple finds for the script
+			r.Warning("Attention: the script was found in more than one kool.yml file")
+			err = nil
+		}
+	}
+
+	return
 }
 
 func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command) error {
@@ -163,32 +216,6 @@ func compListScripts(toComplete string, run *KoolRun) (scripts []string) {
 
 	if scripts, err = run.parser.ParseAvailableScripts(toComplete); err != nil {
 		return nil
-	}
-
-	return
-}
-
-func parseScript(run *KoolRun, script string) (commands []builder.Command, err error) {
-	var (
-		similarIsCorrect string
-		chosenSimilar    string
-	)
-
-	if commands, err = run.parser.Parse(script); err != nil {
-		if parser.IsPossibleTypoError(err) && run.IsTerminal() {
-			if similarIsCorrect, _ = run.promptSelect.Ask(err.Error(), []string{"Yes", "No"}); similarIsCorrect != "Yes" {
-				err = ErrKoolScriptNotFound
-				return
-			}
-
-			if possibleScripts := err.(*parser.ErrPossibleTypo).Similars(); len(possibleScripts) == 1 {
-				chosenSimilar = possibleScripts[0]
-			} else {
-				chosenSimilar, _ = run.promptSelect.Ask("which one did you mean?", possibleScripts)
-			}
-
-			commands, err = run.parser.Parse(chosenSimilar)
-		}
 	}
 
 	return

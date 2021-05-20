@@ -76,3 +76,25 @@ func TestIsTrueNonBooleanStringFakeEnvStorage(t *testing.T) {
 		t.Error("Environment variable non-boolean value should not be true.")
 	}
 }
+
+func TestEnvsHistoryFakeEnvStorage(t *testing.T) {
+	var (
+		history []string
+		hasKey  bool
+	)
+
+	f := NewFakeEnvStorage()
+
+	f.Set("test-env", "first-value")
+
+	history, hasKey = f.EnvsHistory["test-env"]
+
+	if !hasKey || len(history) == 0 {
+		t.Error("environment variable was not added to history")
+		return
+	}
+
+	if history[0] != "first-value" {
+		t.Errorf("expecting to get 'first-value' in history, got %s", history[0])
+	}
+}

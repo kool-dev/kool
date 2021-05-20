@@ -8,20 +8,20 @@ type KoolCompletion struct {
 	rootCmd *cobra.Command
 }
 
-func init() {
+func AddKoolCompletion(root *cobra.Command) {
 	var (
-		completion    = NewKoolCompletion()
+		completion    = NewKoolCompletion(root)
 		completionCmd = NewCompletionCommand(completion)
 	)
 
-	rootCmd.AddCommand(completionCmd)
+	root.AddCommand(completionCmd)
 }
 
 // NewKoolCompletion creates a new handler for completion logic
-func NewKoolCompletion() *KoolCompletion {
+func NewKoolCompletion(root *cobra.Command) *KoolCompletion {
 	return &KoolCompletion{
 		*newDefaultKoolService(),
-		rootCmd,
+		root,
 	}
 }
 
@@ -44,35 +44,47 @@ func (c *KoolCompletion) Execute(args []string) (err error) {
 func NewCompletionCommand(completion *KoolCompletion) *cobra.Command {
 	return &cobra.Command{
 		Use:   "completion [bash|zsh|fish|powershell]",
-		Short: "Generate completion script",
-		Long: `To load completions:
+		Short: "Generate shell completion configuration script",
+		Long: `Autocompletion:
 
-Bash:
+If you want to use kool autocompletion in your Unix shell, follow the appropriate instructions below.
+
+After running one of the below commands, remember to start a new shell for autocompletion to take effect.
+
+#### Bash
+
+Temporarily enable autocompletion for your current session only:
 
 $ source <(kool completion bash)
 
-#### To load completions for each session, execute once:
-Linux:
+Permanently enable autocompletion for all sessions:
+
+  Linux:
+
   $ kool completion bash > /etc/bash_completion.d/kool
-MacOS:
+
+  macOS:
+
   $ kool completion bash > /usr/local/etc/bash_completion.d/kool
 
-Zsh:
+#### Zsh
 
-#### If shell completion is not already enabled in your environment you will need to enable it.  You can execute the following once:
+If Zsh tab completion is not already initialized on your machine, run the following command to turn it on.
 
 $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
-#### To load completions for each session, execute once:
+Permanently enable autocompletion for all sessions:
+
 $ kool completion zsh > "${fpath[1]}/_kool"
 
-#### You will need to start a new shell for this setup to take effect.
+#### Fish
 
-Fish:
+Temporarily enable autocompletion for your current session only:
 
 $ kool completion fish | source
 
-#### To load completions for each session, execute once:
+Permanently enable autocompletion for all sessions:
+
 $ kool completion fish > ~/.config/fish/completions/kool.fish
 `,
 		DisableFlagsInUseLine: true,

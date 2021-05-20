@@ -3,7 +3,6 @@ package cmd
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/shell"
 	"strings"
 	"testing"
@@ -23,7 +22,7 @@ func newFakeKoolCompletion() *KoolCompletion {
 func readOutput(r io.Reader) (output string, err error) {
 	var out []byte
 
-	if out, err = ioutil.ReadAll(r); err != nil {
+	if out, err = io.ReadAll(r); err != nil {
 		return
 	}
 
@@ -70,7 +69,7 @@ func expectedCompletionOutput(shellType string) (expected string, err error) {
 }
 
 func TestNewKoolCompletion(t *testing.T) {
-	k := NewKoolCompletion()
+	k := NewKoolCompletion(rootCmd)
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Error("unexpected shell.Shell on default KoolCompletion instance")

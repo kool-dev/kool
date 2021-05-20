@@ -14,6 +14,7 @@ type KoolDockerFlags struct {
 	EnvVariables []string
 	Volumes      []string
 	Publish      []string
+	Network      []string
 }
 
 // KoolDocker holds handlers and functions to implement the docker command logic
@@ -25,20 +26,20 @@ type KoolDocker struct {
 	dockerRun  builder.Command
 }
 
-func init() {
+func AddKoolDocker(root *cobra.Command) {
 	var (
 		docker    = NewKoolDocker()
 		dockerCmd = NewDockerCommand(docker)
 	)
 
-	rootCmd.AddCommand(dockerCmd)
+	root.AddCommand(dockerCmd)
 }
 
 // NewKoolDocker creates a new handler for docker logic
 func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -76,6 +77,12 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 		}
 	}
 
+	if len(d.Flags.Network) > 0 {
+		for _, network := range d.Flags.Network {
+			d.dockerRun.AppendArgs("--network", network)
+		}
+	}
+
 	err = d.Interactive(d.dockerRun, args...)
 	return
 }
@@ -83,20 +90,23 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 // NewDockerCommand initializes new kool docker command
 func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
-		Use:   "docker [options] [image] [command]",
+		Use:   "docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]",
 		Args:  cobra.MinimumNArgs(1),
-		Short: "Creates a new container and runs the command in it.",
-		Long: `This command acts as a helper for docker run.
-You can start with options that go before the image name
-for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
-the image name and the command you want to execute on that image.`,
+		Short: "Create a new container (a powered up 'docker run')",
+		Long: `A helper for 'docker run'. Any [OPTIONS] added before the
+IMAGE name will be used by 'docker run' itself (i.e. --env='VAR=VALUE').
+Add an optional [COMMAND] to execute on the IMAGE, and use [--] after
+the [COMMAND] to provide optional arguments required by the COMMAND.`,
 		Run: DefaultCommandRunFunction(docker),
+
+		DisableFlagsInUseLine: true,
 	}
 
-	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
-	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
-	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume")
-	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container’s port(s) to the host")
+	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
+	cmd.Flags().StringArrayVarP(&docker.Flags.Network, "network", "n", []string{}, "Connect a container to a network.")
 
 	//After a non-flag arg, stop parsing flags
 	cmd.Flags().SetInterspersed(false)

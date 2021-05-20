@@ -11,23 +11,62 @@ import (
 // CobraRunFN Cobra command run function
 type CobraRunFN func(*cobra.Command, []string)
 
-var version string = "0.0.0-dev"
+// AddCommandsFN function to add subcommands
+type AddCommandsFN func(*cobra.Command)
+
+var hasWarnedDevelopmentVersion = false
+
+var AddCommands AddCommandsFN = func(root *cobra.Command) {
+	AddKoolCompletion(root)
+	AddKoolCreate(root)
+	AddKoolDeploy(root)
+	AddKoolDocker(root)
+	AddKoolExec(root)
+	AddKoolInfo(root)
+	AddKoolInit(root)
+	AddKoolLogs(root)
+	AddKoolPreset(root)
+	AddKoolRestart(root)
+	AddKoolRun(root)
+	AddKoolSelfUpdate(root)
+	AddKoolShare(root)
+	AddKoolStart(root)
+	AddKoolStatus(root)
+	AddKoolStop(root)
+}
+
+// DEV_VERSION holds the static version shown for development time builds
+const DEV_VERSION = "0.0.0-dev"
+
+var version string = DEV_VERSION
 
 var rootCmd = NewRootCmd(environment.NewEnvStorage())
+
+func init() {
+	AddCommands(rootCmd)
+}
 
 // NewRootCmd creates the root command
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "kool",
-		Short: "kool - Kool stuff",
-		Long: `An easy and robust software development environment
-tool helping you from project creation until deployment.
+		Short: "Cloud native environments made easy",
+		Long: `From development to production, a robust and easy-to-use developer tool
+that makes Docker container adoption quick and easy for building and deploying cloud native
+applications.
+
 Complete documentation is available at https://kool.dev/docs`,
-		Version:           version,
-		DisableAutoGenTag: true,
-		PersistentPreRun: func(cmf *cobra.Command, args []string) {
-			if verbose := cmf.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
+		Version:               version,
+		DisableAutoGenTag:     true,
+		DisableFlagsInUseLine: true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				env.Set("KOOL_VERBOSE", verbose.Value.String())
+			}
+
+			if !hasWarnedDevelopmentVersion && version == DEV_VERSION && shell.NewTerminalChecker().IsTerminal(cmd.OutOrStdout()) {
+				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
+				hasWarnedDevelopmentVersion = true
 			}
 		},
 	}
@@ -45,23 +84,17 @@ func Execute() error {
 
 func setRecursiveCall(root *cobra.Command) {
 	shell.RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
-		root.SetArgs(args)
+		childRoot := NewRootCmd(environment.NewEnvStorage())
 
-		oldIn := root.InOrStdin()
-		oldOut := root.OutOrStdout()
-		oldErr := root.ErrOrStderr()
+		childRoot.SetArgs(args)
 
-		root.SetIn(in)
-		root.SetOut(out)
-		root.SetErr(err)
+		childRoot.SetIn(in)
+		childRoot.SetOut(out)
+		childRoot.SetErr(err)
 
-		defer func() {
-			root.SetIn(oldIn)
-			root.SetOut(oldOut)
-			root.SetErr(oldErr)
-		}()
+		AddCommands(childRoot)
 
-		return root.Execute()
+		return childRoot.Execute()
 	}
 }
 

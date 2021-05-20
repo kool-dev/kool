@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
 	"kool-dev/kool/cmd/shell"
@@ -21,6 +20,7 @@ import (
 func newFakeKoolRun(mockParsedCommands map[string][]builder.Command, mockParseError map[string]error) *KoolRun {
 	return &KoolRun{
 		*newFakeKoolService(),
+		&KoolRunFlags{[]string{}},
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
 		environment.NewFakeEnvStorage(),
 		&shell.FakePromptSelect{},
@@ -367,7 +367,7 @@ func TestRunRecursiveCalls(t *testing.T) {
     - kool run recursive
 `)
 
-		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+		if err := os.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
 		}
 
@@ -425,30 +425,39 @@ func TestRunRecursiveCallsWithInputRedirecting(t *testing.T) {
   input: kool receive-file < %s
 `, inputFilePath))
 
-	if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+	if err := os.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 		t.Fatalf("failed creating temp kool.yml for testing: %v", err)
 	}
-	if err := ioutil.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
+	if err := os.WriteFile(inputFilePath, []byte(inputContent), os.ModePerm); err != nil {
 		t.Fatalf("failed creating temp %v for testing: %v", inputFilePath, err)
 	}
 
 	root := NewRootCmd(k.env)
-	root.AddCommand(NewRunCommand(k))
-	root.AddCommand(&cobra.Command{
-		Use: "receive-file",
-		Run: func(cmd *cobra.Command, args []string) {
-			if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
-				t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
-			}
-			if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
-				t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
-			} else if input, err := ioutil.ReadAll(file); err != nil {
-				t.Errorf("failed reading input file: %v", err)
-			} else if string(input) != inputContent {
-				t.Errorf("unexpcted content on input file: %v", input)
-			}
-		},
-	})
+
+	originalAddCommandsFn := AddCommands
+
+	AddCommands = func(rootArg *cobra.Command) {
+		rootArg.AddCommand(NewRunCommand(k))
+		rootArg.AddCommand(&cobra.Command{
+			Use: "receive-file",
+			Run: func(cmd *cobra.Command, args []string) {
+				if shell.NewTerminalChecker().IsTerminal(cmd.InOrStdin()) {
+					t.Errorf("unexpected input - TTY - %T", cmd.InOrStdin())
+				}
+				if file, isFile := cmd.InOrStdin().(*os.File); !isFile {
+					t.Errorf("unexpected input - should be a file; but is %T", cmd.InOrStdin())
+				} else if input, err := io.ReadAll(file); err != nil {
+					t.Errorf("failed reading input file: %v", err)
+				} else if string(input) != inputContent {
+					t.Errorf("unexpcted content on input file: %v", input)
+				}
+			},
+		})
+	}
+
+	defer func() { AddCommands = originalAddCommandsFn }()
+
+	AddCommands(root)
 
 	setRecursiveCall(root)
 
@@ -472,6 +481,9 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 
 	os.Setenv("KOOL_VERBOSE", "true")
 
+	originalAddCommandsFn := AddCommands
+	defer func() { AddCommands = originalAddCommandsFn }()
+
 	var makeRoot = func() *cobra.Command {
 		k := NewKoolRun()
 		k.env = environment.NewFakeEnvStorage()
@@ -485,28 +497,33 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
   bothatsametime: kool run in < %s > %s
 `, outputFilePath, outputFilePath, outputFilePath2, outputFilePath, outputFilePath3))
 
-		if err := ioutil.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
+		if err := os.WriteFile(fmt.Sprintf("%s/kool.yml", tmp), kooYml, os.ModePerm); err != nil {
 			t.Fatalf("failed creating temp kool.yml for testing: %v", err)
 		}
 
 		root := NewRootCmd(k.env)
-		root.AddCommand(NewRunCommand(k))
-		root.AddCommand(&cobra.Command{
-			Use: "echo",
-			Run: func(cmd *cobra.Command, args []string) {
-				fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
-			},
-		})
-		root.AddCommand(&cobra.Command{
-			Use: "catin",
-			Run: func(cmd *cobra.Command, args []string) {
-				if sb, err := ioutil.ReadAll(cmd.InOrStdin()); err != nil {
-					t.Errorf("fail reading input: %v", err)
-				} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
-					t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))
-				}
-			},
-		})
+
+		AddCommands = func(rootArg *cobra.Command) {
+			rootArg.AddCommand(NewRunCommand(k))
+			rootArg.AddCommand(&cobra.Command{
+				Use: "echo",
+				Run: func(cmd *cobra.Command, args []string) {
+					fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
+				},
+			})
+			rootArg.AddCommand(&cobra.Command{
+				Use: "catin",
+				Run: func(cmd *cobra.Command, args []string) {
+					if sb, err := io.ReadAll(cmd.InOrStdin()); err != nil {
+						t.Errorf("fail reading input: %v", err)
+					} else if _, err = fmt.Fprint(cmd.OutOrStdout(), string(sb)); err != nil {
+						t.Errorf("error writing read input to stdout: %s - input: %s", err.Error(), string(sb))
+					}
+				},
+			})
+		}
+
+		AddCommands(root)
 
 		setRecursiveCall(root)
 		return root
@@ -583,6 +600,38 @@ func TestNewRunCommandWithTypoError(t *testing.T) {
 
 	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["cmd"]; !ok || !val {
 		t.Errorf("did not call Interactive for command 'cmd'")
+	}
+}
+
+func TestNewRunCommandWithEnvVariable(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"--env=VAR_TEST=1", "script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	envsHistory := f.env.(*environment.FakeEnvStorage).EnvsHistory
+	history, ok := envsHistory["VAR_TEST"]
+
+	if !ok || len(history) == 0 {
+		t.Error("failed to set the environment variable 'VAR_TEST'")
+		return
+	}
+
+	if len(history) != 2 {
+		t.Error("failed to set '$VAR_TEST' to its original state")
+		return
+	}
+
+	if history[0] != "1" {
+		t.Errorf("expected to set '1' into '$VAR_TEST', did set '%s'", history[0])
+	}
+
+	if history[1] != "" {
+		t.Errorf("expected to set '$VAR_TEST' to an empty value after using it, did set to '%s'", history[0])
 	}
 }
 

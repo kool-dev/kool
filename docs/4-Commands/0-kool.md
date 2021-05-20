@@ -1,11 +1,13 @@
 ## kool
 
-kool - Kool stuff
+Cloud native environments made easy
 
 ### Synopsis
 
-An easy and robust software development environment
-tool helping you from project creation until deployment.
+From development to production, a robust and easy-to-use developer tool
+that makes Docker container adoption quick and easy for building and deploying cloud native
+applications.
+
 Complete documentation is available at https://kool.dev/docs
 
 ### Options
@@ -17,16 +19,17 @@ Complete documentation is available at https://kool.dev/docs
 
 ### SEE ALSO
 
-* [kool create](kool-create.md)	 - Create a new project using preset
-* [kool docker](kool-docker.md)	 - Creates a new container and runs the command in it.
-* [kool exec](kool-exec.md)	 - Execute a command within a running service container
-* [kool info](kool-info.md)	 - Prints out information about kool setup (like environment variables)
-* [kool logs](kool-logs.md)	 - Displays log output from services.
-* [kool preset](kool-preset.md)	 - Initialize kool preset in the current working directory. If no preset argument is specified you will be prompted to pick among the existing options.
-* [kool restart](kool-restart.md)	 - Restart containers - the same as stop followed by start.
-* [kool run](kool-run.md)	 - Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
-* [kool self-update](kool-self-update.md)	 - Update kool to latest version
-* [kool start](kool-start.md)	 - Start the specified Kool environment containers. If no service is specified, start all.
-* [kool status](kool-status.md)	 - Shows the status for containers
-* [kool stop](kool-stop.md)	 - Stop all running containers started with 'kool start' command
+* [kool create](kool-create)	 - Create a new project using a preset
+* [kool docker](kool-docker)	 - Create a new container (a powered up 'docker run')
+* [kool exec](kool-exec)	 - Execute a command inside a running service container
+* [kool info](kool-info)	 - Print out information about the local environment
+* [kool logs](kool-logs)	 - Display log output from running service containers
+* [kool preset](kool-preset)	 - Install configuration files customized for Kool in the current directory
+* [kool restart](kool-restart)	 - Restart running service containers (the same as 'kool stop' followed by 'kool start')
+* [kool run](kool-run)	 - Execute a script defined in kool.yml
+* [kool self-update](kool-self-update)	 - Update kool to the latest version
+* [kool share](kool-share)	 - Live share your local environment on the Internet using an HTTP tunnel
+* [kool start](kool-start)	 - Start service containers defined in docker-compose.yml
+* [kool status](kool-status)	 - Show the status of all service containers
+* [kool stop](kool-stop)	 - Stop and destroy running service containers
 

@@ -1,9 +1,13 @@
 ## kool create
 
-Create a new project using preset
+Create a new project using a preset
+
+### Synopsis
+
+Create a new project using the specified PRESET in a directory named FOLDER.
 
 ```
-kool create [preset] [project] [flags]
+kool create PRESET FOLDER
 ```
 
 ### Options
@@ -20,5 +24,5 @@ kool create [preset] [project] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

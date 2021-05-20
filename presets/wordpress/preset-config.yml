@@ -1,14 +1,19 @@
 language: php
+commands:
+  create:
+    - mkdir $CREATE_DIRECTORY
 questions:
   compose:
     - key: app
-      default_answer: PHP 7.4
-      message: What app service do you want to use
+      default_answer: PHP 8.0
+      message: What PHP version do you want to use
       options:
+        - name: PHP 8.0
+          template: wordpress80.yml
         - name: PHP 7.4
           template: wordpress74.yml
     - key: database
-      default_answer: MySQL 5.7
+      default_answer: MySQL 8.0
       message: What database service do you want to use
       options:
         - name: MySQL 8.0
@@ -38,14 +43,6 @@ questions:
           template: npm.yml
         - name: yarn
           template: yarn.yml
-    - key: scripts
-      default_answer: 1.x
-      message: What composer version do you want to use
-      options:
-        - name: 1.x
-          template: composer.yml
-        - name: 2.x
-          template: composer2.yml
 templates:
   - key: scripts
     template: wordpress.yml

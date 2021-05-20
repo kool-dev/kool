@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,8 +18,8 @@ const presetsTemplate string = `package presets
 
 func main() {
 	var (
-		folders []os.FileInfo
-		files   []os.FileInfo
+		folders []os.DirEntry
+		files   []os.DirEntry
 		err     error
 	)
 
@@ -33,7 +33,7 @@ func main() {
 
 	defer presets.Close()
 
-	folders, err = ioutil.ReadDir("presets")
+	folders, err = os.ReadDir("presets")
 
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +53,7 @@ func main() {
 
 		presets.WriteString(fmt.Sprintf("\tpresets[\"%s\"] = map[string]string{\n", folder.Name()))
 
-		files, err = ioutil.ReadDir(filepath.Join("presets", folder.Name()))
+		files, err = os.ReadDir(filepath.Join("presets", folder.Name()))
 
 		if err != nil {
 			log.Fatal(err)
@@ -70,7 +70,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			filebytes, err := ioutil.ReadAll(presetFile)
+			filebytes, err := io.ReadAll(presetFile)
 
 			if err != nil {
 				log.Fatal(err)

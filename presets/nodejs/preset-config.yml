@@ -1,0 +1,14 @@
+language: javascript
+commands:
+  create:
+    - mkdir $CREATE_DIRECTORY
+questions:
+  kool:
+    - key: scripts
+      default_answer: npm
+      message: What javascript package manager do you want to use
+      options:
+        - name: npm
+          template: npm-nodejs.yml
+        - name: yarn
+          template: yarn-nodejs.yml

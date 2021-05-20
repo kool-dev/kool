@@ -2,7 +2,7 @@ package shell
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/cmd/builder"
 	"os"
 	"testing"
@@ -25,11 +25,11 @@ func TestFakeShell(t *testing.T) {
 		t.Error("failed to use mocked SetInStream function on FakeShell")
 	}
 
-	f.MockOutStream = ioutil.Discard
+	f.MockOutStream = io.Discard
 
 	out := f.OutStream()
 
-	if !f.CalledOutStream || out != ioutil.Discard {
+	if !f.CalledOutStream || out != io.Discard {
 		t.Error("failed to use mocked OutStream function on FakeShell")
 	}
 
@@ -39,11 +39,11 @@ func TestFakeShell(t *testing.T) {
 		t.Error("failed to use mocked SetOutStream function on FakeShell")
 	}
 
-	f.MockErrStream = ioutil.Discard
+	f.MockErrStream = io.Discard
 
 	err := f.ErrStream()
 
-	if !f.CalledErrStream || err != ioutil.Discard {
+	if !f.CalledErrStream || err != io.Discard {
 		t.Error("failed to use mocked ErrStream function on FakeShell")
 	}
 
@@ -77,6 +77,15 @@ func TestFakeShell(t *testing.T) {
 
 	if val, ok := f.CalledLookPath["cmd"]; !val || !ok || lookPathError != command.MockLookPathError {
 		t.Error("failed to use mocked LookPath function on FakeShell")
+	}
+
+	if val, ok := f.CalledLookPath["cmd"]; !val || !ok || lookPathError != command.MockLookPathError {
+		t.Error("failed to use mocked LookPath function on FakeShell")
+	}
+
+	f.MockLookPath = errors.New("mock look path err")
+	if err := f.LookPath(builder.NewCommand("")); !errors.Is(err, f.MockLookPath) {
+		t.Error("failed returning MockLookPath")
 	}
 
 	f.Println()

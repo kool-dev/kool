@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"kool-dev/kool/environment"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
@@ -17,12 +17,6 @@ type HTTPRequester interface {
 }
 
 var httpRequester HTTPRequester = http.DefaultClient
-
-type fakeIOReader struct{}
-
-func (*fakeIOReader) Read(p []byte) (n int, err error) {
-	return
-}
 
 // Endpoint interface encapsulates the behaviour necessary for consuming
 // an API endpoint
@@ -48,7 +42,8 @@ type DefaultEndpoint struct {
 	statusCode   int
 }
 
-func newDefaultEndpoint(method string) *DefaultEndpoint {
+// NewDefaultEndpoint creates an Endpoint with given method
+func NewDefaultEndpoint(method string) *DefaultEndpoint {
 	return &DefaultEndpoint{
 		method: method,
 		query:  url.Values{},
@@ -102,6 +97,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		resp    *http.Response
 		raw     []byte
 		body    io.Reader
+		verbose = e.env.IsTrue("KOOL_VERBOSE")
 	)
 
 	if e.method == "POST" {
@@ -113,7 +109,12 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		}
 	}
 
-	reqURL := fmt.Sprintf("%s/%s", apiBaseURL, e.path)
+	reqURL := fmt.Sprintf("%s/%s?%s", apiBaseURL, e.path, e.query.Encode())
+
+	if verbose {
+		fmt.Fprintf(os.Stderr, "api - calling URL: %s\n", reqURL)
+	}
+
 	if request, err = http.NewRequest(e.method, reqURL, body); err != nil {
 		return
 	}
@@ -131,7 +132,23 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 
 	e.statusCode = resp.StatusCode
 
-	if raw, err = ioutil.ReadAll(resp.Body); err != nil {
+	if raw, err = io.ReadAll(resp.Body); err != nil {
+		return
+	}
+
+	if verbose {
+		fmt.Fprintf(os.Stderr, "api - got response: %s\n", string(raw))
+	}
+
+	if e.statusCode >= 400 {
+		// something went wrong
+		apiErr := new(ErrAPI)
+		if err = json.Unmarshal(raw, apiErr); err != nil {
+			err = fmt.Errorf("%v (parse error: %v)", ErrUnexpectedResponse, err)
+			return
+		}
+		apiErr.Status = e.statusCode
+		err = apiErr
 		return
 	}
 

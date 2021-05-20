@@ -1,5 +1,3 @@
 scripts:
-  npm: kool docker kooldev/node:14 npm
-  node-setup:
-    - kool run npm install
-    - kool run npm run dev
+  npm: kool exec app npm
+  npx: kool exec app npx

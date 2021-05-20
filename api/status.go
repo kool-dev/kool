@@ -27,7 +27,7 @@ type StatusResponse struct {
 // NewDefaultStatusCall creates a new caller for Deploy API status endpoint
 func NewDefaultStatusCall(deployID string) *DefaultStatusCall {
 	return &DefaultStatusCall{
-		Endpoint: newDefaultEndpoint("GET"),
+		Endpoint: NewDefaultEndpoint("GET"),
 
 		deployID: deployID,
 	}

@@ -24,13 +24,13 @@ type KoolLogs struct {
 	logs builder.Command
 }
 
-func init() {
+func AddKoolLogs(root *cobra.Command) {
 	var (
 		logs    = NewKoolLogs()
 		logsCmd = NewLogsCommand(logs)
 	)
 
-	rootCmd.AddCommand(logsCmd)
+	root.AddCommand(logsCmd)
 }
 
 // NewKoolLogs creates a new handler for logs logic
@@ -73,12 +73,17 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 // NewLogsCommand initializes new kool logs command
 func NewLogsCommand(logs *KoolLogs) (logsCmd *cobra.Command) {
 	logsCmd = &cobra.Command{
-		Use:   "logs [options] [service...]",
-		Short: "Displays log output from services.",
-		Run:   DefaultCommandRunFunction(logs),
+		Use:   "logs [OPTIONS] [SERVICE...]",
+		Short: "Display log output from running service containers",
+		Long: `Display log output from all running service containers,
+or one or more specified [SERVICE...] containers. Add a '-f' option to the
+the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').`,
+		Run: DefaultCommandRunFunction(logs),
+
+		DisableFlagsInUseLine: true,
 	}
 
-	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown.")
+	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. A value equal to 0 will show all lines.")
 	logsCmd.Flags().BoolVarP(&logs.Flags.Follow, "follow", "f", false, "Follow log output.")
 	return
 }

@@ -7,13 +7,14 @@ import (
 // NewRestartCommand initializes new kool start command
 func NewRestartCommand(stop KoolService, start KoolService) *cobra.Command {
 	return &cobra.Command{
-		Use:                   "restart",
-		Short:                 "Restart containers - the same as stop followed by start.",
-		Run:                   DefaultCommandRunFunction(stop, start),
+		Use:   "restart",
+		Short: "Restart running service containers (the same as 'kool stop' followed by 'kool start')",
+		Run:   DefaultCommandRunFunction(stop, start),
+
 		DisableFlagsInUseLine: true,
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(NewRestartCommand(NewKoolStop(), NewKoolStart()))
+func AddKoolRestart(root *cobra.Command) {
+	root.AddCommand(NewRestartCommand(NewKoolStop(), NewKoolStart()))
 }

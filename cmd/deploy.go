@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	koolDeployEnv = "kool.deploy.env"
+	koolDeployEnv  = "kool.deploy.env"
+	koolDeployFile = "kool.deploy.yml"
 )
 
 // KoolDeploy holds handlers and functions for using Deploy API
@@ -31,8 +32,11 @@ type KoolDeploy struct {
 func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 	return &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploys your application using Kool Dev",
+		Short: "Deploy a local application to a Kool Cloud environment",
 		Run:   DefaultCommandRunFunction(deploy),
+		Args:  cobra.NoArgs,
+
+		DisableFlagsInUseLine: true,
 	}
 }
 
@@ -47,11 +51,13 @@ func NewKoolDeploy() *KoolDeploy {
 	}
 }
 
-func init() {
+func AddKoolDeploy(root *cobra.Command) {
 	deployCmd := NewDeployCommand(NewKoolDeploy())
 
-	rootCmd.AddCommand(deployCmd)
+	root.AddCommand(deployCmd)
 	deployCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
+	deployCmd.AddCommand(NewDeployDestroyCommand(NewKoolDeployDestroy()))
+	deployCmd.AddCommand(NewDeployLogsCommand(NewKoolDeployLogs()))
 }
 
 // Execute runs the deploy logic.
@@ -60,6 +66,10 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		filename string
 		deploy   *api.Deploy
 	)
+
+	if err = d.validate(); err != nil {
+		return
+	}
 
 	if url := d.env.Get("KOOL_API_URL"); url != "" {
 		api.SetBaseURL(url)
@@ -202,7 +212,9 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 }
 
 func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err error) {
-	var output string
+	var (
+		output, file string
+	)
 
 	output, err = d.Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
 	if err != nil {
@@ -211,7 +223,13 @@ func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err e
 	}
 
 	// -z parameter returns the utf-8 file names separated by 0 bytes
-	files = strings.Split(output, string(rune(0x00)))
+	for _, file = range strings.Split(output, string(rune(0x00))) {
+		if file == "" {
+			continue
+		}
+
+		files = append(files, file)
+	}
 	return
 }
 
@@ -239,4 +257,14 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 	}
 
 	return files
+}
+
+func (d *KoolDeploy) validate() (err error) {
+	var path = filepath.Join(d.env.Get("PWD"), koolDeployFile)
+
+	if _, err = os.Stat(path); os.IsNotExist(err) {
+		err = fmt.Errorf("could not find required file (%s) on current working directory", koolDeployFile)
+	}
+
+	return
 }

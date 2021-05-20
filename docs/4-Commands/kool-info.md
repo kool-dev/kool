@@ -1,9 +1,13 @@
 ## kool info
 
-Prints out information about kool setup (like environment variables)
+Print out information about the local environment
+
+### Synopsis
+
+Print out information about the local environment, such as environment variables.
 
 ```
-kool info [flags]
+kool info
 ```
 
 ### Options
@@ -20,5 +24,5 @@ kool info [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

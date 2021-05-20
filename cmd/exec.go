@@ -26,13 +26,13 @@ type KoolExec struct {
 	composeExec builder.Command
 }
 
-func init() {
+func AddKoolExec(root *cobra.Command) {
 	var (
 		exec    = NewKoolExec()
 		execCmd = NewExecCommand(exec)
 	)
 
-	rootCmd.AddCommand(execCmd)
+	root.AddCommand(execCmd)
 }
 
 // NewKoolExec creates a new handler for exec logic
@@ -47,7 +47,6 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	e.composeExec.Reset()
 	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
 		// we have a KOOL_ASUSER env; now we need to know whether
 		// the image of the target service have such user
@@ -63,9 +62,9 @@ func (e *KoolExec) Execute(args []string) (err error) {
 		e.composeExec.AppendArgs("-T")
 	}
 
-	if _, assert := e.composeExec.(*compose.DockerCompose); assert {
-		// let DockerCompose know about wheter we are under TTY or not
-		e.composeExec.(*compose.DockerCompose).SetIsTTY(e.IsTerminal())
+	if aware, ok := e.composeExec.(compose.TtyAware); ok {
+		// let DockerCompose know about whether we are under TTY or not
+		aware.SetIsTTY(e.IsTerminal())
 	}
 
 	if len(e.Flags.EnvVariables) > 0 {
@@ -85,15 +84,18 @@ func (e *KoolExec) Execute(args []string) (err error) {
 // NewExecCommand initializes new kool exec command
 func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 	execCmd = &cobra.Command{
-		Use:   "exec [options] [service] [command]",
-		Short: "Execute a command within a running service container",
+		Use:   "exec [OPTIONS] SERVICE COMMAND [--] [ARG...]",
+		Short: "Execute a command inside a running service container",
+		Long:  `Execute a COMMAND inside the specified SERVICE container (similar to an SSH session).`,
 		Args:  cobra.MinimumNArgs(2),
 		Run:   DefaultCommandRunFunction(exec),
+
+		DisableFlagsInUseLine: true,
 	}
 
-	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect")
-	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables")
-	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background")
+	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")
+	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
+	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background.")
 
 	//After a non-flag arg, stop parsing flags
 	execCmd.Flags().SetInterspersed(false)

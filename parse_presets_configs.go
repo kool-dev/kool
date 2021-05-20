@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,7 +18,7 @@ const configsTemplate string = `package presets
 
 func main() {
 	var (
-		folders    []os.FileInfo
+		folders    []os.DirEntry
 		configFile *os.File
 		err        error
 	)
@@ -33,7 +33,7 @@ func main() {
 
 	defer configs.Close()
 
-	folders, err = ioutil.ReadDir("presets")
+	folders, err = os.ReadDir("presets")
 
 	if err != nil {
 		log.Fatal(err)
@@ -62,7 +62,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		filebytes, err := ioutil.ReadAll(configFile)
+		filebytes, err := io.ReadAll(configFile)
 
 		if err != nil {
 			log.Fatal(err)

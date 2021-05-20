@@ -1,10 +1,10 @@
-From **development** to **production**, kool brings speed and security to software development teams from different stacks, making their development environments reproducible and easy to set up.
+From **development** to **production**, **kool** brings speed and security to software developers working with multiple tech stacks, making their development environments reproducible and easy to set up.
 
-Here are a few things kool can help you with:
+**kool** will help you:
 
-* Stop installing lots of things on your machine like NGINX, PHP, NODE
-* Stop writing documentation on how to setup local environments
-* No more works on my machine due to different version / setup
-* Have total control of the stack per project, different projects on different versions? No problem!
-* Have the very same stack / version from your production environment
-* Work the same way on different stacks / projects (laravel? adonis? nextjs? symfony?)
+* Stop installing different tech stacks on your local machine (e.g. PHP/Ruby/Python, MySQL/MariaDB/PostgreSQL/MongoDB, NGINX/Apache, Redis/Memcached, Node, etc)
+* Stop writing how-to documentation for setting up local development environments
+* Eliminate "it works on my machine" problems caused by different versions / setups
+* Maintain total control of each tech stack on every project
+* Work locally using the very same tech stack and versions as your production environment
+* Work the same way across different tech stacks and projects (e.g. Laravel, Symfony, Next.js, Nuxt.js, AdonisJs, NestJS, Hugo, WordPress, etc)

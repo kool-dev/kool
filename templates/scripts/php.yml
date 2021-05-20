@@ -1,0 +1,6 @@
+scripts:
+  php: kool exec app php
+
+  setup:
+    - kool start
+    # - add more setup commands

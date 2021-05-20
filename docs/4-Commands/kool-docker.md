@@ -1,26 +1,27 @@
 ## kool docker
 
-Creates a new container and runs the command in it.
+Create a new container (a powered up 'docker run')
 
 ### Synopsis
 
-This command acts as a helper for docker run.
-You can start with options that go before the image name
-for docker run itself, i.e --env='VAR=VALUE'. Then you must pass
-the image name and the command you want to execute on that image.
+A helper for 'docker run'. Any [OPTIONS] added before the
+IMAGE name will be used by 'docker run' itself (i.e. --env='VAR=VALUE').
+Add an optional [COMMAND] to execute on the IMAGE, and use [--] after
+the [COMMAND] to provide optional arguments required by the COMMAND.
 
 ```
-kool docker [options] [image] [command] [flags]
+kool docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]
 ```
 
 ### Options
 
 ```
-  -T, --disable-tty           Deprecated - no effect
-  -e, --env stringArray       Environment variables
+  -T, --disable-tty           Deprecated - no effect.
+  -e, --env stringArray       Environment variables.
   -h, --help                  help for docker
-  -p, --publish stringArray   Publish a container’s port(s) to the host
-  -v, --volume stringArray    Bind mount a volume
+  -n, --network stringArray   Connect a container to a network.
+  -p, --publish stringArray   Publish a container's port(s) to the host.
+  -v, --volume stringArray    Bind mount a volume.
 ```
 
 ### Options inherited from parent commands
@@ -31,5 +32,5 @@ kool docker [options] [image] [command] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

@@ -1,9 +1,15 @@
 ## kool logs
 
-Displays log output from services.
+Display log output from running service containers
+
+### Synopsis
+
+Display log output from all running service containers,
+or one or more specified [SERVICE...] containers. Add a '-f' option to the
+the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').
 
 ```
-kool logs [options] [service...] [flags]
+kool logs [OPTIONS] [SERVICE...]
 ```
 
 ### Options
@@ -11,7 +17,7 @@ kool logs [options] [service...] [flags]
 ```
   -f, --follow     Follow log output.
   -h, --help       help for logs
-  -t, --tail int   Number of lines to show from the end of the logs for each container. For value equal to 0, all lines will be shown. (default 25)
+  -t, --tail int   Number of lines to show from the end of the logs for each container. A value equal to 0 will show all lines. (default 25)
 ```
 
 ### Options inherited from parent commands
@@ -22,5 +28,5 @@ kool logs [options] [service...] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

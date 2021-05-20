@@ -1,17 +1,21 @@
 ## kool exec
 
-Execute a command within a running service container
+Execute a command inside a running service container
+
+### Synopsis
+
+Execute a COMMAND inside the specified SERVICE container (similar to an SSH session).
 
 ```
-kool exec [options] [service] [command] [flags]
+kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
 ```
 
 ### Options
 
 ```
-  -d, --detach            Detached mode: Run command in the background
-  -T, --disable-tty       Deprecated - no effect
-  -e, --env stringArray   Environment variables
+  -d, --detach            Detached mode: Run command in the background.
+  -T, --disable-tty       Deprecated - no effect.
+  -e, --env stringArray   Environment variables.
   -h, --help              help for exec
 ```
 
@@ -23,5 +27,5 @@ kool exec [options] [service] [command] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 

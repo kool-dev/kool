@@ -13,7 +13,7 @@ import (
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker"},
 	}
@@ -22,7 +22,7 @@ func newFakeKoolDocker() *KoolDocker {
 func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newFakeKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
@@ -205,6 +205,24 @@ func TestPublishFlagNewDockerCommand(t *testing.T) {
 
 	if len(argsAppend) != 4 || argsAppend[2] != "--publish" || argsAppend[3] != "publish_test" {
 		t.Errorf("bad arguments to KoolDocker.dockerRun Command with Volumes flag")
+	}
+}
+
+func TestNetworkFlagNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	cmd := NewDockerCommand(f)
+
+	cmd.SetArgs([]string{"--network=kool_global", "image"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing docker command; error: %v", err)
+	}
+
+	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
+
+	if len(argsAppend) != 4 || argsAppend[2] != "--network" || argsAppend[3] != "kool_global" {
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with Network flag")
 	}
 }
 

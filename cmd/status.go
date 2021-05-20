@@ -17,9 +17,9 @@ import (
 type KoolStatus struct {
 	DefaultKoolService
 
-	check      checker.Checker
-	net        network.Handler
-	envStorage environment.EnvStorage
+	check checker.Checker
+	net   network.Handler
+	env   environment.EnvStorage
 
 	getServicesCmd          builder.Command
 	getServiceIDCmd         builder.Command
@@ -34,13 +34,13 @@ type statusService struct {
 	err                   error
 }
 
-func init() {
+func AddKoolStatus(root *cobra.Command) {
 	var (
 		status    = NewKoolStatus()
 		statusCmd = NewStatusCommand(status)
 	)
 
-	rootCmd.AddCommand(statusCmd)
+	root.AddCommand(statusCmd)
 }
 
 // NewKoolStatus creates a new handler for status logic
@@ -83,7 +83,7 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 
 		for _, service := range services {
 			wg.Add(1)
-			go s.getServiceInfo(service, chStatus, &wg)
+			go s.fetchServiceInfo(service, chStatus, &wg)
 		}
 
 		wg.Wait()
@@ -134,7 +134,7 @@ func (s *KoolStatus) checkNetwork() <-chan error {
 	err := make(chan error)
 
 	go func() {
-		err <- s.net.HandleGlobalNetwork(s.envStorage.Get("KOOL_GLOBAL_NETWORK"))
+		err <- s.net.HandleGlobalNetwork(s.env.Get("KOOL_GLOBAL_NETWORK"))
 	}()
 
 	return err
@@ -157,30 +157,29 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 	return
 }
 
-func (s *KoolStatus) getServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
-	var (
-		status, port, serviceID string
-		err                     error
-	)
+func (s *KoolStatus) fetchServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
+	var isRunning bool
 
 	defer wg.Done()
 
-	ss := &statusService{service: service}
-
-	if serviceID, err = s.Exec(s.getServiceIDCmd, service); err != nil {
-		ss.err = err
-	} else if serviceID != "" {
-		status, port = s.getStatusPort(serviceID)
-
-		ss.running = "Not running"
-		if strings.HasPrefix(status, "Up") {
-			ss.running = "Running"
-		}
-		ss.state = status
-		ss.ports = port
+	ss := &statusService{service: service, running: "Not running"}
+	isRunning, ss.state, ss.ports, ss.err = s.getServiceInfo(service)
+	if isRunning {
+		ss.running = "Running"
 	}
 
 	chStatus <- ss
+}
+
+func (s *KoolStatus) getServiceInfo(service string) (isRunning bool, status, port string, err error) {
+	var serviceID string
+	if serviceID, err = s.Exec(s.getServiceIDCmd, service); err == nil && serviceID != "" {
+		status, port = s.getStatusPort(serviceID)
+		if strings.HasPrefix(status, "Up") {
+			isRunning = true
+		}
+	}
+	return
 }
 
 func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string) {
@@ -205,7 +204,9 @@ func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string
 func NewStatusCommand(status *KoolStatus) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "Shows the status for containers",
+		Short: "Show the status of all service containers",
 		Run:   DefaultCommandRunFunction(status),
+
+		DisableFlagsInUseLine: true,
 	}
 }

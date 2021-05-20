@@ -18,9 +18,12 @@ type KoolInfo struct {
 func NewInfoCmd(info *KoolInfo) *cobra.Command {
 	return &cobra.Command{
 		Use:   "info",
-		Short: "Prints out information about kool setup (like environment variables)",
+		Short: "Print out information about the local environment",
+		Long:  "Print out information about the local environment, such as environment variables.",
 		Run:   DefaultCommandRunFunction(info),
 		Args:  cobra.MaximumNArgs(1),
+
+		DisableFlagsInUseLine: true,
 	}
 }
 
@@ -32,8 +35,8 @@ func NewKoolInfo() *KoolInfo {
 	}
 }
 
-func init() {
-	rootCmd.AddCommand(NewInfoCmd(NewKoolInfo()))
+func AddKoolInfo(root *cobra.Command) {
+	root.AddCommand(NewInfoCmd(NewKoolInfo()))
 }
 
 // Execute executes info logic

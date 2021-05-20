@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,8 +18,8 @@ const templatesTemplate string = `package presets
 
 func main() {
 	var (
-		folders []os.FileInfo
-		files   []os.FileInfo
+		folders []os.DirEntry
+		files   []os.DirEntry
 		err     error
 	)
 
@@ -33,7 +33,7 @@ func main() {
 
 	defer templates.Close()
 
-	folders, err = ioutil.ReadDir("templates")
+	folders, err = os.ReadDir("templates")
 
 	if err != nil {
 		log.Fatal(err)
@@ -53,7 +53,7 @@ func main() {
 
 		templates.WriteString(fmt.Sprintf("\ttemplates[\"%s\"] = map[string]string{\n", folder.Name()))
 
-		files, err = ioutil.ReadDir(filepath.Join("templates", folder.Name()))
+		files, err = os.ReadDir(filepath.Join("templates", folder.Name()))
 
 		for _, file := range files {
 			if file.IsDir() {
@@ -66,7 +66,7 @@ func main() {
 				log.Fatal(err)
 			}
 
-			filebytes, err := ioutil.ReadAll(templFile)
+			filebytes, err := io.ReadAll(templFile)
 
 			if err != nil {
 				log.Fatal(err)

@@ -1,7 +1,7 @@
 package shell
 
 import (
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 )
@@ -9,7 +9,7 @@ import (
 func TestFakeTableWriter(t *testing.T) {
 	f := &FakeTableWriter{}
 
-	f.SetWriter(ioutil.Discard)
+	f.SetWriter(io.Discard)
 
 	if !f.CalledSetWriter {
 		t.Errorf("failed to mock method SetWriter on FakeTableWriter")
@@ -40,7 +40,7 @@ row`
 func TestSortByFakeTableWriter(t *testing.T) {
 	f := &FakeTableWriter{}
 
-	f.SetWriter(ioutil.Discard)
+	f.SetWriter(io.Discard)
 
 	f.AppendRow("zRow")
 	f.AppendRow("aRow")

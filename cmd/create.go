@@ -19,13 +19,13 @@ type KoolCreate struct {
 	KoolPreset
 }
 
-func init() {
+func AddKoolCreate(root *cobra.Command) {
 	var (
 		create    = NewKoolCreate()
 		createCmd = NewCreateCommand(create)
 	)
 
-	rootCmd.AddCommand(createCmd)
+	root.AddCommand(createCmd)
 }
 
 // NewKoolCreate creates a new handler for create logic
@@ -56,7 +56,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 	c.parser.LoadConfigs(presets.GetConfigs())
 
 	if !c.parser.Exists(preset) {
-		err = fmt.Errorf("Unknown preset %s", preset)
+		err = fmt.Errorf("unknown preset %s", preset)
 		return
 	}
 
@@ -66,7 +66,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 	}
 
 	if createCmds, ok = presetConfig.Commands["create"]; !ok || len(createCmds) <= 0 {
-		err = fmt.Errorf("No create commands were found for preset %s", preset)
+		err = fmt.Errorf("no create commands were found for preset %s", preset)
 		return
 	}
 
@@ -90,10 +90,13 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 // NewCreateCommand initializes new kool create command
 func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 	createCmd = &cobra.Command{
-		Use:   "create [preset] [project]",
-		Short: "Create a new project using preset",
+		Use:   "create PRESET FOLDER",
+		Short: "Create a new project using a preset",
+		Long:  "Create a new project using the specified PRESET in a directory named FOLDER.",
 		Args:  cobra.ExactArgs(2),
 		Run:   DefaultCommandRunFunction(create),
+
+		DisableFlagsInUseLine: true,
 	}
 
 	return

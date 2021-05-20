@@ -1,15 +1,21 @@
 ## kool run
 
-Runs a custom command defined at kool.yaml in the working directory or in the kool folder of the user's home directory
+Execute a script defined in kool.yml
+
+### Synopsis
+
+Execute the specified SCRIPT, as defined in the kool.yml file.
+A single-line SCRIPT can be run with optional arguments.
 
 ```
-kool run [SCRIPT] [flags]
+kool run SCRIPT [--] [ARG...]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for run
+  -e, --env stringArray   Environment variables.
+  -h, --help              help for run
 ```
 
 ### Options inherited from parent commands
@@ -20,5 +26,5 @@ kool run [SCRIPT] [flags]
 
 ### SEE ALSO
 
-* [kool](kool.md)	 - kool - Kool stuff
+* [kool](kool)	 - Cloud native environments made easy
 
