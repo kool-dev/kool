@@ -713,3 +713,148 @@ func TestNewRunCommandWithTypoErrorNoAnswer(t *testing.T) {
 		t.Error("got an not found script error, but command did not exit")
 	}
 }
+
+func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledFirstQuestion(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script2": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1", "script2"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean one of ['script1', 'script2']?": "Yes",
+		"which one did you mean?":                     "script2",
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"did you mean one of ['script1', 'script2']?": shell.ErrUserCancelled,
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	expected := "Operation Cancelled\n"
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+
+	if f.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Error("did not call Exit with code 0")
+	}
+}
+
+func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledSecondQuestion(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script2": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1", "script2"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean one of ['script1', 'script2']?": "Yes",
+		"which one did you mean?":                     "script2",
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"which one did you mean?": shell.ErrUserCancelled,
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	expected := "Operation Cancelled\n"
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+
+	if f.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Error("did not call Exit with code 0")
+	}
+}
+
+func TestNewRunCommandWithTypoErrorCancelled(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script1": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean 'script1'?": "Yes",
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"did you mean 'script1'?": shell.ErrUserCancelled,
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	expected := "Operation Cancelled\n"
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+
+	if f.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Error("did not call Exit with code 0")
+	}
+}
