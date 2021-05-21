@@ -1,4 +1,4 @@
-<p align="center"><a href="https://kool.dev" target="_blank"><img src="https://kool.dev/img/logo.png" width="400" alt="kool - cloud native"></a></p>
+<p align="center"><a href="https://kool.dev" target="_blank"><img src="https://kool.dev/img/logo.png" width="400" alt="kool - cloud native dev tool"></a></p>
 
 
 <p align="center">
@@ -16,13 +16,7 @@
 
 Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provides all flexibility the DevOps team needs to tailor up everything.
 
-### Why adopt kool for your development environment?
-
-- Provides out-of-the-box simple and fast development environments.
-- No problems with running several projects with different versions and dependency needs.
-- Do not install other project specific dependency ever again in your machine.
-- Removes the learning curve of managing Docker and Docker Compose yourself (yet does not remove one inch of flexibity if you know your way around them).
-- Standard tool for different stacks - helps micro-services teams to communicate and navigate amongst projects.
+To learn more [check out our website kool.dev](https://kool.dev).
 
 ## Installation
 
@@ -42,41 +36,11 @@ Download and run the latest installer from our releases artifacts [here](https:/
 
 ## Getting started
 
-It is easy to get started leveraging `kool`.
+It is easy to get started leveraging `kool`. Check out our [getting started documentation for a generic PHP web app](https://kool.dev/docs/getting-started/starting-new-project).
 
-To create a new Laravel project you only need to:
+To help getting you started on real life applications, we've built presets as a starting point for some popular stacks and frameworks.
 
-```console
-$ kool create laravel my-laravel-project
-$ cd my-laravel-project/
-$ # make sure your `.env` points to the proper database and Redis hosts (`database` and `cache`)
-$ kool start
-```
-
-To get started in an existing Laravel project you only need to:
-
-```console
-$ cd my-laravel-project/
-$ kool preset laravel
-$ # make sure your `.env` points to the proper database and Redis hosts (`database` and `cache`)
-$ kool start
-```
-
-
-- There you go! Now you have a PHP 7.4, Mysql and Redis environment. You are encouraged to take a look and make changes you see fit at `docker-compose.yml` or `kool.yml` to better adjust your project specifications.
-
-- The steps above will create some configuration files in your project folder - all of which you should commit to your version control system.
-
-## Documentation
-
-You can check the documentation at **https://kool.dev/docs** or at [docs/](docs/).
-
-
-## Frameworks Presets
-
-To help getting you started we've built presets as a starting point for some popular stacks and frameworks. In case you miss one let us know in an issue or feel free to open up a PR for it!
-
-Some or our current presets to get you started in no time:
+#### Available Presets
 
 - [Laravel](docs/2-Presets/Laravel.md)
 - [Symfony](docs/2-Presets/Symfony.md)
@@ -87,9 +51,11 @@ Some or our current presets to get you started in no time:
 - [NuxtJS](docs/2-Presets/NuxtJS.md)
 - [Hugo](docs/2-Presets/Hugo.md)
 
-## See it in action (DEMO)
+> In case you miss your favorite framework of choice from the list above, please let us know in an issue or feel free to open up a PR for it!
 
-You can check out a couple of sample commands in action at [asciinema.org/~kooldev](https://asciinema.org/~kooldev). We will be continuously uploading more samples.
+## Documentation
+
+You can check the documentation at [**https://kool.dev/docs**](https://kool.dev/docs) or at [docs/](docs/).
 
 ## Community, Contributing and Support
 
