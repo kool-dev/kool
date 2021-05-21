@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"io"
 	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
@@ -113,7 +112,7 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 			service.SetErrStream(cmd.ErrOrStderr())
 
 			if err := service.Execute(args); err != nil {
-				if errors.Is(err, shell.ErrPromptSelectInterrupted) {
+				if shell.IsUserCancelledError(err) {
 					service.Warning("Operation Cancelled")
 					service.Exit(0)
 				} else {

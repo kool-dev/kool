@@ -397,7 +397,7 @@ func TestDevelopmentVersionWarning(t *testing.T) {
 }
 
 func TestPromptSelectInterruptedError(t *testing.T) {
-	failing := &FakeKoolService{MockExecError: shell.ErrPromptSelectInterrupted}
+	failing := &FakeKoolService{MockExecError: shell.ErrUserCancelled}
 
 	cmd := &cobra.Command{
 		Use:   "fake-command",

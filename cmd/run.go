@@ -148,7 +148,16 @@ func (r *KoolRun) parseScript(script string) (err error) {
 
 	if r.commands, err = r.parser.Parse(script); err != nil {
 		if parser.IsPossibleTypoError(err) && r.IsTerminal() {
-			if similarIsCorrect, _ = r.promptSelect.Ask(err.Error(), []string{"Yes", "No"}); similarIsCorrect != "Yes" {
+			var promptError error
+
+			similarIsCorrect, promptError = r.promptSelect.Ask(err.Error(), []string{"Yes", "No"})
+
+			if promptError != nil {
+				err = promptError
+				return
+			}
+
+			if similarIsCorrect != "Yes" {
 				err = ErrKoolScriptNotFound
 				return
 			}
@@ -156,7 +165,12 @@ func (r *KoolRun) parseScript(script string) (err error) {
 			if possibleScripts := err.(*parser.ErrPossibleTypo).Similars(); len(possibleScripts) == 1 {
 				chosenSimilar = possibleScripts[0]
 			} else {
-				chosenSimilar, _ = r.promptSelect.Ask("which one did you mean?", possibleScripts)
+				chosenSimilar, promptError = r.promptSelect.Ask("which one did you mean?", possibleScripts)
+
+				if promptError != nil {
+					err = promptError
+					return
+				}
 			}
 
 			r.commands, err = r.parser.Parse(chosenSimilar)
