@@ -5,7 +5,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"kool-dev/kool/cmd"
+	"kool-dev/kool/commands"
 	"kool-dev/kool/core/shell"
 	"log"
 	"os"
@@ -33,7 +33,7 @@ func main() {
 
 	koolOutput = new(bytes.Buffer)
 
-	err = doc.GenMarkdownCustom(cmd.RootCmd(), koolOutput, linkHandler)
+	err = doc.GenMarkdownCustom(commands.RootCmd(), koolOutput, linkHandler)
 
 	if err != nil {
 		log.Fatal(err)
@@ -41,7 +41,7 @@ func main() {
 
 	koolMarkdown := koolOutput.String()
 
-	for _, childCmd := range cmd.RootCmd().Commands() {
+	for _, childCmd := range commands.RootCmd().Commands() {
 		var cmdName string
 
 		if cmdName = strings.Replace(childCmd.CommandPath(), " ", "_", -1); cmdName == "kool_deploy" || cmdName == "kool_help" {

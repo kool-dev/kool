@@ -23,9 +23,9 @@ func main() {
 		err     error
 	)
 
-	fmt.Println("Started building cmd/presets/presets.go")
+	fmt.Println("Started building core/presets/presets.go")
 
-	presets, err := os.Create("cmd/presets/presets.go")
+	presets, err := os.Create("core/presets/presets.go")
 
 	if err != nil {
 		log.Fatal(err)
@@ -90,5 +90,5 @@ func main() {
 	presets.WriteString("\treturn presets\n")
 	presets.WriteString("}\n")
 
-	fmt.Println("Finished building cmd/presets/presets.go")
+	fmt.Println("Finished building core/presets/presets.go")
 }

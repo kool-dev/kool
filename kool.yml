@@ -26,9 +26,9 @@ scripts:
     - kool run go:linux run docs.go
   # Parsing the preset files onto Go code in an automated fashion.
   parse-presets:
-    - rm -f cmd/presets/presets.go
-    - rm -f cmd/presets/templates.go
-    - rm -f cmd/presets/configs.go
+    - rm -f core/presets/presets.go
+    - rm -f core/presets/templates.go
+    - rm -f core/presets/configs.go
     - kool run go:linux run parse_presets.go
     - kool run go:linux run parse_templates.go
     - kool run go:linux run parse_presets_configs.go

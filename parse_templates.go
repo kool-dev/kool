@@ -23,9 +23,9 @@ func main() {
 		err     error
 	)
 
-	fmt.Println("Started building cmd/presets/templates.go")
+	fmt.Println("Started building core/presets/templates.go")
 
-	templates, err := os.Create("cmd/presets/templates.go")
+	templates, err := os.Create("core/presets/templates.go")
 
 	if err != nil {
 		log.Fatal(err)
@@ -86,5 +86,5 @@ func main() {
 	templates.WriteString("\treturn templates\n")
 	templates.WriteString("}\n")
 
-	fmt.Println("Finished building cmd/presets/templates.go")
+	fmt.Println("Finished building core/presets/templates.go")
 }
