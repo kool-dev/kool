@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kool-dev/kool/cmd/builder"
 	"kool-dev/kool/cmd/parser"
+	"kool-dev/kool/cmd/shell"
 	"kool-dev/kool/environment"
 	"path"
 	"strings"
@@ -19,10 +20,11 @@ type KoolRunFlags struct {
 // KoolRun holds handlers and functions to implement the run command logic
 type KoolRun struct {
 	DefaultKoolService
-	Flags    *KoolRunFlags
-	parser   parser.Parser
-	env      environment.EnvStorage
-	commands []builder.Command
+	Flags        *KoolRunFlags
+	parser       parser.Parser
+	env          environment.EnvStorage
+	promptSelect shell.PromptSelect
+	commands     []builder.Command
 }
 
 // ErrExtraArguments Extra arguments error
@@ -49,6 +51,7 @@ func NewKoolRun() *KoolRun {
 		&KoolRunFlags{[]string{}},
 		parser.NewParser(),
 		environment.NewEnvStorage(),
+		shell.NewPromptSelect(),
 		[]builder.Command{},
 	}
 }
@@ -125,7 +128,11 @@ func SetRunUsageFunc(run *KoolRun, runCmd *cobra.Command) {
 }
 
 func (r *KoolRun) parseScript(script string) (err error) {
-	var originalEnvs map[string]string = make(map[string]string)
+	var (
+		originalEnvs     map[string]string = make(map[string]string)
+		similarIsCorrect string
+		chosenSimilar    string
+	)
 
 	for _, envVar := range r.Flags.EnvVariables {
 		pair := strings.SplitN(envVar, "=", 2)
@@ -139,10 +146,42 @@ func (r *KoolRun) parseScript(script string) (err error) {
 		}
 	}()
 
-	if r.commands, err = r.parser.Parse(script); err != nil && parser.IsMultipleDefinedScriptError(err) {
-		// we should just warn the user about multiple finds for the script
-		r.Warning("Attention: the script was found in more than one kool.yml file")
-		err = nil
+	if r.commands, err = r.parser.Parse(script); err != nil {
+		if parser.IsPossibleTypoError(err) && r.IsTerminal() {
+			var promptError error
+
+			similarIsCorrect, promptError = r.promptSelect.Ask(err.Error(), []string{"Yes", "No"})
+
+			if promptError != nil {
+				err = promptError
+				return
+			}
+
+			if similarIsCorrect != "Yes" {
+				err = ErrKoolScriptNotFound
+				return
+			}
+
+			if possibleScripts := err.(*parser.ErrPossibleTypo).Similars(); len(possibleScripts) == 1 {
+				chosenSimilar = possibleScripts[0]
+			} else {
+				chosenSimilar, promptError = r.promptSelect.Ask("which one did you mean?", possibleScripts)
+
+				if promptError != nil {
+					err = promptError
+					return
+				}
+			}
+
+			r.commands, err = r.parser.Parse(chosenSimilar)
+			return
+		}
+
+		if parser.IsMultipleDefinedScriptError(err) {
+			// we should just warn the user about multiple finds for the script
+			r.Warning("Attention: the script was found in more than one kool.yml file")
+			err = nil
+		}
 	}
 
 	return

@@ -11,8 +11,8 @@ type FakeParser struct {
 	TargetFiles                    []string
 	CalledParse                    bool
 	CalledParseAvailableScripts    bool
-	MockParsedCommands             []builder.Command
-	MockParseError                 error
+	MockParsedCommands             map[string][]builder.Command
+	MockParseError                 map[string]error
 	MockScripts                    []string
 	MockParseAvailableScriptsError error
 }
@@ -27,8 +27,8 @@ func (f *FakeParser) AddLookupPath(rootPath string) (err error) {
 // Parse implements fake Parse behavior
 func (f *FakeParser) Parse(script string) (commands []builder.Command, err error) {
 	f.CalledParse = true
-	commands = f.MockParsedCommands
-	err = f.MockParseError
+	commands = f.MockParsedCommands[script]
+	err = f.MockParseError[script]
 	return
 }
 

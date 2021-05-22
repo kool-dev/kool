@@ -5,9 +5,6 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 )
 
-// ErrPromptSelectInterrupted error throwed on signal interrupt
-var ErrPromptSelectInterrupted error = terminal.InterruptErr
-
 // PromptSelect contract that holds logic for prompt a select question
 type PromptSelect interface {
 	Ask(string, []string) (string, error)
@@ -27,6 +24,8 @@ func (p *DefaultPromptSelect) Ask(question string, options []string) (answer str
 		Message: question,
 		Options: options,
 	}
-	err = survey.AskOne(prompt, &answer)
+	if err = survey.AskOne(prompt, &answer); err != nil && err == terminal.InterruptErr {
+		err = ErrUserCancelled
+	}
 	return
 }

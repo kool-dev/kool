@@ -395,3 +395,36 @@ func TestDevelopmentVersionWarning(t *testing.T) {
 		t.Error("should not have warned on non-dev version")
 	}
 }
+
+func TestPromptSelectInterruptedError(t *testing.T) {
+	failing := &FakeKoolService{MockExecError: shell.ErrUserCancelled}
+
+	cmd := &cobra.Command{
+		Use:   "fake-command",
+		Short: "fake - fake command",
+		Run:   DefaultCommandRunFunction(failing),
+	}
+
+	b := bytes.NewBufferString("")
+	cmd.SetOut(b)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing root command; error: %v", err)
+	}
+
+	var (
+		out []byte
+		err error
+	)
+
+	if out, err = io.ReadAll(b); err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "Operation Cancelled"
+	output := strings.TrimSpace(string(out))
+
+	if strings.Contains(output, expected) {
+		t.Errorf("bad warning about cancelling operation: %s", output)
+	}
+}

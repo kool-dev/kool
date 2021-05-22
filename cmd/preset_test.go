@@ -377,7 +377,7 @@ func TestCancellingPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 
 	mockError := make(map[string]error)
-	mockError["What language do you want to use"] = shell.ErrPromptSelectInterrupted
+	mockError["What language do you want to use"] = shell.ErrUserCancelled
 
 	f.promptSelect.(*shell.FakePromptSelect).MockError = mockError
 

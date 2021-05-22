@@ -91,22 +91,8 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 		Long: `Initialize a project using the specified [PRESET] by installing configuration
 files customized for Kool in the current working directory. If no [PRESET] is provided,
 an interactive wizard will present the available options.`,
-		Args: cobra.MaximumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			preset.SetOutStream(cmd.OutOrStdout())
-			preset.SetInStream(cmd.InOrStdin())
-			preset.SetErrStream(cmd.ErrOrStderr())
-
-			if err := preset.Execute(args); err != nil {
-				if err.Error() == shell.ErrPromptSelectInterrupted.Error() {
-					preset.Warning("Operation Cancelled")
-					preset.Exit(0)
-				} else {
-					preset.Error(err)
-					preset.Exit(1)
-				}
-			}
-		},
+		Args:                  cobra.MaximumNArgs(1),
+		Run:                   DefaultCommandRunFunction(preset),
 		DisableFlagsInUseLine: true,
 	}
 

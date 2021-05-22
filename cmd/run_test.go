@@ -17,12 +17,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newFakeKoolRun(mockParsedCommands []builder.Command, mockParseError error) *KoolRun {
+func newFakeKoolRun(mockParsedCommands map[string][]builder.Command, mockParseError map[string]error) *KoolRun {
 	return &KoolRun{
 		*newFakeKoolService(),
 		&KoolRunFlags{[]string{}},
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
 		environment.NewFakeEnvStorage(),
+		&shell.FakePromptSelect{},
 		[]builder.Command{},
 	}
 }
@@ -48,7 +49,11 @@ func TestNewKoolRun(t *testing.T) {
 }
 
 func TestNewRunCommand(t *testing.T) {
-	fakeParsedCommands := []builder.Command{&builder.FakeCommand{MockCmd: "cmd1"}}
+	fakeParsedCommands := map[string][]builder.Command{
+		"script": {
+			&builder.FakeCommand{MockCmd: "cmd1"},
+		},
+	}
 
 	f := newFakeKoolRun(fakeParsedCommands, nil)
 	cmd := NewRunCommand(f)
@@ -89,7 +94,7 @@ func TestNewRunCommand(t *testing.T) {
 }
 
 func TestNewRunCommandMultipleScriptsWarning(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{}, parser.ErrMultipleDefinedScript)
+	f := newFakeKoolRun(nil, map[string]error{"script": parser.ErrMultipleDefinedScript})
 	cmd := NewRunCommand(f)
 
 	cmd.SetArgs([]string{"script"})
@@ -110,7 +115,7 @@ func TestNewRunCommandMultipleScriptsWarning(t *testing.T) {
 }
 
 func TestNewRunCommandParseError(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{}, errors.New("parse error"))
+	f := newFakeKoolRun(nil, map[string]error{"script": errors.New("parse error")})
 	cmd := NewRunCommand(f)
 
 	cmd.SetArgs([]string{"script"})
@@ -135,7 +140,12 @@ func TestNewRunCommandParseError(t *testing.T) {
 }
 
 func TestNewRunCommandExtraArgsError(t *testing.T) {
-	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}, &builder.FakeCommand{}}
+	fakeParsedCommands := map[string][]builder.Command{
+		"script": {
+			&builder.FakeCommand{},
+			&builder.FakeCommand{},
+		},
+	}
 	f := newFakeKoolRun(fakeParsedCommands, nil)
 	cmd := NewRunCommand(f)
 
@@ -161,7 +171,12 @@ func TestNewRunCommandExtraArgsError(t *testing.T) {
 }
 
 func TestNewRunCommandErrorInteractive(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{&builder.FakeCommand{MockInteractiveError: errors.New("interactive error")}}, nil)
+	fakeParsedCommands := map[string][]builder.Command{
+		"script": {
+			&builder.FakeCommand{MockInteractiveError: errors.New("interactive error")},
+		},
+	}
+	f := newFakeKoolRun(fakeParsedCommands, nil)
 	cmd := NewRunCommand(f)
 
 	cmd.SetArgs([]string{"script"})
@@ -186,7 +201,7 @@ func TestNewRunCommandErrorInteractive(t *testing.T) {
 }
 
 func TestNewRunCommandScriptNotFound(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{}, nil)
+	f := newFakeKoolRun(nil, nil)
 	cmd := NewRunCommand(f)
 
 	cmd.SetArgs([]string{"script"})
@@ -211,7 +226,11 @@ func TestNewRunCommandScriptNotFound(t *testing.T) {
 }
 
 func TestNewRunCommandWithArguments(t *testing.T) {
-	fakeParsedCommands := []builder.Command{&builder.FakeCommand{}}
+	fakeParsedCommands := map[string][]builder.Command{
+		"script": {
+			&builder.FakeCommand{},
+		},
+	}
 	f := newFakeKoolRun(fakeParsedCommands, nil)
 	cmd := NewRunCommand(f)
 
@@ -233,7 +252,7 @@ func TestNewRunCommandWithArguments(t *testing.T) {
 }
 
 func TestNewRunCommandUsageTemplate(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{}, nil)
+	f := newFakeKoolRun(nil, nil)
 	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
 	cmd := NewRunCommand(f)
 	SetRunUsageFunc(f, cmd)
@@ -256,7 +275,7 @@ func TestNewRunCommandUsageTemplate(t *testing.T) {
 }
 
 func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
-	f := newFakeKoolRun([]builder.Command{}, nil)
+	f := newFakeKoolRun(nil, nil)
 	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
 	f.parser.(*parser.FakeParser).MockParseAvailableScriptsError = errors.New("error parse avaliable scripts")
 	f.env.(*environment.FakeEnvStorage).Envs["KOOL_VERBOSE"] = "1"
@@ -289,7 +308,7 @@ func TestNewRunCommandFailingUsageTemplate(t *testing.T) {
 
 func TestNewRunCommandCompletion(t *testing.T) {
 	var scripts []string
-	f := newFakeKoolRun([]builder.Command{}, nil)
+	f := newFakeKoolRun(nil, nil)
 	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
 	cmd := NewRunCommand(f)
 
@@ -320,7 +339,7 @@ func TestNewRunCommandCompletion(t *testing.T) {
 
 func TestNewRunCommandFailingCompletion(t *testing.T) {
 	var scripts []string
-	f := newFakeKoolRun([]builder.Command{}, nil)
+	f := newFakeKoolRun(nil, nil)
 	f.parser.(*parser.FakeParser).MockScripts = []string{"testing_script"}
 	f.parser.(*parser.FakeParser).MockParseAvailableScriptsError = errors.New("parsing error")
 	cmd := NewRunCommand(f)
@@ -548,6 +567,42 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 	}
 }
 
+func TestNewRunCommandWithTypoError(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script1": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean 'script1'?": "Yes",
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("did not call Ask on PromptSelect")
+	}
+
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["cmd"]; !ok || !val {
+		t.Errorf("did not call Interactive for command 'cmd'")
+	}
+}
+
 func TestNewRunCommandWithEnvVariable(t *testing.T) {
 	f := newFakeKoolRun(nil, nil)
 	cmd := NewRunCommand(f)
@@ -577,5 +632,229 @@ func TestNewRunCommandWithEnvVariable(t *testing.T) {
 
 	if history[1] != "" {
 		t.Errorf("expected to set '$VAR_TEST' to an empty value after using it, did set to '%s'", history[0])
+	}
+}
+
+func TestNewRunCommandWithTypoErrorMultipleSimilar(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script2": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1", "script2"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean one of ['script1', 'script2']?": "Yes",
+		"which one did you mean?":                     "script2",
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("did not call Ask on PromptSelect")
+	}
+
+	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["cmd"]; !ok || !val {
+		t.Errorf("did not call Interactive for command 'cmd'")
+	}
+}
+
+func TestNewRunCommandWithTypoErrorNoAnswer(t *testing.T) {
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+
+	f := newFakeKoolRun(nil, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean 'script1'?": "No",
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("did not call Ask on PromptSelect")
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledError {
+		t.Error("did not call Error for not found script error")
+	}
+
+	expectedError := ErrKoolScriptNotFound.Error()
+
+	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
+		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("got an not found script error, but command did not exit")
+	}
+}
+
+func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledFirstQuestion(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script2": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1", "script2"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean one of ['script1', 'script2']?": "Yes",
+		"which one did you mean?":                     "script2",
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"did you mean one of ['script1', 'script2']?": shell.ErrUserCancelled,
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	expected := "Operation Cancelled\n"
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+
+	if f.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Error("did not call Exit with code 0")
+	}
+}
+
+func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledSecondQuestion(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script2": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1", "script2"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean one of ['script1', 'script2']?": "Yes",
+		"which one did you mean?":                     "script2",
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"which one did you mean?": shell.ErrUserCancelled,
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	expected := "Operation Cancelled\n"
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+
+	if f.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Error("did not call Exit with code 0")
+	}
+}
+
+func TestNewRunCommandWithTypoErrorCancelled(t *testing.T) {
+	fakeParsedCommands := map[string][]builder.Command{
+		"script1": {
+			&builder.FakeCommand{MockCmd: "cmd"},
+		},
+	}
+
+	possibleTypoError := &parser.ErrPossibleTypo{}
+	possibleTypoError.SetSimilars([]string{"script1"})
+
+	fakeParsedError := map[string]error{
+		"script": possibleTypoError,
+	}
+	f := newFakeKoolRun(fakeParsedCommands, fakeParsedError)
+
+	f.promptSelect.(*shell.FakePromptSelect).MockAnswer = map[string]string{
+		"did you mean 'script1'?": "Yes",
+	}
+
+	f.promptSelect.(*shell.FakePromptSelect).MockError = map[string]error{
+		"did you mean 'script1'?": shell.ErrUserCancelled,
+	}
+
+	cmd := NewRunCommand(f)
+
+	cmd.SetArgs([]string{"script"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command; error: %v", err)
+	}
+
+	expected := "Operation Cancelled\n"
+	output := fmt.Sprintln(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+
+	if !f.exiter.(*shell.FakeExiter).Exited() {
+		t.Error("did not call Exit")
+	}
+
+	if f.exiter.(*shell.FakeExiter).Code() != 0 {
+		t.Error("did not call Exit with code 0")
 	}
 }
