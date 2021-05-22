@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"kool-dev/kool/cmd"
-	"kool-dev/kool/cmd/shell"
+	"kool-dev/kool/core/shell"
 	"log"
 	"os"
 	"path/filepath"
