@@ -29,7 +29,7 @@ scripts:
     - rm -f core/presets/presets.go
     - rm -f core/presets/templates.go
     - rm -f core/presets/configs.go
-    - kool run go:linux run parse_presets.go
-    - kool run go:linux run parse_templates.go
-    - kool run go:linux run parse_presets_configs.go
+    - kool run go:linux run gen/parse_presets.go
+    - kool run go:linux run gen/parse_templates.go
+    - kool run go:linux run gen/parse_presets_configs.go
     - kool run fmt
