@@ -1,11 +1,7 @@
 package commands
 
 import (
-	"kool-dev/kool/core/builder"
-	"kool-dev/kool/core/environment"
-	"kool-dev/kool/core/network"
 	"kool-dev/kool/core/shell"
-	"kool-dev/kool/services/checker"
 	"kool-dev/kool/services/updater"
 
 	"errors"
@@ -21,13 +17,7 @@ func newFakeUpdateAwareService(start *KoolStart, koolFakeUpdater *updater.FakeUp
 }
 
 func TestStartWithUpdaterWrapper(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
-	}
+	koolStart := newMockStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
@@ -60,13 +50,7 @@ func TestStartWithUpdaterWrapper(t *testing.T) {
 }
 
 func TestStartWithUpdaterWrapperError(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
-	}
+	koolStart := newMockStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
@@ -97,13 +81,7 @@ func TestStartWithUpdaterWrapperError(t *testing.T) {
 }
 
 func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
-	}
+	koolStart := newMockStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "1.0.0",
@@ -134,13 +112,7 @@ func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 }
 
 func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
-	}
+	koolStart := newMockStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
