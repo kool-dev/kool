@@ -53,9 +53,11 @@ func (s *KoolStop) Execute(args []string) (err error) {
 	}
 
 	if len(args) == 0 {
+		s.down.AppendArgs("--remove-orphans")
+
 		// no specific services passed in, so we gonna 'docker-compose down'
 		if s.Flags.Purge {
-			s.down.AppendArgs("--volumes", "--remove-orphans")
+			s.down.AppendArgs("--volumes")
 		}
 
 		stopCommand = s.down
