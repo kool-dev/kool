@@ -14,7 +14,8 @@ kool start [SERVICE...]
 ### Options
 
 ```
-  -h, --help   help for start
+  -f, --foreground   Start containers in foreground mode
+  -h, --help         help for start
 ```
 
 ### Options inherited from parent commands
