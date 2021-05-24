@@ -15,14 +15,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestStartAllCommand(t *testing.T) {
-	koolStart := &KoolStart{
+func newMockStart() *KoolStart {
+	return &KoolStart{
 		*newFakeKoolService(),
+		&KoolStartFlags{},
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "start"},
 	}
+}
+
+func TestStartAllCommand(t *testing.T) {
+	koolStart := newMockStart()
 
 	cmd := NewStartCommand(koolStart)
 
@@ -45,14 +50,33 @@ func TestStartAllCommand(t *testing.T) {
 	}
 }
 
-func TestStartServicesCommand(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
+func TestStartForegroundFlag(t *testing.T) {
+	koolStart := newMockStart()
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
 	}
+
+	args := koolStart.start.(*builder.FakeCommand).ArgsAppend
+	if len(args) == 0 || args[0] != "-d" {
+		t.Error("did not set -d on start")
+	}
+
+	koolStart = newMockStart()
+	koolStart.Flags.Foreground = true
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	args = koolStart.start.(*builder.FakeCommand).ArgsAppend
+	if len(args) != 0 {
+		t.Error("shoul not have appended args")
+	}
+}
+
+func TestStartServicesCommand(t *testing.T) {
+	koolStart := newMockStart()
 
 	cmd := NewStartCommand(koolStart)
 	expected := []string{"app", "database"}
@@ -76,13 +100,8 @@ func TestStartServicesCommand(t *testing.T) {
 }
 
 func TestFailedDependenciesStartCommand(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{MockError: errors.New("dependencies")},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
-	}
+	koolStart := newMockStart()
+	koolStart.check.(*checker.FakeChecker).MockError = errors.New("dependencies")
 
 	cmd := NewStartCommand(koolStart)
 
@@ -98,13 +117,8 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 }
 
 func TestFailedNetworkStartCommand(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{MockError: errors.New("network")},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start"},
-	}
+	koolStart := newMockStart()
+	koolStart.net.(*network.FakeHandler).MockError = errors.New("network")
 
 	cmd := NewStartCommand(koolStart)
 
@@ -120,13 +134,8 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 }
 
 func TestStartWithError(t *testing.T) {
-	koolStart := &KoolStart{
-		*newFakeKoolService(),
-		&checker.FakeChecker{},
-		&network.FakeHandler{},
-		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{MockCmd: "start", MockInteractiveError: errors.New("start")},
-	}
+	koolStart := newMockStart()
+	koolStart.start.(*builder.FakeCommand).MockInteractiveError = errors.New("start")
 
 	cmd := NewStartCommand(koolStart)
 
