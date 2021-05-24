@@ -11,9 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// KoolStartFlags holds the flags for the kool start command
+type KoolStartFlags struct {
+	Foreground bool
+}
+
 // KoolStart holds handlers and functions for starting containers logic
 type KoolStart struct {
 	DefaultKoolService
+	Flags *KoolStartFlags
 
 	check      checker.Checker
 	net        network.Handler
@@ -22,8 +28,8 @@ type KoolStart struct {
 }
 
 // NewStartCommand initializes new kool start Cobra command
-func NewStartCommand(start *KoolStart) *cobra.Command {
-	return &cobra.Command{
+func NewStartCommand(start *KoolStart) (startCmd *cobra.Command) {
+	startCmd = &cobra.Command{
 		Use:   "start [SERVICE...]",
 		Short: "Start service containers defined in docker-compose.yml",
 		Long: `Start one or more specified [SERVICE] containers. If no [SERVICE] is provided,
@@ -32,6 +38,10 @@ all containers are started. If the containers are already running, they are recr
 
 		DisableFlagsInUseLine: true,
 	}
+
+	startCmd.Flags().BoolVarP(&start.Flags.Foreground, "foreground", "f", false, "Start containers in foreground mode")
+
+	return
 }
 
 // NewKoolStart creates a new pointer with default KoolStart service
@@ -40,10 +50,11 @@ func NewKoolStart() *KoolStart {
 	defaultKoolService := newDefaultKoolService()
 	return &KoolStart{
 		*defaultKoolService,
+		&KoolStartFlags{false},
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		compose.NewDockerCompose("up", "-d", "--force-recreate"),
+		compose.NewDockerCompose("up", "--force-recreate"),
 	}
 }
 
@@ -53,6 +64,10 @@ func AddKoolStart(root *cobra.Command) {
 
 // Execute runs the start logic with incoming arguments.
 func (s *KoolStart) Execute(args []string) (err error) {
+	if !s.Flags.Foreground {
+		s.start.AppendArgs("-d")
+	}
+
 	if err = s.checkDependencies(); err != nil {
 		return
 	}
