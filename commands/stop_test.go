@@ -65,8 +65,8 @@ func TestNewStopCommand(t *testing.T) {
 		t.Errorf("did not call Check")
 	}
 
-	if f.down.(*builder.FakeCommand).CalledAppendArgs {
-		t.Errorf("did not expect to call AppendArgs on KoolStop.down Command")
+	if len(f.down.(*builder.FakeCommand).ArgsAppend) > 1 {
+		t.Errorf("did not expect to call 2 AppendArgs on KoolStop.down Command")
 	}
 }
 
@@ -107,7 +107,7 @@ func TestNewStopPurgeCommand(t *testing.T) {
 	}
 
 	argsAppend := f.down.(*builder.FakeCommand).ArgsAppend
-	if len(argsAppend) != 2 || argsAppend[0] != "--volumes" || argsAppend[1] != "--remove-orphans" {
+	if len(argsAppend) != 2 || argsAppend[1] != "--volumes" || argsAppend[0] != "--remove-orphans" {
 		t.Errorf("bad arguments to KoolStop.down Command when passing --purge flag")
 	}
 }
