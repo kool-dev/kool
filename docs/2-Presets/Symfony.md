@@ -40,6 +40,7 @@ $ Preset symfony is initializing!
 ? What database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
   MySQL 5.7
+  MariaDB 10.5
   PostgreSQL 13.0
   none
 
@@ -96,6 +97,10 @@ MySQL 5.7 and 8.0
 +DATABASE_URL="mysql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_DATABASE}?serverVersion=${DB_VERSION}"
 +# DATABASE_URL="postgresql://db_user:db_password@127.0.0.1:5432/db_name?serverVersion=13&charset=utf8"
 ```
+
+MariaDB 10.5
+
+It's the same as Mysql, except for the `serverVersion` value. Please refer to [Doctrine DBAL configuration docs](https://symfony.com/doc/current/reference/configuration/doctrine.html#doctrine-dbal-configuration) to set the correct `DB_VERSION` value.
 
 PostgreSQL 13.0
 

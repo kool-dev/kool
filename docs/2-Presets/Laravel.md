@@ -40,6 +40,7 @@ $ Preset laravel is initializing!
 ? What database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
   MySQL 5.7
+  MariaDB 10.5
   PostgreSQL 13.0
   none
 
@@ -80,7 +81,7 @@ You need to update some default values in Laravel's **.env.example** file to mat
 
 ### Database Services
 
-MySQL 5.7 and 8.0
+MySQL 5.7 and 8.0 or MariaDB 10.5
 
 ```diff
 -DB_HOST=127.0.0.1
