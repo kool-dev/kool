@@ -1,0 +1,23 @@
+services:
+  database:
+    image: mariadb:10.5
+    ports:
+    - ${KOOL_DATABASE_PORT:-3306}:3306
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD-rootpass}
+      MARIADB_DATABASE: ${DB_DATABASE-database}
+      MARIADB_USER: ${DB_USERNAME-user}
+      MARIADB_PASSWORD: ${DB_PASSWORD-pass}
+      MARIADB_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+    - database:/var/lib/mysql:delegated
+    networks:
+    - kool_local
+    healthcheck:
+      test: mysqladmin -p${DB_PASSWORD-pass} ping
+
+volumes:
+  database:
+
+scripts:
+  maria: kool exec -e MYSQL_PWD=$DB_PASSWORD database mariadb -u $DB_USERNAME $DB_DATABASE

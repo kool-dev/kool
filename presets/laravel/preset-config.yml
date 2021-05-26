@@ -20,6 +20,8 @@ questions:
           template: mysql8.yml
         - name: MySQL 5.7
           template: mysql57.yml
+        - name: MariaDB 10.5
+          template: mariadb105.yml
         - name: PostgreSQL 13.0
           template: postgresql13.yml
         - name: none
