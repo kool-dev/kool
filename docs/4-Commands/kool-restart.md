@@ -9,7 +9,8 @@ kool restart
 ### Options
 
 ```
-  -h, --help   help for restart
+  -h, --help    help for restart
+      --purge   Remove all persistent data from volume mounts on containers
 ```
 
 ### Options inherited from parent commands
