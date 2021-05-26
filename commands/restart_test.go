@@ -66,3 +66,19 @@ func TestFailingStopRestartCommand(t *testing.T) {
 		t.Error("did not call Error due to error on start service")
 	}
 }
+
+func TestPurgeRestartCommand(t *testing.T) {
+	fakeStop := newFakeKoolStop()
+	fakeStart := &FakeKoolService{}
+
+	cmd := NewRestartCommand(fakeStop, fakeStart)
+	cmd.SetArgs([]string{"--purge"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing restart command; error: %v", err)
+	}
+
+	if !fakeStop.Flags.Purge {
+		t.Error("did not set the purge flag to true in the stop service")
+	}
+}
