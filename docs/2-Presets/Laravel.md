@@ -53,10 +53,6 @@ $ Preset laravel is initializing!
 > npm
   yarn
 
-? What composer version do you want to use [Use arrows to move, type to filter]
-> 1.x
-  2.x
-
 $ Preset laravel initialized!
 ```
 
@@ -128,7 +124,7 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 ```yaml
 scripts:
   artisan: kool exec app php artisan
-  composer: kool exec app composer2
+  composer: kool exec app composer
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
   node: kool docker kooldev/node:14 node
   npm: kool docker kooldev/node:14 npm # or yarn
