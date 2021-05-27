@@ -5,15 +5,15 @@ commands:
 questions:
   compose:
     - key: app
-      default_answer: PHP 7.4
+      default_answer: PHP 8.0
       message: What app service do you want to use
       options:
-        - name: PHP 7.4
-          template: php74.yml
         - name: PHP 8.0
           template: php8.yml
+        - name: PHP 7.4
+          template: php74.yml
     - key: database
-      default_answer: MySQL 5.7
+      default_answer: MySQL 8.0
       message: What database service do you want to use
       options:
         - name: MySQL 8.0
@@ -45,14 +45,6 @@ questions:
           template: npm.yml
         - name: yarn
           template: yarn.yml
-    - key: scripts
-      default_answer: 1.x
-      message: What composer version do you want to use
-      options:
-        - name: 1.x
-          template: composer.yml
-        - name: 2.x
-          template: composer2.yml
 templates:
   - key: scripts
     template: symfony.yml

@@ -1,4 +1,5 @@
 scripts:
+  composer: kool exec app composer
   console: kool exec app php ./bin/console
   phpunit: kool exec app php ./bin/phpunit
 

@@ -1,20 +1,7 @@
 scripts:
-  artisan: kool exec app php artisan
   npm: kool exec app npm
   npx: kool exec app npx
 
   node-setup:
     - kool run npm install
     - kool run npm run dev
-
-  setup:
-    - cp .env.example .env
-    - kool start
-    - kool run composer install
-    - kool run artisan key:generate
-    - kool run node-setup
-
-  reset:
-    - kool run composer install
-    - kool run artisan migrate:fresh --seed
-    - kool run node-setup
