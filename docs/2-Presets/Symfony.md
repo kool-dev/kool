@@ -53,10 +53,6 @@ $ Preset symfony is initializing!
 > npm
   yarn
 
-? What composer version do you want to use [Use arrows to move, type to filter]
-> 1.x
-  2.x
-
 $ Preset symfony initialized!
 ```
 
