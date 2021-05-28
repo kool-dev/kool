@@ -3,4 +3,4 @@ scripts:
   npx: kool docker kooldev/node:14 npx
   node-setup:
     - kool run npm install
-    - kool run npm dev
+    - kool run npm run dev
