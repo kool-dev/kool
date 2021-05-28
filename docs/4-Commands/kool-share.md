@@ -23,4 +23,5 @@ kool share
 
 ### SEE ALSO
 
--   [kool](kool) - Cloud native environments made easy
+* [kool](kool)	 - Cloud native environments made easy
+
