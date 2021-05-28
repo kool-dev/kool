@@ -353,6 +353,9 @@ scripts:
 		"npm.yml": `scripts:
   npm: kool docker kooldev/node:14 npm
   npx: kool docker kooldev/node:14 npx
+  node-setup:
+    - kool run npm install
+    - kool run npm dev
 `,
 		"php.yml": `scripts:
   php: kool exec app php
@@ -415,6 +418,9 @@ scripts:
 `,
 		"yarn.yml": `scripts:
   yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
 `,
 	}
 	return templates
