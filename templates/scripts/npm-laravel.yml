@@ -1,7 +1,0 @@
-scripts:
-  npm: kool exec app npm
-  npx: kool exec app npx
-
-  node-setup:
-    - kool run npm install
-    - kool run npm run dev
