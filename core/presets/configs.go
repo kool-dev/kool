@@ -112,9 +112,9 @@ questions:
       message: What javascript package manager do you want to use
       options:
         - name: npm
-          template: npm-laravel.yml
+          template: npm.yml
         - name: yarn
-          template: yarn-laravel.yml
+          template: yarn.yml
 templates:
   - key: scripts
     template: laravel.yml

@@ -316,14 +316,6 @@ scripts:
     - kool docker kooldev/node:14 npm install
     - kool start
 `,
-		"npm-laravel.yml": `scripts:
-  npm: kool exec app npm
-  npx: kool exec app npx
-
-  node-setup:
-    - kool run npm install
-    - kool run npm run dev
-`,
 		"npm-nestjs.yml": `scripts:
   nest: kool exec app nest
   npm: kool exec app npm
@@ -359,8 +351,11 @@ scripts:
     - kool start
 `,
 		"npm.yml": `scripts:
-  npm: kool exec app npm
-  npx: kool exec app npx
+  npm: kool docker kooldev/node:14 npm
+  npx: kool docker kooldev/node:14 npx
+  node-setup:
+    - kool run npm install
+    - kool run npm run dev
 `,
 		"php.yml": `scripts:
   php: kool exec app php
@@ -390,13 +385,6 @@ scripts:
   setup:
     - kool docker kooldev/node:14 yarn install
     - kool start
-`,
-		"yarn-laravel.yml": `scripts:
-  yarn: kool exec app yarn
-
-  node-setup:
-    - kool run yarn install
-    - kool run yarn dev
 `,
 		"yarn-nestjs.yml": `scripts:
   nest: kool exec app nest
@@ -429,7 +417,10 @@ scripts:
     - kool start
 `,
 		"yarn.yml": `scripts:
-  yarn: kool exec app yarn
+  yarn: kool docker kooldev/node:14 yarn
+  node-setup:
+    - kool run yarn install
+    - kool run yarn dev
 `,
 	}
 	return templates
