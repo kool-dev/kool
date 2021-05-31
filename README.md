@@ -7,7 +7,7 @@
 <a href="https://github.com/kool-dev/kool/workflows/docker"><img src="https://github.com/kool-dev/kool/workflows/docker/badge.svg" alt="Docker Hub"></a>
 <a href="https://github.com/kool-dev/kool/workflows/golangci-lint"><img src="https://github.com/kool-dev/kool/workflows/golangci-lint/badge.svg" alt="Golang CI Lint"></a>
 <a href="https://codeclimate.com/github/kool-dev/kool/maintainability"><img src="https://api.codeclimate.com/v1/badges/1511f826de92d2ab39cc/maintainability" alt="Maintainability"></a>
-<a href="https://join.slack.com/t/kool-dev/shared_invite/zt-ntmkyjog-DHOiddbBnhY796KaABUhzg"><img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack" alt="Join Slack Kool community"></a>
+<a href="https://kool.dev/slack"><img src="https://img.shields.io/badge/Join%20Slack-kool--dev-orange?logo=slack" alt="Join Slack Kool community"></a>
 </p>
 
 ## About `kool`
@@ -62,7 +62,7 @@ You can check the documentation at [**https://kool.dev/docs**](https://kool.dev/
 You are most welcome to contribute and help in our mission of making software development *kool* for everyone.
 
 - [Issues](/issues) are the primary channel for bringing up and tracking issues or proposals.
-- [Kool community on Slack](https://join.slack.com/t/kool-dev/shared_invite/zt-ntmkyjog-DHOiddbBnhY796KaABUhzg) is the a great place to get help and reach Kool developers.
+- [Kool community on Slack](https://kool.dev/slack) is the a great place to get help and reach Kool developers.
 - Check out our [contributing guide](CONTRIBUTING.md) for getting involved.
 
 ### Roadmap
