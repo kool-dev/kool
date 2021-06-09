@@ -84,8 +84,8 @@ services:
 +   image: mailhog/mailhog:latest
 +   environment:
 +     - MH_STORAGE=maildir
-+   volumes:
-+     - mailhog:/maildir:delegated
++   # volumes:
++   #   - mailhog:/maildir:delegated
 +   ports:
 +     - "8025:8025"
 +   networks:
