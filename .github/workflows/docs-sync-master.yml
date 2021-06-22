@@ -1,0 +1,12 @@
+name: Docs Sync Master
+
+on:
+  workflow_dispatch:
+
+jobs:
+  docs-sync-master:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsSL http://kool.dev/sync-docs?token=$KOOL_DEV_DOCS_TOKEN&from=master
+        env:
+          KOOL_DEV_DOCS_TOKEN: ${{ secrets.KOOL_DEV_DOCS_TOKEN }}
