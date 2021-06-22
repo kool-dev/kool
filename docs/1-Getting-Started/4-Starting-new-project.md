@@ -74,7 +74,7 @@ $ kool start
 
 Once `kool start` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see "Hello World!". Hooray!
 
-Verify your Docker container is running using the [`kool status` command](docs/commands/kool-status):
+Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
 
 ```bash
 $ kool status

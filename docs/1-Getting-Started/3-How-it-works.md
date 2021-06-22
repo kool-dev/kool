@@ -2,7 +2,7 @@
 
 ### Presets
 
-Out of the box, **kool** ships with a [collection of presets](https://kool.dev/docs/presets/introduction) to help you quickly kickstart local development using some popular frameworks and stacks. Check out the [Laravel preset](https://kool.dev/docs/presets/laravel) as an example of the developer experience **kool** offers.
+Out of the box, **kool** ships with a collection of presets to help you quickly kickstart local development using some popular frameworks and stacks. Check out the [Laravel preset](https://kool.dev/docs/presets/laravel) as an example of the developer experience **kool** offers.
 
 ### docker-compose.yml
 
