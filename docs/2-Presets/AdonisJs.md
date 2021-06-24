@@ -33,18 +33,18 @@ After installing AdonisJs, `kool create` automatically runs the `kool preset ado
 ```bash
 $ Preset adonis is initializing!
 
-? What database service do you want to use [Use arrows to move, type to filter]
+? Which database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
   MySQL 5.7
   PostgreSQL 13.0
   none
 
-? What cache service do you want to use [Use arrows to move, type to filter]
+? Which cache service do you want to use [Use arrows to move, type to filter]
 > Redis 6.0
   Memcached 1.6
   none
 
-? What javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
 

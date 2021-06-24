@@ -32,7 +32,7 @@ After installing Next.js, `kool create` automatically runs the `kool preset next
 ```bash
 $ Preset nextjs is initializing!
 
-? What javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
 

@@ -32,7 +32,7 @@ After installing Node.js, `kool create` automatically runs the `kool preset node
 ```bash
 $ Preset nodejs is initializing!
 
-? What javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
 
