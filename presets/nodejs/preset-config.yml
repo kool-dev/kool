@@ -6,7 +6,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm-nodejs.yml
