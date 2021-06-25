@@ -9,8 +9,9 @@ kool restart
 ### Options
 
 ```
-  -h, --help    help for restart
-      --purge   Remove all persistent data from volume mounts on containers
+  -h, --help      help for restart
+      --purge     Remove all persistent data from volume mounts on containers
+      --rebuild   Updates and builds service's images
 ```
 
 ### Options inherited from parent commands
