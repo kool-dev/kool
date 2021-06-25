@@ -23,6 +23,11 @@ func newMockStart() *KoolStart {
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "start"},
+		&KoolRebuild{
+			*newFakeKoolService(),
+			&builder.FakeCommand{MockCmd: "pull"},
+			&builder.FakeCommand{MockCmd: "build"},
+		},
 	}
 }
 
@@ -72,6 +77,34 @@ func TestStartForegroundFlag(t *testing.T) {
 	args = koolStart.start.(*builder.FakeCommand).ArgsAppend
 	if len(args) != 0 {
 		t.Error("shoul not have appended args")
+	}
+}
+
+func TestStartRebuildFlag(t *testing.T) {
+	koolStart := newMockStart()
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	rebuilder := koolStart.rebuilder.(*KoolRebuild)
+	if rebuilder.pull.(*builder.FakeCommand).CalledCmd || rebuilder.build.(*builder.FakeCommand).CalledCmd {
+		t.Error("should not have executed pull or build")
+	}
+
+	koolStart = newMockStart()
+	rebuilder = koolStart.rebuilder.(*KoolRebuild)
+
+	koolStart.Flags.Rebuild = true
+
+	rebuilder.shell.(*shell.FakeShell).MockOutStream = io.Discard
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	if !rebuilder.pull.(*builder.FakeCommand).CalledCmd || !rebuilder.build.(*builder.FakeCommand).CalledCmd {
+		t.Error("should have executed pull and build")
 	}
 }
 
