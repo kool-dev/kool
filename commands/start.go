@@ -109,7 +109,7 @@ func (s *KoolStart) Execute(args []string) (err error) {
 }
 
 func (s *KoolStart) rebuild() (err error) {
-	var task = NewKoolTask("Pulling and building service's images", s.rebuilder)
+	var task = NewKoolTask("Updating service's images", s.rebuilder)
 
 	task.SetInStream(s.InStream())
 	task.SetOutStream(s.OutStream())
