@@ -2,6 +2,8 @@ package commands
 
 import (
 	"errors"
+	"io"
+	"kool-dev/kool/core/shell"
 	"testing"
 )
 
@@ -80,5 +82,23 @@ func TestPurgeRestartCommand(t *testing.T) {
 
 	if !fakeStop.Flags.Purge {
 		t.Error("did not set the purge flag to true in the stop service")
+	}
+}
+
+func TestRebuildRestartCommand(t *testing.T) {
+	fakeStop := &FakeKoolService{}
+	fakeStart := newFakeKoolStart()
+
+	cmd := NewRestartCommand(fakeStop, fakeStart)
+	cmd.SetArgs([]string{"--rebuild"})
+
+	fakeStart.rebuilder.(*KoolRebuild).shell.(*shell.FakeShell).MockOutStream = io.Discard
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing restart command; error: %v", err)
+	}
+
+	if !fakeStart.Flags.Rebuild {
+		t.Error("did not set the rebuild flag to true in the start service")
 	}
 }

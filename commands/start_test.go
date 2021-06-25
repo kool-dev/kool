@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newMockStart() *KoolStart {
+func newFakeKoolStart() *KoolStart {
 	return &KoolStart{
 		*newFakeKoolService(),
 		&KoolStartFlags{},
@@ -32,7 +32,7 @@ func newMockStart() *KoolStart {
 }
 
 func TestStartAllCommand(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	cmd := NewStartCommand(koolStart)
 
@@ -56,7 +56,7 @@ func TestStartAllCommand(t *testing.T) {
 }
 
 func TestStartForegroundFlag(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	if err := koolStart.Execute(nil); err != nil {
 		t.Fatal(err)
@@ -67,7 +67,7 @@ func TestStartForegroundFlag(t *testing.T) {
 		t.Error("did not set -d on start")
 	}
 
-	koolStart = newMockStart()
+	koolStart = newFakeKoolStart()
 	koolStart.Flags.Foreground = true
 
 	if err := koolStart.Execute(nil); err != nil {
@@ -81,7 +81,7 @@ func TestStartForegroundFlag(t *testing.T) {
 }
 
 func TestStartRebuildFlag(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	if err := koolStart.Execute(nil); err != nil {
 		t.Fatal(err)
@@ -92,7 +92,7 @@ func TestStartRebuildFlag(t *testing.T) {
 		t.Error("should not have executed pull or build")
 	}
 
-	koolStart = newMockStart()
+	koolStart = newFakeKoolStart()
 	rebuilder = koolStart.rebuilder.(*KoolRebuild)
 
 	koolStart.Flags.Rebuild = true
@@ -109,7 +109,7 @@ func TestStartRebuildFlag(t *testing.T) {
 }
 
 func TestStartServicesCommand(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	cmd := NewStartCommand(koolStart)
 	expected := []string{"app", "database"}
@@ -133,7 +133,7 @@ func TestStartServicesCommand(t *testing.T) {
 }
 
 func TestFailedDependenciesStartCommand(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 	koolStart.check.(*checker.FakeChecker).MockError = errors.New("dependencies")
 
 	cmd := NewStartCommand(koolStart)
@@ -150,7 +150,7 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 }
 
 func TestFailedNetworkStartCommand(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 	koolStart.net.(*network.FakeHandler).MockError = errors.New("network")
 
 	cmd := NewStartCommand(koolStart)
@@ -167,7 +167,7 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 }
 
 func TestStartWithError(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 	koolStart.start.(*builder.FakeCommand).MockInteractiveError = errors.New("start")
 
 	cmd := NewStartCommand(koolStart)
