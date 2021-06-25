@@ -106,6 +106,19 @@ func TestStartRebuildFlag(t *testing.T) {
 	if !rebuilder.pull.(*builder.FakeCommand).CalledCmd || !rebuilder.build.(*builder.FakeCommand).CalledCmd {
 		t.Error("should have executed pull and build")
 	}
+
+	rebuilder.pull.(*builder.FakeCommand).MockInteractiveError = errors.New("mock pull error")
+
+	if err := rebuilder.Execute(nil); !errors.Is(err, rebuilder.pull.(*builder.FakeCommand).MockInteractiveError) {
+		t.Error("expected pull error")
+	}
+
+	rebuilder.pull.(*builder.FakeCommand).MockInteractiveError = nil
+	rebuilder.build.(*builder.FakeCommand).MockInteractiveError = errors.New("mock build error")
+
+	if err := rebuilder.Execute(nil); !errors.Is(err, rebuilder.build.(*builder.FakeCommand).MockInteractiveError) {
+		t.Error("expected build error")
+	}
 }
 
 func TestStartServicesCommand(t *testing.T) {
