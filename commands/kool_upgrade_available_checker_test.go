@@ -17,7 +17,7 @@ func newFakeUpdateAwareService(start *KoolStart, koolFakeUpdater *updater.FakeUp
 }
 
 func TestStartWithUpdaterWrapper(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
@@ -50,7 +50,7 @@ func TestStartWithUpdaterWrapper(t *testing.T) {
 }
 
 func TestStartWithUpdaterWrapperError(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
@@ -81,7 +81,7 @@ func TestStartWithUpdaterWrapperError(t *testing.T) {
 }
 
 func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "1.0.0",
@@ -112,7 +112,7 @@ func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 }
 
 func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
-	koolStart := newMockStart()
+	koolStart := newFakeKoolStart()
 
 	koolUpdater := &updater.FakeUpdater{
 		MockCurrentVersion: "0.0.0",
