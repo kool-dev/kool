@@ -31,22 +31,22 @@ Under the hood, this command will create your project directory and automaticall
 ```bash
 $ Preset wordpress is initializing!
 
-? What PHP version do you want to use  [Use arrows to move, type to filter]
+? Which PHP version do you want to use  [Use arrows to move, type to filter]
 > PHP 8.0
   PHP 7.4
 
-? What database service do you want to use [Use arrows to move, type to filter]
+? Which database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
   MySQL 5.7
   PostgreSQL 13.0
   none
 
-? What cache service do you want to use [Use arrows to move, type to filter]
+? Which cache service do you want to use [Use arrows to move, type to filter]
 > Redis 6.0
   Memcached 1.6
   none
 
-? What javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
 

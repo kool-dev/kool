@@ -6,7 +6,7 @@ questions:
   compose:
     - key: database
       default_answer: MySQL 8.0
-      message: What database service do you want to use
+      message: Which database service do you want to use
       options:
         - name: MySQL 8.0
           template: mysql8-adonis.yml
@@ -18,7 +18,7 @@ questions:
           template: none
     - key: cache
       default_answer: Redis 6.0
-      message: What cache service do you want to use
+      message: Which cache service do you want to use
       options:
         - name: Redis 6.0
           template: redis6.yml
@@ -29,7 +29,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm-adonis.yml

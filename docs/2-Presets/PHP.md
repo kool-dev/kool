@@ -32,11 +32,11 @@ After setting up the project, `kool create` automatically runs the `kool preset 
 ```bash
 $ Preset php is initializing!
 
-? What app service do you want to use [Use arrows to move, type to filter]
+? Which app service do you want to use [Use arrows to move, type to filter]
 > PHP 7.4
   PHP 8.0
 
-? What composer version do you want to use [Use arrows to move, type to filter]
+? Which composer version do you want to use [Use arrows to move, type to filter]
 > 1.x
   2.x
 

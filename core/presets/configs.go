@@ -13,7 +13,7 @@ questions:
   compose:
     - key: database
       default_answer: MySQL 8.0
-      message: What database service do you want to use
+      message: Which database service do you want to use
       options:
         - name: MySQL 8.0
           template: mysql8-adonis.yml
@@ -25,7 +25,7 @@ questions:
           template: none
     - key: cache
       default_answer: Redis 6.0
-      message: What cache service do you want to use
+      message: Which cache service do you want to use
       options:
         - name: Redis 6.0
           template: redis6.yml
@@ -36,7 +36,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm-adonis.yml
@@ -52,21 +52,6 @@ templates:
 commands:
   create:
   - kool docker klakegg/hugo new site $CREATE_DIRECTORY
-#questions:
-#  compose:
-#    - key: app
-#      template: hugo.yml
-#   - key: comments
-#     default_answer: none
-#     message: What comments service do you want to use
-#     options:
-#       - name: Commento
-#         template: commento.yml
-#       - name: none
-#         template: none
-#templates:
-#  - key: scripts
-#    template: hugo.yml
 `
 	configs["laravel"] = `language: php
 commands:
@@ -76,7 +61,7 @@ questions:
   compose:
     - key: app
       default_answer: PHP 8.0
-      message: What app service do you want to use
+      message: Which app service do you want to use
       options:
         - name: PHP 8.0
           template: php8.yml
@@ -84,7 +69,7 @@ questions:
           template: php74.yml
     - key: database
       default_answer: MySQL 8.0
-      message: What database service do you want to use
+      message: Which database service do you want to use
       options:
         - name: MySQL 8.0
           template: mysql8.yml
@@ -98,7 +83,7 @@ questions:
           template: none
     - key: cache
       default_answer: Redis 6.0
-      message: What cache service do you want to use
+      message: Which cache service do you want to use
       options:
         - name: Redis 6.0
           template: redis6.yml
@@ -109,7 +94,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm.yml
@@ -127,7 +112,7 @@ questions:
   compose:
     - key: database
       default_answer: MySQL 8.0
-      message: What database service do you want to use
+      message: Which database service do you want to use
       options:
         - name: MySQL 8.0
           template: mysql8.yml
@@ -139,7 +124,7 @@ questions:
           template: none
     - key: cache
       default_answer: Redis 6.0
-      message: What cache service do you want to use
+      message: Which cache service do you want to use
       options:
         - name: Redis 6.0
           template: redis6.yml
@@ -168,7 +153,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm-nextjs.yml
@@ -183,7 +168,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm-nodejs.yml
@@ -241,7 +226,7 @@ questions:
   compose:
     - key: app
       default_answer: PHP 8.0
-      message: What app service do you want to use
+      message: Which app service do you want to use
       options:
         - name: PHP 8.0
           template: php8.yml
@@ -249,7 +234,7 @@ questions:
           template: php74.yml
     - key: database
       default_answer: MySQL 8.0
-      message: What database service do you want to use
+      message: Which database service do you want to use
       options:
         - name: MySQL 8.0
           template: mysql8.yml
@@ -263,7 +248,7 @@ questions:
           template: none
     - key: cache
       default_answer: Redis 6.0
-      message: What cache service do you want to use
+      message: Which cache service do you want to use
       options:
         - name: Redis 6.0
           template: redis6.yml
@@ -274,7 +259,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm.yml
@@ -292,7 +277,7 @@ questions:
   compose:
     - key: app
       default_answer: PHP 8.0
-      message: What PHP version do you want to use
+      message: Which PHP version do you want to use
       options:
         - name: PHP 8.0
           template: wordpress80.yml
@@ -300,7 +285,7 @@ questions:
           template: wordpress74.yml
     - key: database
       default_answer: MySQL 8.0
-      message: What database service do you want to use
+      message: Which database service do you want to use
       options:
         - name: MySQL 8.0
           template: mysql8.yml
@@ -312,7 +297,7 @@ questions:
           template: none
     - key: cache
       default_answer: Redis 6.0
-      message: What cache service do you want to use
+      message: Which cache service do you want to use
       options:
         - name: Redis 6.0
           template: redis6.yml
@@ -323,7 +308,7 @@ questions:
   kool:
     - key: scripts
       default_answer: npm
-      message: What javascript package manager do you want to use
+      message: Which javascript package manager do you want to use
       options:
         - name: npm
           template: npm.yml
