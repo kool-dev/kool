@@ -33,7 +33,7 @@ func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 	return &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy a local application to a Kool Cloud environment",
-		Run:   DefaultCommandRunFunction(deploy),
+		RunE:  DefaultCommandRunFunction(deploy),
 		Args:  cobra.NoArgs,
 
 		DisableFlagsInUseLine: true,

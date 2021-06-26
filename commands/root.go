@@ -9,7 +9,7 @@ import (
 )
 
 // CobraRunFN Cobra command run function
-type CobraRunFN func(*cobra.Command, []string)
+type CobraRunFN func(*cobra.Command, []string) error
 
 // AddCommandsFN function to add subcommands
 type AddCommandsFN func(*cobra.Command)
@@ -49,8 +49,10 @@ func init() {
 // NewRootCmd creates the root command
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
-		Use:   "kool",
-		Short: "Cloud native environments made easy",
+		Use:           "kool",
+		SilenceErrors: true,
+		SilenceUsage:  true,
+		Short:         "Cloud native environments made easy",
 		Long: `From development to production, a robust and easy-to-use developer tool
 that makes Docker container adoption quick and easy for building and deploying cloud native
 applications.
@@ -78,7 +80,6 @@ Complete documentation is available at https://kool.dev/docs`,
 // Execute proxies the call to cobra root command
 func Execute() error {
 	setRecursiveCall(rootCmd)
-
 	return rootCmd.Execute()
 }
 
@@ -105,37 +106,36 @@ func RootCmd() *cobra.Command {
 
 // DefaultCommandRunFunction default run function logic
 func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
-	return func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) (err error) {
 		for _, service := range services {
 			service.SetOutStream(cmd.OutOrStdout())
 			service.SetInStream(cmd.InOrStdin())
 			service.SetErrStream(cmd.ErrOrStderr())
 
-			if err := service.Execute(args); err != nil {
+			if err = service.Execute(args); err != nil {
 				if shell.IsUserCancelledError(err) {
 					service.Warning("Operation Cancelled")
-					service.Exit(0)
-				} else {
-					service.Error(err)
-					service.Exit(1)
+					err = nil
 				}
+				return
 			}
 		}
+		return
 	}
 }
 
 // LongTaskCommandRunFunction long tasks run function logic
 func LongTaskCommandRunFunction(tasks ...KoolTask) CobraRunFN {
-	return func(cmd *cobra.Command, args []string) {
+	return func(cmd *cobra.Command, args []string) (err error) {
 		for _, task := range tasks {
 			task.SetOutStream(cmd.OutOrStdout())
 			task.SetInStream(cmd.InOrStdin())
 			task.SetErrStream(cmd.ErrOrStderr())
 
-			if err := task.Run(args); err != nil {
-				task.Error(err)
-				task.Exit(1)
+			if err = task.Run(args); err != nil {
+				return
 			}
 		}
+		return
 	}
 }

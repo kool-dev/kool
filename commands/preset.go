@@ -92,7 +92,7 @@ func NewPresetCommand(preset *KoolPreset) (presetCmd *cobra.Command) {
 files customized for Kool in the current working directory. If no [PRESET] is provided,
 an interactive wizard will present the available options.`,
 		Args:                  cobra.MaximumNArgs(1),
-		Run:                   DefaultCommandRunFunction(preset),
+		RunE:                  DefaultCommandRunFunction(preset),
 		DisableFlagsInUseLine: true,
 	}
 

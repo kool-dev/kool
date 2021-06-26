@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/gookit/color"
 )
 
@@ -20,13 +21,20 @@ type KoolTask interface {
 // DefaultKoolTask holds data for running kool service as a long task
 type DefaultKoolTask struct {
 	KoolService
-	message   string
-	taskShell shell.Shell
+	message     string
+	taskShell   shell.Shell
+	frameOutput bool
+	originalOut io.Writer
 }
 
 // NewKoolTask creates a new kool task
 func NewKoolTask(message string, service KoolService) *DefaultKoolTask {
-	return &DefaultKoolTask{service, message, shell.NewShell()}
+	return &DefaultKoolTask{
+		KoolService: service,
+		message:     message,
+		taskShell:   shell.NewShell(),
+		frameOutput: true,
+	}
 }
 
 // Run runs task
@@ -35,16 +43,15 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		return t.Execute(args)
 	}
 
-	originalOutput := t.OutStream()
-	t.taskShell.SetOutStream(originalOutput)
+	t.originalOut = t.OutStream()
+	t.taskShell.SetOutStream(t.originalOut)
 	pipeReader, pipeWriter := io.Pipe()
 
 	t.SetOutStream(pipeWriter)
-	defer t.SetOutStream(originalOutput)
-
-	startMessage := fmt.Sprintf("%s ...", t.message)
-	t.taskShell.Println(startMessage)
-	t.taskShell.Println(strings.Repeat("=", len(startMessage)))
+	origErr := t.ErrStream()
+	t.SetErrStream(pipeWriter)
+	defer t.SetOutStream(t.originalOut)
+	defer t.SetErrStream(origErr)
 
 	lines := make(chan string)
 
@@ -54,22 +61,26 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 	err = <-t.execService(args)
 	pipeWriter.Close()
 	<-donePrinting
-
 	var statusMessage string
 	if err != nil {
-		statusMessage = fmt.Sprintf("... %s", color.New(color.Red).Sprint("error"))
+		statusMessage = color.New(color.Red).Sprint("error")
 	} else {
-		statusMessage = fmt.Sprintf("... %s", color.New(color.Green).Sprint("done"))
+		statusMessage = color.New(color.Green).Sprint("done")
 	}
 
-	t.taskShell.Printf("\r")
-	t.taskShell.Println(statusMessage)
+	t.taskShell.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+	t.taskShell.Println(fmt.Sprintf("[%s] %s", statusMessage, t.message))
 
 	return
 }
 
+// SetFrameOutput
+func (t *DefaultKoolTask) SetFrameOutput(frame bool) {
+	t.frameOutput = frame
+}
+
 func (t *DefaultKoolTask) execService(args []string) <-chan error {
-	err := make(chan error)
+	var err = make(chan error)
 
 	go func() {
 		defer close(err)
@@ -93,7 +104,7 @@ func readServiceOutput(reader io.Reader, lines chan string) {
 		)
 
 		for err == nil {
-			if line, err = bufReader.ReadString('\n'); line != "" {
+			if line, err = bufReader.ReadString('\n'); strings.TrimSpace(line) != "" {
 				lines <- strings.TrimSpace(line)
 			}
 		}
@@ -101,31 +112,35 @@ func readServiceOutput(reader io.Reader, lines chan string) {
 }
 
 func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
-	donePrinting := make(chan bool)
-	spinChars := []byte{'-', '/', '|', '\\'}
-	spinPos := 0
-	currentSpin := spinChars[spinPos : spinPos+1]
+	var (
+		donePrinting = make(chan bool)
+		loading      = spinner.New(spinner.CharSets[14], 100*time.Millisecond, spinner.WithWriter(t.originalOut))
+	)
+
+	loading.Prefix = " "
+	loading.Suffix = " " + t.message
+	loading.Start()
 
 	go func() {
 		defer close(donePrinting)
+		defer loading.Stop()
 
 	OutputPrint:
 		for {
 			select {
 			case line, ok := <-lines:
 				if ok {
-					t.taskShell.Printf("\r")
-					t.taskShell.Println(">", line)
-					t.taskShell.Printf("... %s", currentSpin)
+					loading.Lock()
+					t.taskShell.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+					if t.frameOutput {
+						t.taskShell.Println(">", line)
+					} else {
+						t.taskShell.Println(line)
+					}
+					loading.Unlock()
 				} else {
-					t.taskShell.Printf("\r")
-					t.taskShell.Printf("... %s", currentSpin)
 					break OutputPrint
 				}
-			case <-time.After(100 * time.Millisecond):
-				spinPos = (spinPos + 1) % 4
-				currentSpin = spinChars[spinPos : spinPos+1]
-				t.taskShell.Printf("\r... %s", currentSpin)
 			}
 		}
 

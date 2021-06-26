@@ -57,13 +57,14 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 // NewSelfUpdateCommand initializes new kool self-update command
 func NewSelfUpdateCommand(selfUpdate *KoolSelfUpdate) *cobra.Command {
 	selfUpdateTask := NewKoolTask("Updating kool version", selfUpdate)
+	selfUpdateTask.SetFrameOutput(false)
 
 	return &cobra.Command{
 		Use:   "self-update",
 		Short: "Update kool to the latest version",
 		Long:  "Checks the latest release of Kool in GitHub Releases, and downloads and replaces the local binary if a newer version is available.",
 		Args:  cobra.NoArgs,
-		Run:   LongTaskCommandRunFunction(selfUpdateTask),
+		RunE:  LongTaskCommandRunFunction(selfUpdateTask),
 
 		DisableFlagsInUseLine: true,
 	}

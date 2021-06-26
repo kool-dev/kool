@@ -32,7 +32,7 @@ func NewDeployExecCommand(deployExec *KoolDeployExec) (cmd *cobra.Command) {
 execute a COMMAND inside the specified SERVICE container (similar to an SSH session).
 Must use a KOOL_API_TOKEN environment variable for authentication.`,
 		Args: cobra.MinimumNArgs(1),
-		Run:  DefaultCommandRunFunction(deployExec),
+		RunE: DefaultCommandRunFunction(deployExec),
 
 		DisableFlagsInUseLine: true,
 	}

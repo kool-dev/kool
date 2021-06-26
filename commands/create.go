@@ -94,7 +94,7 @@ func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 		Short: "Create a new project using a preset",
 		Long:  "Create a new project using the specified PRESET in a directory named FOLDER.",
 		Args:  cobra.ExactArgs(2),
-		Run:   DefaultCommandRunFunction(create),
+		RunE:  DefaultCommandRunFunction(create),
 
 		DisableFlagsInUseLine: true,
 	}

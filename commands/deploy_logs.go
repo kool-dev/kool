@@ -33,7 +33,7 @@ func NewDeployLogsCommand(deployLogs *KoolDeployLogs) (cmd *cobra.Command) {
 you can see the logs from the specified SERVICE container.
 Must use a KOOL_API_TOKEN environment variable for authentication.`,
 		Args: cobra.ExactArgs(1),
-		Run:  DefaultCommandRunFunction(deployLogs),
+		RunE: DefaultCommandRunFunction(deployLogs),
 
 		DisableFlagsInUseLine: true,
 	}

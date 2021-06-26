@@ -28,7 +28,7 @@ func TestStartWithUpdaterWrapper(t *testing.T) {
 	cmd := NewStartCommand(koolStart)
 	fakeUpdateAwareService := newFakeUpdateAwareService(koolStart, koolUpdater)
 
-	cmd.Run = DefaultCommandRunFunction(fakeUpdateAwareService)
+	cmd.RunE = DefaultCommandRunFunction(fakeUpdateAwareService)
 
 	if _, err := execStartCommand(cmd); err != nil {
 		t.Fatal(err)
@@ -61,7 +61,7 @@ func TestStartWithUpdaterWrapperError(t *testing.T) {
 	cmd := NewStartCommand(koolStart)
 	fakeUpdateAwareService := newFakeUpdateAwareService(koolStart, koolUpdater)
 
-	cmd.Run = DefaultCommandRunFunction(fakeUpdateAwareService)
+	cmd.RunE = DefaultCommandRunFunction(fakeUpdateAwareService)
 
 	if _, err := execStartCommand(cmd); err != nil {
 		t.Fatal(err)
@@ -92,7 +92,7 @@ func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 	cmd := NewStartCommand(koolStart)
 	fakeUpdateAwareService := newFakeUpdateAwareService(koolStart, koolUpdater)
 
-	cmd.Run = DefaultCommandRunFunction(fakeUpdateAwareService)
+	cmd.RunE = DefaultCommandRunFunction(fakeUpdateAwareService)
 
 	if _, err := execStartCommand(cmd); err != nil {
 		t.Fatal(err)
@@ -124,7 +124,7 @@ func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
 	cmd := NewStartCommand(koolStart)
 	fakeUpdateAwareService := newFakeUpdateAwareService(koolStart, koolUpdater)
 
-	cmd.Run = DefaultCommandRunFunction(fakeUpdateAwareService)
+	cmd.RunE = DefaultCommandRunFunction(fakeUpdateAwareService)
 
 	if fakeUpdateAwareService.updater.(*updater.FakeUpdater).CalledGetCurrentVersion {
 		t.Errorf("called GetCurrentVersion")

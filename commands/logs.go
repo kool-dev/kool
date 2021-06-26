@@ -78,7 +78,7 @@ func NewLogsCommand(logs *KoolLogs) (logsCmd *cobra.Command) {
 		Long: `Display log output from all running service containers,
 or one or more specified [SERVICE...] containers. Add a '-f' option to the
 the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').`,
-		Run: DefaultCommandRunFunction(logs),
+		RunE: DefaultCommandRunFunction(logs),
 
 		DisableFlagsInUseLine: true,
 	}

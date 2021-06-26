@@ -44,7 +44,7 @@ func NewStartCommand(start *KoolStart) (startCmd *cobra.Command) {
 		Short: "Start service containers defined in docker-compose.yml",
 		Long: `Start one or more specified [SERVICE] containers. If no [SERVICE] is provided,
 all containers are started. If the containers are already running, they are recreated.`,
-		Run: DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd})),
+		RunE: DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd})),
 
 		DisableFlagsInUseLine: true,
 	}
@@ -110,6 +110,8 @@ func (s *KoolStart) Execute(args []string) (err error) {
 
 func (s *KoolStart) rebuild() (err error) {
 	var task = NewKoolTask("Updating service's images", s.rebuilder)
+
+	task.SetFrameOutput(false)
 
 	task.SetInStream(s.InStream())
 	task.SetOutStream(s.OutStream())

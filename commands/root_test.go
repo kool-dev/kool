@@ -150,7 +150,7 @@ func TestDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(f),
+		RunE:  DefaultCommandRunFunction(f),
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -168,7 +168,7 @@ func TestFailingDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(f),
+		RunE:  DefaultCommandRunFunction(f),
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -189,7 +189,7 @@ func TestMultipleServicesDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(services[0], services[1]),
+		RunE:  DefaultCommandRunFunction(services[0], services[1]),
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -210,7 +210,7 @@ func TestMultipleServicesFailingDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(failing, passing),
+		RunE:  DefaultCommandRunFunction(failing, passing),
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -402,7 +402,7 @@ func TestPromptSelectInterruptedError(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(failing),
+		RunE:  DefaultCommandRunFunction(failing),
 	}
 
 	b := bytes.NewBufferString("")

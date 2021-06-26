@@ -6,7 +6,6 @@ import (
 	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -45,6 +44,14 @@ type OutputWritter interface {
 	Success(...interface{})
 }
 
+// Outputable implements basic output handlers
+type Outputable interface {
+	OutStream() io.Writer
+	SetOutStream(io.Writer)
+	ErrStream() io.Writer
+	SetErrStream(io.Writer)
+}
+
 type PathChecker interface {
 	LookPath(builder.Command) error
 }
@@ -52,13 +59,10 @@ type PathChecker interface {
 // Shell implements functions for handling a shell
 type Shell interface {
 	OutputWritter
+	Outputable
 	PathChecker
 	InStream() io.Reader
 	SetInStream(io.Reader)
-	OutStream() io.Writer
-	SetOutStream(io.Writer)
-	ErrStream() io.Writer
-	SetErrStream(io.Writer)
 	Exec(builder.Command, ...string) (string, error)
 	Interactive(builder.Command, ...string) error
 	Error(error)
@@ -298,9 +302,6 @@ func (s *DefaultShell) execute(cmd *exec.Cmd) (err error) {
 	for {
 		select {
 		case err = <-waitCh:
-			if err != nil {
-				log.Fatal(err)
-			}
 			return
 		case sig := <-sigChan:
 			if err := cmd.Process.Signal(sig); err != nil {

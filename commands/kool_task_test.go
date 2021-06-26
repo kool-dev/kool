@@ -59,7 +59,7 @@ func newKoolTaskServiceTestWithOutput() *koolTaskServiceTest {
 }
 
 func newKoolTaskTest(message string, service KoolService) *DefaultKoolTask {
-	return &DefaultKoolTask{service, message, &shell.FakeShell{}}
+	return &DefaultKoolTask{service, message, &shell.FakeShell{}, true}
 }
 
 func TestNewKoolTask(t *testing.T) {

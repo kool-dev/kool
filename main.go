@@ -6,6 +6,7 @@ import (
 
 	"kool-dev/kool/commands"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/shell"
 )
 
 func main() {
@@ -13,7 +14,13 @@ func main() {
 	environment.InitEnvironmentVariables(environment.NewEnvStorage())
 
 	if err := commands.Execute(); err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		shell.NewShell().Println(err)
+		code := 1
+		if ex, ok := err.(shell.ErrExitable); ok {
+			code = ex.Code
+		}
+		os.Exit(code)
 	}
+
+	os.Exit(0)
 }

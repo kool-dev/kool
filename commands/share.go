@@ -99,7 +99,7 @@ func NewShareCommand(share *KoolShare) (shareCmd *cobra.Command) {
 		Use:   "share",
 		Short: "Live share your local environment on the Internet using an HTTP tunnel",
 		Args:  cobra.NoArgs,
-		Run:   DefaultCommandRunFunction(share),
+		RunE:  DefaultCommandRunFunction(share),
 
 		DisableFlagsInUseLine: true,
 	}

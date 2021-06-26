@@ -118,8 +118,10 @@ func (k *DefaultKoolService) Interactive(command builder.Command, extraArgs ...s
 
 	// Subprocess exited. Get the return code, if we can
 	if exitError, ok := err.(*exec.ExitError); ok {
-		waitStatus := exitError.Sys().(syscall.WaitStatus)
-		k.Exit(waitStatus.ExitStatus())
+		err = shell.ErrExitable{
+			Err:  err,
+			Code: exitError.Sys().(syscall.WaitStatus).ExitStatus(),
+		}
 	}
 
 	return

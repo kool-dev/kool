@@ -91,6 +91,6 @@ $ kool completion fish > ~/.config/fish/completions/kool.fish
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.ExactValidArgs(1),
 		Hidden:                true,
-		Run:                   DefaultCommandRunFunction(completion),
+		RunE:                  DefaultCommandRunFunction(completion),
 	}
 }
