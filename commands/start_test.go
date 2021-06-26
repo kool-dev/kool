@@ -151,15 +151,7 @@ func TestFailedDependenciesStartCommand(t *testing.T) {
 
 	cmd := NewStartCommand(koolStart)
 
-	_, err := execStartCommand(cmd)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
+	assertExecGotError(t, cmd, "dependencies")
 }
 
 func TestFailedNetworkStartCommand(t *testing.T) {
@@ -168,15 +160,7 @@ func TestFailedNetworkStartCommand(t *testing.T) {
 
 	cmd := NewStartCommand(koolStart)
 
-	_, err := execStartCommand(cmd)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
+	assertExecGotError(t, cmd, "network")
 }
 
 func TestStartWithError(t *testing.T) {
@@ -185,15 +169,7 @@ func TestStartWithError(t *testing.T) {
 
 	cmd := NewStartCommand(koolStart)
 
-	_, err := execStartCommand(cmd)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 1 {
-		t.Errorf("Expected an exit code 1, got '%v'", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
+	assertExecGotError(t, cmd, "start")
 }
 
 func execStartCommand(cmd *cobra.Command) (output string, err error) {

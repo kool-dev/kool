@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
-	"os"
-	"os/exec"
 	"strings"
-	"syscall"
 	"testing"
 )
 
@@ -142,33 +139,5 @@ func TestKoolServiceProxies(t *testing.T) {
 
 	if val, ok := k.shell.(*shell.FakeShell).CalledLookPath["cmd"]; !val || !ok {
 		t.Errorf("failed to assert calling method LookPath on FakeKoolService")
-	}
-}
-
-func TestKoolServiceInteractiveError(t *testing.T) {
-	k := newFakeKoolService()
-
-	command := &builder.FakeCommand{MockInteractiveError: shell.ErrLookPath}
-
-	_ = k.Interactive(command)
-
-	if !k.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit for not found command")
-	} else if code := k.exiter.(*shell.FakeExiter).Code(); code != 2 {
-		t.Errorf("expecting exit code 2, got %v", code)
-	}
-
-	processState := &os.ProcessState{}
-	exitError := &exec.ExitError{ProcessState: processState}
-	exitStatus := exitError.Sys().(syscall.WaitStatus).ExitStatus()
-
-	command = &builder.FakeCommand{MockInteractiveError: exitError}
-
-	_ = k.Interactive(command)
-
-	if !k.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit for not found command")
-	} else if code := k.exiter.(*shell.FakeExiter).Code(); code != exitStatus {
-		t.Errorf("expecting exit code %v, got %v", exitStatus, code)
 	}
 }

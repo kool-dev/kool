@@ -99,9 +99,7 @@ func TestNewRunCommandMultipleScriptsWarning(t *testing.T) {
 
 	cmd.SetArgs([]string{"script"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
+	assertExecGotError(t, cmd, "script was not found in any kool.yml")
 
 	if !f.shell.(*shell.FakeShell).CalledWarning {
 		t.Errorf("did not call Warning for multiple scripts")
@@ -120,23 +118,8 @@ func TestNewRunCommandParseError(t *testing.T) {
 
 	cmd.SetArgs([]string{"script"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error for parse error")
-	}
-
-	expectedError := "parse error"
-
-	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
-		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("got an parse error, but command did not exit")
-	}
+	expected := "parse error"
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestNewRunCommandExtraArgsError(t *testing.T) {
@@ -151,23 +134,8 @@ func TestNewRunCommandExtraArgsError(t *testing.T) {
 
 	cmd.SetArgs([]string{"script", "extraArg"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error for extra arguments")
-	}
-
-	expectedError := ErrExtraArguments.Error()
-
-	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
-		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("got an extra arguments error, but command did not exit")
-	}
+	expected := ErrExtraArguments.Error()
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestNewRunCommandErrorInteractive(t *testing.T) {
@@ -181,23 +149,8 @@ func TestNewRunCommandErrorInteractive(t *testing.T) {
 
 	cmd.SetArgs([]string{"script"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error for parsed command failure")
-	}
-
-	expectedError := "interactive error"
-
-	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
-		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("got an error executing parsed command, but command did not exit")
-	}
+	expected := "interactive error"
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestNewRunCommandScriptNotFound(t *testing.T) {
@@ -206,23 +159,8 @@ func TestNewRunCommandScriptNotFound(t *testing.T) {
 
 	cmd.SetArgs([]string{"script"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error for not found script error")
-	}
-
-	expectedError := ErrKoolScriptNotFound.Error()
-
-	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
-		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("got an not found script error, but command did not exit")
-	}
+	expected := ErrKoolScriptNotFound.Error()
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestNewRunCommandWithArguments(t *testing.T) {
@@ -609,9 +547,7 @@ func TestNewRunCommandWithEnvVariable(t *testing.T) {
 
 	cmd.SetArgs([]string{"--env=VAR_TEST=1", "script"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
+	assertExecGotError(t, cmd, "script was not found in any kool.yml")
 
 	envsHistory := f.env.(*environment.FakeEnvStorage).EnvsHistory
 	history, ok := envsHistory["VAR_TEST"]
@@ -691,26 +627,11 @@ func TestNewRunCommandWithTypoErrorNoAnswer(t *testing.T) {
 
 	cmd.SetArgs([]string{"script"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
-	}
+	expected := ErrKoolScriptNotFound.Error()
+	assertExecGotError(t, cmd, expected)
 
 	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
 		t.Error("did not call Ask on PromptSelect")
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error for not found script error")
-	}
-
-	expectedError := ErrKoolScriptNotFound.Error()
-
-	if gotError := f.shell.(*shell.FakeShell).Err.Error(); gotError != expectedError {
-		t.Errorf("expecting error '%s', got '%s'", expectedError, gotError)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("got an not found script error, but command did not exit")
 	}
 }
 
@@ -744,7 +665,7 @@ func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledFirstQuestion(t *test
 	cmd.SetArgs([]string{"script"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
+		t.Errorf("unexpected error %v", err)
 	}
 
 	expected := "Operation Cancelled\n"
@@ -752,14 +673,6 @@ func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledFirstQuestion(t *test
 
 	if output != expected {
 		t.Errorf("expecting warning '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
-
-	if f.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Error("did not call Exit with code 0")
 	}
 }
 
@@ -802,14 +715,6 @@ func TestNewRunCommandWithTypoErrorMultipleSimilarCancelledSecondQuestion(t *tes
 	if output != expected {
 		t.Errorf("expecting warning '%s', got '%s'", expected, output)
 	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
-
-	if f.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Error("did not call Exit with code 0")
-	}
 }
 
 func TestNewRunCommandWithTypoErrorCancelled(t *testing.T) {
@@ -840,7 +745,7 @@ func TestNewRunCommandWithTypoErrorCancelled(t *testing.T) {
 	cmd.SetArgs([]string{"script"})
 
 	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing run command; error: %v", err)
+		t.Errorf("unexpected error %v", err)
 	}
 
 	expected := "Operation Cancelled\n"
@@ -848,13 +753,5 @@ func TestNewRunCommandWithTypoErrorCancelled(t *testing.T) {
 
 	if output != expected {
 		t.Errorf("expecting warning '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
-
-	if f.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Error("did not call Exit with code 0")
 	}
 }

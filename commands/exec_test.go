@@ -194,17 +194,7 @@ func TestFailingNewExecCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"service", "command"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing exec command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
-
-	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error exec" {
-		t.Errorf("expecting error 'error exec', got '%s'", err.Error())
-	}
+	assertExecGotError(t, cmd, "error exec")
 }
 
 func TestDockerComposeTerminalAwarness(t *testing.T) {

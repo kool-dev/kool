@@ -59,7 +59,12 @@ func newKoolTaskServiceTestWithOutput() *koolTaskServiceTest {
 }
 
 func newKoolTaskTest(message string, service KoolService) *DefaultKoolTask {
-	return &DefaultKoolTask{service, message, &shell.FakeShell{}, true}
+	return &DefaultKoolTask{
+		KoolService: service,
+		message: message,
+		taskShell: &shell.FakeShell{},
+		frameOutput: true,
+	}
 }
 
 func TestNewKoolTask(t *testing.T) {
@@ -93,8 +98,8 @@ func TestRunNewKoolTask(t *testing.T) {
 
 	outputLines := task.taskShell.(*shell.FakeShell).OutLines
 
-	if len(outputLines) >= 1 && outputLines[0] != "testing ..." {
-		t.Errorf("expecting message 'testing ...', got %s", outputLines[0])
+	if len(outputLines) >= 1 && !strings.HasSuffix(outputLines[0], " testing") {
+		t.Errorf("expecting message '[done] testing', got %s", outputLines[0])
 	}
 
 	expected := fmt.Sprintf("... %s", color.New(color.Green).Sprint("done"))
