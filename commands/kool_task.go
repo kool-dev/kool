@@ -124,23 +124,15 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 	go func() {
 		defer close(donePrinting)
 
-	OutputPrint:
-		for {
-			select {
-			case line, ok := <-lines:
-				if ok {
-					loading.Lock()
-					t.actualOut.Printf("\r" + strings.Repeat(" ", 100) + "\r")
-					if t.frameOutput {
-						t.actualOut.Println(">", line)
-					} else {
-						t.actualOut.Println(line)
-					}
-					loading.Unlock()
-				} else {
-					break OutputPrint
-				}
+		for line := range lines {
+			loading.Lock()
+			t.actualOut.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+			if t.frameOutput {
+				t.actualOut.Println(">", line)
+			} else {
+				t.actualOut.Println(line)
 			}
+			loading.Unlock()
 		}
 
 		loading.Stop()
