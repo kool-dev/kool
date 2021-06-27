@@ -101,9 +101,23 @@ func TestRunNewKoolTask(t *testing.T) {
 		t.Errorf("expecting message '[done] testing', got %s", outputLines[0])
 	}
 
-	expected := fmt.Sprintf("... %s", color.New(color.Green).Sprint("done"))
-	if len(outputLines) >= 3 && outputLines[2] != expected {
-		t.Errorf("expecting task status '%s', got %s", expected, outputLines[2])
+	task = newKoolTaskTest("testing", service)
+	task.SetFrameOutput(false)
+
+	_ = task.Run([]string{})
+
+	if !service.term.(*shell.FakeTerminalChecker).CalledIsTerminal {
+		t.Error("did not call IsTerminal on task KoolService")
+	}
+
+	if !service.CalledExecute {
+		t.Error("did not call Execute on task KoolService")
+	}
+
+	outputLines = task.actualOut.(*shell.FakeShell).OutLines
+
+	if len(outputLines) >= 1 && !strings.HasSuffix(outputLines[0], " testing") {
+		t.Errorf("expecting message '[done] testing', got %s", outputLines[0])
 	}
 }
 
