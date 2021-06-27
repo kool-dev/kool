@@ -61,8 +61,8 @@ func newKoolTaskServiceTestWithOutput() *koolTaskServiceTest {
 func newKoolTaskTest(message string, service KoolService) *DefaultKoolTask {
 	return &DefaultKoolTask{
 		KoolService: service,
-		message: message,
-		taskShell: &shell.FakeShell{},
+		message:     message,
+		actualOut:   &shell.FakeShell{},
 		frameOutput: true,
 	}
 }
@@ -77,8 +77,8 @@ func TestNewKoolTask(t *testing.T) {
 		t.Errorf("expecting message 'testing' on KoolTask, got '%s'", message)
 	}
 
-	if _, ok := task.taskShell.(*shell.DefaultShell); !ok {
-		t.Error("unexpected shell.Shell on KoolTask.taskShell")
+	if _, ok := task.actualOut.(*shell.DefaultShell); !ok {
+		t.Error("unexpected shell.Shell on KoolTask.actualOut")
 	}
 }
 
@@ -96,7 +96,7 @@ func TestRunNewKoolTask(t *testing.T) {
 		t.Error("did not call Execute on task KoolService")
 	}
 
-	outputLines := task.taskShell.(*shell.FakeShell).OutLines
+	outputLines := task.actualOut.(*shell.FakeShell).OutLines
 
 	if len(outputLines) >= 1 && !strings.HasSuffix(outputLines[0], " testing") {
 		t.Errorf("expecting message '[done] testing', got %s", outputLines[0])
@@ -121,7 +121,7 @@ func TestRunFailingNewKoolTask(t *testing.T) {
 		t.Errorf("expecting Run to return the error '%v', got '%v'", service.MockError, err)
 	}
 
-	outputLines := task.taskShell.(*shell.FakeShell).OutLines
+	outputLines := task.actualOut.(*shell.FakeShell).OutLines
 
 	expected := fmt.Sprintf("... %s", color.New(color.Red).Sprint("error"))
 	if len(outputLines) >= 3 && outputLines[2] != expected {
@@ -136,7 +136,7 @@ func TestRunNonTtyNewKoolTask(t *testing.T) {
 
 	_ = task.Run([]string{})
 
-	if outputLines := task.taskShell.(*shell.FakeShell).OutLines; len(outputLines) > 0 {
+	if outputLines := task.actualOut.(*shell.FakeShell).OutLines; len(outputLines) > 0 {
 		t.Error("should not print out task output")
 	}
 }
@@ -144,11 +144,11 @@ func TestRunNonTtyNewKoolTask(t *testing.T) {
 func TestRunOutputNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTestWithOutput()
 	task := newKoolTaskTest("testing", service)
-	task.taskShell = shell.NewShell()
+	task.actualOut = shell.NewShell()
 
 	_ = task.Run([]string{})
 
-	bufBytes, err := io.ReadAll(task.taskShell.OutStream().(io.Reader))
+	bufBytes, err := io.ReadAll(task.actualOut.OutStream().(io.Reader))
 
 	if err != nil {
 		t.Fatal(err)

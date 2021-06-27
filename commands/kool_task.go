@@ -22,7 +22,7 @@ type KoolTask interface {
 type DefaultKoolTask struct {
 	KoolService
 	message     string
-	taskShell   shell.Shell
+	actualOut   shell.Shell
 	frameOutput bool
 	originalOut io.Writer
 }
@@ -32,7 +32,7 @@ func NewKoolTask(message string, service KoolService) *DefaultKoolTask {
 	return &DefaultKoolTask{
 		KoolService: service,
 		message:     message,
-		taskShell:   shell.NewShell(),
+		actualOut:   shell.NewShell(),
 		frameOutput: true,
 	}
 }
@@ -44,7 +44,7 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 	}
 
 	t.originalOut = t.OutStream()
-	t.taskShell.SetOutStream(t.originalOut)
+	t.actualOut.SetOutStream(t.originalOut)
 	pipeReader, pipeWriter := io.Pipe()
 
 	t.SetOutStream(pipeWriter)
@@ -68,8 +68,8 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		statusMessage = color.New(color.Green).Sprint("done")
 	}
 
-	t.taskShell.Printf("\r" + strings.Repeat(" ", 100) + "\r")
-	t.taskShell.Println(fmt.Sprintf("[%s] %s", statusMessage, t.message))
+	t.actualOut.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+	t.actualOut.Println(fmt.Sprintf("[%s] %s", statusMessage, t.message))
 
 	return
 }
@@ -123,7 +123,6 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 
 	go func() {
 		defer close(donePrinting)
-		defer loading.Stop()
 
 	OutputPrint:
 		for {
@@ -131,11 +130,11 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 			case line, ok := <-lines:
 				if ok {
 					loading.Lock()
-					t.taskShell.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+					t.actualOut.Printf("\r" + strings.Repeat(" ", 100) + "\r")
 					if t.frameOutput {
-						t.taskShell.Println(">", line)
+						t.actualOut.Println(">", line)
 					} else {
-						t.taskShell.Println(line)
+						t.actualOut.Println(line)
 					}
 					loading.Unlock()
 				} else {
@@ -144,6 +143,7 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 			}
 		}
 
+		loading.Stop()
 		donePrinting <- true
 	}()
 
