@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// CobraRunFN Cobra command run function
-type CobraRunFN func(*cobra.Command, []string) error
+// CobraRunE Cobra command run function
+type CobraRunE func(*cobra.Command, []string) error
 
 // AddCommandsFN function to add subcommands
 type AddCommandsFN func(*cobra.Command)
@@ -105,7 +105,7 @@ func RootCmd() *cobra.Command {
 }
 
 // DefaultCommandRunFunction default run function logic
-func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
+func DefaultCommandRunFunction(services ...KoolService) CobraRunE {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		for _, service := range services {
 			service.SetOutStream(cmd.OutOrStdout())
@@ -125,7 +125,7 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunFN {
 }
 
 // LongTaskCommandRunFunction long tasks run function logic
-func LongTaskCommandRunFunction(tasks ...KoolTask) CobraRunFN {
+func LongTaskCommandRunFunction(tasks ...KoolTask) CobraRunE {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		for _, task := range tasks {
 			task.SetOutStream(cmd.OutOrStdout())

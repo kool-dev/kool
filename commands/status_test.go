@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
@@ -23,7 +24,7 @@ func (f *FakeRaceShell) Exec(command builder.Command, extraArgs ...string) (stri
 }
 
 func newFakeKoolStatus() *KoolStatus {
-	return &KoolStatus{
+	fs := &KoolStatus{
 		*newFakeKoolService(),
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
@@ -33,6 +34,11 @@ func newFakeKoolStatus() *KoolStatus {
 		&builder.FakeCommand{},
 		&shell.FakeTableWriter{},
 	}
+
+	fs.shell.(*shell.FakeShell).MockErrStream = io.Discard
+	fs.shell.(*shell.FakeShell).MockOutStream = io.Discard
+
+	return fs
 }
 
 func TestNewKoolStatus(t *testing.T) {
@@ -163,13 +169,11 @@ func TestNoServicesStatusCommand(t *testing.T) {
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
-	f.getServicesCmd.(*builder.FakeCommand).MockExecError = errors.New("")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecError = errors.New("exec err")
 
 	cmd := NewStatusCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing status command; error: %v", err)
-	}
+	assertExecGotError(t, cmd, "exec err")
 
 	expected := "No services found."
 
@@ -182,49 +186,31 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 
 func TestFailedDependenciesStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
-	f.check.(*checker.FakeChecker).MockError = errors.New("")
+	f.check.(*checker.FakeChecker).MockError = errors.New("exec error")
 
 	cmd := NewStatusCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing status command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
+	assertExecGotError(t, cmd, "exec error")
 }
 
 func TestFailedNetworkStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
-	f.net.(*network.FakeHandler).MockError = errors.New("")
+	f.net.(*network.FakeHandler).MockError = errors.New("exec network error")
 
 	cmd := NewStatusCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing status command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
+	assertExecGotError(t, cmd, "exec network error")
 }
 
 func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
 	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
-	f.getServiceIDCmd.(*builder.FakeCommand).MockExecError = errors.New("")
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecError = errors.New("get service error")
 
 	cmd := NewStatusCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing status command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
+	assertExecGotError(t, cmd, "get service error")
 }
 
 func TestServicesOrderStatusCommand(t *testing.T) {
@@ -239,7 +225,12 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 		&shell.FakeTableWriter{},
 	}
 
-	f.shell = &FakeRaceShell{}
+	f.shell = &FakeRaceShell{
+		FakeShell: shell.FakeShell{
+			MockErrStream: io.Discard,
+			MockOutStream: io.Discard,
+		},
+	}
 	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = `cache
 app`
 	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "output"
