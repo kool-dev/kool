@@ -35,9 +35,7 @@ func TestFailingStartRestartCommand(t *testing.T) {
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing restart command; error: %v", err)
-	}
+	assertExecGotError(t, cmd, "start error")
 }
 
 func TestFailingStopRestartCommand(t *testing.T) {
@@ -48,9 +46,7 @@ func TestFailingStopRestartCommand(t *testing.T) {
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing restart command; error: %v", err)
-	}
+	assertExecGotError(t, cmd, "stop error")
 }
 
 func TestPurgeRestartCommand(t *testing.T) {

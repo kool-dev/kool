@@ -48,10 +48,6 @@ func TestNewKoolStatus(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on default KoolStatus instance")
 	}
 
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolStatus instance")
-	}
-
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on default KoolStatus instance")
 	}

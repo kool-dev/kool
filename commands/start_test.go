@@ -40,14 +40,6 @@ func TestStartAllCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if koolStart.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not expect for KoolStart service to call exit")
-	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Errorf("did not expect KoolStart service to have exit code different than 0; got '%d", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
-
 	interactiveArgs, ok := koolStart.shell.(*shell.FakeShell).ArgsInteractive["start"]
 
 	if ok && len(interactiveArgs) > 0 {
@@ -132,9 +124,6 @@ func TestStartServicesCommand(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Errorf("did not expect KoolStart to exit with error, got %d", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
 	var startedServices []string
 	if interactiveArgs, ok := koolStart.shell.(*shell.FakeShell).ArgsInteractive["start"]; ok {
 		startedServices = interactiveArgs

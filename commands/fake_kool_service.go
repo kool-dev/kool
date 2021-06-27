@@ -8,9 +8,7 @@ import (
 // FakeKoolService is a mock to be used on testing/replacement for KoolService interface
 type FakeKoolService struct {
 	ArgsExecute        []string
-	ExitCode           int
 	CalledExecute      bool
-	CalledExit         bool
 	CalledPrintln      bool
 	CalledPrintf       bool
 	CalledError        bool
@@ -35,12 +33,6 @@ func (f *FakeKoolService) Execute(args []string) (err error) {
 	f.CalledExecute = true
 	err = f.MockExecError
 	return
-}
-
-// Exit mocks the function for testing
-func (f *FakeKoolService) Exit(code int) {
-	f.CalledExit = true
-	f.ExitCode = code
 }
 
 // Println mocks the function for testing

@@ -11,7 +11,6 @@ import (
 func newFakeKoolCompletion() *KoolCompletion {
 	return &KoolCompletion{
 		DefaultKoolService{
-			&shell.FakeExiter{},
 			&shell.FakeTerminalChecker{MockIsTerminal: true},
 			shell.NewShell(),
 		},
@@ -73,10 +72,6 @@ func TestNewKoolCompletion(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Error("unexpected shell.Shell on default KoolCompletion instance")
-	}
-
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Error("unexpected shell.Exiter on default KoolCompletion instance")
 	}
 
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {

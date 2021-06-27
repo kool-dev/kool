@@ -60,10 +60,6 @@ func TestNewKoolPreset(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on default KoolPreset instance")
 	}
 
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolPreset instance")
-	}
-
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on default KoolPreset instance")
 	}
@@ -197,10 +193,6 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 
 	if output != expected {
 		t.Errorf("expecting message '%s', got '%s'", expected, output)
-	}
-
-	if f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("unexpected program Exit")
 	}
 
 	if !f.shell.(*shell.FakeShell).CalledSuccess {

@@ -31,7 +31,6 @@ func (t *koolTaskServiceTest) Execute(args []string) error {
 
 func newKoolServiceTest() *DefaultKoolService {
 	service := &DefaultKoolService{
-		&shell.FakeExiter{},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		shell.NewShell(),
 	}

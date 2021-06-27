@@ -74,10 +74,6 @@ func TestStartWithUpdaterWrapperError(t *testing.T) {
 	if !fakeUpdateAwareService.updater.(*updater.FakeUpdater).CalledCheckForUpdates {
 		t.Errorf("did not call CheckForUpdates")
 	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Errorf("did not expect KoolStart service to have exit code different than 0; got '%d", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
 }
 
 func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
@@ -105,10 +101,6 @@ func TestStartWithUpdaterWrapperSameVersion(t *testing.T) {
 	if !fakeUpdateAwareService.updater.(*updater.FakeUpdater).CalledCheckForUpdates {
 		t.Errorf("did not call CheckForUpdates")
 	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Errorf("did not expect KoolStart service to have exit code different than 0; got '%d", koolStart.exiter.(*shell.FakeExiter).Code())
-	}
 }
 
 func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
@@ -132,9 +124,5 @@ func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
 
 	if fakeUpdateAwareService.updater.(*updater.FakeUpdater).CalledCheckForUpdates {
 		t.Errorf("called CheckForUpdates")
-	}
-
-	if koolStart.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Errorf("did not expect KoolStart service to have exit code different than 0; got '%d", koolStart.exiter.(*shell.FakeExiter).Code())
 	}
 }
