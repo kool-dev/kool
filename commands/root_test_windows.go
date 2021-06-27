@@ -1,16 +1,9 @@
 package commands
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"kool-dev/kool/core/environment"
-	"kool-dev/kool/core/shell"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/creack/pty"
 	"github.com/spf13/cobra"
 )
 
