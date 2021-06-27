@@ -49,6 +49,32 @@ func TestStartWithUpdaterWrapper(t *testing.T) {
 	}
 }
 
+func TestStartWithUpdaterWrapperTimeout(t *testing.T) {
+	koolStart := newFakeKoolStart()
+
+	koolUpdater := &updater.FakeUpdater{
+		MockCurrentVersion: "0.0.0",
+		MockLatestVersion:  "1.0.0",
+		MockErrorUpdate:    nil,
+		MockTimeoutDelay:   true,
+	}
+
+	cmd := NewStartCommand(koolStart)
+	fakeUpdateAwareService := newFakeUpdateAwareService(koolStart, koolUpdater)
+
+	cmd.RunE = DefaultCommandRunFunction(fakeUpdateAwareService)
+
+	if _, err := execStartCommand(cmd); err != nil {
+		t.Fatal(err)
+	}
+
+	expected := ""
+
+	if output := fmt.Sprint(koolStart.shell.(*shell.FakeShell).WarningOutput...); output != expected {
+		t.Errorf("expecting warning message '%s', got '%s'", expected, output)
+	}
+}
+
 func TestStartWithUpdaterWrapperError(t *testing.T) {
 	koolStart := newFakeKoolStart()
 
@@ -117,6 +143,14 @@ func TestDontCheckForUpdatesWhenNonTerminal(t *testing.T) {
 	fakeUpdateAwareService := newFakeUpdateAwareService(koolStart, koolUpdater)
 
 	cmd.RunE = DefaultCommandRunFunction(fakeUpdateAwareService)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("error %v", err)
+	}
+
+	if !koolStart.term.(*shell.FakeTerminalChecker).CalledIsTerminal {
+		t.Error("should have called IsTerminal")
+	}
 
 	if fakeUpdateAwareService.updater.(*updater.FakeUpdater).CalledGetCurrentVersion {
 		t.Errorf("called GetCurrentVersion")

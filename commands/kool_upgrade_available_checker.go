@@ -41,7 +41,7 @@ func (u *UpdateAwareService) Execute(args []string) (err error) {
 		if update {
 			defer u.KoolService.Warning("There's a new version available! Run kool self-update to upgrade!")
 		}
-	case <-time.After(1000 * time.Millisecond):
+	case <-time.After(time.Second):
 		break
 	}
 
