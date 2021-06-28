@@ -4,6 +4,7 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/services/checker"
 	"kool-dev/kool/services/compose"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -76,17 +77,21 @@ func (s *KoolStop) Execute(args []string) (err error) {
 	}
 
 	err = s.Interactive(stopCommand)
+	time.Sleep(time.Second * 2)
 	return
 }
 
 // NewStopCommand initializes new kool stop command
 func NewStopCommand(stop *KoolStop) (stopCmd *cobra.Command) {
+	var task = NewKoolTask("Stopping all service containers", stop)
+	task.SetFrameOutput(false)
+
 	stopCmd = &cobra.Command{
 		Use:   "stop [SERVICE...]",
 		Short: "Stop and destroy running service containers",
 		Long: `Stop and destroy the specified [SERVICE] containers, which were started
 using 'kool start'. If no [SERVICE] is provided, all running containers are stopped.`,
-		Run: DefaultCommandRunFunction(stop),
+		RunE: LongTaskCommandRunFunction(task),
 
 		DisableFlagsInUseLine: true,
 	}

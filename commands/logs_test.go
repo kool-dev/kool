@@ -34,10 +34,6 @@ func TestNewKoolLogs(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on default KoolLogs instance")
 	}
 
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolLogs instance")
-	}
-
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on default KoolLogs instance")
 	}
@@ -161,17 +157,7 @@ func TestFailingNewLogsCommand(t *testing.T) {
 	f := newFakeFailedKoolLogs()
 	cmd := NewLogsCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing logs command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
-
-	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error logs" {
-		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
-	}
+	assertExecGotError(t, cmd, "error logs")
 }
 
 func TestNoContainersNewLogsCommand(t *testing.T) {
@@ -205,15 +191,5 @@ func TestFailingNoContainersNewLogsCommand(t *testing.T) {
 
 	cmd := NewLogsCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing logs command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
-
-	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error list" {
-		t.Errorf("expecting error 'error logs', got '%s'", err.Error())
-	}
+	assertExecGotError(t, cmd, "error list")
 }

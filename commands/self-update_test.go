@@ -31,10 +31,6 @@ func TestNewKoolSelfUpdate(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on KoolSelfUpdate KoolRun instance")
 	}
 
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolSelfUpdate instance")
-	}
-
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on KoolSelfUpdate KoolRun instance")
 	}
@@ -98,9 +94,8 @@ func TestNewSelfUpdateErrorCommand(t *testing.T) {
 	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", errors.New("error"), nil)
 	cmd := NewSelfUpdateCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing self-update command; error: %v", err)
-	}
+	expected := "kool self-update failed: error"
+	assertExecGotError(t, cmd, expected)
 
 	if f.shell.(*shell.FakeShell).CalledWarning {
 		t.Errorf("unexpected warning message for failed update")
@@ -108,20 +103,6 @@ func TestNewSelfUpdateErrorCommand(t *testing.T) {
 
 	if f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Errorf("unexpected update successful message for failed update")
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Errorf("did not call Error for failed update")
-	}
-
-	expected := "kool self-update failed: error"
-
-	if output := f.shell.(*shell.FakeShell).Err.Error(); output != expected {
-		t.Errorf("expecting error message '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Errorf("did not exited after failing update")
 	}
 }
 

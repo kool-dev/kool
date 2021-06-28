@@ -35,17 +35,7 @@ func TestFailingStartRestartCommand(t *testing.T) {
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing restart command; error: %v", err)
-	}
-
-	if !fakeStart.CalledExit {
-		t.Error("did not exit command due to error on start service")
-	}
-
-	if !fakeStart.CalledError {
-		t.Error("did not call Error due to error on start service")
-	}
+	assertExecGotError(t, cmd, "start error")
 }
 
 func TestFailingStopRestartCommand(t *testing.T) {
@@ -56,17 +46,7 @@ func TestFailingStopRestartCommand(t *testing.T) {
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing restart command; error: %v", err)
-	}
-
-	if !fakeStop.CalledExit {
-		t.Error("did not exit command due to error on start service")
-	}
-
-	if !fakeStop.CalledError {
-		t.Error("did not call Error due to error on start service")
-	}
+	assertExecGotError(t, cmd, "stop error")
 }
 
 func TestPurgeRestartCommand(t *testing.T) {

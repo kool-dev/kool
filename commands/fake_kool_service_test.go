@@ -15,13 +15,6 @@ func TestFakeKoolService(t *testing.T) {
 		t.Errorf("failed to assert calling method Execute on FakeKoolService")
 	}
 
-	code := 100
-	f.Exit(code)
-
-	if !f.CalledExit || f.ExitCode != code {
-		t.Errorf("failed to assert calling method Exit on FakeKoolService")
-	}
-
 	f.Println()
 
 	if !f.CalledPrintln {

@@ -35,10 +35,6 @@ func TestNewKoolDocker(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on default KoolDocker instance")
 	}
 
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolDocker instance")
-	}
-
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on default KoolDocker instance")
 	}
@@ -251,17 +247,7 @@ func TestFailingNewDockerCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"image"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing docker command; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("expecting command to exit due to an error.")
-	}
-
-	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "error docker" {
-		t.Errorf("expecting error 'error docker', got '%s'", err.Error())
-	}
+	assertExecGotError(t, cmd, "error docker")
 }
 
 func TestNonTerminalNewDockerCommand(t *testing.T) {

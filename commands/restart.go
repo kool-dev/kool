@@ -17,14 +17,15 @@ func NewRestartCommand(stop KoolService, start KoolService) (restartCmd *cobra.C
 	restartCmd = &cobra.Command{
 		Use:   "restart",
 		Short: "Restart running service containers (the same as 'kool stop' followed by 'kool start')",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, ok := stop.(*KoolStop); ok && flags.Purge {
 				stop.(*KoolStop).Flags.Purge = true
 			}
 			if _, ok := start.(*KoolStart); ok && flags.Rebuild {
 				start.(*KoolStart).Flags.Rebuild = true
 			}
-			DefaultCommandRunFunction(stop, start)(cmd, args)
+
+			return DefaultCommandRunFunction(stop, start)(cmd, args)
 		},
 
 		DisableFlagsInUseLine: true,

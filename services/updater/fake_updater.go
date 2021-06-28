@@ -1,6 +1,8 @@
 package updater
 
 import (
+	"time"
+
 	"github.com/blang/semver"
 )
 
@@ -11,6 +13,7 @@ type FakeUpdater struct {
 
 	MockCurrentVersion, MockLatestVersion string
 	MockErrorUpdate, MockErrorPermission  error
+	MockTimeoutDelay                      bool
 }
 
 // GetCurrentVersion get mocked current version
@@ -30,6 +33,12 @@ func (u *FakeUpdater) Update(currentVersion semver.Version) (updatedVersion semv
 // CheckForUpdates implements fake available update check
 func (u *FakeUpdater) CheckForUpdates(currentVersion semver.Version, ch chan bool) {
 	u.CalledCheckForUpdates = true
+
+	if u.MockTimeoutDelay {
+		// causes a timeout
+		time.Sleep(time.Millisecond * 1100)
+	}
+
 	ch <- true
 }
 

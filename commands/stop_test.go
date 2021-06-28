@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/checker"
@@ -10,13 +11,16 @@ import (
 )
 
 func newFakeKoolStop() *KoolStop {
-	return &KoolStop{
+	fs := &KoolStop{
 		*newFakeKoolService(),
 		&KoolStopFlags{false},
 		&checker.FakeChecker{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 	}
+	fs.shell.(*shell.FakeShell).MockErrStream = io.Discard
+	fs.shell.(*shell.FakeShell).MockOutStream = io.Discard
+	return fs
 }
 
 func TestNewKoolStop(t *testing.T) {
@@ -24,10 +28,6 @@ func TestNewKoolStop(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolStop instance")
-	}
-
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolStop instance")
 	}
 
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
@@ -137,15 +137,5 @@ func TestNewFailingDependenciesCheckStopCommand(t *testing.T) {
 	f.check.(*checker.FakeChecker).MockError = errors.New("check error")
 	cmd := NewStopCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing stop command with args; error: %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not exit command due to dependencies checking error")
-	}
-
-	if err := f.shell.(*shell.FakeShell).Err; err.Error() != "check error" {
-		t.Errorf("expecting error 'check error', got '%v'", err)
-	}
+	assertExecGotError(t, cmd, "check error")
 }

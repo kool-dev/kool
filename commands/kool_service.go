@@ -16,29 +16,21 @@ type KoolService interface {
 	Execute([]string) error
 	IsTerminal() bool
 
-	shell.Exiter
 	shell.Shell
 }
 
 // DefaultKoolService holds handlers and functions shared by all
 // services, meant to be used on commands when executing the services.
 type DefaultKoolService struct {
-	exiter shell.Exiter
-	term   shell.TerminalChecker
-	shell  shell.Shell
+	term  shell.TerminalChecker
+	shell shell.Shell
 }
 
 func newDefaultKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
-		shell.NewExiter(),
 		shell.NewTerminalChecker(),
 		shell.NewShell(),
 	}
-}
-
-// Exit proxies the call the given Exiter
-func (k *DefaultKoolService) Exit(code int) {
-	k.exiter.Exit(code)
 }
 
 // Println proxies the call to the given Shell
@@ -112,14 +104,16 @@ func (k *DefaultKoolService) Interactive(command builder.Command, extraArgs ...s
 	err = k.shell.Interactive(command, extraArgs...)
 
 	if err == shell.ErrLookPath {
-		k.Error(fmt.Errorf("failed to run %s error: %v", command.String(), err))
-		k.Exit(2)
+		err = fmt.Errorf("failed to run %s error: %v", command.String(), err)
+		return
 	}
 
 	// Subprocess exited. Get the return code, if we can
 	if exitError, ok := err.(*exec.ExitError); ok {
-		waitStatus := exitError.Sys().(syscall.WaitStatus)
-		k.Exit(waitStatus.ExitStatus())
+		err = shell.ErrExitable{
+			Err:  err,
+			Code: exitError.Sys().(syscall.WaitStatus).ExitStatus(),
+		}
 	}
 
 	return

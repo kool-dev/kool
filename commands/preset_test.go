@@ -60,10 +60,6 @@ func TestNewKoolPreset(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on default KoolPreset instance")
 	}
 
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolPreset instance")
-	}
-
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
 		t.Errorf("unexpected shell.TerminalChecker on default KoolPreset instance")
 	}
@@ -165,27 +161,10 @@ func TestInvalidScriptPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"invalid"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
+	assertExecGotError(t, cmd, "unknown preset invalid")
 
 	if !f.presetsParser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	expected := "unknown preset invalid"
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if expected != output {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
 	}
 }
 
@@ -216,10 +195,6 @@ func TestExistingFilesPresetCommand(t *testing.T) {
 		t.Errorf("expecting message '%s', got '%s'", expected, output)
 	}
 
-	if f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("unexpected program Exit")
-	}
-
 	if !f.shell.(*shell.FakeShell).CalledSuccess {
 		t.Error("did not call Success")
 	}
@@ -237,24 +212,8 @@ func TestWriteErrorPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
 	expected := "failed to write preset file : write error"
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if output != expected {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestNoArgsPresetCommand(t *testing.T) {
@@ -305,27 +264,11 @@ func TestFailingLanguageNoArgsPresetCommand(t *testing.T) {
 
 	cmd := NewPresetCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
+	expected := "error prompt select language"
+	assertExecGotError(t, cmd, expected)
 
 	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
 		t.Error("did not call Ask on PromptSelect")
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	expected := "error prompt select language"
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if output != expected {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
 	}
 }
 
@@ -349,27 +292,11 @@ func TestFailingPresetNoArgsPresetCommand(t *testing.T) {
 
 	cmd := NewPresetCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
+	expected := "error prompt select preset"
+	assertExecGotError(t, cmd, expected)
 
 	if !f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
 		t.Error("did not call Ask on PromptSelect")
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	expected := "error prompt select preset"
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if output != expected {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
 	}
 }
 
@@ -397,14 +324,6 @@ func TestCancellingPresetCommand(t *testing.T) {
 	if output != expected {
 		t.Errorf("expecting warning '%s', got '%s'", expected, output)
 	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
-
-	if f.exiter.(*shell.FakeExiter).Code() != 0 {
-		t.Error("did not call Exit with code 0")
-	}
 }
 
 func TestNonTTYPresetCommand(t *testing.T) {
@@ -413,21 +332,7 @@ func TestNonTTYPresetCommand(t *testing.T) {
 
 	cmd := NewPresetCommand(f)
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "the input device is not a TTY; for non-tty environments, please specify a preset argument" {
-		t.Errorf("expecting error 'the input device is not a TTY; for non-tty environments, please specify a preset argument', got %v", err)
-	}
+	assertExecGotError(t, cmd, "the input device is not a TTY; for non-tty environments, please specify a preset argument")
 }
 
 func TestCustomDockerComposePresetCommand(t *testing.T) {
@@ -545,27 +450,8 @@ func TestCustomDockerComposeErrorTemplateParsePresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	expectedErr := "failed to write preset file docker-compose.yml: parse error"
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != expectedErr {
-		t.Errorf("expecting error '%s', got %v", expectedErr, err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
+	expected := "failed to write preset file docker-compose.yml: parse error"
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestCustomDockerNoneOptionComposePresetCommand(t *testing.T) {
@@ -663,21 +549,8 @@ func TestErrorAskForServicePresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "database question error" {
-		t.Errorf("expecting error 'database question error', got %v", err)
-	}
+	expected := "database question error"
+	assertExecGotError(t, cmd, expected)
 }
 
 func TestErrorComposeStringPresetCommand(t *testing.T) {
@@ -717,21 +590,7 @@ func TestErrorComposeStringPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "failed to write preset file docker-compose.yml: compose string error" {
-		t.Errorf("expecting error 'failed to write preset file docker-compose.yml: compose string error', got %v", err)
-	}
+	assertExecGotError(t, cmd, "failed to write preset file docker-compose.yml: compose string error")
 }
 
 func TestErrorGetConfigPresetCommand(t *testing.T) {
@@ -747,25 +606,7 @@ func TestErrorGetConfigPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "error parsing preset config; err: get config error" {
-		t.Errorf("expecting error 'error parsing preset config; err: get config error', got %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Error")
-	}
+	assertExecGotError(t, cmd, "error parsing preset config; err: get config error")
 }
 
 func TestDefaultTemplatesPresetCommand(t *testing.T) {
@@ -890,25 +731,7 @@ func TestErrorDefaultTemplatesPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"preset"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "failed to load default preset templates: template parse error" {
-		t.Errorf("expecting error 'failed to load default preset templates: template parse error', got %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Error")
-	}
+	assertExecGotError(t, cmd, "failed to load default preset templates: template parse error")
 }
 
 func TestCustomKoolYmlPresetCommand(t *testing.T) {
@@ -1047,25 +870,7 @@ func TestAskErrorCustomKoolYmlPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"preset"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "ask error" {
-		t.Errorf("expecting error 'ask error', got %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Error")
-	}
+	assertExecGotError(t, cmd, "ask error")
 }
 
 func TestTemplateParseErrorCustomKoolYmlPresetCommand(t *testing.T) {
@@ -1113,25 +918,7 @@ func TestTemplateParseErrorCustomKoolYmlPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"preset"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "failed to write preset file kool.yml: parse error" {
-		t.Errorf("expecting error 'failed to write preset file kool.yml: parse error', got %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Error")
-	}
+	assertExecGotError(t, cmd, "failed to write preset file kool.yml: parse error")
 }
 
 func TestStringErrorCustomKoolYmlPresetCommand(t *testing.T) {
@@ -1190,23 +977,5 @@ func TestStringErrorCustomKoolYmlPresetCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"preset"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing preset command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	err := f.shell.(*shell.FakeShell).Err
-
-	if err == nil {
-		t.Error("expecting an error, got none")
-	} else if err.Error() != "failed to write preset file kool.yml: string error" {
-		t.Errorf("expecting error 'failed to write preset file kool.yml: string error', got %v", err)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Error")
-	}
+	assertExecGotError(t, cmd, "failed to write preset file kool.yml: string error")
 }

@@ -97,7 +97,7 @@ func NewDockerCommand(docker *KoolDocker) (cmd *cobra.Command) {
 IMAGE name will be used by 'docker run' itself (i.e. --env='VAR=VALUE').
 Add an optional [COMMAND] to execute on the IMAGE, and use [--] after
 the [COMMAND] to provide optional arguments required by the COMMAND.`,
-		Run: DefaultCommandRunFunction(docker),
+		RunE: DefaultCommandRunFunction(docker),
 
 		DisableFlagsInUseLine: true,
 	}

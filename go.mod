@@ -7,6 +7,7 @@ require (
 	github.com/agnivade/levenshtein v1.1.0
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/briandowns/spinner v1.16.0
 	github.com/creack/pty v1.1.11
 	github.com/fireworkweb/godotenv v1.3.1-0.20200525231918-bdecbe8dfc58
 	github.com/fsnotify/fsnotify v1.4.9 // indirect

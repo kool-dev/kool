@@ -22,7 +22,7 @@ func NewDeployDestroyCommand(destroy *KoolDeployDestroy) *cobra.Command {
 		Use:   "destroy",
 		Short: "Destroy an environment deployed to Kool Cloud",
 		Args:  cobra.NoArgs,
-		Run:   DefaultCommandRunFunction(destroy),
+		RunE:  DefaultCommandRunFunction(destroy),
 
 		DisableFlagsInUseLine: true,
 	}

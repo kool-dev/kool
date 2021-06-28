@@ -40,45 +40,6 @@ func assertServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage
 	return
 }
 
-func assertFailingServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage string) {
-	if !service.CalledSetOutStream {
-		errMessage = "did not call SetOutStream on kool service"
-		return
-	}
-
-	if !service.CalledSetInStream {
-		errMessage = "did not call SetInStream on kool service"
-		return
-	}
-
-	if !service.CalledSetErrStream {
-		errMessage = "did not call SetErrStream on kool service"
-		return
-	}
-
-	if !service.CalledExecute {
-		errMessage = "did not call Execute on kool service"
-		return
-	}
-
-	if !service.CalledError {
-		errMessage = "did not call Error on kool service"
-		return
-	}
-
-	if !service.CalledExit {
-		errMessage = "did not call Exit on kool service"
-		return
-	}
-
-	if service.ExitCode != 1 {
-		errMessage = fmt.Sprintf("should exit with status 1, got %v", service.ExitCode)
-		return
-	}
-
-	return
-}
-
 func TestNewRootCmd(t *testing.T) {
 	fakeEnv := environment.NewFakeEnvStorage()
 	cmd := NewRootCmd(fakeEnv)
@@ -150,7 +111,7 @@ func TestDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(f),
+		RunE:  DefaultCommandRunFunction(f),
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -168,16 +129,10 @@ func TestFailingDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(f),
+		RunE:  DefaultCommandRunFunction(f),
 	}
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing root command; error: %v", err)
-	}
-
-	if errMessage := assertFailingServiceAfterExecutingDefaultRun(f); errMessage != "" {
-		t.Error(errMessage)
-	}
+	assertExecGotError(t, cmd, "execute error")
 }
 
 func TestMultipleServicesDefaultCommandRunFunction(t *testing.T) {
@@ -189,7 +144,7 @@ func TestMultipleServicesDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(services[0], services[1]),
+		RunE:  DefaultCommandRunFunction(services[0], services[1]),
 	}
 
 	if err := cmd.Execute(); err != nil {
@@ -210,16 +165,10 @@ func TestMultipleServicesFailingDefaultCommandRunFunction(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(failing, passing),
+		RunE:  DefaultCommandRunFunction(failing, passing),
 	}
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing root command; error: %v", err)
-	}
-
-	if errMessage := assertFailingServiceAfterExecutingDefaultRun(failing); errMessage != "" {
-		t.Error(errMessage)
-	}
+	assertExecGotError(t, cmd, "execute error")
 }
 
 func TestVerboseFlagRootCommand(t *testing.T) {
@@ -402,7 +351,7 @@ func TestPromptSelectInterruptedError(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "fake-command",
 		Short: "fake - fake command",
-		Run:   DefaultCommandRunFunction(failing),
+		RunE:  DefaultCommandRunFunction(failing),
 	}
 
 	b := bytes.NewBufferString("")
@@ -426,5 +375,15 @@ func TestPromptSelectInterruptedError(t *testing.T) {
 
 	if strings.Contains(output, expected) {
 		t.Errorf("bad warning about cancelling operation: %s", output)
+	}
+}
+
+func assertExecGotError(t *testing.T, cmd *cobra.Command, partialErr string) {
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+	if err := cmd.Execute(); err == nil {
+		t.Errorf("should have got an error - %s", partialErr)
+	} else if !strings.Contains(err.Error(), partialErr) {
+		t.Errorf("unexpected error executing command; '%s' but got error: %v", partialErr, err)
 	}
 }

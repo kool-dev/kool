@@ -14,25 +14,13 @@ import (
 
 func newFakeKoolService() *DefaultKoolService {
 	return &DefaultKoolService{
-		&shell.FakeExiter{},
 		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		&shell.FakeShell{},
 	}
 }
 
 func TestKoolServiceProxies(t *testing.T) {
-	code := 100
 	k := newFakeKoolService()
-
-	k.Exit(code)
-
-	if !k.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("Exit was not proxied by DefaultKoolService")
-	}
-
-	if k.exiter.(*shell.FakeExiter).Code() != code {
-		t.Errorf("Exit did not proxy the proper code by DefaultKoolService; expected %d got %d", code, k.exiter.(*shell.FakeExiter).Code())
-	}
 
 	err := errors.New("fake error")
 	k.Error(err)
@@ -145,30 +133,25 @@ func TestKoolServiceProxies(t *testing.T) {
 	}
 }
 
-func TestKoolServiceInteractiveError(t *testing.T) {
+func TestKoolServiceErrors(t *testing.T) {
 	k := newFakeKoolService()
 
-	command := &builder.FakeCommand{MockInteractiveError: shell.ErrLookPath}
+	err := k.Interactive(&builder.FakeCommand{MockInteractiveError: shell.ErrLookPath}, "extraArg")
 
-	_ = k.Interactive(command)
-
-	if !k.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit for not found command")
-	} else if code := k.exiter.(*shell.FakeExiter).Code(); code != 2 {
-		t.Errorf("expecting exit code 2, got %v", code)
+	if err == nil || !strings.Contains(err.Error(), "failed to run") {
+		t.Errorf("bad error returned: %v", err)
 	}
 
-	processState := &os.ProcessState{}
-	exitError := &exec.ExitError{ProcessState: processState}
+	exitError := &exec.ExitError{ProcessState: &os.ProcessState{}}
 	exitStatus := exitError.Sys().(syscall.WaitStatus).ExitStatus()
 
-	command = &builder.FakeCommand{MockInteractiveError: exitError}
+	command := &builder.FakeCommand{MockInteractiveError: exitError}
 
-	_ = k.Interactive(command)
+	err = k.Interactive(command)
 
-	if !k.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit for not found command")
-	} else if code := k.exiter.(*shell.FakeExiter).Code(); code != exitStatus {
-		t.Errorf("expecting exit code %v, got %v", exitStatus, code)
+	if ex, ok := err.(shell.ErrExitable); !ok {
+		t.Error("should be ErrExitable")
+	} else if ex.Code != exitStatus {
+		t.Errorf("exit code should be %d but got %d", exitStatus, ex.Code)
 	}
 }

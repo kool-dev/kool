@@ -5,7 +5,6 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
-	"strings"
 	"testing"
 )
 
@@ -68,26 +67,14 @@ func TestShareCommandBadDomain(t *testing.T) {
 
 	cmd := NewShareCommand(share)
 	cmd.SetArgs([]string{"--subdomain", "-sub"})
-	if err := cmd.Execute(); err != nil {
-		t.Error("unexpected error on running command")
-	} else if err = share.shell.(*shell.FakeShell).Err; err == nil {
-		t.Error("expected error but got none")
-	} else if !strings.Contains(err.Error(), "invalid subdomain") {
-		t.Errorf("invalid error; expected 'invalid subdomain' but got %s", err.Error())
-	}
+	assertExecGotError(t, cmd, "invalid subdomain")
 }
 
 func TestShareCommandServiceNotRunning(t *testing.T) {
 	share := newFakeShareService()
 
 	cmd := NewShareCommand(share)
-	if err := cmd.Execute(); err != nil {
-		t.Error("unexpected error on running command")
-	} else if err = share.shell.(*shell.FakeShell).Err; err == nil {
-		t.Error("expected error but got none")
-	} else if !strings.Contains(err.Error(), "is not running") {
-		t.Errorf("invalid error; expected 'is not running' but got %s", err.Error())
-	}
+	assertExecGotError(t, cmd, "is not running")
 }
 
 func TestShareCommandServiceDoesNotExist(t *testing.T) {
@@ -95,13 +82,7 @@ func TestShareCommandServiceDoesNotExist(t *testing.T) {
 	share.status.getServiceIDCmd.(*builder.FakeCommand).MockExecError = errors.New("fake error")
 
 	cmd := NewShareCommand(share)
-	if err := cmd.Execute(); err != nil {
-		t.Error("unexpected error on running command")
-	} else if err = share.shell.(*shell.FakeShell).Err; err == nil {
-		t.Error("expected error but got none")
-	} else if !strings.Contains(err.Error(), "fake error") {
-		t.Errorf("invalid error; expected 'fake error' but got %s", err.Error())
-	}
+	assertExecGotError(t, cmd, "fake error")
 }
 
 func TestShareCommandSetFlags(t *testing.T) {

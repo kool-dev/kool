@@ -3,11 +3,11 @@ package commands
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
+	"strings"
 	"testing"
 )
 
@@ -26,10 +26,6 @@ func TestNewKoolCreate(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolCreate instance")
-	}
-
-	if _, ok := k.DefaultKoolService.exiter.(*shell.DefaultExiter); !ok {
-		t.Errorf("unexpected shell.Exiter on default KoolCreate instance")
 	}
 
 	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
@@ -94,8 +90,10 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"invalid", "my-app"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing create command; error: %v", err)
+	if err := cmd.Execute(); err == nil {
+		t.Error("should have got an error")
+	} else if !strings.Contains(err.Error(), "unknown preset") {
+		t.Errorf("unexpected error: %s", err)
 	}
 
 	if !f.parser.(*presets.FakeParser).CalledLoadPresets {
@@ -104,21 +102,6 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 
 	if !f.parser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	expected := "unknown preset invalid"
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if expected != output {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
 	}
 }
 
@@ -146,24 +129,7 @@ func TestErrorConfigCreateCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel", "my-app"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing create command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	expected := fmt.Sprintf("error parsing preset config; err: %v", getConfigError)
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if expected != output {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
+	assertExecGotError(t, cmd, "error parsing preset config")
 }
 
 func TestNoCreateCommandsCreateCommand(t *testing.T) {
@@ -180,22 +146,5 @@ func TestNoCreateCommandsCreateCommand(t *testing.T) {
 
 	cmd.SetArgs([]string{"laravel", "my-app"})
 
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing create command; error: %v", err)
-	}
-
-	if !f.shell.(*shell.FakeShell).CalledError {
-		t.Error("did not call Error")
-	}
-
-	expected := "no create commands were found for preset laravel"
-	output := f.shell.(*shell.FakeShell).Err.Error()
-
-	if expected != output {
-		t.Errorf("expecting error '%s', got '%s'", expected, output)
-	}
-
-	if !f.exiter.(*shell.FakeExiter).Exited() {
-		t.Error("did not call Exit")
-	}
+	assertExecGotError(t, cmd, "no create commands were found for preset laravel")
 }

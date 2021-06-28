@@ -88,7 +88,7 @@ func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 		Short: "Execute a command inside a running service container",
 		Long:  `Execute a COMMAND inside the specified SERVICE container (similar to an SSH session).`,
 		Args:  cobra.MinimumNArgs(2),
-		Run:   DefaultCommandRunFunction(exec),
+		RunE:  DefaultCommandRunFunction(exec),
 
 		DisableFlagsInUseLine: true,
 	}
