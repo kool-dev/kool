@@ -42,7 +42,7 @@ It's really easy to get started with `kool`. Check out our [Getting Started docu
 
 To help you start building real-world applications, we've created Kool Presets as a starting point for some popular frameworks and stacks.
 
-#### Available Presets
+### Available Presets
 
 - [AdonisJs](docs/2-Presets/AdonisJs.md)
 - [Hugo](docs/2-Presets/Hugo.md)
@@ -69,7 +69,7 @@ We invite you to contribute and help in our mission of making software developme
 - [Kool on Slack](https://kool.dev/slack) is a great place to get help and interact with Kool developers.
 - Learn how to get involved by reading our [contributing guide](CONTRIBUTING.md).
 
-### Roadmap
+## Roadmap
 
 Our work is organized according to a loosely defined but clear roadmap. Check out [the Roadmap page](https://blog.kool.dev/page/roadmap) on [our blog](https://blog.kool.dev/).
 
