@@ -12,66 +12,70 @@
 
 ## About `kool`
 
-**kool** is a CLI tool that helps bringing down to earth the complexities of modern software development environments - making them lightweight, fast and reproduceable. It takes off the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, as well as offers a highly simplified interface for leveraging _Kubernetes_ cloud deployment for staging and production deployments.
+**Kool** is a CLI tool that brings the complexities of modern software development environments down to earth - making these environments lightweight, fast and reproducible. It reduces the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, and offers a simplified interface for using _Kubernetes_ to deploy staging and production environments to the cloud.
 
-Get your local development environment up and running easy and quickly, put time and effort on making a great application, and then leverage the Kool cloud for deploying and sharing your work with the world! This tool is suitable for single developers or large teams, powering them with a simple start and still provides all flexibility the DevOps team needs to tailor up everything.
+**Kool** gets your local development environment up and running easily and quickly, so you have more time to build a great application. When the time is right, you can then use Kool Cloud to deploy and share your work with the world!
 
-To learn more [check out our website kool.dev](https://kool.dev).
+**Kool** is suitable for solo developers and teams of all sizes. It provides a hassle-free way to handle the Docker basics and immediately start using containers for development, while simultaneously guaranteeing no loss of control over more specialized Docker environments.
+
+[Learn more at kool.dev](https://kool.dev).
 
 ## Installation
 
-Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/) so you need to have it already installed on your machine. If you haven't already, please [get Docker first](https://docs.docker.com/get-docker/).
+Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/). If you haven't done so already, you first need to [install Docker and the kool CLI](https://kool.dev/docs/getting-started/installation).
 
-#### For Linux or MacOS
+### For Linux and macOS
 
-In order to obtain `kool` under **Linux** and **MacOS** run the following script:
+Install **kool** by running the following script. It will download the latest **kool** binary from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases), and save it in your `/usr/local/bin` folder.
 
 ```bash
 curl -fsSL https://kool.dev/install | bash
 ```
 
-#### For Windows
+### For Windows
 
-Download and run the latest installer from our releases artifacts [here](https://github.com/kool-dev/kool/releases).
+Install **kool** by downloading the appropriate installer from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases). At the bottom of the release notes for the latest version, expand the list of "Assets", and download the installer that matches your machine.
 
-## Getting started
+## Getting Started
 
-It is easy to get started leveraging `kool`. Check out our [getting started documentation for a generic PHP web app](https://kool.dev/docs/getting-started/starting-new-project).
+It's really easy to get started with `kool`. Check out our [Getting Started documentation for a generic PHP web app](https://kool.dev/docs/getting-started/starting-new-project).
 
-To help getting you started on real life applications, we've built presets as a starting point for some popular stacks and frameworks.
+To help you start building real-world applications, we've created Kool Presets as a starting point for some popular frameworks and stacks.
 
-#### Available Presets
+### Available Presets
 
-- [Laravel](docs/2-Presets/Laravel.md)
-- [Symfony](docs/2-Presets/Symfony.md)
-- [Wordpress](docs/2-Presets/Wordpress.md)
-- [Adonis](docs/2-Presets/Adonis.md)
-- [NestJS](docs/2-Presets/NestJS.md)
-- [NextJS](docs/2-Presets/NextJS.md)
-- [NuxtJS](docs/2-Presets/NuxtJS.md)
+- [AdonisJs](docs/2-Presets/AdonisJs.md)
 - [Hugo](docs/2-Presets/Hugo.md)
+- [Laravel](docs/2-Presets/Laravel.md)
+- [NestJS](docs/2-Presets/NestJS.md)
+- [Next.js](docs/2-Presets/NextJS.md)
+- [Node.js](docs/2-Presets/NodeJS.md)
+- [NuxtJS](docs/2-Presets/NuxtJS.md)
+- [PHP](docs/2-Presets/PHP.md)
+- [Symfony](docs/2-Presets/Symfony.md)
+- [WordPress](docs/2-Presets/WordPress.md)
 
-> In case you miss your favorite framework of choice from the list above, please let us know in an issue or feel free to open up a PR for it!
+> If you don't see your favorite framework in the list above, please let us know by creating a GitHub issue, or, better yet, feel free to submit a PR!
 
 ## Documentation
 
-You can check the documentation at [**https://kool.dev/docs**](https://kool.dev/docs) or at [docs/](docs/).
+Read the documentation at [**https://kool.dev/docs**](https://kool.dev/docs) or [docs/](docs/).
 
 ## Community, Contributing and Support
 
-You are most welcome to contribute and help in our mission of making software development *kool* for everyone.
+We invite you to contribute and help in our mission of making software development *kool* for everyone.
 
-- [Issues](/issues) are the primary channel for bringing up and tracking issues or proposals.
-- [Kool community on Slack](https://kool.dev/slack) is the a great place to get help and reach Kool developers.
-- Check out our [contributing guide](CONTRIBUTING.md) for getting involved.
+- [Issues](/issues) are the primary channel for bringing issues and proposals to our attention.
+- [Kool on Slack](https://kool.dev/slack) is a great place to get help and interact with Kool developers.
+- Learn how to get involved by reading our [contributing guide](CONTRIBUTING.md).
 
-### Roadmap
+## Roadmap
 
-We have been working in a loosely defined but clear roadmap. You can check it out [in our blog Roadmap page](https://blog.kool.dev/page/roadmap).
+Our work is organized according to a loosely defined but clear roadmap. Check out [the Roadmap page](https://blog.kool.dev/page/roadmap) on [our blog](https://blog.kool.dev/).
 
 ## Security
 
-If you find security issue please let us know ahead of making it public like in an issue so we can take action as soon as possible. Please email the concern to `contact@kool.dev`.
+If you find a security issue, please let us know right away, before making it public, by creating a GitHub issue. We'll take action as soon as possible. You can email questions and concerns to `contact@kool.dev`.
 
 ## License
 
