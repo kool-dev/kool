@@ -1,8 +1,8 @@
-### `kool run mysql` or `kool run setup`
+### `kool run mysql`, `kool run maria` or `kool run setup`
 
 **Problem:**
 
-> Access denied for root on mysql
+> Access denied for root on mysql and mariaDB databases
 
 **Answer:**
 

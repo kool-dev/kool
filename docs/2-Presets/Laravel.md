@@ -97,7 +97,7 @@ PostgreSQL 13.0
 +DB_PORT=5432
 ```
 
-> In order to avoid permission issues with mysql, add a user other than root and a password to your **.env.example** file
+> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **.env.example** file
 
 ```diff
 -DB_USERNAME=root
