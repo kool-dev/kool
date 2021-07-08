@@ -97,6 +97,16 @@ PostgreSQL 13.0
 +DB_PORT=5432
 ```
 
+> In order to avoid permission issues with mysql, add a user other than root and a password to your **.env.example** file
+
+```diff
+-DB_USERNAME=root
++DB_USERNAME=<some_user>
+
+-DB_PASSWORD=
++DB_PASSWORD=<somepass>
+```
+
 ### Cache Services
 
 Redis
