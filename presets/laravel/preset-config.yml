@@ -45,6 +45,8 @@ questions:
           template: npm.yml
         - name: yarn
           template: yarn.yml
+        - name: none
+          template: none
 templates:
   - key: scripts
     template: laravel.yml
