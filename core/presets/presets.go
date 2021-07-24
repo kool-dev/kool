@@ -29,7 +29,7 @@ func GetAll() map[string]map[string]string {
 		"docker-compose.yml": `version: "3.8"
 services:
   app:
-    image: klakegg/hugo
+    image: klakegg/hugo:ext-alpine
     command: ["server", "-p", "80", "-D"]
     working_dir: /app
     ports:
@@ -53,7 +53,7 @@ networks:
     name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
 `,
 		"kool.yml": `scripts:
-  hugo: kool docker -p 1313:1313 klakegg/hugo
+  hugo: kool docker -p 1313:1313 klakegg/hugo:ext-alpine
   dev: kool run hugo server -D
 
   # remove or modify to suit the needs of your project

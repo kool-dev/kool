@@ -1,5 +1,5 @@
 scripts:
-  hugo: kool docker -p 1313:1313 klakegg/hugo
+  hugo: kool docker -p 1313:1313 klakegg/hugo:ext-alpine
   dev: kool run hugo server -D
 
   # remove or modify to suit the needs of your project
