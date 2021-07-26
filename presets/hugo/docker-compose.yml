@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   app:
-    image: klakegg/hugo
+    image: klakegg/hugo:ext-alpine
     command: ["server", "-p", "80", "-D"]
     working_dir: /app
     ports:

@@ -27,7 +27,7 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create hugo my-project
 ```
 
-Under the hood, this command will run `kool docker klakegg/hugo new site my-project` using the [klakegg/hugo](https://hub.docker.com/r/klakegg/hugo/) Docker image.
+Under the hood, this command will run `kool docker klakegg/hugo:ext-alpine new site my-project` using the [klakegg/hugo](https://hub.docker.com/r/klakegg/hugo/) Docker image.
 
 Now, move into your new Hugo project:
 
@@ -54,7 +54,7 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 
 ```yaml
 scripts:
-	hugo: kool docker -p 1313:1313 klakegg/hugo
+	hugo: kool docker -p 1313:1313 klakegg/hugo:ext-alpine
 	dev: kool run hugo server -D
 
 	# remove or modify to suit the needs of your project

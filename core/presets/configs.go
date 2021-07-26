@@ -51,7 +51,7 @@ templates:
 	configs["hugo"] = `language: static
 commands:
   create:
-  - kool docker klakegg/hugo new site $CREATE_DIRECTORY
+  - kool docker klakegg/hugo:ext-alpine new site $CREATE_DIRECTORY
 `
 	configs["laravel"] = `language: php
 commands:
