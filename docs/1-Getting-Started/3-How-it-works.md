@@ -1,4 +1,4 @@
-**Kool** is a suite of open source dev tools that level up the way you build and deploy modern, cloud native web applications. By using Kool, you'll get a better development environment and a better development workflow, which adds up to a better developer experience.
+**Kool** is a suite of open source dev tools that level up the way you build and deploy modern, cloud native web applications. By using Kool, you'll get a better development environment and a better development workflow, which adds up to **a better developer experience**.
 
 <a name="better-development-environment"></a>
 ## A Better Development Environment
