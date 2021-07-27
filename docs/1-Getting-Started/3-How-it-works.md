@@ -140,6 +140,7 @@ When performing an output redirect, the last argument after the redirect key **m
 
 Learn more by taking a closer look at the **kool.yml** files in our [Presets](https://github.com/kool-dev/kool/tree/master/presets). They contain good examples of prebuilt commands that are ready to use in a handful of different stacks. If you need help creating custom scripts based on your own unique needs, don't hesitate to [ask us on Slack](https://kool.dev/slack).
 
+<a name="better-development-workflow"></a>
 ## A Better Development Workflow
 
 Start work on a project by moving into the project directory and using `kool start` to spin up your local Docker environment. Once you're up and running, use the `kool` CLI to level up your development workflow.
