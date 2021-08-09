@@ -5,6 +5,7 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/services/compose"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -47,14 +48,17 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
-	if !e.IsTerminal() {
-		e.composeExec.AppendArgs("-T")
+	if aware, ok := e.composeExec.(compose.TtyAware); ok {
+		// let DockerCompose know about whether we are under TTY or not
+		aware.SetIsTTY(e.IsTerminal())
 	}
 
 	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
 		// we have a KOOL_ASUSER env; now we need to know whether
 		// the image of the target service have such user
 		var passwd string
+		bkpIn := e.InStream()
+		e.SetInStream(os.Stdin)
 		if passwd, err = e.Exec(e.composeExec, args[0], "cat", "/etc/passwd"); err != nil {
 			e.Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
 			err = nil
@@ -62,11 +66,11 @@ func (e *KoolExec) Execute(args []string) (err error) {
 			// since user (kool:x:UID) exists within the container, we set it
 			e.composeExec.AppendArgs("--user", asuser)
 		}
+		e.SetInStream(bkpIn)
 	}
 
-	if aware, ok := e.composeExec.(compose.TtyAware); ok {
-		// let DockerCompose know about whether we are under TTY or not
-		aware.SetIsTTY(e.IsTerminal())
+	if !e.IsTerminal() {
+		e.composeExec.AppendArgs("-T")
 	}
 
 	if len(e.Flags.EnvVariables) > 0 {
