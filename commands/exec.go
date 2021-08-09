@@ -2,9 +2,11 @@ package commands
 
 import (
 	"fmt"
+	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/services/compose"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -45,29 +47,60 @@ func NewKoolExec() *KoolExec {
 	}
 }
 
-// Execute runs the exec logic with incoming arguments.
-func (e *KoolExec) Execute(args []string) (err error) {
-	if !e.IsTerminal() {
-		e.composeExec.AppendArgs("-T")
-	}
+func (e *KoolExec) detectTTY() {
+	var isTerminal = e.IsTerminal()
 
-	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
-		// we have a KOOL_ASUSER env; now we need to know whether
-		// the image of the target service have such user
-		var passwd string
-		if passwd, err = e.Exec(e.composeExec, args[0], "cat", "/etc/passwd"); err != nil {
-			e.Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
-			err = nil
-		} else if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
-			// since user (kool:x:UID) exists within the container, we set it
-			e.composeExec.AppendArgs("--user", asuser)
-		}
+	if !isTerminal {
+		e.composeExec.AppendArgs("-T")
 	}
 
 	if aware, ok := e.composeExec.(compose.TtyAware); ok {
 		// let DockerCompose know about whether we are under TTY or not
-		aware.SetIsTTY(e.IsTerminal())
+		aware.SetIsTTY(isTerminal)
 	}
+}
+
+func (e *KoolExec) checkUser(service string) {
+	var (
+		asuser      string
+		err         error
+		actualInput io.Reader
+	)
+
+	if asuser = e.env.Get("KOOL_ASUSER"); asuser == "" {
+		return
+	}
+
+	actualInput = e.InStream()
+	defer e.SetInStream(actualInput) // return actualInput
+
+	// avoid interference of Exec on actual input
+	// by temporarily setting os.Stdin
+	e.SetInStream(os.Stdin)
+
+	// we have a KOOL_ASUSER env; now we need to know whether
+	// the image of the target service have such user
+	var passwd string
+
+	if passwd, err = e.Exec(e.composeExec, service, "cat", "/etc/passwd"); err != nil {
+		// for safety, let's write the warning message to os.Stderr
+		// so we avoid getting cross-fire on in/out redirections
+		actualOut := e.OutStream()
+		defer e.SetOutStream(actualOut)
+
+		e.SetOutStream(os.Stderr)
+		e.Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
+	} else if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
+		// since user (kool:x:UID) exists within the container, we set it
+		e.composeExec.AppendArgs("--user", asuser)
+	}
+}
+
+// Execute runs the exec logic with incoming arguments.
+func (e *KoolExec) Execute(args []string) (err error) {
+	e.detectTTY()
+
+	e.checkUser(args[0])
 
 	if len(e.Flags.EnvVariables) > 0 {
 		for _, envVar := range e.Flags.EnvVariables {
