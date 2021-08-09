@@ -47,19 +47,21 @@ func NewKoolExec() *KoolExec {
 
 // Execute runs the exec logic with incoming arguments.
 func (e *KoolExec) Execute(args []string) (err error) {
+	if !e.IsTerminal() {
+		e.composeExec.AppendArgs("-T")
+	}
+
 	if asuser := e.env.Get("KOOL_ASUSER"); asuser != "" {
 		// we have a KOOL_ASUSER env; now we need to know whether
 		// the image of the target service have such user
-		passwd, _ := e.Exec(e.composeExec, args[0], "cat", "/etc/passwd")
-		// kool:x:UID
-		if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
-			// since user existing within the container, we use it
+		var passwd string
+		if passwd, err = e.Exec(e.composeExec, args[0], "cat", "/etc/passwd"); err != nil {
+			e.Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
+			err = nil
+		} else if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
+			// since user (kool:x:UID) exists within the container, we set it
 			e.composeExec.AppendArgs("--user", asuser)
 		}
-	}
-
-	if !e.IsTerminal() {
-		e.composeExec.AppendArgs("-T")
 	}
 
 	if aware, ok := e.composeExec.(compose.TtyAware); ok {
