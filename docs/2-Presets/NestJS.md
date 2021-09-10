@@ -217,6 +217,7 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/2-Presets/AdonisJs.md)**
+- **[CodeIgniter](/docs/2-Presets/CodeIgniter.md)**
 - **[Hugo](/docs/2-Presets/Hugo.md)**
 - **[Laravel](/docs/2-Presets/Laravel.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**

@@ -1,0 +1,41 @@
+language: php
+commands:
+  create:
+  - kool docker kooldev/php:7.4 composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter $CREATE_DIRECTORY
+questions:
+  compose:
+    - key: app
+      default_answer: PHP 8.0
+      message: Which app service do you want to use
+      options:
+        - name: PHP 8.0
+          template: php8.yml
+        - name: PHP 7.4
+          template: php74.yml
+    - key: database
+      default_answer: MySQL 8.0
+      message: Which database service do you want to use
+      options:
+        - name: MySQL 8.0
+          template: mysql8.yml
+        - name: MySQL 5.7
+          template: mysql57.yml
+        - name: MariaDB 10.5
+          template: mariadb105.yml
+        - name: PostgreSQL 13.0
+          template: postgresql13.yml
+        - name: none
+          template: none
+    - key: cache
+      default_answer: Redis 6.0
+      message: Which cache service do you want to use
+      options:
+        - name: Redis 6.0
+          template: redis6.yml
+        - name: Memcached 1.6
+          template: memcached16.yml
+        - name: none
+          template: none
+templates:
+  - key: scripts
+    template: codeigniter.yml
