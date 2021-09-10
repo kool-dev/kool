@@ -1,7 +1,7 @@
 # Start a CodeIgniter Project with Docker in 3 Easy Steps
 
 1. Run `kool create codeigniter my-project`
-2. Update **.env.example**
+2. Update **env**
 3. Run `kool run setup`
 
 > Yes, using **kool** + Docker to create and work on new CodeIgniter projects is that easy!
@@ -67,9 +67,9 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 > Now's a good time to review the **docker-compose.yml** file and verify the services match the choices you made earlier using the wizard.
 
-## 2. Update .env.example
+## 2. Update env
 
-You need to update some default values in CodeIgniter's **.env.example** file to match the services in your **docker-compose.yml** file.
+You need to update some default values in CodeIgniter's **env** file to match the services in your **docker-compose.yml** file.
 
 ### Database Services
 
@@ -93,7 +93,7 @@ PostgreSQL 13.0
 +DB_PORT=5432
 ```
 
-> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **.env.example** file
+> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **env** file
 
 ```diff
 -DB_USERNAME=root
@@ -134,7 +134,7 @@ scripts:
   phpunit: kool exec app php ./bin/phpunit
 
   setup:
-    - cp .env.example .env
+    - cp env .env
     - kool start
     - kool run composer install
     - kool run spark key:generate
@@ -147,11 +147,11 @@ scripts:
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
 
 ```bash
-# CAUTION: this script will reset your `.env` file with `.env.example`
+# CAUTION: this script will reset your `.env` file with `env`
 $ kool run setup
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **env** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
 
 Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the CodeIgniter welcome page. Hooray!
 
