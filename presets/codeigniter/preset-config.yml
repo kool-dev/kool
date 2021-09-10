@@ -36,6 +36,3 @@ questions:
           template: memcached16.yml
         - name: none
           template: none
-templates:
-  - key: scripts
-    template: codeigniter.yml
