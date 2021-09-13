@@ -31,7 +31,7 @@ fi
 read -p "You are going to build all artifacts for version $BUILD_VERSION. Continue? (y/N) "
 if [[ ! $REPLY =~ ^(yes|YES|y|Y)$ ]]
 then
-   exit
+    exit
 fi
 
 rm -rf dist
