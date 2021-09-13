@@ -246,6 +246,7 @@ $ kool start
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
+- **[CodeIgniter](/docs/2-Presets/CodeIgniter.md)**
 - **[Hugo](/docs/2-Presets/Hugo.md)**
 - **[Laravel](/docs/2-Presets/Laravel.md)**
 - **[NestJS](/docs/2-Presets/NestJS.md)**

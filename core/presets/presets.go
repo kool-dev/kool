@@ -6,6 +6,23 @@ package presets
 func GetAll() map[string]map[string]string {
 	var presets = make(map[string]map[string]string)
 	presets["adonis"] = map[string]string{}
+	presets["codeigniter"] = map[string]string{
+		"kool.yml": `scripts:
+  composer: kool exec app composer
+  spark: kool exec app php spark
+  phpunit: kool exec app php ./bin/phpunit
+
+  setup:
+    - cp env .env
+    - kool start
+    - kool run composer install
+    - kool run spark key:generate
+
+  reset:
+    - kool run composer install
+    - kool run spark migrate:refresh -f
+`,
+	}
 	presets["golang-cli"] = map[string]string{
 		"kool.yml": `scripts:
   # Helper for local development - compiling and installing locally

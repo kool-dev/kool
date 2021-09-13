@@ -1,10 +1,10 @@
-# Start a Laravel Project with Docker in 3 Easy Steps
+# Start a CodeIgniter Project with Docker in 3 Easy Steps
 
-1. Run `kool create laravel my-project`
-2. Update **.env.example**
+1. Run `kool create codeigniter my-project`
+2. Update **env**
 3. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new Laravel projects is that easy!
+> Yes, using **kool** + Docker to create and work on new CodeIgniter projects is that easy!
 
 ## Requirements
 
@@ -18,20 +18,20 @@ $ kool self-update
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create laravel my-project`
+## 1. Run `kool create codeigniter my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Laravel project:
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new CodeIgniter project:
 
 ```bash
-$ kool create laravel my-project
+$ kool create codeigniter my-project
 ```
 
-Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist laravel/laravel my-project` using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:7.4</a>.
+Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter my-project` using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:7.4</a>.
 
-After installing Laravel, `kool create` automatically runs the `kool preset laravel` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After installing CodeIgniter, `kool create` automatically runs the `kool preset codeigniter` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
-$ Preset laravel is initializing!
+$ Preset CodeIgniter is initializing!
 
 ? Which app service do you want to use [Use arrows to move, type to filter]
 > PHP 7.4
@@ -49,14 +49,10 @@ $ Preset laravel is initializing!
   Memcached 1.6
   none
 
-? Which javascript package manager do you want to use [Use arrows to move, type to filter]
-> npm
-  yarn
-
-$ Preset laravel initialized!
+$ Preset codeigniter initialized!
 ```
 
-Now, move into your new Laravel project:
+Now, move into your new CodeIgniter project:
 
 ```bash
 $ cd my-project
@@ -71,9 +67,9 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 > Now's a good time to review the **docker-compose.yml** file and verify the services match the choices you made earlier using the wizard.
 
-## 2. Update .env.example
+## 2. Update env
 
-You need to update some default values in Laravel's **.env.example** file to match the services in your **docker-compose.yml** file.
+You need to update some default values in CodeIgniter's **env** file to match the services in your **docker-compose.yml** file.
 
 ### Database Services
 
@@ -97,7 +93,7 @@ PostgreSQL 13.0
 +DB_PORT=5432
 ```
 
-> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **.env.example** file
+> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **env** file
 
 ```diff
 -DB_USERNAME=root
@@ -127,46 +123,37 @@ Memcached
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
+As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run spark`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
 To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard), including a script called `setup`, which helps you spin up a project for the first time.
 
 ```yaml
 scripts:
-  artisan: kool exec app php artisan
   composer: kool exec app composer
-  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
-  node: kool docker kooldev/node:14 node
-  npm: kool docker kooldev/node:14 npm # or yarn
-  npx: kool exec app npx
+  spark: kool exec app php spark
+  phpunit: kool exec app php ./bin/phpunit
 
-  node-setup:
-    - kool run npm install # or yarn install
-    - kool run npm run dev # or yarn dev
+  setup:
+    - cp env .env
+    - kool start
+    - kool run composer install
+    - kool run spark key:generate
 
   reset:
     - kool run composer install
-    - kool run artisan migrate:fresh --seed
-    - kool run node-setup
-
-  setup:
-    - cp .env.example .env
-    - kool start
-    - kool run composer install
-    - kool run artisan key:generate
-    - kool run node-setup
+    - kool run spark migrate:refresh -f
 ```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
 
 ```bash
-# CAUTION: this script will reset your `.env` file with `.env.example`
+# CAUTION: this script will reset your `.env` file with `env`
 $ kool run setup
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: copy your updated **env** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the Laravel welcome page. Hooray!
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost](http://localhost) and see the CodeIgniter welcome page. Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status).
 
@@ -186,7 +173,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app ls
 ```
 
-Try `kool run artisan --help` to execute the `kool exec app php artisan --help` command in your running `app` container and print out information about Laravel's CLI commands.
+Try `kool run spark --help` to execute the `kool exec app php spark --help` command in your running `app` container and print out information about CodeIgniter's CLI commands.
 
 ### Open Sessions in Docker Containers
 
@@ -233,8 +220,8 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/2-Presets/AdonisJs.md)**
-- **[CodeIgniter](/docs/2-Presets/CodeIgniter.md)**
 - **[Hugo](/docs/2-Presets/Hugo.md)**
+- **[Laravel](/docs/2-Presets/Laravel.md)**
 - **[NestJS](/docs/2-Presets/NestJS.md)**
 - **[Next.js](/docs/2-Presets/NextJS.md)**
 - **[Node.js](/docs/2-Presets/NodeJS.md)**
