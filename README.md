@@ -45,6 +45,7 @@ To help you start building real-world applications, we've created Kool Presets a
 ### Available Presets
 
 - [AdonisJs](docs/2-Presets/AdonisJs.md)
+- [CodeIgniter](docs/2-Presets/CodeIgniter.md)
 - [Hugo](docs/2-Presets/Hugo.md)
 - [Laravel](docs/2-Presets/Laravel.md)
 - [NestJS](docs/2-Presets/NestJS.md)
