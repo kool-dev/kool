@@ -16,6 +16,7 @@ Out of the box, Kool ships with a collection of Presets that will help you quick
 > As an example of the Preset developer experience, check out the [Laravel preset](https://kool.dev/docs/presets/laravel).
 
 - [AdonisJs](/docs/2-Presets/AdonisJs.md)
+- [CodeIgniter](/docs/2-Presets/CodeIgniter.md)
 - [Hugo](/docs/2-Presets/Hugo.md)
 - [Laravel](/docs/2-Presets/Laravel.md)
 - [NestJS](/docs/2-Presets/NestJS.md)
