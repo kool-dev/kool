@@ -316,6 +316,15 @@ scripts:
     - kool docker kooldev/node:14 npm install
     - kool start
 `,
+		"npm-expressjs.yml": `scripts:
+  node: kool exec app node
+  npm: kool exec app npm
+  npx: kool exec app npx
+
+  setup:
+    - kool docker kooldev/node:14 npm install
+    - kool start
+`,
 		"npm-nestjs.yml": `scripts:
   nest: kool exec app nest
   npm: kool exec app npm
@@ -380,6 +389,14 @@ scripts:
 `,
 		"yarn-adonis.yml": `scripts:
   adonis: kool exec app adonis
+  yarn: kool exec app yarn
+
+  setup:
+    - kool docker kooldev/node:14 yarn install
+    - kool start
+`,
+		"yarn-expressjs.yml": `scripts:
+  node: kool exec app node
   yarn: kool exec app yarn
 
   setup:
