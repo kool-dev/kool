@@ -105,13 +105,13 @@ PostgreSQL 13.0
 > In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **env** file
 
 ```diff
--database.tests.username = root
+-database.default.username = root
 +DB_USERNAME = <some_user>
-+database.tests.username = "${DB_USERNAME}"
++database.default.username = "${DB_USERNAME}"
 
--database.tests.password = root
+-database.default.password = root
 +DB_PASSWORD = <somepass>
-+database.tests.password = "${DB_PASSWORD}"
++database.default.password = "${DB_PASSWORD}"
 ```
 
 ## 3. Update app/Config/Cache.php
