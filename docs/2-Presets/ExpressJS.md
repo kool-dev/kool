@@ -1,4 +1,4 @@
-# Start a Node.js Project with Docker in 2 Easy Steps
+# Start a Express.js Project with Docker in 2 Easy Steps
 
 1. Run `kool create expressjs my-project`
 2. Run `kool run setup`
