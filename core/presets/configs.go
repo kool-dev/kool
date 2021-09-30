@@ -84,6 +84,21 @@ questions:
           template: memcached16.yml
         - name: none
           template: none`
+	configs["expressjs"] = `language: javascript
+commands:
+  create:
+    - mkdir $CREATE_DIRECTORY
+questions:
+  kool:
+    - key: scripts
+      default_answer: npm
+      message: Which javascript package manager do you want to use
+      options:
+        - name: npm
+          template: npm-expressjs.yml
+        - name: yarn
+          template: yarn-expressjs.yml
+`
 	configs["golang-cli"] = `language: golang
 `
 	configs["hugo"] = `language: static

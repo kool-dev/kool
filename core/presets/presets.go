@@ -23,6 +23,57 @@ func GetAll() map[string]map[string]string {
     - kool run spark migrate:refresh -f
 `,
 	}
+	presets["expressjs"] = map[string]string{
+		"app.js": `const express = require("express");
+const app = express();
+const port = 3000;
+
+app.get("/", (req, res) => {
+    res.send("Hello World");
+})
+
+app.listen(port, () => {
+    console.log("Server running at http://localhost:"+port+"/");
+})
+`,
+		"docker-compose.yml": `version: "3.7"
+services:
+  app:
+    image: kooldev/node:14
+    command: ["node", "app.js"]
+    ports:
+      - "${KOOL_APP_PORT:-3000}:3000"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
+
+networks:
+  kool_local:
+  kool_global:
+    external: true
+    name: "${KOOL_GLOBAL_NETWORK:-kool_global}"
+`,
+		"package.json": `{
+    "name": "app",
+    "version": "1.0.0",
+    "description": "",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.17.1"
+    }
+}
+`,
+	}
 	presets["golang-cli"] = map[string]string{
 		"kool.yml": `scripts:
   # Helper for local development - compiling and installing locally
