@@ -76,50 +76,67 @@ You need to update some default values in CodeIgniter's **env** file to match th
 MySQL 5.7 and 8.0 or MariaDB 10.5
 
 ```diff
--DB_HOST=127.0.0.1
-+DB_HOST=database
+-database.default.hostname = localhost
++database.default.hostname = database
+
+-database.default.database = ci4
++DB_DATABASE = ci4
++database.default.database = "${DB_DATABASE}"
+
++database.default.port = 3306
 ```
 
 PostgreSQL 13.0
 
 ```diff
--DB_CONNECTION=mysql
-+DB_CONNECTION=pgsql
+-database.default.DBDriver = MySQLi
++database.default.DBDriver = Postgre
 
--DB_HOST=127.0.0.1
-+DB_HOST=database
+-database.default.hostname = localhost
++database.default.hostname = database
 
--DB_PORT=3306
-+DB_PORT=5432
+-database.default.database = ci4
++DB_DATABASE = ci4
++database.default.database = "${DB_DATABASE}"
+
++database.default.port = 5432
 ```
 
 > In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **env** file
 
 ```diff
--DB_USERNAME=root
-+DB_USERNAME=<some_user>
+-database.default.username = root
++DB_USERNAME = <some_user>
++database.default.username = "${DB_USERNAME}"
 
--DB_PASSWORD=
-+DB_PASSWORD=<somepass>
+-database.default.password = root
++DB_PASSWORD = <somepass>
++database.default.password = "${DB_PASSWORD}"
 ```
+
+## 3. Update app/Config/Cache.php
+
+You need to update some default values in CodeIgniter's **app/Config/Cache.php** file to match the services in your **docker-compose.yml** file.
 
 ### Cache Services
 
 Redis
 
 ```diff
--REDIS_HOST=127.0.0.1
-+REDIS_HOST=cache
+public $redis = [
+-    'host' => '127.0.0.1',
++    'host' => cache
 ```
 
 Memcached
 
 ```diff
--MEMCACHED_HOST=127.0.0.1
-+MEMCACHED_HOST=cache
+public $memcached = [
+-    'host' => '127.0.0.1',
++    'host' => cache
 ```
 
-## 3. Run `kool run setup`
+## 4. Run `kool run setup`
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
