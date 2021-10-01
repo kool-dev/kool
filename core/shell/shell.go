@@ -61,11 +61,15 @@ type Shell interface {
 	OutputWritter
 	Outputable
 	PathChecker
+
 	InStream() io.Reader
 	SetInStream(io.Reader)
+
 	Exec(builder.Command, ...string) (string, error)
 	Interactive(builder.Command, ...string) error
 	Error(error)
+
+	IsTerminal() bool
 }
 
 // NewShell creates a new shell
@@ -82,6 +86,12 @@ func NewShell() Shell {
 // InStream get input stream
 func (s *DefaultShell) InStream() io.Reader {
 	return s.inStream
+}
+
+// IsTerminal tells whether this shell is attached
+// to a full input/output terminal
+func (s *DefaultShell) IsTerminal() bool {
+	return NewTerminalChecker().IsTerminal(s.inStream, s.outStream)
 }
 
 // SetInStream set input stream

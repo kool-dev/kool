@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
 	"kool-dev/kool/core/shell"
 	"strings"
 	"testing"
@@ -23,7 +22,7 @@ func (t *koolTaskServiceTest) Execute(args []string) error {
 	t.CalledExecute = true
 
 	if t.MockOutput != "" {
-		t.Println(t.MockOutput)
+		t.Shell().Println(t.MockOutput)
 	}
 
 	return t.MockError
@@ -31,11 +30,10 @@ func (t *koolTaskServiceTest) Execute(args []string) error {
 
 func newKoolServiceTest() *DefaultKoolService {
 	service := &DefaultKoolService{
-		&shell.FakeTerminalChecker{MockIsTerminal: true},
 		shell.NewShell(),
 	}
 	buf := bytes.NewBufferString("")
-	service.SetOutStream(buf)
+	service.Shell().SetOutStream(buf)
 	return service
 }
 
@@ -45,15 +43,6 @@ func newKoolTaskServiceTest() *koolTaskServiceTest {
 		false,
 		nil,
 		"",
-	}
-}
-
-func newKoolTaskServiceTestWithOutput() *koolTaskServiceTest {
-	return &koolTaskServiceTest{
-		*newKoolServiceTest(),
-		false,
-		nil,
-		"testing output",
 	}
 }
 
@@ -83,11 +72,13 @@ func TestNewKoolTask(t *testing.T) {
 
 func TestRunNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTest()
+	service.Fake()
+	service.shell.(*shell.FakeShell).MockIsTerminal = false
 	task := newKoolTaskTest("testing", service)
 
 	_ = task.Run([]string{})
 
-	if !service.term.(*shell.FakeTerminalChecker).CalledIsTerminal {
+	if !service.shell.(*shell.FakeShell).CalledIsTerminal {
 		t.Error("did not call IsTerminal on task KoolService")
 	}
 
@@ -106,7 +97,7 @@ func TestRunNewKoolTask(t *testing.T) {
 
 	_ = task.Run([]string{})
 
-	if !service.term.(*shell.FakeTerminalChecker).CalledIsTerminal {
+	if !service.shell.(*shell.FakeShell).CalledIsTerminal {
 		t.Error("did not call IsTerminal on task KoolService")
 	}
 
@@ -144,7 +135,9 @@ func TestRunFailingNewKoolTask(t *testing.T) {
 
 func TestRunNonTtyNewKoolTask(t *testing.T) {
 	service := newKoolTaskServiceTest()
-	service.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	service.Fake()
+	service.shell.(*shell.FakeShell).MockIsTerminal = false
+	service.shell.(*shell.FakeShell).MockOutStream = bytes.NewBufferString("")
 	task := newKoolTaskTest("testing", service)
 
 	_ = task.Run([]string{})
@@ -155,21 +148,23 @@ func TestRunNonTtyNewKoolTask(t *testing.T) {
 }
 
 func TestRunOutputNewKoolTask(t *testing.T) {
-	service := newKoolTaskServiceTestWithOutput()
+	service := &koolTaskServiceTest{
+		*newKoolServiceTest(),
+		false,
+		nil,
+		"testing output",
+	}
+
+	service.Fake()
+	service.shell.(*shell.FakeShell).MockIsTerminal = false
 	task := newKoolTaskTest("testing", service)
-	task.actualOut = shell.NewShell()
+	task.actualOut = service.Shell()
 
 	_ = task.Run([]string{})
 
-	bufBytes, err := io.ReadAll(task.actualOut.OutStream().(io.Reader))
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	output := strings.TrimSpace(string(bufBytes))
+	output := strings.Join(service.shell.(*shell.FakeShell).OutLines, "\n")
 
 	if !strings.Contains(output, "testing output") {
-		t.Error("did not printed KoolService output")
+		t.Error("did not print KoolService output")
 	}
 }

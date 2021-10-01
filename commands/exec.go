@@ -48,7 +48,7 @@ func NewKoolExec() *KoolExec {
 }
 
 func (e *KoolExec) detectTTY() {
-	var isTerminal = e.IsTerminal()
+	var isTerminal = e.Shell().IsTerminal()
 
 	if !isTerminal {
 		e.composeExec.AppendArgs("-T")
@@ -71,25 +71,25 @@ func (e *KoolExec) checkUser(service string) {
 		return
 	}
 
-	actualInput = e.InStream()
-	defer e.SetInStream(actualInput) // return actualInput
+	actualInput = e.Shell().InStream()
+	defer e.Shell().SetInStream(actualInput) // return actualInput
 
 	// avoid interference of Exec on actual input
 	// by temporarily setting os.Stdin
-	e.SetInStream(os.Stdin)
+	e.Shell().SetInStream(os.Stdin)
 
 	// we have a KOOL_ASUSER env; now we need to know whether
 	// the image of the target service have such user
 	var passwd string
 
-	if passwd, err = e.Exec(e.composeExec, service, "cat", "/etc/passwd"); err != nil {
+	if passwd, err = e.Shell().Exec(e.composeExec, service, "cat", "/etc/passwd"); err != nil {
 		// for safety, let's write the warning message to os.Stderr
 		// so we avoid getting cross-fire on in/out redirections
-		actualOut := e.OutStream()
-		defer e.SetOutStream(actualOut)
+		actualOut := e.Shell().OutStream()
+		defer e.Shell().SetOutStream(actualOut)
 
-		e.SetOutStream(os.Stderr)
-		e.Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
+		e.Shell().SetOutStream(os.Stderr)
+		e.Shell().Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
 	} else if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
 		// since user (kool:x:UID) exists within the container, we set it
 		e.composeExec.AppendArgs("--user", asuser)
@@ -112,7 +112,7 @@ func (e *KoolExec) Execute(args []string) (err error) {
 		e.composeExec.AppendArgs("--detach")
 	}
 
-	err = e.Interactive(e.composeExec, args...)
+	err = e.Shell().Interactive(e.composeExec, args...)
 	return
 }
 

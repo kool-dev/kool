@@ -29,13 +29,13 @@ func NewKoolCompletion(root *cobra.Command) *KoolCompletion {
 func (c *KoolCompletion) Execute(args []string) (err error) {
 	switch args[0] {
 	case "bash":
-		err = c.rootCmd.GenBashCompletion(c.OutStream())
+		err = c.rootCmd.GenBashCompletion(c.Shell().OutStream())
 	case "zsh":
-		err = c.rootCmd.GenZshCompletion(c.OutStream())
+		err = c.rootCmd.GenZshCompletion(c.Shell().OutStream())
 	case "fish":
-		err = c.rootCmd.GenFishCompletion(c.OutStream(), true)
+		err = c.rootCmd.GenFishCompletion(c.Shell().OutStream(), true)
 	case "powershell":
-		err = c.rootCmd.GenPowerShellCompletion(c.OutStream())
+		err = c.rootCmd.GenPowerShellCompletion(c.Shell().OutStream())
 	}
 	return
 }

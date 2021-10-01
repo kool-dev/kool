@@ -67,13 +67,13 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 	}
 
 	if services, err = s.getServices(); err != nil || len(services) == 0 {
-		s.Warning("No services found.")
+		s.Shell().Warning("No services found.")
 		return
 	}
 
 	chStatus := make(chan *statusService, len(services))
 
-	s.table.SetWriter(s.OutStream())
+	s.table.SetWriter(s.Shell().OutStream())
 	s.table.AppendHeader("Service", "Running", "Ports", "State")
 
 	go func() {
@@ -143,7 +143,7 @@ func (s *KoolStatus) checkNetwork() <-chan error {
 func (s *KoolStatus) getServices() (services []string, err error) {
 	var output string
 
-	if output, err = s.Exec(s.getServicesCmd); err != nil {
+	if output, err = s.Shell().Exec(s.getServicesCmd); err != nil {
 		return
 	}
 
@@ -173,7 +173,7 @@ func (s *KoolStatus) fetchServiceInfo(service string, chStatus chan *statusServi
 
 func (s *KoolStatus) getServiceInfo(service string) (isRunning bool, status, port string, err error) {
 	var serviceID string
-	if serviceID, err = s.Exec(s.getServiceIDCmd, service); err == nil && serviceID != "" {
+	if serviceID, err = s.Shell().Exec(s.getServiceIDCmd, service); err == nil && serviceID != "" {
 		status, port = s.getStatusPort(serviceID)
 		if strings.HasPrefix(status, "Up") {
 			isRunning = true
@@ -185,7 +185,7 @@ func (s *KoolStatus) getServiceInfo(service string) (isRunning bool, status, por
 func (s *KoolStatus) getStatusPort(serviceID string) (status string, port string) {
 	var output string
 
-	if output, _ = s.Exec(s.getServiceStatusPortCmd, "--filter", "ID="+serviceID); output == "" {
+	if output, _ = s.Shell().Exec(s.getServiceStatusPortCmd, "--filter", "ID="+serviceID); output == "" {
 		return
 	}
 

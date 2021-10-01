@@ -47,12 +47,12 @@ func NewKoolLogs() *KoolLogs {
 func (l *KoolLogs) Execute(args []string) (err error) {
 	var services string
 
-	if services, err = l.Exec(l.list, args...); err != nil {
+	if services, err = l.Shell().Exec(l.list, args...); err != nil {
 		return
 	}
 
 	if services = strings.TrimSpace(services); services == "" {
-		l.Warning("There are no containers")
+		l.Shell().Warning("There are no containers")
 		return
 	}
 
@@ -66,7 +66,7 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 		l.logs.AppendArgs("--follow")
 	}
 
-	err = l.Interactive(l.logs, args...)
+	err = l.Shell().Interactive(l.logs, args...)
 	return
 }
 

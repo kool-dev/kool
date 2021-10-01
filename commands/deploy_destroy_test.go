@@ -34,7 +34,7 @@ func (d *fakeDestroyCall) Call() (*api.DestroyResponse, error) {
 
 func TestDeployDestroyExec(t *testing.T) {
 	destroy := &KoolDeployDestroy{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		environment.NewFakeEnvStorage(),
 		&fakeDestroyCall{
 			DefaultEndpoint: *api.NewDefaultEndpoint(""),

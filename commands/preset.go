@@ -59,14 +59,14 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		return
 	}
 
-	p.Println("Preset", preset, "is initializing!")
+	p.Shell().Println("Preset", preset, "is initializing!")
 
 	backupDate := time.Now().Format("20060102")
 
 	if existingFiles := p.presetsParser.LookUpFiles(preset); len(existingFiles) > 0 {
 		for _, fileName := range existingFiles {
 			warning := fmt.Sprintf("Preset file %s already exists and will be renamed to %s.bak.%s", fileName, fileName, backupDate)
-			p.Warning(warning)
+			p.Shell().Warning(warning)
 		}
 	}
 
@@ -79,7 +79,7 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 		return
 	}
 
-	p.Success("Preset ", preset, " initialized!")
+	p.Shell().Success("Preset ", preset, " initialized!")
 	return
 }
 
@@ -107,7 +107,7 @@ func (p *KoolPreset) loadParsers() {
 
 func (p *KoolPreset) getPresetArgOrAsk(args []string) (preset string, err error) {
 	if len(args) == 0 {
-		if !p.IsTerminal() {
+		if !p.Shell().IsTerminal() {
 			err = fmt.Errorf("the input device is not a TTY; for non-tty environments, please specify a preset argument")
 			return
 		}
@@ -189,7 +189,7 @@ func (p *KoolPreset) customizeCompose(preset string, config *presets.PresetConfi
 				optionTemplate[option.Name] = allTemplates[serviceName][option.Template]
 			}
 
-			if p.IsTerminal() && len(options) > 1 {
+			if p.Shell().IsTerminal() && len(options) > 1 {
 				if selectedOption, err = p.promptSelect.Ask(question.Message, options); err != nil {
 					return
 				}
@@ -244,7 +244,7 @@ func (p *KoolPreset) customizeKoolYaml(preset string, config *presets.PresetConf
 				optionTemplate[option.Name] = allTemplates["scripts"][option.Template]
 			}
 
-			if p.IsTerminal() {
+			if p.Shell().IsTerminal() {
 				if selectedOption, err = p.promptSelect.Ask(question.Message, options); err != nil {
 					return
 				}

@@ -1,5 +1,4 @@
 //go:build !windows
-// +build !windows
 
 package commands
 
@@ -20,7 +19,7 @@ import (
 
 func newFakeKoolRun(mockParsedCommands map[string][]builder.Command, mockParseError map[string]error) *KoolRun {
 	return &KoolRun{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolRunFlags{[]string{}},
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
 		environment.NewFakeEnvStorage(),
@@ -34,10 +33,6 @@ func TestNewKoolRun(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolRun instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolRun instance")
 	}
 
 	if _, ok := k.parser.(*parser.DefaultParser); !ok {

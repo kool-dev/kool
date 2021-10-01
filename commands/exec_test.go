@@ -13,7 +13,7 @@ import (
 
 func newFakeKoolExec() *KoolExec {
 	return &KoolExec{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "exec"},
@@ -22,7 +22,7 @@ func newFakeKoolExec() *KoolExec {
 
 func newFailedFakeKoolExec() *KoolExec {
 	return &KoolExec{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "exec", MockInteractiveError: errors.New("error exec")},
@@ -34,10 +34,6 @@ func TestNewKoolExec(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolExec instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolExec instance")
 	}
 
 	if k.Flags == nil {
@@ -118,7 +114,7 @@ func TestKoolUserEnvNewExecCommand(t *testing.T) {
 	argsAppend := f.composeExec.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 2 || argsAppend[0] != "--user" || argsAppend[1] != "user_testing" {
-		t.Error("bad arguments to KoolExec.composeExec Command with KOOL_USER environment variable")
+		t.Errorf("bad arguments to KoolExec.composeExec Command with KOOL_USER environment variable: %v", argsAppend)
 	}
 
 	// now check
@@ -204,7 +200,7 @@ func TestDockerComposeTerminalAwarness(t *testing.T) {
 	cmd := NewExecCommand(f)
 	cmd.SetArgs([]string{"service", "command"})
 
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing exec command; error: %v", err)
 	}
@@ -213,7 +209,7 @@ func TestDockerComposeTerminalAwarness(t *testing.T) {
 		t.Errorf("unexpected -t flag when NOT under TTY; %s", f.composeExec.String())
 	}
 
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = true
+	f.shell.(*shell.FakeShell).MockIsTerminal = true
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing exec command; error: %v", err)
 	}
@@ -226,7 +222,7 @@ func TestDockerComposeTerminalAwarness(t *testing.T) {
 func TestNonTerminalNewExecCommand(t *testing.T) {
 	f := newFakeKoolExec()
 
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 
 	cmd := NewExecCommand(f)
 

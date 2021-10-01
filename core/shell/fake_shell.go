@@ -15,6 +15,7 @@ type FakeShell struct {
 	CalledSetOutStream bool
 	CalledErrStream    bool
 	CalledSetErrStream bool
+	CalledIsTerminal   bool
 	CalledExec         map[string]bool
 	CalledInteractive  map[string]bool
 	CalledLookPath     map[string]bool
@@ -28,16 +29,23 @@ type FakeShell struct {
 
 	CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess bool
 
-	MockOutStream io.Writer
-	MockErrStream io.Writer
-	MockInStream  io.Reader
-	MockLookPath  error
+	MockOutStream  io.Writer
+	MockErrStream  io.Writer
+	MockInStream   io.Reader
+	MockLookPath   error
+	MockIsTerminal bool
 }
 
 // InStream is a mocked testing function
 func (f *FakeShell) InStream() (inStream io.Reader) {
 	f.CalledInStream = true
 	return f.MockInStream
+}
+
+// IsTerminal is a mocked testing function
+func (f *FakeShell) IsTerminal() bool {
+	f.CalledIsTerminal = true
+	return f.MockIsTerminal
 }
 
 // SetInStream is a mocked testing function

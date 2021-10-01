@@ -87,7 +87,7 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 			command.AppendArgs(args...)
 		}
 
-		if err = r.Interactive(command); err != nil {
+		if err = r.Shell().Interactive(command); err != nil {
 			return
 		}
 	}
@@ -147,7 +147,7 @@ func (r *KoolRun) parseScript(script string) (err error) {
 	}()
 
 	if r.commands, err = r.parser.Parse(script); err != nil {
-		if parser.IsPossibleTypoError(err) && r.IsTerminal() {
+		if parser.IsPossibleTypoError(err) && r.Shell().IsTerminal() {
 			var promptError error
 
 			similarIsCorrect, promptError = r.promptSelect.Ask(err.Error(), []string{"Yes", "No"})
@@ -179,7 +179,7 @@ func (r *KoolRun) parseScript(script string) (err error) {
 
 		if parser.IsMultipleDefinedScriptError(err) {
 			// we should just warn the user about multiple finds for the script
-			r.Warning("Attention: the script was found in more than one kool.yml file")
+			r.Shell().Warning("Attention: the script was found in more than one kool.yml file")
 			err = nil
 		}
 	}
@@ -201,7 +201,7 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 
 		if scripts, err = run.parser.ParseAvailableScripts(""); err != nil {
 			if run.env.IsTrue("KOOL_VERBOSE") {
-				run.Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
+				run.Shell().Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
 			}
 			return
 		}
@@ -216,7 +216,7 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 			sb.WriteString("\n")
 		}
 
-		run.Println(sb.String())
+		run.Shell().Println(sb.String())
 		return
 	}
 }

@@ -11,7 +11,7 @@ import (
 
 func newFakeKoolLogs() *KoolLogs {
 	return &KoolLogs{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolLogsFlags{25, false},
 		&builder.FakeCommand{MockCmd: "list", MockExecOut: "app"},
 		&builder.FakeCommand{MockCmd: "logs"},
@@ -20,7 +20,7 @@ func newFakeKoolLogs() *KoolLogs {
 
 func newFakeFailedKoolLogs() *KoolLogs {
 	return &KoolLogs{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolLogsFlags{25, false},
 		&builder.FakeCommand{MockCmd: "list", MockExecOut: "app"},
 		&builder.FakeCommand{MockCmd: "logs", MockInteractiveError: errors.New("error logs")},
@@ -32,10 +32,6 @@ func TestNewKoolLogs(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolLogs instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolLogs instance")
 	}
 
 	if k.Flags == nil {

@@ -46,11 +46,11 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 	}
 
 	if latestVersion.Equals(currentVersion) {
-		s.Warning("You already have the latest version ", currentVersion.String())
+		s.Shell().Warning("You already have the latest version ", currentVersion.String())
 		return
 	}
 
-	s.Success("Successfully updated to version ", latestVersion.String())
+	s.Shell().Success("Successfully updated to version ", latestVersion.String())
 	return
 }
 

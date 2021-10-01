@@ -75,7 +75,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		api.SetBaseURL(url)
 	}
 
-	d.Println("Create release file...")
+	d.Shell().Println("Create release file...")
 	if filename, err = d.createReleaseFile(); err != nil {
 		return
 	}
@@ -83,18 +83,18 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	defer func(file string) {
 		var err error
 		if err = os.Remove(file); err != nil {
-			d.Error(fmt.Errorf("error trying to remove temporary tarball: %v", err))
+			d.Shell().Error(fmt.Errorf("error trying to remove temporary tarball: %v", err))
 		}
 	}(filename)
 
 	deploy = api.NewDeploy(filename)
 
-	d.Println("Upload release file...")
+	d.Shell().Println("Upload release file...")
 	if err = deploy.SendFile(); err != nil {
 		return
 	}
 
-	d.Println("Going to deploy...")
+	d.Shell().Println("Going to deploy...")
 
 	timeout := 10 * time.Minute
 
@@ -115,12 +115,12 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 			if lastStatus != deploy.Status.Status {
 				lastStatus = deploy.Status.Status
-				d.Println("  > deploy:", lastStatus)
+				d.Shell().Println("  > deploy:", lastStatus)
 			}
 
 			if err != nil {
 				finishes <- false
-				d.Error(err)
+				d.Shell().Error(err)
 				break
 			}
 
@@ -138,7 +138,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	case success = <-finishes:
 		{
 			if success {
-				d.Success("Deploy finished: ", deploy.GetURL())
+				d.Shell().Success("Deploy finished: ", deploy.GetURL())
 			} else {
 				err = fmt.Errorf("deploy failed")
 				return
@@ -169,13 +169,13 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 	}
 
 	var hasGit bool = true
-	if errGit := d.LookPath(d.git); errGit != nil {
+	if errGit := d.Shell().LookPath(d.git); errGit != nil {
 		hasGit = false
 	}
 
 	if _, errGit := os.Stat(".git"); !hasGit || os.IsNotExist(errGit) {
 		// not a GIT repo/environment!
-		d.Println("Fallback to tarball full current working directory...")
+		d.Shell().Println("Fallback to tarball full current working directory...")
 		cwd, _ = os.Getwd()
 		filename, err = tarball.CompressFolder(cwd)
 		return
@@ -216,7 +216,7 @@ func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err e
 		output, file string
 	)
 
-	output, err = d.Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
+	output, err = d.Shell().Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
 	if err != nil {
 		err = fmt.Errorf("failed listing GIT files: %s", err.Error())
 		return

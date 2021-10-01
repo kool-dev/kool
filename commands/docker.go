@@ -49,7 +49,7 @@ func NewKoolDocker() *KoolDocker {
 func (d *KoolDocker) Execute(args []string) (err error) {
 	workDir, _ := os.Getwd()
 
-	if d.IsTerminal() {
+	if d.Shell().IsTerminal() {
 		d.dockerRun.AppendArgs("-t")
 	}
 
@@ -83,7 +83,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 		}
 	}
 
-	err = d.Interactive(d.dockerRun, args...)
+	err = d.Shell().Interactive(d.dockerRun, args...)
 	return
 }
 

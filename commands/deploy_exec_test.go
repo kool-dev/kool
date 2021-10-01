@@ -4,7 +4,6 @@ import (
 	"errors"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
-	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/cloud/k8s"
 	"strings"
 	"testing"
@@ -12,7 +11,7 @@ import (
 
 func newFakeKoolDeployExec() *KoolDeployExec {
 	return &KoolDeployExec{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolDeployExecFlags{},
 		environment.NewFakeEnvStorage(),
 		&fakeK8S{},
@@ -75,7 +74,6 @@ func TestKoolDeployExec(t *testing.T) {
 	fakeKubectl = &builder.FakeCommand{}
 	mock.MockKubectlKube = fakeKubectl
 	fakeKubectl.MockInteractiveError = nil
-	e.term.(*shell.FakeTerminalChecker).MockIsTerminal = true
 	e.Flags.Container = "foo"
 
 	if err = e.Execute(args); err != nil {

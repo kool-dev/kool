@@ -39,7 +39,7 @@ scripts:
 
 func newFakeKoolPreset() *KoolPreset {
 	return &KoolPreset{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&presets.FakeParser{},
 		&compose.FakeParser{},
 		&templates.FakeParser{},
@@ -60,10 +60,6 @@ func TestNewKoolPreset(t *testing.T) {
 		t.Errorf("unexpected shell.Shell on default KoolPreset instance")
 	}
 
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolPreset instance")
-	}
-
 	if _, ok := k.presetsParser.(*presets.DefaultParser); !ok {
 		t.Errorf("unexpected presets.Parser on default KoolPreset instance")
 	}
@@ -78,10 +74,6 @@ func TestNewKoolPreset(t *testing.T) {
 
 	if _, ok := k.promptSelect.(*shell.DefaultPromptSelect); !ok {
 		t.Errorf("unexpected shell.PromptSelect on default KoolPreset instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolPreset instance")
 	}
 }
 
@@ -328,7 +320,7 @@ func TestCancellingPresetCommand(t *testing.T) {
 
 func TestNonTTYPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 
 	cmd := NewPresetCommand(f)
 

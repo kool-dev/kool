@@ -68,7 +68,7 @@ func (s *KoolStop) Execute(args []string) (err error) {
 		if s.Flags.Purge {
 			s.rm.AppendArgs("-v") // removes volumes
 
-			s.Warning("Attention: when stopping specific services, only anonymous volumes will be removed.")
+			s.Shell().Warning("Attention: when stopping specific services, only anonymous volumes will be removed.")
 		}
 
 		s.rm.AppendArgs(args...)
@@ -76,7 +76,7 @@ func (s *KoolStop) Execute(args []string) (err error) {
 		stopCommand = s.rm
 	}
 
-	err = s.Interactive(stopCommand)
+	err = s.Shell().Interactive(stopCommand)
 	time.Sleep(time.Second * 2)
 	return
 }

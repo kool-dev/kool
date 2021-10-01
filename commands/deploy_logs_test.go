@@ -54,7 +54,7 @@ func (f *fakeK8S) Cleanup(out shell.OutputWritter) {
 
 func fakeKoolDeployLogs() *KoolDeployLogs {
 	return &KoolDeployLogs{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolDeployLogsFlags{},
 		environment.NewFakeEnvStorage(),
 		&fakeK8S{},
