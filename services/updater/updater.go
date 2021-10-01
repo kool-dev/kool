@@ -3,6 +3,8 @@ package updater
 import (
 	"fmt"
 	"kool-dev/kool/services/user"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/blang/semver"
@@ -75,6 +77,26 @@ func (u *DefaultUpdater) CheckPermission() (err error) {
 	if runtime.GOOS != "windows" && runtime.GOOS != "linux" {
 		// we should be fine in other plataforms, permission-wise
 		return
+	}
+
+	if runtime.GOOS == "linux" {
+		var (
+			binPath string
+		)
+
+		if binPath, err = os.Executable(); err != nil {
+			return
+		}
+
+		if binPath, err = filepath.EvalSymlinks(binPath); err != nil {
+			return
+		}
+
+		if isWriteable(binPath) && isWriteable(filepath.Dir(binPath)) {
+			// the folder the binary file lives is IS writeable
+			// for the current user
+			return
+		}
 	}
 
 	// we need elevated privileges!
