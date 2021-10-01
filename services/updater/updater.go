@@ -3,11 +3,14 @@ package updater
 import (
 	"fmt"
 	"kool-dev/kool/services/user"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 )
 
 // DefaultUpdater holds data for updating kool
@@ -74,6 +77,24 @@ func (u *DefaultUpdater) CheckForUpdates(current semver.Version, chHasNewVersion
 func (u *DefaultUpdater) CheckPermission() (err error) {
 	if runtime.GOOS != "windows" && runtime.GOOS != "linux" {
 		// we should be fine in other plataforms, permission-wise
+		return
+	}
+
+	var (
+		binPath string
+	)
+
+	if binPath, err = os.Executable(); err != nil {
+		return
+	}
+
+	if binPath, err = filepath.EvalSymlinks(binPath); err != nil {
+		return
+	}
+
+	if unix.Access(binPath, unix.W_OK) == nil && unix.Access(filepath.Dir(binPath), unix.W_OK) == nil {
+		// the folder the binary file lives is IS writeable
+		// for the current user
 		return
 	}
 
