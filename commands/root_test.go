@@ -175,10 +175,7 @@ func TestMultipleServicesFailingDefaultCommandRunFunction(t *testing.T) {
 func TestVerboseFlagRootCommand(t *testing.T) {
 	fakeEnv := environment.NewFakeEnvStorage()
 
-	fInfo := &KoolInfo{
-		*newFakeKoolService(),
-		fakeEnv,
-	}
+	fInfo := fakeKoolInfo()
 
 	root := NewRootCmd(fakeEnv)
 	info := NewInfoCmd(fInfo)

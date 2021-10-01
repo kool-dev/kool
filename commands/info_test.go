@@ -1,59 +1,56 @@
 package commands
 
 import (
-	"bytes"
-	"io"
+	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
-	"sort"
+	"kool-dev/kool/core/shell"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 )
 
-const testingEnv string = `
-KOOL_FILTER_TESTING=1
-KOOL_TESTING=1
-`
-
 func setup(f *KoolInfo) {
 	f.envStorage.Set("KOOL_FILTER_TESTING", "1")
 	f.envStorage.Set("KOOL_TESTING", "1")
 }
 
-func TestInfo(t *testing.T) {
-	f := &KoolInfo{
-		*newDefaultKoolService(),
+func fakeKoolInfo() *KoolInfo {
+	return &KoolInfo{
+		*newFakeKoolService(),
 		environment.NewFakeEnvStorage(),
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 	}
+}
+
+func TestInfo(t *testing.T) {
+	f := fakeKoolInfo()
 
 	setup(f)
 
-	output, err := execInfoCommand(NewInfoCmd(f))
+	output, err := execInfoCommand(NewInfoCmd(f), f)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := strings.Trim(testingEnv, "\n")
-
-	if output != expected {
-		t.Errorf("Expected '%s', got '%s'", expected, output)
+	for _, expected := range []string{"KOOL_FILTER_TESTING=1", "KOOL_TESTING=1"} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("Expected '%s', got '%s'", expected, output)
+		}
 	}
 }
 
 func TestFilteredInfo(t *testing.T) {
-	f := &KoolInfo{
-		*newDefaultKoolService(),
-		environment.NewFakeEnvStorage(),
-	}
+	f := fakeKoolInfo()
 
 	setup(f)
 
 	cmd := NewInfoCmd(f)
 	cmd.SetArgs([]string{"FILTER"})
 
-	output, err := execInfoCommand(cmd)
+	output, err := execInfoCommand(cmd, f)
 
 	if err != nil {
 		t.Fatal(err)
@@ -61,27 +58,16 @@ func TestFilteredInfo(t *testing.T) {
 
 	expected := "KOOL_FILTER_TESTING=1"
 
-	if output != expected {
+	if !strings.Contains(output, expected) {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
 	}
 }
 
-func execInfoCommand(cmd *cobra.Command) (output string, err error) {
-	b := bytes.NewBufferString("")
-	cmd.SetOut(b)
-
+func execInfoCommand(cmd *cobra.Command, f *KoolInfo) (output string, err error) {
 	if err = cmd.Execute(); err != nil {
 		return
 	}
 
-	var out []byte
-	if out, err = io.ReadAll(b); err != nil {
-		return
-	}
-
-	envs := strings.Split(strings.Trim(string(out), "\n"), "\n")
-	sort.Strings(envs)
-
-	output = strings.Join(envs, "\n")
+	output = strings.Join(f.shell.(*shell.FakeShell).OutLines, "\n")
 	return
 }
