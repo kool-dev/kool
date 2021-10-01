@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"os"
@@ -60,7 +59,6 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 	// kool CLI info
 	i.Println("Kool Version ", version)
 	if output, err = os.Executable(); err != nil {
-		fmt.Println("err1")
 		return
 	}
 	i.Println("Kool Bin Path:", output)
