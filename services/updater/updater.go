@@ -10,7 +10,6 @@ import (
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/unix"
 )
 
 // DefaultUpdater holds data for updating kool
@@ -93,7 +92,7 @@ func (u *DefaultUpdater) CheckPermission() (err error) {
 			return
 		}
 
-		if unix.Access(binPath, unix.W_OK) == nil && unix.Access(filepath.Dir(binPath), unix.W_OK) == nil {
+		if isWriteable(binPath) && isWriteable(filepath.Dir(binPath)) {
 			// the folder the binary file lives is IS writeable
 			// for the current user
 			return
