@@ -14,7 +14,7 @@ import (
 type KoolInfo struct {
 	DefaultKoolService
 
-	envStorage environment.EnvStorage
+	envStorage                  environment.EnvStorage
 	cmdDocker, cmdDockerCompose builder.Command
 }
 

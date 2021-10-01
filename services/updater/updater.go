@@ -80,22 +80,24 @@ func (u *DefaultUpdater) CheckPermission() (err error) {
 		return
 	}
 
-	var (
-		binPath string
-	)
+	if runtime.GOOS == "linux" {
+		var (
+			binPath string
+		)
 
-	if binPath, err = os.Executable(); err != nil {
-		return
-	}
+		if binPath, err = os.Executable(); err != nil {
+			return
+		}
 
-	if binPath, err = filepath.EvalSymlinks(binPath); err != nil {
-		return
-	}
+		if binPath, err = filepath.EvalSymlinks(binPath); err != nil {
+			return
+		}
 
-	if unix.Access(binPath, unix.W_OK) == nil && unix.Access(filepath.Dir(binPath), unix.W_OK) == nil {
-		// the folder the binary file lives is IS writeable
-		// for the current user
-		return
+		if unix.Access(binPath, unix.W_OK) == nil && unix.Access(filepath.Dir(binPath), unix.W_OK) == nil {
+			// the folder the binary file lives is IS writeable
+			// for the current user
+			return
+		}
 	}
 
 	// we need elevated privileges!
