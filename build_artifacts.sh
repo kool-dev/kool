@@ -46,6 +46,7 @@ BUILD=(\
   "dist/kool-linux-arm6|--env GOOS=linux --env GOARCH=arm --env GOARM=6" \
   "dist/kool-linux-arm7|--env GOOS=linux --env GOARCH=arm --env GOARM=7" \
   "dist/kool-windows-amd64.exe|--env GOOS=windows --env GOARCH=amd64" \
+  "dist/kool-linux-arm64|--env GOOS=linux --env GOARCH=arm64" \
 )
 
 for i in "${!BUILD[@]}"; do
