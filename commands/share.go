@@ -89,7 +89,7 @@ func (s *KoolShare) Execute(args []string) (err error) {
 		s.share.AppendArgs("--subdomain", s.Flags.Subdomain)
 	}
 
-	err = s.Interactive(s.share)
+	err = s.Shell().Interactive(s.share)
 	return
 }
 

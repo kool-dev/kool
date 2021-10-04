@@ -18,17 +18,17 @@ import (
 )
 
 func assertServiceAfterExecutingDefaultRun(service *FakeKoolService) (errMessage string) {
-	if !service.CalledSetOutStream {
+	if !service.shell.CalledSetOutStream {
 		errMessage = "did not call SetOutStream on kool service"
 		return
 	}
 
-	if !service.CalledSetInStream {
+	if !service.shell.CalledSetInStream {
 		errMessage = "did not call SetInStream on kool service"
 		return
 	}
 
-	if !service.CalledSetErrStream {
+	if !service.shell.CalledSetErrStream {
 		errMessage = "did not call SetErrStream on kool service"
 		return
 	}
@@ -107,7 +107,7 @@ func TestVersionFlagCommand(t *testing.T) {
 }
 
 func TestDefaultCommandRunFunction(t *testing.T) {
-	f := &FakeKoolService{}
+	f := newFakeKoolService()
 
 	cmd := &cobra.Command{
 		Use:   "fake-command",
@@ -125,7 +125,8 @@ func TestDefaultCommandRunFunction(t *testing.T) {
 }
 
 func TestFailingDefaultCommandRunFunction(t *testing.T) {
-	f := &FakeKoolService{MockExecError: fmt.Errorf("execute error")}
+	f := newFakeKoolService()
+	f.MockExecuteErr = fmt.Errorf("execute error")
 
 	cmd := &cobra.Command{
 		Use:   "fake-command",
@@ -139,8 +140,8 @@ func TestFailingDefaultCommandRunFunction(t *testing.T) {
 func TestMultipleServicesDefaultCommandRunFunction(t *testing.T) {
 	var services []*FakeKoolService
 
-	services = append(services, &FakeKoolService{})
-	services = append(services, &FakeKoolService{})
+	services = append(services, newFakeKoolService())
+	services = append(services, newFakeKoolService())
 
 	cmd := &cobra.Command{
 		Use:   "fake-command",
@@ -160,8 +161,9 @@ func TestMultipleServicesDefaultCommandRunFunction(t *testing.T) {
 }
 
 func TestMultipleServicesFailingDefaultCommandRunFunction(t *testing.T) {
-	failing := &FakeKoolService{MockExecError: fmt.Errorf("execute error")}
-	passing := &FakeKoolService{}
+	failing := newFakeKoolService()
+	failing.MockExecuteErr = fmt.Errorf("execute error")
+	passing := newFakeKoolService()
 
 	cmd := &cobra.Command{
 		Use:   "fake-command",
@@ -344,7 +346,8 @@ func TestDevelopmentVersionWarning(t *testing.T) {
 }
 
 func TestPromptSelectInterruptedError(t *testing.T) {
-	failing := &FakeKoolService{MockExecError: shell.ErrUserCancelled}
+	failing := newFakeKoolService()
+	failing.MockExecuteErr = shell.ErrUserCancelled
 
 	cmd := &cobra.Command{
 		Use:   "fake-command",

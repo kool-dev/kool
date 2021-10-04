@@ -80,11 +80,11 @@ func AddKoolStart(root *cobra.Command) {
 
 // Execute runs the rebuild logic
 func (r *KoolRebuild) Execute(args []string) (err error) {
-	if err = r.Interactive(r.pull); err != nil {
+	if err = r.Shell().Interactive(r.pull); err != nil {
 		return
 	}
 
-	err = r.Interactive(r.build)
+	err = r.Shell().Interactive(r.build)
 	return
 }
 
@@ -104,7 +104,7 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 
-	err = s.Interactive(s.start, args...)
+	err = s.Shell().Interactive(s.start, args...)
 	return
 }
 
@@ -113,9 +113,9 @@ func (s *KoolStart) rebuild() (err error) {
 
 	task.SetFrameOutput(false)
 
-	task.SetInStream(s.InStream())
-	task.SetOutStream(s.OutStream())
-	task.SetErrStream(s.ErrStream())
+	task.Shell().SetInStream(s.Shell().InStream())
+	task.Shell().SetOutStream(s.Shell().OutStream())
+	task.Shell().SetErrStream(s.Shell().ErrStream())
 
 	err = task.Run(nil)
 	return

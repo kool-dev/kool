@@ -11,7 +11,7 @@ import (
 
 func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, errU, errP error) *KoolSelfUpdate {
 	selfUpdate := &KoolSelfUpdate{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&updater.FakeUpdater{
 			MockCurrentVersion:  currentVersion,
 			MockLatestVersion:   latestVersion,
@@ -29,10 +29,6 @@ func TestNewKoolSelfUpdate(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on KoolSelfUpdate KoolRun instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on KoolSelfUpdate KoolRun instance")
 	}
 
 	if _, ok := k.updater.(*updater.DefaultUpdater); !ok {

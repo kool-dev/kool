@@ -17,7 +17,7 @@ func setup(f *KoolInfo) {
 
 func fakeKoolInfo() *KoolInfo {
 	return &KoolInfo{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},

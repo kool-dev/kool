@@ -59,7 +59,7 @@ func (d *KoolDeployDestroy) Execute(args []string) (err error) {
 		return
 	}
 
-	d.Success(fmt.Sprintf("Environment (ID: %d) scheduled for deleting.", resp.Environment.ID))
+	d.Shell().Success(fmt.Sprintf("Environment (ID: %d) scheduled for deleting.", resp.Environment.ID))
 
 	return
 }

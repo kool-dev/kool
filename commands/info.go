@@ -57,51 +57,51 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 	}
 
 	// kool CLI info
-	i.Println("Kool Version ", version)
+	i.Shell().Println("Kool Version ", version)
 	if output, err = os.Executable(); err != nil {
 		return
 	}
-	i.Println("Kool Bin Path:", output)
+	i.Shell().Println("Kool Bin Path:", output)
 
-	i.Println("")
+	i.Shell().Println("")
 	// docker CLI info
-	if output, err = i.Exec(i.cmdDocker); err != nil {
+	if output, err = i.Shell().Exec(i.cmdDocker); err != nil {
 		return
 	}
-	i.Println(output)
+	i.Shell().Println(output)
 
 	if err = i.shell.LookPath(i.cmdDocker); err != nil {
 		return
 	}
 	output, _ = exec.LookPath(i.cmdDocker.Cmd())
 
-	i.Println("Docker Bin Path:", output)
+	i.Shell().Println("Docker Bin Path:", output)
 
-	i.Println("")
+	i.Shell().Println("")
 
 	// docker-compose CLI info
-	if output, err = i.Exec(i.cmdDockerCompose); err != nil {
+	if output, err = i.Shell().Exec(i.cmdDockerCompose); err != nil {
 		// just alert missing docker-compose, but don't elevate error
-		i.Warning("Docker Compose:", err.Error())
-		i.Warning("It's okay not having docker-compose installed, as kool will fallback to using a container for it when necessary.")
+		i.Shell().Warning("Docker Compose:", err.Error())
+		i.Shell().Warning("It's okay not having docker-compose installed, as kool will fallback to using a container for it when necessary.")
 		err = nil
 	} else {
-		i.Println(output)
+		i.Shell().Println(output)
 		output, _ = exec.LookPath("docker-compose")
-		i.Println("Docker Compose Bin Path:", output)
+		i.Shell().Println("Docker Compose Bin Path:", output)
 	}
 
-	i.Println("")
-	i.Println("Environment Variables of Interest:")
-	i.Println("")
+	i.Shell().Println("")
+	i.Shell().Println("Environment Variables of Interest:")
+	i.Shell().Println("")
 
 	for _, envVar := range i.envStorage.All() {
 		if strings.Contains(envVar, filter) {
 			// keep from printing out known to be sensitive values
 			if strings.Contains(envVar, "KOOL_API_TOKEN") {
-				i.Warning("KOOL_API_TOKEN=***************** [redacted]")
+				i.Shell().Warning("KOOL_API_TOKEN=***************** [redacted]")
 			} else {
-				i.Println(envVar)
+				i.Shell().Println(envVar)
 			}
 		}
 	}

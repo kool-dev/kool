@@ -77,9 +77,9 @@ func (e *KoolDeployLogs) Execute(args []string) (err error) {
 		return
 	}
 
-	defer e.cloud.Cleanup(e)
+	defer e.cloud.Cleanup(e.Shell())
 
-	if kubectl, err = e.cloud.Kubectl(e); err != nil {
+	if kubectl, err = e.cloud.Kubectl(e.Shell()); err != nil {
 		return
 	}
 
@@ -92,6 +92,6 @@ func (e *KoolDeployLogs) Execute(args []string) (err error) {
 	}
 	kubectl.AppendArgs(cloudService, "-c", e.Flags.Container)
 
-	err = e.Interactive(kubectl)
+	err = e.Shell().Interactive(kubectl)
 	return
 }

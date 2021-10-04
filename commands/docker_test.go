@@ -12,7 +12,7 @@ import (
 
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker"},
@@ -21,7 +21,7 @@ func newFakeKoolDocker() *KoolDocker {
 
 func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
@@ -33,10 +33,6 @@ func TestNewKoolDocker(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolDocker instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolDocker instance")
 	}
 
 	if k.Flags == nil {
@@ -83,7 +79,7 @@ func TestNewDockerCommand(t *testing.T) {
 	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
 
 	if len(argsAppend) != 3 || argsAppend[0] != "-t" || argsAppend[1] != "--volume" || argsAppend[2] != workDir+":/app:delegated" {
-		t.Errorf("bad arguments to KoolDocker.dockerRun Command with default flags")
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with default flags: %v", argsAppend)
 	}
 
 	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["docker"]; !ok || !val {
@@ -99,7 +95,7 @@ func TestNewDockerCommand(t *testing.T) {
 
 func TestNoArgsNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 
 	cmd := NewDockerCommand(f)
 
@@ -112,7 +108,7 @@ func TestNoArgsNewDockerCommand(t *testing.T) {
 
 func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "kooldev_user_test"
@@ -132,7 +128,7 @@ func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 
 func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "kooldev_user_test"
@@ -152,7 +148,7 @@ func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
 
 func TestEnvFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	cmd.SetArgs([]string{"--env=VAR_TEST=1", "image"})
@@ -170,7 +166,7 @@ func TestEnvFlagNewDockerCommand(t *testing.T) {
 
 func TestVolumesFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	cmd.SetArgs([]string{"--volume=volume_test", "image"})
@@ -188,7 +184,7 @@ func TestVolumesFlagNewDockerCommand(t *testing.T) {
 
 func TestPublishFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	cmd.SetArgs([]string{"--publish=publish_test", "image"})
@@ -206,7 +202,7 @@ func TestPublishFlagNewDockerCommand(t *testing.T) {
 
 func TestNetworkFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	cmd.SetArgs([]string{"--network=kool_global", "image"})
@@ -224,7 +220,7 @@ func TestNetworkFlagNewDockerCommand(t *testing.T) {
 
 func TestImageCommandsNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	cmd.SetArgs([]string{"image", "command1", "command2"})
@@ -242,7 +238,7 @@ func TestImageCommandsNewDockerCommand(t *testing.T) {
 
 func TestFailingNewDockerCommand(t *testing.T) {
 	f := newFailedFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
 	cmd.SetArgs([]string{"image"})
@@ -252,7 +248,7 @@ func TestFailingNewDockerCommand(t *testing.T) {
 
 func TestNonTerminalNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
-	f.term.(*shell.FakeTerminalChecker).MockIsTerminal = false
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
 
 	cmd := NewDockerCommand(f)
 

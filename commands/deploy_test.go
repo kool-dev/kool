@@ -24,7 +24,7 @@ func TestNewKoolDeploy(t *testing.T) {
 
 func fakeKoolDeploy() *KoolDeploy {
 	return &KoolDeploy{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 	}

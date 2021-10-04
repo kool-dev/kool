@@ -12,7 +12,7 @@ import (
 
 func newFakeKoolStop() *KoolStop {
 	fs := &KoolStop{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolStopFlags{false},
 		&checker.FakeChecker{},
 		&builder.FakeCommand{},
@@ -28,10 +28,6 @@ func TestNewKoolStop(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolStop instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolStop instance")
 	}
 
 	if k.Flags == nil {

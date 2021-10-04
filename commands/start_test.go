@@ -17,14 +17,14 @@ import (
 
 func newFakeKoolStart() *KoolStart {
 	return &KoolStart{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolStartFlags{},
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "start"},
 		&KoolRebuild{
-			*newFakeKoolService(),
+			*(newDefaultKoolService().Fake()),
 			&builder.FakeCommand{MockCmd: "pull"},
 			&builder.FakeCommand{MockCmd: "build"},
 		},

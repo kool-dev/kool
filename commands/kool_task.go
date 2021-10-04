@@ -39,19 +39,19 @@ func NewKoolTask(message string, service KoolService) *DefaultKoolTask {
 
 // Run runs task
 func (t *DefaultKoolTask) Run(args []string) (err error) {
-	if !t.IsTerminal() {
+	if !t.Shell().IsTerminal() {
 		return t.Execute(args)
 	}
 
-	t.originalOut = t.OutStream()
+	t.originalOut = t.Shell().OutStream()
 	t.actualOut.SetOutStream(t.originalOut)
 	pipeReader, pipeWriter := io.Pipe()
 
-	t.SetOutStream(pipeWriter)
-	origErr := t.ErrStream()
-	t.SetErrStream(pipeWriter)
-	defer t.SetOutStream(t.originalOut)
-	defer t.SetErrStream(origErr)
+	t.Shell().SetOutStream(pipeWriter)
+	origErr := t.Shell().ErrStream()
+	t.Shell().SetErrStream(pipeWriter)
+	defer t.Shell().SetOutStream(t.originalOut)
+	defer t.Shell().SetErrStream(origErr)
 
 	lines := make(chan string)
 

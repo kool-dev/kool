@@ -75,7 +75,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 			return
 		}
 
-		if err = c.Interactive(c.createCommand); err != nil {
+		if err = c.Shell().Interactive(c.createCommand); err != nil {
 			return
 		}
 	}

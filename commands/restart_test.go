@@ -9,8 +9,8 @@ import (
 
 // NewRestartCommand initializes new kool start command
 func TestRestartCommand(t *testing.T) {
-	fakeStop := &FakeKoolService{}
-	fakeStart := &FakeKoolService{}
+	fakeStop := newFakeKoolService()
+	fakeStart := newFakeKoolService()
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
@@ -28,10 +28,10 @@ func TestRestartCommand(t *testing.T) {
 }
 
 func TestFailingStartRestartCommand(t *testing.T) {
-	fakeStop := &FakeKoolService{}
-	fakeStart := &FakeKoolService{}
+	fakeStop := newFakeKoolService()
+	fakeStart := newFakeKoolService()
 
-	fakeStart.MockExecError = errors.New("start error")
+	fakeStart.MockExecuteErr = errors.New("start error")
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
@@ -39,10 +39,10 @@ func TestFailingStartRestartCommand(t *testing.T) {
 }
 
 func TestFailingStopRestartCommand(t *testing.T) {
-	fakeStop := &FakeKoolService{}
-	fakeStart := &FakeKoolService{}
+	fakeStop := newFakeKoolService()
+	fakeStart := newFakeKoolService()
 
-	fakeStop.MockExecError = errors.New("stop error")
+	fakeStop.MockExecuteErr = errors.New("stop error")
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 
@@ -51,7 +51,7 @@ func TestFailingStopRestartCommand(t *testing.T) {
 
 func TestPurgeRestartCommand(t *testing.T) {
 	fakeStop := newFakeKoolStop()
-	fakeStart := &FakeKoolService{}
+	fakeStart := newFakeKoolService()
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)
 	cmd.SetArgs([]string{"--purge"})
@@ -66,7 +66,7 @@ func TestPurgeRestartCommand(t *testing.T) {
 }
 
 func TestRebuildRestartCommand(t *testing.T) {
-	fakeStop := &FakeKoolService{}
+	fakeStop := newFakeKoolService()
 	fakeStart := newFakeKoolStart()
 
 	cmd := NewRestartCommand(fakeStop, fakeStart)

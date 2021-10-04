@@ -25,7 +25,7 @@ func (f *FakeRaceShell) Exec(command builder.Command, extraArgs ...string) (stri
 
 func newFakeKoolStatus() *KoolStatus {
 	fs := &KoolStatus{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
@@ -46,10 +46,6 @@ func TestNewKoolStatus(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolStatus instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolStatus instance")
 	}
 
 	if _, ok := k.check.(*checker.DefaultChecker); !ok {
@@ -211,7 +207,7 @@ func TestFailedGetServiceIDStatusCommand(t *testing.T) {
 
 func TestServicesOrderStatusCommand(t *testing.T) {
 	f := &KoolStatus{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),

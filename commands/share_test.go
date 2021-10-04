@@ -26,7 +26,7 @@ func TestShareDefaults(t *testing.T) {
 
 func newFakeShareService() *KoolShare {
 	return &KoolShare{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&KoolShareFlags{"default-service", "default-subdomain", 0},
 		environment.NewFakeEnvStorage(),
 		newFakeKoolStatus(),

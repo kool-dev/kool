@@ -13,7 +13,7 @@ import (
 
 func newFakeKoolCreate() *KoolCreate {
 	return &KoolCreate{
-		*newFakeKoolService(),
+		*(newDefaultKoolService().Fake()),
 		&presets.FakeParser{},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
@@ -26,10 +26,6 @@ func TestNewKoolCreate(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolCreate instance")
-	}
-
-	if _, ok := k.DefaultKoolService.term.(*shell.DefaultTerminalChecker); !ok {
-		t.Errorf("unexpected shell.TerminalChecker on default KoolCreate instance")
 	}
 
 	if _, ok := k.createCommand.(*builder.DefaultCommand); !ok {

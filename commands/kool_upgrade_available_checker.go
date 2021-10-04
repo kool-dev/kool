@@ -23,7 +23,7 @@ func CheckNewVersion(service KoolService, updater updater.Updater) *UpdateAwareS
 
 // Execute runs the check logic and proxies to original service
 func (u *UpdateAwareService) Execute(args []string) (err error) {
-	if !u.KoolService.IsTerminal() {
+	if !u.KoolService.Shell().IsTerminal() {
 		err = u.KoolService.Execute(args)
 		return
 	}
@@ -39,7 +39,7 @@ func (u *UpdateAwareService) Execute(args []string) (err error) {
 	select {
 	case update := <-ch:
 		if update {
-			defer u.KoolService.Warning("There's a new version available! Run kool self-update to upgrade!")
+			defer u.KoolService.Shell().Warning("There's a new version available! Run kool self-update to upgrade!")
 		}
 	case <-time.After(time.Second):
 		break

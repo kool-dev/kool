@@ -108,13 +108,13 @@ func RootCmd() *cobra.Command {
 func DefaultCommandRunFunction(services ...KoolService) CobraRunE {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		for _, service := range services {
-			service.SetOutStream(cmd.OutOrStdout())
-			service.SetInStream(cmd.InOrStdin())
-			service.SetErrStream(cmd.ErrOrStderr())
+			service.Shell().SetOutStream(cmd.OutOrStdout())
+			service.Shell().SetInStream(cmd.InOrStdin())
+			service.Shell().SetErrStream(cmd.ErrOrStderr())
 
 			if err = service.Execute(args); err != nil {
 				if shell.IsUserCancelledError(err) {
-					service.Warning("Operation Cancelled")
+					service.Shell().Warning("Operation Cancelled")
 					err = nil
 				}
 				return
@@ -128,9 +128,9 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunE {
 func LongTaskCommandRunFunction(tasks ...KoolTask) CobraRunE {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		for _, task := range tasks {
-			task.SetOutStream(cmd.OutOrStdout())
-			task.SetInStream(cmd.InOrStdin())
-			task.SetErrStream(cmd.ErrOrStderr())
+			task.Shell().SetOutStream(cmd.OutOrStdout())
+			task.Shell().SetInStream(cmd.InOrStdin())
+			task.Shell().SetErrStream(cmd.ErrOrStderr())
 
 			if err = task.Run(args); err != nil {
 				return
