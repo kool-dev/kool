@@ -13,13 +13,13 @@ type OutputWritter interface {
 	WriteYAML(string, *yaml.Node) error
 }
 
-type DefaultOutputWritter struct {}
+type DefaultOutputWritter struct{}
 
 func (o *DefaultOutputWritter) WriteYAML(filePath string, document *yaml.Node) (err error) {
 	var (
-		buff = new(bytes.Buffer)
+		buff    = new(bytes.Buffer)
 		encoder *yaml.Encoder
-		file *os.File
+		file    *os.File
 	)
 
 	if document.Kind != yaml.DocumentNode {

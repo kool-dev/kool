@@ -5,52 +5,23 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"kool-dev/kool/core/automate"
+	"kool-dev/kool/core/shell"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
 
+const presetConfigFile = "presets/%s/config.yml"
+
 var source embed.FS
 
+// SetSource informs the package about the
+// source of template files and configs
 func SetSource(src embed.FS) {
 	source = src
-}
-
-// PresetConfigQuestion preset config question
-type PresetConfigQuestion struct {
-	Key           string                       `yaml:"key"`
-	DefaultAnswer string                       `yaml:"default_answer"`
-	Message       string                       `yaml:"message"`
-	Options       []PresetConfigQuestionOption `yaml:"options"`
-}
-
-// PresetConfigQuestionOption preset config question option
-type PresetConfigQuestionOption struct {
-	Name     string `yaml:"name"`
-	Template string `yaml:"template"`
-}
-
-// PresetConfigTemplate default templates for preset
-type PresetConfigTemplate struct {
-	Key      string `yaml:"key"`
-	Template string `yaml:"template"`
-}
-
-// ConfigLanguage holds the field to parse
-// language out of preset configuration
-type ConfigLanguage struct {
-	Language string `yaml:"language"`
-}
-
-// PresetConfig preset config
-type PresetConfig struct {
-	Language  string                            `yaml:"language"`
-	Commands  map[string][]string               `yaml:"commands"`
-	Questions map[string][]PresetConfigQuestion `yaml:"questions"`
-	Templates []PresetConfigTemplate            `yaml:"templates"`
 }
 
 // DefaultParser holds presets parsing data
@@ -61,11 +32,10 @@ type DefaultParser struct {
 // Parser holds presets parsing logic
 type Parser interface {
 	Exists(string) bool
-	GetLanguages() []string
+	GetTags() []string
 	GetPresets(string) []string
 	LookUpFiles(string) []string
-	WriteFiles(string) (string, error)
-	GetConfig(string) (*PresetConfig, error)
+	Install(string, shell.OutputWritter) error
 }
 
 // NewParser creates a new preset default parser
@@ -95,56 +65,59 @@ func (p *DefaultParser) Exists(preset string) bool {
 	return true
 }
 
-// GetLanguages get all presets languages
-func (p *DefaultParser) GetLanguages() (languages []string) {
-	var (
-		entries     []fs.DirEntry
-		folder      fs.DirEntry
-		data        []byte
-		lang        = new(ConfigLanguage)
-		lookedLangs = make(map[string]bool)
-	)
-
-	entries, _ = source.ReadDir("presets")
-
-	for _, folder = range entries {
-		data, _ = source.ReadFile(
-			fmt.Sprintf("presets/%s/preset-config.yml", folder.Name()),
-		)
-
-		_ = yaml.Unmarshal(data, lang)
-
-		if !lookedLangs[lang.Language] {
-			languages = append(languages, lang.Language)
-			lookedLangs[lang.Language] = true
-		}
-	}
-	sort.Strings(languages)
-	return
-}
-
-// GetPresets get all presets names
-func (p *DefaultParser) GetPresets(language string) (presets []string) {
+// GetTags get all presets tags
+func (p *DefaultParser) GetTags() (tags []string) {
 	var (
 		entries []fs.DirEntry
 		folder  fs.DirEntry
 		data    []byte
-		lang    = new(ConfigLanguage)
+		config  = new(PresetConfig)
+		exists  = make(map[string]bool)
 	)
 
 	entries, _ = source.ReadDir("presets")
 
 	for _, folder = range entries {
 		data, _ = source.ReadFile(
-			fmt.Sprintf("presets/%s/preset-config.yml", folder.Name()),
+			fmt.Sprintf(presetConfigFile, folder.Name()),
 		)
 
-		_ = yaml.Unmarshal(data, lang)
+		_ = yaml.Unmarshal(data, config)
 
-		if lang.Language == language {
+		for _, tag := range config.Tags {
+			if !exists[tag] {
+				tags = append(tags, tag)
+				exists[tag] = true
+			}
+		}
+	}
+	sort.Strings(tags)
+	return
+}
+
+// GetPresets get all presets names
+func (p *DefaultParser) GetPresets(tag string) (presets []string) {
+	var (
+		entries []fs.DirEntry
+		folder  fs.DirEntry
+		data    []byte
+		config  = new(PresetConfig)
+	)
+
+	entries, _ = source.ReadDir("presets")
+
+	for _, folder = range entries {
+		data, _ = source.ReadFile(
+			fmt.Sprintf(presetConfigFile, folder.Name()),
+		)
+
+		_ = yaml.Unmarshal(data, config)
+
+		if config.HasTag(tag) {
 			presets = append(presets, folder.Name())
 		}
 	}
+
 	sort.Strings(presets)
 	return
 }
@@ -162,64 +135,102 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 	return
 }
 
-// WriteFiles write preset files
-func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) {
+// Install write preset files
+func (p *DefaultParser) Install(preset string, output shell.OutputWritter) (err error) {
 	var (
-		fileContent []byte
+		config *PresetConfig
+		step   *automate.ActionStep
+		action *automate.Action
 	)
 
-	for _, fileName := range p.presetFiles(preset) {
-		fileContent, _ = source.ReadFile(
-			fmt.Sprintf("presets/%s/%s", preset, fileName),
-		)
+	if config, err = p.getConfig(preset); err != nil {
+		return
+	}
 
-		var (
-			file afero.File
-			size int
-		)
+	for _, step = range config.Preset {
+		output.Println("-", step.Name)
 
-		if _, statErr := p.local.Stat(fileName); !os.IsNotExist(statErr) {
-			if err = p.local.Rename(fileName, fmt.Sprintf("%s.bak.%s", fileName, time.Now().Format("20060102"))); err != nil {
-				fileError = fileName
+		for _, action = range step.Actions {
+			switch action.Type() {
+			case automate.TypeAdd:
+				// the 'add' operation will run a new recipe
+				// that is composed by a new array of ActionStep
+				// action.Recipe
+				output.Println("add:", action.Recipe)
+				break
+			case automate.TypeCopy:
+				// io.Copy(dst, src)
+				// action.Src
+				// action.Dst
+				output.Println("copy:", action.Src, action.Dst)
+				break
+			case automate.TypeScripts:
+				// action.Scripts
+				output.Println("scripts:", len(action.Scripts))
+				break
+			case automate.TypePrompt:
+				// action.Prompt
+				output.Println("prompt:", action.Prompt)
+				break
+			default:
+				err = fmt.Errorf("ops, something is wrong with this preset config (%d)", action.Type())
 				return
 			}
 		}
-
-		file, err = p.local.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
-
-		if err != nil {
-			fileError = fileName
-			return
-		}
-
-		if size, err = file.Write(fileContent); err != nil {
-			fileError = fileName
-			return
-		}
-
-		if len(fileContent) != size {
-			fileError = fileName
-			err = ErrPresetWriteAllBytes
-			return
-		}
-
-		if err = file.Sync(); err != nil {
-			fileError = fileName
-			return
-		}
-
-		file.Close()
 	}
+
+	// for _, fileName := range p.presetFiles(preset) {
+	// 	fileContent, _ = source.ReadFile(
+	// 		fmt.Sprintf("presets/%s/%s", preset, fileName),
+	// 	)
+
+	// 	var (
+	// 		file afero.File
+	// 		size int
+	// 	)
+
+	// 	if _, statErr := p.local.Stat(fileName); !os.IsNotExist(statErr) {
+	// 		if err = p.local.Rename(fileName, fmt.Sprintf("%s.bak.%s", fileName, time.Now().Format("20060102"))); err != nil {
+	// 			fileError = fileName
+	// 			return
+	// 		}
+	// 	}
+
+	// 	file, err = p.local.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+
+	// 	if err != nil {
+	// 		fileError = fileName
+	// 		return
+	// 	}
+
+	// 	if size, err = file.Write(fileContent); err != nil {
+	// 		fileError = fileName
+	// 		return
+	// 	}
+
+	// 	if len(fileContent) != size {
+	// 		fileError = fileName
+	// 		err = ErrPresetWriteAllBytes
+	// 		return
+	// 	}
+
+	// 	if err = file.Sync(); err != nil {
+	// 		fileError = fileName
+	// 		return
+	// 	}
+
+	// 	file.Close()
+	// }
 
 	return
 }
 
-// GetConfig get preset config
-func (p *DefaultParser) GetConfig(preset string) (config *PresetConfig, err error) {
+// getConfig parses the preset config data for usage
+func (p *DefaultParser) getConfig(preset string) (config *PresetConfig, err error) {
 	var data []byte
 
 	data, err = source.ReadFile(
-		fmt.Sprintf("presets/%s/preset-config.yml", preset),
+		fmt.Sprintf(presetConfigFile, preset),
 	)
 
 	if err != nil {
@@ -229,6 +240,7 @@ func (p *DefaultParser) GetConfig(preset string) (config *PresetConfig, err erro
 
 	config = new(PresetConfig)
 	err = yaml.Unmarshal(data, config)
+	config.presetID = preset
 	return
 }
 

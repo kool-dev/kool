@@ -10,7 +10,7 @@ type Merger interface {
 	Merge(*yaml.Node, *yaml.Node) error
 }
 
-type DefaultMerger struct {}
+type DefaultMerger struct{}
 
 func (m *DefaultMerger) Merge(src *yaml.Node, dst *yaml.Node) (err error) {
 	// allow only for merging similar structures for now

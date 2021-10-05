@@ -1,0 +1,13 @@
+version: 3.8
+#
+# Services definitions
+#
+services:
+#
+# Annonymos volumes definitions
+#
+volumes:
+#
+# Networks definitions
+#
+network:

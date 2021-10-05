@@ -1,0 +1,75 @@
+# The name of the preset
+name: 'Laravel App'
+
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'PHP' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new Laravel Application
+    actions:
+      - scripts:
+          - docker pull -q kooldev/php:8.0
+          - kool docker kooldev/php:8.0 composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+
+  - name: 'Select the desired setup'
+    actions:
+      # Defines which app service to use (PHP version)
+      - prompt: 'Which app service do you want to use'
+        default: 'PHP 8.0'
+        options:
+          - name: 'PHP 8.0'
+            actions:
+              - add: php-8
+          - name: 'PHP 7.4'
+            actions:
+              - add: php-7.4
+
+      # Defines which database service to use (DB)
+      - prompt: 'Which database service do you want to use'
+        default: 'MySQL 8.0'
+        options:
+          - name: 'MySQL 8.0'
+            actions:
+              - add: mysql-8
+          - name: 'MySQL 5.7'
+            actions:
+              - add: mysql-5.7
+          - name: 'MariaDB 10.5'
+            actions:
+              - add: maria-10.5
+          - name: 'PostgreSQL 13.0'
+            actions:
+              - add: postgresql-13
+          - name: 'None - do not use a database'
+
+      # Defines which cache service to use (in-memory key/value storage)
+      - prompt: 'Which cache service do you want to use'
+        default: 'Redis 6.0'
+        options:
+          - name: 'Redis 6.0'
+            actions:
+              - add: redis-6
+          - name: 'Memcached 1.6'
+            actions:
+              - add: memcached-1.6
+          - name: 'None - do not use a key/value storage'
+
+      # Defines which Javascript package manager to use
+      - prompt: 'Which Javascript package manager do you want to use'
+        default: 'NPM'
+        options:
+          - name: 'NPM'
+            actions:
+              - add: npm
+          - name: 'Yarn'
+            actions:
+              - add: yarn
+          - name: 'None'
