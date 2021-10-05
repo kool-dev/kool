@@ -52,9 +52,6 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 	// sets env variable CREATE_DIRECTORY that aims to tell
 	c.env.Set("CREATE_DIRECTORY", createDirectory)
 
-	c.parser.LoadPresets(presets.GetAll())
-	c.parser.LoadConfigs(presets.GetConfigs())
-
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("unknown preset %s", preset)
 		return

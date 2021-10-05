@@ -2,17 +2,12 @@ package presets
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists              bool
-	CalledLookUpFiles         bool
-	CalledWriteFiles          map[string]bool
-	CalledGetPresets          bool
-	CalledGetLanguages        bool
-	CalledSetPresetKeyContent map[string]map[string]map[string]bool
-	CalledGetTemplates        bool
-	CalledLoadPresets         bool
-	CalledLoadTemplates       bool
-	CalledLoadConfigs         bool
-	CalledGetConfig           map[string]bool
+	CalledExists       bool
+	CalledLookUpFiles  bool
+	CalledWriteFiles   map[string]bool
+	CalledGetPresets   bool
+	CalledGetLanguages bool
+	CalledGetConfig    map[string]bool
 
 	MockExists         bool
 	MockFoundFiles     []string
@@ -20,10 +15,6 @@ type FakeParser struct {
 	MockError          error
 	MockLanguages      []string
 	MockPresets        []string
-	MockTemplates      map[string]map[string]string
-	MockAllPresets     map[string]map[string]string
-	MockAllTemplates   map[string]map[string]string
-	MockAllConfigs     map[string]string
 	MockConfig         map[string]*PresetConfig
 	MockGetConfigError map[string]error
 }
@@ -66,51 +57,6 @@ func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
 	fileError = f.MockFileError
 	err = f.MockError
 	return
-}
-
-// SetPresetKeyContent set preset key value
-func (f *FakeParser) SetPresetKeyContent(preset string, key string, content string) {
-	if f.CalledSetPresetKeyContent == nil {
-		f.CalledSetPresetKeyContent = make(map[string]map[string]map[string]bool)
-	}
-
-	if _, ok := f.CalledSetPresetKeyContent[preset]; !ok {
-		f.CalledSetPresetKeyContent[preset] = make(map[string]map[string]bool)
-	}
-
-	if _, ok := f.CalledSetPresetKeyContent[preset][key]; !ok {
-		f.CalledSetPresetKeyContent[preset][key] = make(map[string]bool)
-	}
-
-	f.CalledSetPresetKeyContent[preset][key][content] = true
-}
-
-// GetTemplates get all templates
-func (f *FakeParser) GetTemplates() (templates map[string]map[string]string) {
-	f.CalledGetTemplates = true
-	if f.MockTemplates == nil {
-		f.MockTemplates = make(map[string]map[string]string)
-	}
-	templates = f.MockTemplates
-	return
-}
-
-//LoadPresets loads all presets
-func (f *FakeParser) LoadPresets(presets map[string]map[string]string) {
-	f.CalledLoadPresets = true
-	f.MockAllPresets = presets
-}
-
-//LoadTemplates loads all templates
-func (f *FakeParser) LoadTemplates(templates map[string]map[string]string) {
-	f.CalledLoadTemplates = true
-	f.MockAllTemplates = templates
-}
-
-// LoadConfigs load the configs
-func (f *FakeParser) LoadConfigs(configs map[string]string) {
-	f.CalledLoadConfigs = true
-	f.MockAllConfigs = configs
 }
 
 // GetConfig get preset config

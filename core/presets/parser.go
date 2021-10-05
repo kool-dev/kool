@@ -1,8 +1,10 @@
 package presets
 
 import (
+	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"sort"
 	"time"
@@ -10,6 +12,12 @@ import (
 	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
+
+var source embed.FS
+
+func SetSource(src embed.FS) {
+	source = src
+}
 
 // PresetConfigQuestion preset config question
 type PresetConfigQuestion struct {
@@ -31,6 +39,12 @@ type PresetConfigTemplate struct {
 	Template string `yaml:"template"`
 }
 
+// ConfigLanguage holds the field to parse
+// language out of preset configuration
+type ConfigLanguage struct {
+	Language string `yaml:"language"`
+}
+
 // PresetConfig preset config
 type PresetConfig struct {
 	Language  string                            `yaml:"language"`
@@ -41,10 +55,7 @@ type PresetConfig struct {
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
-	Presets   map[string]map[string]string
-	Templates map[string]map[string]string
-	Configs   map[string]string
-	fs        afero.Fs
+	local afero.Fs
 }
 
 // Parser holds presets parsing logic
@@ -53,49 +64,59 @@ type Parser interface {
 	GetLanguages() []string
 	GetPresets(string) []string
 	LookUpFiles(string) []string
-	LoadPresets(map[string]map[string]string)
-	LoadTemplates(map[string]map[string]string)
-	LoadConfigs(map[string]string)
 	WriteFiles(string) (string, error)
-	SetPresetKeyContent(string, string, string)
-	GetTemplates() map[string]map[string]string
 	GetConfig(string) (*PresetConfig, error)
 }
 
 // NewParser creates a new preset default parser
 func NewParser() Parser {
 	return &DefaultParser{
-		fs: afero.NewOsFs(),
+		local: afero.NewOsFs(),
 	}
 }
 
 // NewParserFS creates a new preset default parser with file system
 func NewParserFS(fs afero.Fs) Parser {
 	return &DefaultParser{
-		fs: fs,
+		local: fs,
 	}
 }
 
 // Exists check if preset exists
-func (p *DefaultParser) Exists(preset string) (exists bool) {
-	_, exists = p.Presets[preset]
-	return
+func (p *DefaultParser) Exists(preset string) bool {
+	var (
+		err error
+	)
+
+	if _, err = source.ReadDir(fmt.Sprintf("presets/%s", preset)); err != nil {
+		return false
+	}
+
+	return true
 }
 
 // GetLanguages get all presets languages
 func (p *DefaultParser) GetLanguages() (languages []string) {
-	if len(p.Presets) == 0 {
-		return
-	}
+	var (
+		entries     []fs.DirEntry
+		folder      fs.DirEntry
+		data        []byte
+		lang        = new(ConfigLanguage)
+		lookedLangs = make(map[string]bool)
+	)
 
-	var lookedLangs map[string]bool = make(map[string]bool)
+	entries, _ = source.ReadDir("presets")
 
-	for preset := range p.Presets {
-		config, err := p.GetConfig(preset)
+	for _, folder = range entries {
+		data, _ = source.ReadFile(
+			fmt.Sprintf("presets/%s/preset-config.yml", folder.Name()),
+		)
 
-		if err == nil && config != nil && config.Language != "" && !lookedLangs[config.Language] {
-			languages = append(languages, config.Language)
-			lookedLangs[config.Language] = true
+		_ = yaml.Unmarshal(data, lang)
+
+		if !lookedLangs[lang.Language] {
+			languages = append(languages, lang.Language)
+			lookedLangs[lang.Language] = true
 		}
 	}
 	sort.Strings(languages)
@@ -104,17 +125,24 @@ func (p *DefaultParser) GetLanguages() (languages []string) {
 
 // GetPresets get all presets names
 func (p *DefaultParser) GetPresets(language string) (presets []string) {
-	if len(p.Presets) == 0 {
-		return
-	}
+	var (
+		entries []fs.DirEntry
+		folder  fs.DirEntry
+		data    []byte
+		lang    = new(ConfigLanguage)
+	)
 
-	for preset := range p.Presets {
-		config, err := p.GetConfig(preset)
+	entries, _ = source.ReadDir("presets")
 
-		if err != nil || config == nil {
-			presets = append(presets, preset)
-		} else if config.Language == language {
-			presets = append(presets, preset)
+	for _, folder = range entries {
+		data, _ = source.ReadFile(
+			fmt.Sprintf("presets/%s/preset-config.yml", folder.Name()),
+		)
+
+		_ = yaml.Unmarshal(data, lang)
+
+		if lang.Language == language {
+			presets = append(presets, folder.Name())
 		}
 	}
 	sort.Strings(presets)
@@ -126,10 +154,8 @@ var ErrPresetWriteAllBytes = errors.New("failed to write all bytes")
 
 // LookUpFiles check if preset files exist
 func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
-	presetFiles := p.Presets[preset]
-
-	for fileName := range presetFiles {
-		if _, err := p.fs.Stat(fileName); !os.IsNotExist(err) {
+	for _, fileName := range p.presetFiles(preset) {
+		if _, err := p.local.Stat(fileName); !os.IsNotExist(err) {
 			foundFiles = append(foundFiles, fileName)
 		}
 	}
@@ -138,34 +164,40 @@ func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
 
 // WriteFiles write preset files
 func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) {
-	presetFiles := p.Presets[preset]
+	var (
+		fileContent []byte
+	)
 
-	for fileName, fileContent := range presetFiles {
-		var (
-			file  afero.File
-			lines int
+	for _, fileName := range p.presetFiles(preset) {
+		fileContent, _ = source.ReadFile(
+			fmt.Sprintf("presets/%s/%s", preset, fileName),
 		)
 
-		if _, statErr := p.fs.Stat(fileName); !os.IsNotExist(statErr) {
-			if err = p.fs.Rename(fileName, fmt.Sprintf("%s.bak.%s", fileName, time.Now().Format("20060102"))); err != nil {
+		var (
+			file afero.File
+			size int
+		)
+
+		if _, statErr := p.local.Stat(fileName); !os.IsNotExist(statErr) {
+			if err = p.local.Rename(fileName, fmt.Sprintf("%s.bak.%s", fileName, time.Now().Format("20060102"))); err != nil {
 				fileError = fileName
 				return
 			}
 		}
 
-		file, err = p.fs.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+		file, err = p.local.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 
 		if err != nil {
 			fileError = fileName
 			return
 		}
 
-		if lines, err = file.Write([]byte(fileContent)); err != nil {
+		if size, err = file.Write(fileContent); err != nil {
 			fileError = fileName
 			return
 		}
 
-		if len([]byte(fileContent)) != lines {
+		if len(fileContent) != size {
 			fileError = fileName
 			err = ErrPresetWriteAllBytes
 			return
@@ -182,48 +214,37 @@ func (p *DefaultParser) WriteFiles(preset string) (fileError string, err error) 
 	return
 }
 
-// SetPresetKeyContent set preset key value
-func (p *DefaultParser) SetPresetKeyContent(preset string, key string, content string) {
-	if _, found := p.Presets[preset]; !found {
-		return
-	}
-
-	p.Presets[preset][key] = content
-}
-
-// GetTemplates get all templates
-func (p *DefaultParser) GetTemplates() map[string]map[string]string {
-	return p.Templates
-}
-
-// LoadPresets loads the presets
-func (p *DefaultParser) LoadPresets(allPresets map[string]map[string]string) {
-	p.Presets = allPresets
-}
-
-// LoadTemplates loads the templates
-func (p *DefaultParser) LoadTemplates(allTemplates map[string]map[string]string) {
-	p.Templates = allTemplates
-}
-
-// LoadConfigs load the configs
-func (p *DefaultParser) LoadConfigs(allConfigs map[string]string) {
-	p.Configs = allConfigs
-}
-
 // GetConfig get preset config
 func (p *DefaultParser) GetConfig(preset string) (config *PresetConfig, err error) {
-	var (
-		configValue string
-		hasConfig   bool
+	var data []byte
+
+	data, err = source.ReadFile(
+		fmt.Sprintf("presets/%s/preset-config.yml", preset),
 	)
 
-	if configValue, hasConfig = p.Configs[preset]; !hasConfig {
-		err = fmt.Errorf("configuration for preset %s not found", preset)
+	if err != nil {
+		err = fmt.Errorf("configuration for preset %s not found (%v)", preset, err)
 		return
 	}
 
 	config = new(PresetConfig)
-	err = yaml.Unmarshal([]byte(configValue), config)
+	err = yaml.Unmarshal(data, config)
+	return
+}
+
+func (p *DefaultParser) presetFiles(preset string) (presetFiles []string) {
+	var (
+		entries []fs.DirEntry
+		file    fs.DirEntry
+		err     error
+	)
+
+	if entries, err = source.ReadDir(fmt.Sprintf("presets/%s", preset)); err != nil {
+		return
+	}
+
+	for _, file = range entries {
+		presetFiles = append(presetFiles, file.Name())
+	}
 	return
 }
