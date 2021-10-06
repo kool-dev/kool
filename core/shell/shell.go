@@ -42,6 +42,7 @@ type OutputWritter interface {
 	Printf(string, ...interface{})
 	Warning(...interface{})
 	Success(...interface{})
+	Info(...interface{})
 }
 
 // Outputable implements basic output handlers
@@ -241,14 +242,17 @@ func (s *DefaultShell) Error(err error) {
 
 // Warning warning message
 func (s *DefaultShell) Warning(out ...interface{}) {
-	warningMessage := color.New(color.Yellow).Sprint(out...)
-	fmt.Fprintln(s.OutStream(), warningMessage)
+	fmt.Fprintln(s.OutStream(), color.New(color.Yellow).Sprint(out...))
 }
 
 // Success success message
 func (s *DefaultShell) Success(out ...interface{}) {
-	successMessage := color.New(color.Green).Sprint(out...)
-	fmt.Fprintln(s.OutStream(), successMessage)
+	fmt.Fprintln(s.OutStream(), color.New(color.Green).Sprint(out...))
+}
+
+// Info info message
+func (s *DefaultShell) Info(out ...interface{}) {
+	fmt.Fprintln(s.OutStream(), color.New(color.Blue).Sprint(out...))
 }
 
 // Exec will execute the given command silently and return the combined

@@ -57,20 +57,6 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 
 	p.Shell().Println("Preset", preset, "is initializing!")
 
-	// if existingFiles := p.presetsParser.LookUpFiles(preset); len(existingFiles) > 0 {
-	// 	for _, fileName := range existingFiles {
-	// 		p.Shell().Warning(fmt.Sprintf(
-	// 			"Preset file %s already exists and will be renamed to %s.bak.%s",
-	// 			fileName,
-	// 			fileName,
-	// 			time.Now().Format("20060102"),
-	// 		))
-	// 	}
-
-	// 	// TODO: in case len(existingFiles) > 0 && under TTY,
-	// 	// ask for confirmation that we do want to override
-	// }
-
 	if err = p.presetsParser.Install(preset, p.Shell()); err != nil {
 		return
 	}

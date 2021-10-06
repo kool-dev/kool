@@ -1,4 +1,4 @@
-package presets
+package yamler
 
 import (
 	"bytes"

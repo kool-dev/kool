@@ -19,7 +19,7 @@ preset:
       - copy: docker-compose.yml
       - copy: kool.yml
 
-  - name: 'Select the desired setup'
+  - name: 'Tailor up your setup'
     actions:
       # Defines which app service to use (PHP version)
       - prompt: 'Which app service do you want to use'

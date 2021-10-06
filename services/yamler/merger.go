@@ -1,4 +1,4 @@
-package presets
+package yamler
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ func (m *DefaultMerger) Merge(src *yaml.Node, dst *yaml.Node) (err error) {
 			return
 		}
 
-		err = fmt.Errorf("trying to merge different kinds: %s onto %s", transKind(src.Kind), transKind(dst.Kind))
+		err = fmt.Errorf("trying to merge different kinds: %d onto %d", src.Kind, dst.Kind)
 		return
 	}
 

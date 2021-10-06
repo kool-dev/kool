@@ -7,10 +7,8 @@ import (
 	"io/fs"
 	"kool-dev/kool/core/automate"
 	"kool-dev/kool/core/shell"
-	"os"
 	"sort"
 
-	"github.com/spf13/afero"
 	"gopkg.in/yaml.v2"
 )
 
@@ -26,7 +24,7 @@ func SetSource(src embed.FS) {
 
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
-	local afero.Fs
+	presetID string
 }
 
 // Parser holds presets parsing logic
@@ -34,22 +32,13 @@ type Parser interface {
 	Exists(string) bool
 	GetTags() []string
 	GetPresets(string) []string
-	LookUpFiles(string) []string
 	Install(string, shell.OutputWritter) error
+	Add(string, shell.OutputWritter) error
 }
 
 // NewParser creates a new preset default parser
 func NewParser() Parser {
-	return &DefaultParser{
-		local: afero.NewOsFs(),
-	}
-}
-
-// NewParserFS creates a new preset default parser with file system
-func NewParserFS(fs afero.Fs) Parser {
-	return &DefaultParser{
-		local: fs,
-	}
+	return &DefaultParser{}
 }
 
 // Exists check if preset exists
@@ -95,13 +84,13 @@ func (p *DefaultParser) GetTags() (tags []string) {
 	return
 }
 
-// GetPresets get all presets names
+// GetPresets look up all presets IDs with the given tag
 func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 	var (
 		entries []fs.DirEntry
 		folder  fs.DirEntry
 		data    []byte
-		config  = new(PresetConfig)
+		config  *PresetConfig
 	)
 
 	entries, _ = source.ReadDir("presets")
@@ -111,6 +100,7 @@ func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 			fmt.Sprintf(presetConfigFile, folder.Name()),
 		)
 
+		config = new(PresetConfig)
 		_ = yaml.Unmarshal(data, config)
 
 		if config.HasTag(tag) {
@@ -125,102 +115,55 @@ func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 // ErrPresetWriteAllBytes error throwed when did not write all preset file bytes
 var ErrPresetWriteAllBytes = errors.New("failed to write all bytes")
 
-// LookUpFiles check if preset files exist
-func (p *DefaultParser) LookUpFiles(preset string) (foundFiles []string) {
-	for _, fileName := range p.presetFiles(preset) {
-		if _, err := p.local.Stat(fileName); !os.IsNotExist(err) {
-			foundFiles = append(foundFiles, fileName)
-		}
-	}
-	return
-}
-
-// Install write preset files
+// Install executes the preset installation actions
 func (p *DefaultParser) Install(preset string, output shell.OutputWritter) (err error) {
 	var (
 		config *PresetConfig
-		step   *automate.ActionStep
-		action *automate.Action
 	)
 
 	if config, err = p.getConfig(preset); err != nil {
 		return
 	}
 
-	for _, step = range config.Preset {
-		output.Println("-", step.Name)
+	p.presetID = preset
+	if err = automate.NewExecutor(output, p.getSourceFile).Do(config.Preset); err != nil {
+		return
+	}
 
-		for _, action = range step.Actions {
-			switch action.Type() {
-			case automate.TypeAdd:
-				// the 'add' operation will run a new recipe
-				// that is composed by a new array of ActionStep
-				// action.Recipe
-				output.Println("add:", action.Recipe)
-				break
-			case automate.TypeCopy:
-				// io.Copy(dst, src)
-				// action.Src
-				// action.Dst
-				output.Println("copy:", action.Src, action.Dst)
-				break
-			case automate.TypeScripts:
-				// action.Scripts
-				output.Println("scripts:", len(action.Scripts))
-				break
-			case automate.TypePrompt:
-				// action.Prompt
-				output.Println("prompt:", action.Prompt)
-				break
-			default:
-				err = fmt.Errorf("ops, something is wrong with this preset config (%d)", action.Type())
-				return
-			}
+	return
+}
+
+func (p *DefaultParser) Add(recipe string, output shell.OutputWritter) (err error) {
+	var steps = []*automate.ActionSet{
+		{
+			Name: fmt.Sprintf("Running recipe %s", recipe),
+			Actions: []*automate.Action{
+				{
+					Recipe: recipe,
+				},
+			},
+		},
+	}
+
+	if err = automate.NewExecutor(output, p.getSourceFile).Do(steps); err != nil {
+		return
+	}
+
+	return
+}
+
+func (p *DefaultParser) getSourceFile(path string) (data []byte, err error) {
+	if p.presetID != "" {
+		// look up in the preset folder
+		if data, err = source.ReadFile(fmt.Sprintf("presets/%s/%s", p.presetID, path)); err == nil {
+			return
 		}
 	}
 
-	// for _, fileName := range p.presetFiles(preset) {
-	// 	fileContent, _ = source.ReadFile(
-	// 		fmt.Sprintf("presets/%s/%s", preset, fileName),
-	// 	)
-
-	// 	var (
-	// 		file afero.File
-	// 		size int
-	// 	)
-
-	// 	if _, statErr := p.local.Stat(fileName); !os.IsNotExist(statErr) {
-	// 		if err = p.local.Rename(fileName, fmt.Sprintf("%s.bak.%s", fileName, time.Now().Format("20060102"))); err != nil {
-	// 			fileError = fileName
-	// 			return
-	// 		}
-	// 	}
-
-	// 	file, err = p.local.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
-
-	// 	if err != nil {
-	// 		fileError = fileName
-	// 		return
-	// 	}
-
-	// 	if size, err = file.Write(fileContent); err != nil {
-	// 		fileError = fileName
-	// 		return
-	// 	}
-
-	// 	if len(fileContent) != size {
-	// 		fileError = fileName
-	// 		err = ErrPresetWriteAllBytes
-	// 		return
-	// 	}
-
-	// 	if err = file.Sync(); err != nil {
-	// 		fileError = fileName
-	// 		return
-	// 	}
-
-	// 	file.Close()
-	// }
+	// fallback looking at the global templates
+	if data, err = source.ReadFile(fmt.Sprintf("templates/%s", path)); err != nil {
+		err = fmt.Errorf("could not find %s on within preset or global templates (err: %v)", path, err)
+	}
 
 	return
 }

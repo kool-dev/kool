@@ -5,7 +5,6 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -42,9 +41,6 @@ func NewKoolCreate() *KoolCreate {
 // Execute runs the create logic with incoming arguments.
 func (c *KoolCreate) Execute(args []string) (err error) {
 	var (
-		presetConfig    *presets.PresetConfig
-		createCmds      []string
-		ok              bool
 		preset          = args[0]
 		createDirectory = args[1]
 	)
@@ -57,27 +53,19 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		return
 	}
 
-	if presetConfig, err = c.parser.GetConfig(preset); err != nil || presetConfig == nil {
-		err = fmt.Errorf("error parsing preset config; err: %v", err)
-		return
-	}
+	// TODO: implement parser create run
 
-	if createCmds, ok = presetConfig.Commands["create"]; !ok || len(createCmds) <= 0 {
-		err = fmt.Errorf("no create commands were found for preset %s", preset)
-		return
-	}
+	// for _, createCmd := range createCmds {
+	// 	if err = c.createCommand.Parse(createCmd); err != nil {
+	// 		return
+	// 	}
 
-	for _, createCmd := range createCmds {
-		if err = c.createCommand.Parse(createCmd); err != nil {
-			return
-		}
+	// 	if err = c.Shell().Interactive(c.createCommand); err != nil {
+	// 		return
+	// 	}
+	// }
 
-		if err = c.Shell().Interactive(c.createCommand); err != nil {
-			return
-		}
-	}
-
-	_ = os.Chdir(createDirectory)
+	// _ = os.Chdir(createDirectory)
 
 	err = c.KoolPreset.Execute([]string{preset})
 

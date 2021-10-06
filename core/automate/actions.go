@@ -8,10 +8,11 @@ const (
 	TypeScripts
 	TypePrompt
 	TypeAdd
+	TypeMerge
 )
 
-// ActionStep represents a set of single actions or a question
-type ActionStep struct {
+// ActionSet represents a set of single actions or a question
+type ActionSet struct {
 	Name    string    `yaml:"name"`
 	Actions []*Action `yaml:"actions"`
 }
@@ -21,15 +22,17 @@ type ActionStep struct {
 type Action struct {
 	// add
 	Recipe string `yaml:"add"`
+	// merge
+	Merge string `yaml:"merge"`
 	// copy
 	Src string `yaml:"copy"`
 	Dst string `yaml:"dst"`
 	// scripts
 	Scripts []string `yaml:"scripts"`
 	// prompt
-	Prompt  string        `yaml:"prompt"`
-	Default string        `yaml:"default"`
-	Options []*ActionStep `yaml:"options"`
+	Prompt  string       `yaml:"prompt"`
+	Default string       `yaml:"default"`
+	Options []*ActionSet `yaml:"options"`
 }
 
 // Type tells the actual implementation of this action
@@ -48,6 +51,10 @@ func (a *Action) Type() ActionType {
 
 	if a.Prompt != "" {
 		return TypePrompt
+	}
+
+	if a.Merge != "" {
+		return TypeMerge
 	}
 
 	return TypeUnknown
