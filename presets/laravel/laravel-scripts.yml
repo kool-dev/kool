@@ -1,16 +1,18 @@
 scripts:
+  # Common commands
   composer: kool exec app composer
   artisan: kool exec app php artisan
   phpunit: kool exec app php ./bin/phpunit
 
+  # Use this to setup your projects the first in a new environment.
   setup:
     - cp .env.example .env
     - kool start
     - kool run composer install
     - kool run artisan key:generate
-    - kool run node-setup
 
+  # Use this to reset the state of your database and run common hoursekeeping
+  # when changing branches.
   reset:
     - kool run composer install
     - kool run artisan migrate:fresh --seed
-    - kool run node-setup

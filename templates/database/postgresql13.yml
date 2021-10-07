@@ -17,6 +17,3 @@ services:
 
 volumes:
   database:
-
-scripts:
-  psql: kool exec -e PGPASSWORD=$DB_PASSWORD database psql -U $DB_USERNAME $DB_DATABASE

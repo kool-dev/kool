@@ -1,0 +1,3 @@
+actions:
+  - merge: scripts/yarn.yml
+    dst: kool.yml

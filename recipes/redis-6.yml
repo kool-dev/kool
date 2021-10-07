@@ -1,0 +1,3 @@
+actions:
+  - merge: cache/redis6.yml
+    dst: docker-compose.yml
