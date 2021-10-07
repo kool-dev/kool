@@ -3,6 +3,7 @@ package automate
 import (
 	"fmt"
 	"io/ioutil"
+	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/yamler"
 	"os"
@@ -16,15 +17,15 @@ import (
 type RetrieveSource func(string) ([]byte, error)
 
 type Executor struct {
-	output        shell.OutputWritter
+	sh            shell.Shell
 	getFromSource RetrieveSource
 	local         afero.Fs
 	prompter      shell.PromptSelect
 }
 
-func NewExecutor(output shell.OutputWritter, fn RetrieveSource) *Executor {
+func NewExecutor(sh shell.Shell, fn RetrieveSource) *Executor {
 	return &Executor{
-		output:        output,
+		sh:            sh,
 		getFromSource: fn,
 		local:         afero.NewOsFs(),
 		prompter:      shell.NewPromptSelect(),
@@ -39,7 +40,7 @@ func (e *Executor) Do(steps []*ActionSet) (err error) {
 
 	for _, step = range steps {
 		if step.Name != "" {
-			e.output.Info("⇒ ", step.Name)
+			e.sh.Info("⇒ ", step.Name)
 		}
 
 		for _, action = range step.Actions {
@@ -57,8 +58,9 @@ func (e *Executor) Do(steps []*ActionSet) (err error) {
 				}
 				break
 			case TypeScripts:
-				// action.Scripts
-				e.output.Println("→ scripts:", len(action.Scripts))
+				if err = e.scripts(action); err != nil {
+					return
+				}
 				break
 			case TypeMerge:
 				if err = e.merge(action); err != nil {
@@ -90,9 +92,9 @@ func (e *Executor) copy(action *Action) (err error) {
 	// defaults to the same path/file
 	if action.Dst == "" {
 		action.Dst = action.Src
-		e.output.Println("→ copying", action.Src)
+		e.sh.Println("→ copying", action.Src)
 	} else {
-		e.output.Println("→ copying", action.Src, "as", action.Dst)
+		e.sh.Println("→ copying", action.Src, "as", action.Dst)
 	}
 
 	if data, err = e.getFromSource(action.Src); err != nil {
@@ -102,7 +104,7 @@ func (e *Executor) copy(action *Action) (err error) {
 	if _, statErr := e.local.Stat(action.Dst); !os.IsNotExist(statErr) {
 		renamedFile := fmt.Sprintf("%s.bak.%s", action.Dst, time.Now().Format("20060102"))
 
-		e.output.Warning(fmt.Sprintf(
+		e.sh.Warning(fmt.Sprintf(
 			"File %s already exists, overriding. (backup is %s)",
 			action.Dst,
 			renamedFile,
@@ -146,9 +148,9 @@ func (e *Executor) merge(action *Action) (err error) {
 	// defaults to the same path/file
 	if action.Dst == "" {
 		action.Dst = action.Merge
-		e.output.Println("→ merging", action.Merge)
+		e.sh.Println("→ merging", action.Merge)
 	} else {
-		e.output.Println("→ merging", action.Merge, "onto", action.Dst)
+		e.sh.Println("→ merging", action.Merge, "onto", action.Dst)
 	}
 
 	// partial
@@ -221,5 +223,31 @@ func (e *Executor) add(action *Action) (err error) {
 	}
 
 	err = e.Do([]*ActionSet{set})
+	return
+}
+
+func (e *Executor) scripts(action *Action) (err error) {
+	var (
+		command  builder.Command
+		commands []builder.Command
+		line     string
+	)
+
+	for _, line = range action.Scripts {
+		if command, err = builder.ParseCommand(line); err != nil {
+			return
+		}
+
+		commands = append(commands, command)
+	}
+
+	// all commands have parsed succussfully; now execute them
+	for _, command = range commands {
+		e.sh.Println("→ exec:", command.String())
+		if err = e.sh.Interactive(command); err != nil {
+			return
+		}
+	}
+
 	return
 }

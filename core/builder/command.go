@@ -72,7 +72,8 @@ func (c *DefaultCommand) Cmd() string {
 	return c.command
 }
 
-// Parse calls the ParseCommand function
+// Parse calls the ParseCommand and swaps the content
+// of current pointer
 func (c *DefaultCommand) Parse(line string) (err error) {
 	if parsed, err := ParseCommand(line); err == nil {
 		*c = *parsed

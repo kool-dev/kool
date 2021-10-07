@@ -32,8 +32,9 @@ type Parser interface {
 	Exists(string) bool
 	GetTags() []string
 	GetPresets(string) []string
-	Install(string, shell.OutputWritter) error
-	Add(string, shell.OutputWritter) error
+	Install(string, shell.Shell) error
+	Create(string, shell.Shell) error
+	Add(string, shell.Shell) error
 }
 
 // NewParser creates a new preset default parser
@@ -116,7 +117,7 @@ func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 var ErrPresetWriteAllBytes = errors.New("failed to write all bytes")
 
 // Install executes the preset installation actions
-func (p *DefaultParser) Install(preset string, output shell.OutputWritter) (err error) {
+func (p *DefaultParser) Install(preset string, sh shell.Shell) (err error) {
 	var (
 		config *PresetConfig
 	)
@@ -126,14 +127,32 @@ func (p *DefaultParser) Install(preset string, output shell.OutputWritter) (err 
 	}
 
 	p.presetID = preset
-	if err = automate.NewExecutor(output, p.getSourceFile).Do(config.Preset); err != nil {
+	if err = automate.NewExecutor(sh, p.getSourceFile).Do(config.Preset); err != nil {
 		return
 	}
 
 	return
 }
 
-func (p *DefaultParser) Add(recipe string, output shell.OutputWritter) (err error) {
+// Create executes the preset installation actions
+func (p *DefaultParser) Create(preset string, sh shell.Shell) (err error) {
+	var (
+		config *PresetConfig
+	)
+
+	if config, err = p.getConfig(preset); err != nil {
+		return
+	}
+
+	p.presetID = preset
+	if err = automate.NewExecutor(sh, p.getSourceFile).Do(config.Create); err != nil {
+		return
+	}
+
+	return
+}
+
+func (p *DefaultParser) Add(recipe string, sh shell.Shell) (err error) {
 	var steps = []*automate.ActionSet{
 		{
 			Name: fmt.Sprintf("Running recipe %s", recipe),
@@ -145,7 +164,7 @@ func (p *DefaultParser) Add(recipe string, output shell.OutputWritter) (err erro
 		},
 	}
 
-	if err = automate.NewExecutor(output, p.getSourceFile).Do(steps); err != nil {
+	if err = automate.NewExecutor(sh, p.getSourceFile).Do(steps); err != nil {
 		return
 	}
 

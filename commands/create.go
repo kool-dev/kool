@@ -2,9 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -12,10 +12,8 @@ import (
 // KoolCreate holds handlers and functions to implement the preset command logic
 type KoolCreate struct {
 	DefaultKoolService
-	parser        presets.Parser
-	env           environment.EnvStorage
-	createCommand builder.Command
-	KoolPreset
+	parser presets.Parser
+	env    environment.EnvStorage
 }
 
 func AddKoolCreate(root *cobra.Command) {
@@ -33,8 +31,6 @@ func NewKoolCreate() *KoolCreate {
 		*newDefaultKoolService(),
 		presets.NewParser(),
 		environment.NewEnvStorage(),
-		&builder.DefaultCommand{},
-		*NewKoolPreset(),
 	}
 }
 
@@ -53,21 +49,23 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		return
 	}
 
-	// TODO: implement parser create run
+	c.Shell().Println("Creating new", preset, "project...")
 
-	// for _, createCmd := range createCmds {
-	// 	if err = c.createCommand.Parse(createCmd); err != nil {
-	// 		return
-	// 	}
+	if err = c.parser.Create(preset, c.Shell()); err != nil {
+		return
+	}
 
-	// 	if err = c.Shell().Interactive(c.createCommand); err != nil {
-	// 		return
-	// 	}
-	// }
+	c.Shell().Println("Initializing", preset, "preset...")
 
-	// _ = os.Chdir(createDirectory)
+	if err = os.Chdir(createDirectory); err != nil {
+		return
+	}
 
-	err = c.KoolPreset.Execute([]string{preset})
+	if err = c.parser.Install(preset, c.Shell()); err != nil {
+		return
+	}
+
+	c.Shell().Success("Preset ", preset, " created successfully!")
 
 	return
 }

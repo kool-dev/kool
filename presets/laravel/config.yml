@@ -1,6 +1,3 @@
-# The name of the preset
-name: 'Laravel App'
-
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'PHP' ]
 
