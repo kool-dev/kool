@@ -7,7 +7,7 @@ const (
 	TypeCopy
 	TypeScripts
 	TypePrompt
-	TypeAdd
+	TypeRecipe
 	TypeMerge
 )
 
@@ -20,8 +20,8 @@ type ActionSet struct {
 // Action is a union kind of type that holds
 // one specific action within it; used for parsing
 type Action struct {
-	// add
-	Recipe string `yaml:"add"`
+	// recipe
+	Recipe string `yaml:"recipe"`
 	// merge
 	Merge string `yaml:"merge"`
 	// copy
@@ -42,7 +42,7 @@ func (a *Action) Type() ActionType {
 	}
 
 	if a.Recipe != "" {
-		return TypeAdd
+		return TypeRecipe
 	}
 
 	if a.Src != "" {

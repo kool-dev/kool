@@ -7,7 +7,7 @@ create:
     actions:
       - scripts:
           - docker pull -q kooldev/php:8.0
-          - kool docker kooldev/php:8.0 composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+          - kool docker kooldev/php:8.0 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -15,7 +15,7 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: laravel-scripts.yml
+      - merge: symfony-scripts.yml
         dst: kool.yml
 
   - name: 'Tailor up your setup'

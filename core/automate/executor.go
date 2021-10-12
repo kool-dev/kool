@@ -45,7 +45,7 @@ func (e *Executor) Do(steps []*ActionSet) (err error) {
 
 		for _, action = range step.Actions {
 			switch action.Type() {
-			case TypeAdd:
+			case TypeRecipe:
 				// the 'add' operation will run a new recipe
 				// that is composed by a new array of ActionSet
 				if err = e.add(action); err != nil {

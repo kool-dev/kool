@@ -1,0 +1,12 @@
+actions:
+  # Defines which Javascript package manager to use
+  - prompt: 'Which Javascript package manager do you want to use'
+    default: 'npm'
+    options:
+      - name: 'npm'
+        actions:
+          - recipe: npm
+      - name: 'yarn'
+        actions:
+          - recipe: yarn
+      - name: 'None'

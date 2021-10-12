@@ -16,13 +16,13 @@ func parseAction(data string, t *testing.T) *Action {
 
 func TestParseActionAdd(t *testing.T) {
 	t.Run("Basic add parse", func(t *testing.T) {
-		a := parseAction("add: 'foo'", t)
+		a := parseAction("recipe: 'foo'", t)
 
 		if a.Recipe != "foo" {
 			t.Errorf("failed parsing ActionAdd - expected Recipe=foo: %v", a)
 		}
 
-		if a.Type() != TypeAdd {
+		if a.Type() != TypeRecipe {
 			t.Errorf("failed parsing ActionAdd type; got: %v - %+v", a.Type(), a)
 		}
 	})
@@ -98,11 +98,11 @@ func TestParseActionSets(t *testing.T) {
 
 	t.Run("Parse mutiple actions", func(t *testing.T) {
 		s := new(ActionSet)
-		if err := yaml.Unmarshal([]byte("actions:\n  - add: bar\n  - copy: file"), s); err != nil {
+		if err := yaml.Unmarshal([]byte("actions:\n  - recipe: bar\n  - copy: file"), s); err != nil {
 			t.Errorf("unexpected error parsing ActionSet: %v", err)
 		}
 
-		if len(s.Actions) != 2 || s.Actions[0].Type() != TypeAdd || s.Actions[1].Type() != TypeCopy {
+		if len(s.Actions) != 2 || s.Actions[0].Type() != TypeRecipe || s.Actions[1].Type() != TypeCopy {
 			t.Errorf("failed parsing ActionSet; expected 2/add/copy, got: %v", s)
 		}
 	})
@@ -117,10 +117,10 @@ actions:
     options:
       - name: 'PHP 8.0'
         actions:
-          - add: php-8
+          - recipe: php-8
       - name: 'PHP 7.4'
         actions:
-          - add: php-7.4
+          - recipe: php-7.4
 `
 	s := new(ActionSet)
 	if err := yaml.Unmarshal([]byte(config), s); err != nil {
@@ -133,7 +133,7 @@ actions:
 		t.Errorf("bad full ActionSet action[0] prompt/default: %v", s.Actions[0])
 	} else if len(s.Actions[0].Options) != 2 {
 		t.Errorf("bad full ActionSet action[0].Options: %v", s.Actions[0].Options)
-	} else if s.Actions[0].Options[1].Name != "PHP 7.4" || len(s.Actions[0].Options[1].Actions) != 1 || s.Actions[0].Options[1].Actions[0].Type() != TypeAdd {
+	} else if s.Actions[0].Options[1].Name != "PHP 7.4" || len(s.Actions[0].Options[1].Actions) != 1 || s.Actions[0].Options[1].Actions[0].Type() != TypeRecipe {
 		t.Errorf("bad full actionSet action[0].Options[1]; expected 7.4/1/add; got: %v", s.Actions[0].Options[1])
 	}
 }
