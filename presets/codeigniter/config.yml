@@ -1,0 +1,26 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'PHP' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new Laravel Application
+    actions:
+      - scripts:
+          - docker pull -q kooldev/php:7.4
+          - kool docker kooldev/php:7.4 composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - merge: codeigniter-scripts.yml
+        dst: kool.yml
+
+  - name: 'Tailor up your setup'
+    actions:
+      - recipe: pick-php
+      - recipe: pick-db
+      - recipe: pick-cache
+      - recipe: pick-node-pkg-mgr
