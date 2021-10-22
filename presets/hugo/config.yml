@@ -1,0 +1,16 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'Static', 'Hugo' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new Hugo website
+    actions:
+      - scripts:
+          - kool docker klakegg/hugo:ext-alpine new site $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml

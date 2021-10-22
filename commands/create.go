@@ -9,7 +9,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// KoolCreate holds handlers and functions to implement the preset command logic
+// TODO: create flag for --no-preset so the command runs only the create portion of the preset config
+
+// KoolCreate holds handlers and functions to implement the create command logic
 type KoolCreate struct {
 	DefaultKoolService
 	parser presets.Parser
