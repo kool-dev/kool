@@ -1,0 +1,33 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'JS' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new Express Application
+    actions:
+      - scripts:
+          - mkdir $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - copy: app.js
+      - copy: package.json
+
+  - name: 'Tailor up your setup'
+    actions:
+      # define package manager
+      - prompt: Which javascript package manager do you want to use?
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - merge: scripts/npm-expressjs.yml
+                dst: kool.yml
+          - name: 'yarn'
+            actions:
+              - merge: scripts/yarn-expressjs.yml
+                dst: kool.yml
