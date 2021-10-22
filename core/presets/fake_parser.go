@@ -2,21 +2,19 @@ package presets
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists       bool
-	CalledLookUpFiles  bool
-	CalledWriteFiles   map[string]bool
-	CalledGetPresets   bool
-	CalledGetLanguages bool
-	CalledGetConfig    map[string]bool
+	CalledExists     bool
+	CalledGetTags    bool
+	CalledGetPresets bool
+	CalledInstall    bool
+	CalledCreate     bool
+	CalledAdd        bool
 
-	MockExists         bool
-	MockFoundFiles     []string
-	MockFileError      string
-	MockError          error
-	MockLanguages      []string
-	MockPresets        []string
-	MockConfig         map[string]*PresetConfig
-	MockGetConfigError map[string]error
+	MockExists     bool
+	MockGetTags    []string
+	MockGetPresets []string
+	MockInstall    error
+	MockCreate     error
+	MockAdd        error
 }
 
 // Exists check if preset exists
@@ -26,61 +24,37 @@ func (f *FakeParser) Exists(preset string) (exists bool) {
 	return
 }
 
-// GetLanguages get all presets languages
-func (f *FakeParser) GetLanguages() (languages []string) {
-	f.CalledGetLanguages = true
-	languages = f.MockLanguages
+// GetTags get all presets tags
+func (f *FakeParser) GetTags() (languages []string) {
+	f.CalledGetTags = true
+	languages = f.MockGetTags
 	return
 }
 
 // GetPresets get all presets names
-func (f *FakeParser) GetPresets(language string) (presets []string) {
+func (f *FakeParser) GetPresets(tag string) (presets []string) {
 	f.CalledGetPresets = true
-	presets = f.MockPresets
+	presets = f.MockGetPresets
 	return
 }
 
-// LookUpFiles check if preset files exist
-func (f *FakeParser) LookUpFiles(preset string) (foundFiles []string) {
-	f.CalledLookUpFiles = true
-	foundFiles = f.MockFoundFiles
+// Install
+func (f *FakeParser) Install(tag string) (err error) {
+	f.CalledInstall = true
+	err = f.MockInstall
 	return
 }
 
-// WriteFiles write preset files
-func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
-	if f.CalledWriteFiles == nil {
-		f.CalledWriteFiles = make(map[string]bool)
-	}
-
-	f.CalledWriteFiles[preset] = true
-	fileError = f.MockFileError
-	err = f.MockError
+// Create
+func (f *FakeParser) Create(tag string) (err error) {
+	f.CalledCreate = true
+	err = f.MockCreate
 	return
 }
 
-// GetConfig get preset config
-func (f *FakeParser) GetConfig(preset string) (config *PresetConfig, err error) {
-	if f.CalledGetConfig == nil {
-		f.CalledGetConfig = make(map[string]bool)
-	}
-
-	if f.MockConfig == nil {
-		f.MockConfig = make(map[string]*PresetConfig)
-	}
-
-	if f.MockGetConfigError == nil {
-		f.MockGetConfigError = make(map[string]error)
-	}
-
-	f.CalledGetConfig[preset] = true
-	if val, ok := f.MockConfig[preset]; ok {
-		config = val
-	}
-
-	if val, ok := f.MockGetConfigError[preset]; ok {
-		err = val
-	}
-
+// Add
+func (f *FakeParser) Add(tag string) (err error) {
+	f.CalledAdd = true
+	err = f.MockAdd
 	return
 }

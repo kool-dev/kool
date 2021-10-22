@@ -1,7 +1,6 @@
 package presets
 
 import (
-	"embed"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -14,11 +13,19 @@ import (
 
 const presetConfigFile = "presets/%s/config.yml"
 
-var source embed.FS
+// SourceFS componds all required interfaces for managing
+// the sourcing of presets and templates on a filesystem
+type SourceFS interface {
+	fs.FS
+	fs.ReadDirFS
+	fs.ReadFileFS
+}
+
+var source SourceFS
 
 // SetSource informs the package about the
 // source of template files and configs
-func SetSource(src embed.FS) {
+func SetSource(src SourceFS) {
 	source = src
 }
 

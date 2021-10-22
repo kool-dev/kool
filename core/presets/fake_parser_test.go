@@ -2,7 +2,6 @@ package presets
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 )
 
@@ -16,110 +15,38 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked Exists function on FakeParser")
 	}
 
-	f.MockFoundFiles = []string{"kool.yml"}
-	foundFiles := f.LookUpFiles("preset")
-
-	if !f.CalledLookUpFiles || len(foundFiles) != 1 || foundFiles[0] != "kool.yml" {
-		t.Error("failed to use mocked LookUpFiles function on FakeParser")
-	}
-
-	f.MockFileError = "kool.yml"
-	f.MockError = errors.New("error")
-	fileError, err := f.WriteFiles("preset")
-
-	if !f.CalledWriteFiles["preset"] || fileError != f.MockFileError || f.MockError.Error() != err.Error() {
-		t.Error("failed to use mocked WriteFiles function on FakeParser")
-	}
-
-	f.MockPresets = []string{"preset"}
+	f.MockGetPresets = []string{"preset"}
 	presets := f.GetPresets("")
 
 	if !f.CalledGetPresets || len(presets) != 1 || presets[0] != "preset" {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
 
-	f.MockLanguages = []string{"php"}
-	languages := f.GetLanguages()
+	f.MockGetTags = []string{"php"}
+	tags := f.GetTags()
 
-	if !f.CalledGetLanguages || len(languages) != 1 || languages[0] != "php" {
-		t.Error("failed to use mocked GetPresets function on FakeParser")
+	if !f.CalledGetTags || len(tags) != 1 || tags[0] != "php" {
+		t.Error("failed to use mocked GetTags function on FakeParser")
 	}
 
-	f.SetPresetKeyContent("preset", "key", "content")
+	f.MockInstall = errors.New("Install")
+	errInstall := f.Install("")
 
-	if !f.CalledSetPresetKeyContent["preset"]["key"]["content"] {
-		t.Error("failed to use mocked SetPresetKeyContent function on FakeParser")
+	if !f.CalledInstall || errInstall == nil || errInstall.Error() != "Install" {
+		t.Error("failed to use mocked Install function on FakeParser")
 	}
 
-	f.MockTemplates = nil
-	_ = f.GetTemplates()
-	if !f.CalledGetTemplates {
-		t.Error("failed to use mocked GetTemplates function on FakeParser")
+	f.MockCreate = errors.New("Create")
+	errCreate := f.Create("")
+
+	if !f.CalledCreate || errCreate == nil || errCreate.Error() != "Create" {
+		t.Error("failed to use mocked Create function on FakeParser")
 	}
 
-	f.MockTemplates = map[string]map[string]string{
-		"service": map[string]string{
-			"serviceType": "serviceContent",
-		},
-	}
+	f.MockAdd = errors.New("Add")
+	errAdd := f.Add("")
 
-	templates := f.GetTemplates()
-
-	if val, ok := templates["service"]["serviceType"]; !ok || val != "serviceContent" {
-		t.Error("failed to use mocked GetTemplates function on FakeParser")
-	}
-
-	allPresets := map[string]map[string]string{
-		"preset": map[string]string{
-			"file": "file content",
-		},
-	}
-
-	f.LoadPresets(allPresets)
-
-	if !f.CalledLoadPresets || !reflect.DeepEqual(allPresets, f.MockAllPresets) {
-		t.Error("failed to use mocked LoadTemplates function on FakeParser")
-	}
-
-	allTemplates := map[string]map[string]string{
-		"service": map[string]string{
-			"serviceType": "serviceContent",
-		},
-	}
-
-	f.LoadTemplates(allTemplates)
-
-	if !f.CalledLoadTemplates || !reflect.DeepEqual(allTemplates, f.MockAllTemplates) {
-		t.Error("failed to use mocked LoadTemplates function on FakeParser")
-	}
-
-	allConfigs := map[string]string{
-		"preset": "preset_config",
-	}
-
-	f.LoadConfigs(allConfigs)
-
-	if !f.CalledLoadConfigs || !reflect.DeepEqual(allConfigs, f.MockAllConfigs) {
-		t.Error("failed to use mocked LoadTemplates function on FakeParser")
-	}
-
-	config, configErr := f.GetConfig("nonConfiguredPreset")
-
-	if !f.CalledGetConfig["nonConfiguredPreset"] || config != nil || configErr != nil {
-		t.Error("failed to use mocked GetConfig function on FakeParser")
-	}
-
-	f.MockConfig = map[string]*PresetConfig{
-		"preset": new(PresetConfig),
-	}
-
-	f.MockGetConfigError = map[string]error{
-		"preset": errors.New("error get config"),
-	}
-
-	config, configErr = f.GetConfig("preset")
-
-	if !f.CalledGetConfig["preset"] || config != f.MockConfig["preset"] || configErr != f.MockGetConfigError["preset"] {
-		t.Error("failed to use mocked GetConfig function on FakeParser")
+	if !f.CalledAdd || errAdd == nil || errAdd.Error() != "Add" {
+		t.Error("failed to use mocked Add function on FakeParser")
 	}
 }
