@@ -1,13 +1,13 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
-tags: [ 'PHP' ]
+tags: [ 'JS' ]
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
-  - name: Creating new Symfony Application
+  - name: Creating new NextJS Application
     actions:
       - scripts:
-          - docker pull -q kooldev/php:8.0
-          - kool docker kooldev/php:8.0 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
+          - docker pull -q kooldev/node:14
+          - kool docker kooldev/node:14 yarn create next-app $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -15,12 +15,7 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: symfony-scripts.yml
-        dst: kool.yml
 
   - name: 'Tailor up your setup'
     actions:
-      - recipe: pick-php
-      - recipe: pick-db
-      - recipe: pick-cache
       - recipe: pick-node-pkg-mgr
