@@ -1,5 +1,6 @@
 scripts:
   php: kool exec app php
+  composer: kool exec app composer
 
   setup:
     - kool start

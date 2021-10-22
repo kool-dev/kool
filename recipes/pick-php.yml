@@ -1,6 +1,6 @@
 actions:
   # Defines which app service to use (PHP version)
-  - prompt: 'Which app service do you want to use'
+  - prompt: 'Which PHP version do you want to use'
     default: 'PHP 8.0'
     options:
       - name: 'PHP 8.0'
