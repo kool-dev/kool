@@ -4,10 +4,6 @@ version: "3.8"
 #
 services:
 #
-# Annonymos volumes definitions
-#
-volumes:
-#
 # Networks definitions
 #
 networks:
