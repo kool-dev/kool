@@ -1,0 +1,36 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'JS' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new Laravel Application
+    actions:
+      - scripts:
+          - docker pull -q kooldev/node:14-adonis
+          - kool docker kooldev/node:14-adonis adonis new $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - merge: app/node14-adonis.yml
+        dst: docker-compose.yml
+
+  - name: 'Tailor up your setup'
+    actions:
+      - recipe: pick-db
+      - recipe: pick-cache
+      # define package manager
+      - prompt: Which javascript package manager do you want to use?
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - merge: scripts/npm-adonis.yml
+                dst: kool.yml
+          - name: 'yarn'
+            actions:
+              - merge: scripts/yarn-adonis.yml
+                dst: kool.yml
