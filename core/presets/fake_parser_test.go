@@ -30,21 +30,21 @@ func TestFakeParser(t *testing.T) {
 	}
 
 	f.MockInstall = errors.New("Install")
-	errInstall := f.Install("")
+	errInstall := f.Install("", nil)
 
 	if !f.CalledInstall || errInstall == nil || errInstall.Error() != "Install" {
 		t.Error("failed to use mocked Install function on FakeParser")
 	}
 
 	f.MockCreate = errors.New("Create")
-	errCreate := f.Create("")
+	errCreate := f.Create("", nil)
 
 	if !f.CalledCreate || errCreate == nil || errCreate.Error() != "Create" {
 		t.Error("failed to use mocked Create function on FakeParser")
 	}
 
 	f.MockAdd = errors.New("Add")
-	errAdd := f.Add("")
+	errAdd := f.Add("", nil)
 
 	if !f.CalledAdd || errAdd == nil || errAdd.Error() != "Add" {
 		t.Error("failed to use mocked Add function on FakeParser")

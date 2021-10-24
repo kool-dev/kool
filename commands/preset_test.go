@@ -6,7 +6,6 @@ import (
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
-	"kool-dev/kool/core/templates"
 	"kool-dev/kool/services/compose"
 	"strings"
 	"testing"
@@ -41,16 +40,8 @@ func newFakeKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*(newDefaultKoolService().Fake()),
 		&presets.FakeParser{},
-		&compose.FakeParser{},
-		&templates.FakeParser{},
-		&parser.FakeKoolYaml{},
 		&shell.FakePromptSelect{},
 	}
-}
-
-func parseMysqlTemplate() (template yaml.MapSlice) {
-	_ = yaml.Unmarshal([]byte(mysqlTemplate), &template)
-	return
 }
 
 func TestNewKoolPreset(t *testing.T) {
@@ -64,14 +55,6 @@ func TestNewKoolPreset(t *testing.T) {
 		t.Errorf("unexpected presets.Parser on default KoolPreset instance")
 	}
 
-	if _, ok := k.composeParser.(*compose.DefaultParser); !ok {
-		t.Errorf("unexpected compose.Parser on default KoolPreset instance")
-	}
-
-	if _, ok := k.templateParser.(*templates.DefaultParser); !ok {
-		t.Errorf("unexpected templates.Parser on default KoolPreset instance")
-	}
-
 	if _, ok := k.promptSelect.(*shell.DefaultPromptSelect); !ok {
 		t.Errorf("unexpected shell.PromptSelect on default KoolPreset instance")
 	}
@@ -80,9 +63,6 @@ func TestNewKoolPreset(t *testing.T) {
 func TestPresetCommand(t *testing.T) {
 	f := newFakeKoolPreset()
 	f.presetsParser.(*presets.FakeParser).MockExists = true
-	f.presetsParser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": {},
-	}
 
 	cmd := NewPresetCommand(f)
 

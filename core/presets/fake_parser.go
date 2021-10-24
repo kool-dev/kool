@@ -1,5 +1,7 @@
 package presets
 
+import "kool-dev/kool/core/shell"
+
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
 	CalledExists     bool
@@ -39,21 +41,21 @@ func (f *FakeParser) GetPresets(tag string) (presets []string) {
 }
 
 // Install
-func (f *FakeParser) Install(tag string) (err error) {
+func (f *FakeParser) Install(tag string, sh shell.Shell) (err error) {
 	f.CalledInstall = true
 	err = f.MockInstall
 	return
 }
 
 // Create
-func (f *FakeParser) Create(tag string) (err error) {
+func (f *FakeParser) Create(tag string, sh shell.Shell) (err error) {
 	f.CalledCreate = true
 	err = f.MockCreate
 	return
 }
 
 // Add
-func (f *FakeParser) Add(tag string) (err error) {
+func (f *FakeParser) Add(tag string, sh shell.Shell) (err error) {
 	f.CalledAdd = true
 	err = f.MockAdd
 	return

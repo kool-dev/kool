@@ -3,7 +3,6 @@ package commands
 import (
 	"bytes"
 	"errors"
-	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
@@ -16,8 +15,6 @@ func newFakeKoolCreate() *KoolCreate {
 		*(newDefaultKoolService().Fake()),
 		&presets.FakeParser{},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{},
-		*newFakeKoolPreset(),
 	}
 }
 
@@ -26,10 +23,6 @@ func TestNewKoolCreate(t *testing.T) {
 
 	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolCreate instance")
-	}
-
-	if _, ok := k.createCommand.(*builder.DefaultCommand); !ok {
-		t.Errorf("unexpected builder.Command on default KoolCreate instance")
 	}
 
 	if _, ok := k.parser.(*presets.DefaultParser); !ok {
@@ -41,16 +34,8 @@ func TestNewKoolCreateCommand(t *testing.T) {
 	f := newFakeKoolCreate()
 
 	f.parser.(*presets.FakeParser).MockExists = true
-	f.KoolPreset.presetsParser.(*presets.FakeParser).MockExists = true
-	f.parser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": {
-			Commands: map[string][]string{
-				"create": {"kool docker create command"},
-			},
-		},
-	}
-	f.KoolPreset.presetsParser.(*presets.FakeParser).MockConfig = f.parser.(*presets.FakeParser).MockConfig
-	f.createCommand.(*builder.FakeCommand).MockCmd = "create"
+	f.parser.(*presets.FakeParser).MockCreate = nil
+	f.parser.(*presets.FakeParser).MockInstall = nil
 
 	cmd := NewCreateCommand(f)
 	cmd.SetArgs([]string{"laravel", "my-app"})
@@ -59,20 +44,16 @@ func TestNewKoolCreateCommand(t *testing.T) {
 		t.Errorf("unexpected error executing create command; error: %v", err)
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledLoadPresets {
-		t.Error("did not call parser.LoadPresets")
-	}
-
 	if !f.parser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
 	}
 
-	if val, ok := f.parser.(*presets.FakeParser).CalledGetConfig["laravel"]; !ok || !val {
-		t.Error("did not call parser.GetConfig for preset 'laravel'")
+	if !f.parser.(*presets.FakeParser).CalledCreate {
+		t.Error("did not call parser.Create")
 	}
 
-	if !f.createCommand.(*builder.FakeCommand).CalledParseCommand {
-		t.Error("did not call Parse on KoolCreate.createCommand Command")
+	if !f.parser.(*presets.FakeParser).CalledInstall {
+		t.Error("did not call parser.Install")
 	}
 
 	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["create"]; !val || !ok {
@@ -92,10 +73,6 @@ func TestInvalidPresetCreateCommand(t *testing.T) {
 		t.Errorf("unexpected error: %s", err)
 	}
 
-	if !f.parser.(*presets.FakeParser).CalledLoadPresets {
-		t.Error("did not call parser.LoadPresets")
-	}
-
 	if !f.parser.(*presets.FakeParser).CalledExists {
 		t.Error("did not call parser.Exists")
 	}
@@ -112,35 +89,29 @@ func TestNoArgsNewCreateCommand(t *testing.T) {
 	}
 }
 
-func TestErrorConfigCreateCommand(t *testing.T) {
+func TestErrCreateCommand(t *testing.T) {
 	f := newFakeKoolCreate()
 
 	f.parser.(*presets.FakeParser).MockExists = true
-	getConfigError := errors.New("get config error")
-	f.parser.(*presets.FakeParser).MockGetConfigError = map[string]error{
-		"laravel": getConfigError,
-	}
+	createErr := errors.New("create error")
+	f.parser.(*presets.FakeParser).MockCreate = createErr
 
 	cmd := NewCreateCommand(f)
 
 	cmd.SetArgs([]string{"laravel", "my-app"})
 
-	assertExecGotError(t, cmd, "error parsing preset config")
+	assertExecGotError(t, cmd, "create error")
 }
 
-func TestNoCreateCommandsCreateCommand(t *testing.T) {
+func TestErrInstallCreateCommand(t *testing.T) {
 	f := newFakeKoolCreate()
 
 	f.parser.(*presets.FakeParser).MockExists = true
-	f.parser.(*presets.FakeParser).MockConfig = map[string]*presets.PresetConfig{
-		"laravel": {
-			Commands: make(map[string][]string),
-		},
-	}
+	f.parser.(*presets.FakeParser).MockInstall = errors.New("install error")
 
 	cmd := NewCreateCommand(f)
 
 	cmd.SetArgs([]string{"laravel", "my-app"})
 
-	assertExecGotError(t, cmd, "no create commands were found for preset laravel")
+	assertExecGotError(t, cmd, "install error")
 }

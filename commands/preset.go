@@ -2,11 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
-	"kool-dev/kool/core/templates"
-	"kool-dev/kool/services/compose"
 
 	"github.com/spf13/cobra"
 )
@@ -15,9 +12,6 @@ import (
 type KoolPreset struct {
 	DefaultKoolService
 	presetsParser  presets.Parser
-	composeParser  compose.Parser
-	templateParser templates.Parser
-	koolYamlParser parser.KoolYamlParser
 	promptSelect   shell.PromptSelect
 }
 
@@ -35,9 +29,6 @@ func NewKoolPreset() *KoolPreset {
 	return &KoolPreset{
 		*newDefaultKoolService(),
 		presets.NewParser(),
-		compose.NewParser(),
-		templates.NewParser(),
-		&parser.KoolYaml{},
 		shell.NewPromptSelect(),
 	}
 }
