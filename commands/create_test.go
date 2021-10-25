@@ -38,7 +38,7 @@ func TestNewKoolCreateCommand(t *testing.T) {
 	f.parser.(*presets.FakeParser).MockInstall = nil
 
 	cmd := NewCreateCommand(f)
-	cmd.SetArgs([]string{"laravel", "my-app"})
+	cmd.SetArgs([]string{"laravel", "/tmp"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing create command; error: %v", err)
@@ -54,10 +54,6 @@ func TestNewKoolCreateCommand(t *testing.T) {
 
 	if !f.parser.(*presets.FakeParser).CalledInstall {
 		t.Error("did not call parser.Install")
-	}
-
-	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["create"]; !val || !ok {
-		t.Error("did not call Interactive on KoolCreate.createCommand Command")
 	}
 }
 
@@ -111,7 +107,7 @@ func TestErrInstallCreateCommand(t *testing.T) {
 
 	cmd := NewCreateCommand(f)
 
-	cmd.SetArgs([]string{"laravel", "my-app"})
+	cmd.SetArgs([]string{"laravel", "/tmp"})
 
 	assertExecGotError(t, cmd, "install error")
 }

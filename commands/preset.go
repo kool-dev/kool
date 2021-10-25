@@ -11,8 +11,8 @@ import (
 // KoolPreset holds handlers and functions to implement the preset command logic
 type KoolPreset struct {
 	DefaultKoolService
-	presetsParser  presets.Parser
-	promptSelect   shell.PromptSelect
+	presetsParser presets.Parser
+	promptSelect  shell.PromptSelect
 }
 
 func AddKoolPreset(root *cobra.Command) {
