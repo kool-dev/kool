@@ -166,7 +166,7 @@ func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...str
 
 	command.AppendArgs(extraArgs...)
 
-	// soon should refactor this onto a struct with methods
+	// soon should refactor this into a struct with methods
 	// so we can remove this too long list of returned values.
 	if cmdptr, err = parseRedirects(command, s); err != nil {
 		return

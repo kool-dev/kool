@@ -18,6 +18,6 @@ preset:
       - merge: node-scripts.yml
         dst: kool.yml
 
-  - name: 'Tailor up your setup'
+  - name: 'Customize your setup'
     actions:
       - recipe: pick-node-pkg-mgr

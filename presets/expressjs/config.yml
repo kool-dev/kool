@@ -17,7 +17,7 @@ preset:
       - copy: app.js
       - copy: package.json
 
-  - name: 'Tailor up your setup'
+  - name: 'Customize your setup'
     actions:
       # define package manager
       - prompt: Which javascript package manager do you want to use?

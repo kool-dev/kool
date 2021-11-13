@@ -137,7 +137,7 @@ func (e *Executor) merge(action *Action) (err error) {
 		data    []byte
 		file    afero.File
 		merger  = &yamler.DefaultMerger{}
-		onto    = &yaml3.Node{}
+		into    = &yaml3.Node{}
 		partial = &yaml3.Node{}
 	)
 
@@ -146,7 +146,7 @@ func (e *Executor) merge(action *Action) (err error) {
 		action.Dst = action.Merge
 		e.sh.Println("→ merging", action.Merge)
 	} else {
-		e.sh.Println("→ merging", action.Merge, "onto", action.Dst)
+		e.sh.Println("→ merging", action.Merge, "into", action.Dst)
 	}
 
 	// partial
@@ -158,7 +158,7 @@ func (e *Executor) merge(action *Action) (err error) {
 		return err
 	}
 
-	// onto
+	// into
 	if file, err = e.local.OpenFile(action.Dst, os.O_RDONLY, os.ModePerm); err != nil {
 		return
 	}
@@ -171,15 +171,15 @@ func (e *Executor) merge(action *Action) (err error) {
 		return
 	}
 
-	if err = yaml3.Unmarshal(data, onto); err != nil {
+	if err = yaml3.Unmarshal(data, into); err != nil {
 		return err
 	}
 
-	if err = merger.Merge(partial, onto); err != nil {
+	if err = merger.Merge(partial, into); err != nil {
 		return
 	}
 
-	err = new(yamler.DefaultOutputWritter).WriteYAML(action.Dst, onto)
+	err = new(yamler.DefaultOutputWritter).WriteYAML(action.Dst, into)
 	return
 }
 

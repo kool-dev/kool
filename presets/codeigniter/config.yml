@@ -18,7 +18,7 @@ preset:
       - merge: codeigniter-scripts.yml
         dst: kool.yml
 
-  - name: 'Tailor up your setup'
+  - name: 'Customize your setup'
     actions:
       - recipe: pick-php
       - recipe: pick-db

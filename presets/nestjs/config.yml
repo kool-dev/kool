@@ -18,7 +18,7 @@ preset:
       - merge: app/node14-nestjs.yml
         dst: docker-compose.yml
 
-  - name: 'Tailor up your setup'
+  - name: 'Customize your setup'
     actions:
       - recipe: pick-db
       - recipe: pick-cache

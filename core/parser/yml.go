@@ -32,7 +32,7 @@ type KoolYamlParser interface {
 
 var yamlMarshalFn yamlMarshalFnType = yaml.Marshal
 
-// ParseKoolYaml decodes the target kool.yml onto its
+// ParseKoolYaml decodes the target kool.yml into its
 // the expected KoolYaml representation.
 func ParseKoolYaml(filePath string) (parsed *KoolYaml, err error) {
 	var (
@@ -87,7 +87,7 @@ func (y *KoolYaml) GetSimilars(script string) (has bool, similars []string) {
 	return
 }
 
-// ParseCommands parsed the given script from kool.yml file onto a list
+// ParseCommands parsed the given script from kool.yml file into a list
 // of commands parsed.
 func (y *KoolYaml) ParseCommands(script string) (commands []builder.Command, err error) {
 	var (

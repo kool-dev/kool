@@ -35,7 +35,7 @@ func (f *FakeKoolYaml) HasScript(script string) (has bool) {
 	return
 }
 
-// ParseCommands parsed the given script from kool.yml file onto a list
+// ParseCommands parsed the given script from kool.yml file into a list
 // of commands parsed.
 func (f *FakeKoolYaml) ParseCommands(script string) (commands []builder.Command, err error) {
 	if f.CalledParseCommands == nil {

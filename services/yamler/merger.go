@@ -21,7 +21,7 @@ func (m *DefaultMerger) Merge(src *yaml.Node, dst *yaml.Node) (err error) {
 			return
 		}
 
-		err = fmt.Errorf("trying to merge different kinds: %d onto %d", src.Kind, dst.Kind)
+		err = fmt.Errorf("trying to merge different kinds: %d into %d", src.Kind, dst.Kind)
 		return
 	}
 
