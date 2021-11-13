@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
+	"os"
 	"strings"
 	"testing"
 )
@@ -107,7 +108,12 @@ func TestErrInstallCreateCommand(t *testing.T) {
 
 	cmd := NewCreateCommand(f)
 
+	cwd, _ := os.Getwd()
+
 	cmd.SetArgs([]string{"laravel", t.TempDir()})
 
 	assertExecGotError(t, cmd, "install error")
+
+	// return to original folder
+	os.Chdir(cwd)
 }
