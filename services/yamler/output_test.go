@@ -25,6 +25,7 @@ func TestWriteYAML(t *testing.T) {
 
 	fh, _ := os.Open(f)
 	bs, _ := ioutil.ReadAll(fh)
+	fh.Close()
 	got := strings.Trim(string(bs), " \t\n")
 
 	if got != yml {
