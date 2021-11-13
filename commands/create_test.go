@@ -115,5 +115,5 @@ func TestErrInstallCreateCommand(t *testing.T) {
 	assertExecGotError(t, cmd, "install error")
 
 	// return to original folder
-	os.Chdir(cwd)
+	_ = os.Chdir(cwd)
 }
