@@ -107,7 +107,7 @@ func TestErrInstallCreateCommand(t *testing.T) {
 
 	cmd := NewCreateCommand(f)
 
-	cmd.SetArgs([]string{"laravel", "/tmp"})
+	cmd.SetArgs([]string{"laravel", t.TempDir()})
 
 	assertExecGotError(t, cmd, "install error")
 }
