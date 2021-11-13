@@ -212,20 +212,3 @@ func (p *DefaultParser) getConfig(preset string) (config *PresetConfig, err erro
 	config.presetID = preset
 	return
 }
-
-func (p *DefaultParser) presetFiles(preset string) (presetFiles []string) {
-	var (
-		entries []fs.DirEntry
-		file    fs.DirEntry
-		err     error
-	)
-
-	if entries, err = source.ReadDir(fmt.Sprintf("presets/%s", preset)); err != nil {
-		return
-	}
-
-	for _, file = range entries {
-		presetFiles = append(presetFiles, file.Name())
-	}
-	return
-}

@@ -85,9 +85,7 @@ func (m *DefaultMerger) Merge(src *yaml.Node, dst *yaml.Node) (err error) {
 	}
 
 	if dst.Kind == yaml.SequenceNode {
-		for _, nd := range src.Content {
-			dst.Content = append(dst.Content, nd)
-		}
+		dst.Content = append(dst.Content, src.Content...)
 		return
 	}
 

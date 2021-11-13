@@ -51,27 +51,23 @@ func (e *Executor) Do(steps []*ActionSet) (err error) {
 				if err = e.add(action); err != nil {
 					return
 				}
-				break
+
 			case TypeCopy:
 				if err = e.copy(action); err != nil {
 					return
 				}
-				break
 			case TypeScripts:
 				if err = e.scripts(action); err != nil {
 					return
 				}
-				break
 			case TypeMerge:
 				if err = e.merge(action); err != nil {
 					return
 				}
-				break
 			case TypePrompt:
 				if err = e.prompt(action); err != nil {
 					return
 				}
-				break
 			default:
 				err = fmt.Errorf("ops, something is wrong with this preset config (%d)", action.Type())
 				return
