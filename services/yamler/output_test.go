@@ -48,6 +48,7 @@ func TestWriteYAMLIndentation(t *testing.T) {
 
 	fh, _ := os.Open(f)
 	bs, _ := ioutil.ReadAll(fh)
+	fh.Close()
 	got := strings.Trim(string(bs), " \t\n")
 
 	expect := "foo:\n  bar: xxx"
