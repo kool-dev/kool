@@ -89,7 +89,7 @@ func (e *KoolExec) checkUser(service string) {
 		defer e.Shell().SetOutStream(actualOut)
 
 		e.Shell().SetOutStream(os.Stderr)
-		e.Shell().Warning("failed to check running container for kool user; not setting a user (err: %s)", err.Error())
+		e.Shell().Warning(fmt.Sprintf("failed to check running container for kool user; did you forget kool start? (err: %s)", err.Error()))
 	} else if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
 		// since user (kool:x:UID) exists within the container, we set it
 		e.composeExec.AppendArgs("--user", asuser)
