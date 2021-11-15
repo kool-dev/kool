@@ -1,31 +1,22 @@
 package presets
 
+import "kool-dev/kool/core/shell"
+
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
-	CalledExists              bool
-	CalledLookUpFiles         bool
-	CalledWriteFiles          map[string]bool
-	CalledGetPresets          bool
-	CalledGetLanguages        bool
-	CalledSetPresetKeyContent map[string]map[string]map[string]bool
-	CalledGetTemplates        bool
-	CalledLoadPresets         bool
-	CalledLoadTemplates       bool
-	CalledLoadConfigs         bool
-	CalledGetConfig           map[string]bool
+	CalledExists     bool
+	CalledGetTags    bool
+	CalledGetPresets bool
+	CalledInstall    bool
+	CalledCreate     bool
+	CalledAdd        bool
 
-	MockExists         bool
-	MockFoundFiles     []string
-	MockFileError      string
-	MockError          error
-	MockLanguages      []string
-	MockPresets        []string
-	MockTemplates      map[string]map[string]string
-	MockAllPresets     map[string]map[string]string
-	MockAllTemplates   map[string]map[string]string
-	MockAllConfigs     map[string]string
-	MockConfig         map[string]*PresetConfig
-	MockGetConfigError map[string]error
+	MockExists     bool
+	MockGetTags    []string
+	MockGetPresets []string
+	MockInstall    error
+	MockCreate     error
+	MockAdd        error
 }
 
 // Exists check if preset exists
@@ -35,106 +26,37 @@ func (f *FakeParser) Exists(preset string) (exists bool) {
 	return
 }
 
-// GetLanguages get all presets languages
-func (f *FakeParser) GetLanguages() (languages []string) {
-	f.CalledGetLanguages = true
-	languages = f.MockLanguages
+// GetTags get all presets tags
+func (f *FakeParser) GetTags() (languages []string) {
+	f.CalledGetTags = true
+	languages = f.MockGetTags
 	return
 }
 
 // GetPresets get all presets names
-func (f *FakeParser) GetPresets(language string) (presets []string) {
+func (f *FakeParser) GetPresets(tag string) (presets []string) {
 	f.CalledGetPresets = true
-	presets = f.MockPresets
+	presets = f.MockGetPresets
 	return
 }
 
-// LookUpFiles check if preset files exist
-func (f *FakeParser) LookUpFiles(preset string) (foundFiles []string) {
-	f.CalledLookUpFiles = true
-	foundFiles = f.MockFoundFiles
+// Install
+func (f *FakeParser) Install(tag string, sh shell.Shell) (err error) {
+	f.CalledInstall = true
+	err = f.MockInstall
 	return
 }
 
-// WriteFiles write preset files
-func (f *FakeParser) WriteFiles(preset string) (fileError string, err error) {
-	if f.CalledWriteFiles == nil {
-		f.CalledWriteFiles = make(map[string]bool)
-	}
-
-	f.CalledWriteFiles[preset] = true
-	fileError = f.MockFileError
-	err = f.MockError
+// Create
+func (f *FakeParser) Create(tag string, sh shell.Shell) (err error) {
+	f.CalledCreate = true
+	err = f.MockCreate
 	return
 }
 
-// SetPresetKeyContent set preset key value
-func (f *FakeParser) SetPresetKeyContent(preset string, key string, content string) {
-	if f.CalledSetPresetKeyContent == nil {
-		f.CalledSetPresetKeyContent = make(map[string]map[string]map[string]bool)
-	}
-
-	if _, ok := f.CalledSetPresetKeyContent[preset]; !ok {
-		f.CalledSetPresetKeyContent[preset] = make(map[string]map[string]bool)
-	}
-
-	if _, ok := f.CalledSetPresetKeyContent[preset][key]; !ok {
-		f.CalledSetPresetKeyContent[preset][key] = make(map[string]bool)
-	}
-
-	f.CalledSetPresetKeyContent[preset][key][content] = true
-}
-
-// GetTemplates get all templates
-func (f *FakeParser) GetTemplates() (templates map[string]map[string]string) {
-	f.CalledGetTemplates = true
-	if f.MockTemplates == nil {
-		f.MockTemplates = make(map[string]map[string]string)
-	}
-	templates = f.MockTemplates
-	return
-}
-
-//LoadPresets loads all presets
-func (f *FakeParser) LoadPresets(presets map[string]map[string]string) {
-	f.CalledLoadPresets = true
-	f.MockAllPresets = presets
-}
-
-//LoadTemplates loads all templates
-func (f *FakeParser) LoadTemplates(templates map[string]map[string]string) {
-	f.CalledLoadTemplates = true
-	f.MockAllTemplates = templates
-}
-
-// LoadConfigs load the configs
-func (f *FakeParser) LoadConfigs(configs map[string]string) {
-	f.CalledLoadConfigs = true
-	f.MockAllConfigs = configs
-}
-
-// GetConfig get preset config
-func (f *FakeParser) GetConfig(preset string) (config *PresetConfig, err error) {
-	if f.CalledGetConfig == nil {
-		f.CalledGetConfig = make(map[string]bool)
-	}
-
-	if f.MockConfig == nil {
-		f.MockConfig = make(map[string]*PresetConfig)
-	}
-
-	if f.MockGetConfigError == nil {
-		f.MockGetConfigError = make(map[string]error)
-	}
-
-	f.CalledGetConfig[preset] = true
-	if val, ok := f.MockConfig[preset]; ok {
-		config = val
-	}
-
-	if val, ok := f.MockGetConfigError[preset]; ok {
-		err = val
-	}
-
+// Add
+func (f *FakeParser) Add(tag string, sh shell.Shell) (err error) {
+	f.CalledAdd = true
+	err = f.MockAdd
 	return
 }

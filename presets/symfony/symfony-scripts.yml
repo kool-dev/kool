@@ -1,0 +1,9 @@
+scripts:
+  composer: kool exec app composer
+  console: kool exec app php ./bin/console
+  phpunit: kool exec app php ./bin/phpunit
+
+  setup:
+    - kool start
+    - kool run composer install
+    # - kool run console doctrine:migrations:migrate -n

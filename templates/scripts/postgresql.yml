@@ -1,0 +1,3 @@
+scripts:
+  # CLI access to PostgreSQL
+  psql: kool exec -e PGPASSWORD=$DB_PASSWORD database psql -U $DB_USERNAME $DB_DATABASE

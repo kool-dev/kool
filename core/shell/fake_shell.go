@@ -25,9 +25,10 @@ type FakeShell struct {
 	OutLines      []string
 	WarningOutput []interface{}
 	SuccessOutput []interface{}
+	InfoOutput    []interface{}
 	FOutput       string
 
-	CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess bool
+	CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess, CalledInfo bool
 
 	MockOutStream  io.Writer
 	MockErrStream  io.Writer
@@ -156,4 +157,10 @@ func (f *FakeShell) Warning(out ...interface{}) {
 func (f *FakeShell) Success(out ...interface{}) {
 	f.CalledSuccess = true
 	f.SuccessOutput = out
+}
+
+// Info is a mocked testing function
+func (f *FakeShell) Info(out ...interface{}) {
+	f.CalledInfo = true
+	f.InfoOutput = out
 }

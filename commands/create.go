@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
 	"os"
@@ -10,13 +9,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// KoolCreate holds handlers and functions to implement the preset command logic
+// TODO: create flag for --no-preset so the command runs only the create portion of the preset config
+
+// KoolCreate holds handlers and functions to implement the create command logic
 type KoolCreate struct {
 	DefaultKoolService
-	parser        presets.Parser
-	env           environment.EnvStorage
-	createCommand builder.Command
-	KoolPreset
+	parser presets.Parser
+	env    environment.EnvStorage
 }
 
 func AddKoolCreate(root *cobra.Command) {
@@ -34,17 +33,12 @@ func NewKoolCreate() *KoolCreate {
 		*newDefaultKoolService(),
 		presets.NewParser(),
 		environment.NewEnvStorage(),
-		&builder.DefaultCommand{},
-		*NewKoolPreset(),
 	}
 }
 
 // Execute runs the create logic with incoming arguments.
 func (c *KoolCreate) Execute(args []string) (err error) {
 	var (
-		presetConfig    *presets.PresetConfig
-		createCmds      []string
-		ok              bool
 		preset          = args[0]
 		createDirectory = args[1]
 	)
@@ -52,37 +46,28 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 	// sets env variable CREATE_DIRECTORY that aims to tell
 	c.env.Set("CREATE_DIRECTORY", createDirectory)
 
-	c.parser.LoadPresets(presets.GetAll())
-	c.parser.LoadConfigs(presets.GetConfigs())
-
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("unknown preset %s", preset)
 		return
 	}
 
-	if presetConfig, err = c.parser.GetConfig(preset); err != nil || presetConfig == nil {
-		err = fmt.Errorf("error parsing preset config; err: %v", err)
+	c.Shell().Println("Creating new", preset, "project...")
+
+	if err = c.parser.Create(preset, c.Shell()); err != nil {
 		return
 	}
 
-	if createCmds, ok = presetConfig.Commands["create"]; !ok || len(createCmds) <= 0 {
-		err = fmt.Errorf("no create commands were found for preset %s", preset)
+	c.Shell().Println("Initializing", preset, "preset...")
+
+	if err = os.Chdir(createDirectory); err != nil {
 		return
 	}
 
-	for _, createCmd := range createCmds {
-		if err = c.createCommand.Parse(createCmd); err != nil {
-			return
-		}
-
-		if err = c.Shell().Interactive(c.createCommand); err != nil {
-			return
-		}
+	if err = c.parser.Install(preset, c.Shell()); err != nil {
+		return
 	}
 
-	_ = os.Chdir(createDirectory)
-
-	err = c.KoolPreset.Execute([]string{preset})
+	c.Shell().Success("Preset ", preset, " created successfully!")
 
 	return
 }

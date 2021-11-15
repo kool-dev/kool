@@ -33,6 +33,7 @@ var AddCommands AddCommandsFN = func(root *cobra.Command) {
 	AddKoolStart(root)
 	AddKoolStatus(root)
 	AddKoolStop(root)
+	AddKoolRecipe(root)
 }
 
 // DEV_VERSION holds the static version shown for development time builds

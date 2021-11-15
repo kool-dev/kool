@@ -45,6 +45,9 @@ func (f *fakeOutputWritter) Warning(args ...interface{}) {
 func (*fakeOutputWritter) Success(args ...interface{}) {
 }
 
+func (*fakeOutputWritter) Info(args ...interface{}) {
+}
+
 func TestNewDefaultK8S(t *testing.T) {
 	k := NewDefaultK8S()
 	if _, ok := k.apiExec.(*api.DefaultExecCall); !ok {

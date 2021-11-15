@@ -42,6 +42,7 @@ type OutputWritter interface {
 	Printf(string, ...interface{})
 	Warning(...interface{})
 	Success(...interface{})
+	Info(...interface{})
 }
 
 // Outputable implements basic output handlers
@@ -165,7 +166,7 @@ func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...str
 
 	command.AppendArgs(extraArgs...)
 
-	// soon should refactor this onto a struct with methods
+	// soon should refactor this into a struct with methods
 	// so we can remove this too long list of returned values.
 	if cmdptr, err = parseRedirects(command, s); err != nil {
 		return
@@ -241,14 +242,17 @@ func (s *DefaultShell) Error(err error) {
 
 // Warning warning message
 func (s *DefaultShell) Warning(out ...interface{}) {
-	warningMessage := color.New(color.Yellow).Sprint(out...)
-	fmt.Fprintln(s.OutStream(), warningMessage)
+	fmt.Fprintln(s.OutStream(), color.New(color.Yellow).Sprint(out...))
 }
 
 // Success success message
 func (s *DefaultShell) Success(out ...interface{}) {
-	successMessage := color.New(color.Green).Sprint(out...)
-	fmt.Fprintln(s.OutStream(), successMessage)
+	fmt.Fprintln(s.OutStream(), color.New(color.Green).Sprint(out...))
+}
+
+// Info info message
+func (s *DefaultShell) Info(out ...interface{}) {
+	fmt.Fprintln(s.OutStream(), color.New(color.Blue).Sprint(out...))
 }
 
 // Exec will execute the given command silently and return the combined

@@ -1,0 +1,3 @@
+actions:
+  - merge: cache/memcached16.yml
+    dst: docker-compose.yml

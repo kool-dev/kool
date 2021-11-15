@@ -1,0 +1,3 @@
+actions:
+  - merge: scripts/npm.yml
+    dst: kool.yml

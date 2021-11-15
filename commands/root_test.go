@@ -258,6 +258,7 @@ func TestAddCommands(t *testing.T) {
 		"start":       false,
 		"status":      false,
 		"stop":        false,
+		"recipe":      false,
 	}
 
 	for _, subCmd := range root.Commands() {

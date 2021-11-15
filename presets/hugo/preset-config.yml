@@ -1,4 +1,0 @@
-language: static
-commands:
-  create:
-  - kool docker klakegg/hugo:ext-alpine new site $CREATE_DIRECTORY

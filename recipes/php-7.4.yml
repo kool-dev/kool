@@ -1,0 +1,3 @@
+actions:
+  - merge: app/php74.yml
+    dst: docker-compose.yml

@@ -1,0 +1,12 @@
+tags: [ 'foo' ]
+
+create:
+  - name: creating foo
+    actions:
+      - scripts:
+          - echo "foo"
+
+preset:
+  - name: 'preset step'
+    actions:
+      - copy: bar

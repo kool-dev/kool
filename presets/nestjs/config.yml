@@ -1,0 +1,35 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'JS' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new NestJS Application
+    actions:
+      - scripts:
+          - docker pull -q kooldev/node:14-nest
+          - kool docker kooldev/node:14-nest nest new $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - merge: app/node14-nestjs.yml
+        dst: docker-compose.yml
+
+  - name: 'Customize your setup'
+    actions:
+      - recipe: pick-db
+      - recipe: pick-cache
+      - prompt: 'Which Javascript package manager do you want to use'
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - merge: npm.yml
+                dst: kool.yml
+          - name: 'yarn'
+            actions:
+              - merge: yarn.yml
+                dst: kool.yml

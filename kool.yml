@@ -1,5 +1,5 @@
 scripts:
-  # Helper for local development - parsing presets onto Go,
+  # Helper for local development
   # compiling and installing locally
   dev:
     - kool run compile
@@ -24,12 +24,3 @@ scripts:
   make-docs:
     - rm -f docs/4-Commands/*.md
     - kool run go:linux run docs.go
-  # Parsing the preset files onto Go code in an automated fashion.
-  parse-presets:
-    - rm -f core/presets/presets.go
-    - rm -f core/presets/templates.go
-    - rm -f core/presets/configs.go
-    - kool run go:linux run gen/parse_presets.go
-    - kool run go:linux run gen/parse_templates.go
-    - kool run go:linux run gen/parse_presets_configs.go
-    - kool run fmt

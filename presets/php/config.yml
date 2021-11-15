@@ -1,0 +1,23 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'PHP' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new PHP Application
+    actions:
+      - scripts:
+          - mkdir -p $CREATE_DIRECTORY/public
+          - echo "<?php echo 'Hello World!';" > $CREATE_DIRECTORY/public/index.php
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - merge: scripts/php.yml
+        dst: kool.yml
+
+  - name: 'Customize your setup'
+    actions:
+      - recipe: pick-php

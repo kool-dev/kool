@@ -22,7 +22,7 @@ func TestParseCommand(t *testing.T) {
 	cmd, err := ParseCommand(line)
 
 	if err != nil {
-		t.Errorf("failed to parse proper command line onto Command; error: %s", err)
+		t.Errorf("failed to parse proper command line into Command; error: %s", err)
 		return
 	}
 
@@ -111,7 +111,7 @@ func TestParse(t *testing.T) {
 	err := cmd.Parse(line)
 
 	if err != nil {
-		t.Errorf("failed to parse proper command line onto Command; error: %s", err)
+		t.Errorf("failed to parse proper command line into Command; error: %s", err)
 		return
 	}
 
