@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"io"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
@@ -118,6 +119,8 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunE {
 					service.Shell().Warning("Operation Cancelled")
 					err = nil
 				}
+
+				err = fmt.Errorf("ERROR: %s", err.Error())
 				return
 			}
 		}

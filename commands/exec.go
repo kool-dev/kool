@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"kool-dev/kool/core/builder"
@@ -75,14 +76,14 @@ func (e *KoolExec) checkUser(service string) {
 	defer e.Shell().SetInStream(actualInput) // return actualInput
 
 	// avoid interference of Exec on actual input
-	// by temporarily setting os.Stdin
-	e.Shell().SetInStream(os.Stdin)
+	// by temporarily setting stdin to a fake mock
+	e.Shell().SetInStream(bytes.NewBuffer([]byte{}))
 
 	// we have a KOOL_ASUSER env; now we need to know whether
 	// the image of the target service have such user
 	var passwd string
 
-	if passwd, err = e.Shell().Exec(e.composeExec, service, "cat", "/etc/passwd"); err != nil {
+	if passwd, err = e.Shell().Exec(e.composeExec, "-T", service, "cat", "/etc/passwd"); err != nil {
 		// for safety, let's write the warning message to os.Stderr
 		// so we avoid getting cross-fire on in/out redirections
 		actualOut := e.Shell().OutStream()
