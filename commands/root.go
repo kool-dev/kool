@@ -118,9 +118,9 @@ func DefaultCommandRunFunction(services ...KoolService) CobraRunE {
 				if shell.IsUserCancelledError(err) {
 					service.Shell().Warning("Operation Cancelled")
 					err = nil
+				} else {
+					err = fmt.Errorf("ERROR: %s", err.Error())
 				}
-
-				err = fmt.Errorf("ERROR: %s", err.Error())
 				return
 			}
 		}
