@@ -17,6 +17,11 @@ type TtyAware interface {
 	SetIsTTY(bool)
 }
 
+// LocalDockerComposeAware interface holds functions for get localDockerCompose command
+type LocalDockerComposeAware interface {
+	LocalDockerCompose() builder.Command
+}
+
 // DockerCompose holds data and logic to wrap docker-compose command
 // within a container for flexibility
 type DockerCompose struct {
@@ -57,10 +62,16 @@ func (c *DockerCompose) SetLocalDockerCompose(cmd builder.Command) *DockerCompos
 	return c
 }
 
+// LocalDockerCompose return the builder.Command from localDockerCompose
+func (c *DockerCompose) LocalDockerCompose() builder.Command {
+	return c.localDockerCompose
+}
+
 // Args returns the command arguments
 func (c *DockerCompose) Args() (args []string) {
 	if c.sh.LookPath(c.localDockerCompose) == nil {
-		return append([]string{c.Command.Cmd()}, c.Command.Args()...)
+		args = append([]string{c.Command.Cmd()}, c.Command.Args()...)
+		return append(c.localDockerCompose.Args(), args...)
 	}
 
 	args = append(args, "run", "--rm", "-i")
@@ -123,5 +134,6 @@ func (c *DockerCompose) String() string {
 func (c *DockerCompose) Copy() (copied builder.Command) {
 	copied = NewDockerCompose(c.Command.Cmd(), c.Command.Args()...)
 	copied.(*DockerCompose).SetIsTTY(c.isTTY)
+	copied.(*DockerCompose).SetLocalDockerCompose(c.localDockerCompose)
 	return
 }
