@@ -160,6 +160,9 @@ func (e *Executor) merge(action *Action) (err error) {
 
 	// into
 	if file, err = e.local.OpenFile(action.Dst, os.O_RDONLY, os.ModePerm); err != nil {
+		if os.IsNotExist(err) {
+			err = fmt.Errorf("merge destiny file '%s' does not exist", action.Dst)
+		}
 		return
 	}
 
@@ -211,6 +214,9 @@ func (e *Executor) add(action *Action) (err error) {
 	)
 
 	if data, err = recipesSource.ReadFile(fmt.Sprintf("recipes/%s.yml", action.Recipe)); err != nil {
+		if os.IsNotExist(err) {
+			err = fmt.Errorf("recipe '%s' does not exist", action.Recipe)
+		}
 		return
 	}
 
