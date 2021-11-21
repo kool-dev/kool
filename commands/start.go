@@ -15,6 +15,7 @@ import (
 type KoolStartFlags struct {
 	Foreground bool
 	Rebuild    bool
+	Profile    string
 }
 
 // KoolStart holds handlers and functions for starting containers logic
@@ -51,6 +52,7 @@ all containers are started. If the containers are already running, they are recr
 
 	startCmd.Flags().BoolVarP(&start.Flags.Foreground, "foreground", "f", false, "Start containers in foreground mode")
 	startCmd.Flags().BoolVarP(&start.Flags.Rebuild, "rebuild", "b", false, "Updates and builds service's images")
+	startCmd.Flags().StringVarP(&start.Flags.Profile, "profile", "", "", "Specify a profile to enable")
 
 	return
 }
@@ -61,7 +63,7 @@ func NewKoolStart() *KoolStart {
 	defaultKoolService := newDefaultKoolService()
 	return &KoolStart{
 		*defaultKoolService,
-		&KoolStartFlags{false, false},
+		&KoolStartFlags{false, false, ""},
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
@@ -93,6 +95,13 @@ func (s *KoolStart) Execute(args []string) (err error) {
 	if s.Flags.Rebuild {
 		if err = s.rebuild(); err != nil {
 			return
+		}
+	}
+
+	if len(s.Flags.Profile) > 0 {
+		if aware, ok := s.start.(compose.LocalDockerComposeAware); ok {
+			// let DockerCompose know about whether we are under TTY or not
+			aware.LocalDockerCompose().AppendArgs("--profile", s.Flags.Profile)
 		}
 	}
 
