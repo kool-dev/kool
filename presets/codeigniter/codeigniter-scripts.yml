@@ -1,7 +1,7 @@
 scripts:
   composer: kool exec app composer
   spark: kool exec app php spark
-  phpunit: kool exec app php ./bin/phpunit
+  phpunit: kool exec app vendor/bin/phpunit
 
   setup:
     - cp env .env
