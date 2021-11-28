@@ -1,0 +1,8 @@
+services:
+  # see: https://github.com/kool-dev/pdf
+  pdf:
+    image: "kooldev/pdf:latest"
+    expose:
+      - 3000
+    networks:
+      - kool_local

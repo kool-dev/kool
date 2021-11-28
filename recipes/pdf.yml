@@ -1,0 +1,3 @@
+actions:
+  - merge: misc/pdf.yml
+    dst: docker-compose.yml
