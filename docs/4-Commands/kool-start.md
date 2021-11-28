@@ -14,9 +14,10 @@ kool start [SERVICE...]
 ### Options
 
 ```
-  -f, --foreground   Start containers in foreground mode
-  -h, --help         help for start
-  -b, --rebuild      Updates and builds service's images
+  -f, --foreground       Start containers in foreground mode
+  -h, --help             help for start
+      --profile string   Specify a profile to enable
+  -b, --rebuild          Updates and builds service's images
 ```
 
 ### Options inherited from parent commands
