@@ -5,7 +5,7 @@ A few of the optimizations included in Kool's Docker images:
 - Alpine base images to remain small and up-to-date
 - Configured with sane defaults - for development as well as production
 - Environment variables to easily update the most common settings
-- Battle-tested - Firework has been using these images in production for quite a long time now!
+- Battle-tested - a growing community has been using these images in production for quite a long time now!
 
 ## Kool-Optimized Docker Images
 
@@ -15,4 +15,4 @@ A few of the optimizations included in Kool's Docker images:
 - Java images: https://github.com/kool-dev/docker-java
 - DevOps images: https://github.com/kool-dev/docker-toolkit
 
-> Disclaimer: Kool Docker images follow our recommended best practices, which are aimed at making your life easier. However, you can use the **Kool CLI** with any Docker images you like - assuming you know what you're doing :).
+> Disclaimer: Kool Docker images follow our recommended best practices, which are aimed at making your life easier. However, you can use the **Kool CLI** with any Docker images you like - assuming you know what you're doing.
