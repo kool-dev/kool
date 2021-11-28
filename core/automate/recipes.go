@@ -32,7 +32,9 @@ func GetRecipes() (recipes []*RecipeMetadata, err error) {
 
 	for _, e := range entries {
 		m := &RecipeMetadata{Slug: strings.ReplaceAll(e.Name(), ".yml", "")}
-		raw, err = recipesSource.ReadFile(fmt.Sprintf("recipes/%s", e.Name()))
+		if raw, err = recipesSource.ReadFile(fmt.Sprintf("recipes/%s", e.Name())); err != nil {
+			return
+		}
 		if err = yaml.Unmarshal(raw, m); err != nil {
 			recipes = nil
 			return
