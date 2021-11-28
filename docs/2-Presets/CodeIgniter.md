@@ -125,7 +125,7 @@ Redis
 ```diff
 public $redis = [
 -    'host' => '127.0.0.1',
-+    'host' => cache
++    'host' => 'cache'
 ```
 
 Memcached
@@ -133,7 +133,7 @@ Memcached
 ```diff
 public $memcached = [
 -    'host' => '127.0.0.1',
-+    'host' => cache
++    'host' => 'cache'
 ```
 
 ## 4. Run `kool run setup`
