@@ -25,6 +25,7 @@ type DefaultKoolTask struct {
 	actualOut   shell.Shell
 	frameOutput bool
 	originalOut io.Writer
+	termWidth   int
 }
 
 // NewKoolTask creates a new kool task
@@ -44,6 +45,10 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 	}
 
 	t.originalOut = t.Shell().OutStream()
+	if t.termWidth, err = shell.GetTerminalWidth(t.originalOut); err != nil {
+		fmt.Fprintf(t.Shell().ErrStream(), "[bad TTY] %s", err.Error())
+		err = nil
+	}
 	t.actualOut.SetOutStream(t.originalOut)
 	pipeReader, pipeWriter := io.Pipe()
 
@@ -68,7 +73,7 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		statusMessage = color.New(color.Green).Sprint("done")
 	}
 
-	t.actualOut.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+	t.actualOut.Printf("\r" + strings.Repeat(" ", t.termWidth-1) + "\r")
 	t.actualOut.Println(fmt.Sprintf("[%s] %s", statusMessage, t.message))
 
 	return
@@ -126,7 +131,7 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 
 		for line := range lines {
 			loading.Lock()
-			t.actualOut.Printf("\r" + strings.Repeat(" ", 100) + "\r")
+			t.actualOut.Printf("\r" + strings.Repeat(" ", t.termWidth-1) + "\r")
 			if t.frameOutput {
 				t.actualOut.Println(">", line)
 			} else {

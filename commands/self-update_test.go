@@ -40,6 +40,8 @@ func TestNewSelfUpdateCommand(t *testing.T) {
 	f := newFakeKoolSelfUpdate("0.0.0", "1.0.0", nil, nil)
 	cmd := NewSelfUpdateCommand(f)
 
+	f.shell.(*shell.FakeShell).MockErrStream = io.Discard
+
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing self-update command; error: %v", err)
 	}
@@ -67,6 +69,8 @@ func TestNewSelfUpdateUpToDateCommand(t *testing.T) {
 	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", nil, nil)
 	cmd := NewSelfUpdateCommand(f)
 
+	f.shell.(*shell.FakeShell).MockErrStream = io.Discard
+
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing self-update command; error: %v", err)
 	}
@@ -89,6 +93,8 @@ func TestNewSelfUpdateUpToDateCommand(t *testing.T) {
 func TestNewSelfUpdateErrorCommand(t *testing.T) {
 	f := newFakeKoolSelfUpdate("1.0.0", "1.0.0", errors.New("error"), nil)
 	cmd := NewSelfUpdateCommand(f)
+
+	f.shell.(*shell.FakeShell).MockErrStream = io.Discard
 
 	expected := "kool self-update failed: error"
 	assertExecGotError(t, cmd, expected)

@@ -73,6 +73,7 @@ func TestRebuildRestartCommand(t *testing.T) {
 	cmd.SetArgs([]string{"--rebuild"})
 
 	fakeStart.rebuilder.(*KoolRebuild).shell.(*shell.FakeShell).MockOutStream = io.Discard
+	fakeStart.rebuilder.(*KoolRebuild).shell.(*shell.FakeShell).MockErrStream = io.Discard
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing restart command; error: %v", err)

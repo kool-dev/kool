@@ -2,6 +2,8 @@ package shell
 
 import "github.com/moby/term"
 
+const standardTermWidth int = 80
+
 // TerminalChecker holds logic to check if environment is a terminal
 type TerminalChecker interface {
 	IsTerminal(...interface{}) bool
