@@ -15,16 +15,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func newFakedKoolServiceWithStderr() (s *DefaultKoolService) {
+	s = newDefaultKoolService().Fake()
+	s.shell.(*shell.FakeShell).MockErrStream = io.Discard
+	return s
+}
+
 func newFakeKoolStart() *KoolStart {
 	return &KoolStart{
-		*(newDefaultKoolService().Fake()),
+		*newFakedKoolServiceWithStderr(),
 		&KoolStartFlags{},
 		&checker.FakeChecker{},
 		&network.FakeHandler{},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "start"},
 		&KoolRebuild{
-			*(newDefaultKoolService().Fake()),
+			*newFakedKoolServiceWithStderr(),
 			&builder.FakeCommand{MockCmd: "pull"},
 			&builder.FakeCommand{MockCmd: "build"},
 		},
