@@ -87,8 +87,9 @@ func NewStopCommand(stop *KoolStop) (stopCmd *cobra.Command) {
 	task.SetFrameOutput(false)
 
 	stopCmd = &cobra.Command{
-		Use:   "stop [SERVICE...]",
-		Short: "Stop and destroy running service containers",
+		Use:        "stop [SERVICE...]",
+		SuggestFor: []string{"down"},
+		Short:      "Stop and destroy running service containers",
 		Long: `Stop and destroy the specified [SERVICE] containers, which were started
 using 'kool start'. If no [SERVICE] is provided, all running containers are stopped.`,
 		RunE: LongTaskCommandRunFunction(task),

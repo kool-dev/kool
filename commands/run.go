@@ -105,10 +105,10 @@ A single-line SCRIPT can be run with optional arguments.`,
 		RunE: DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) != 0 {
-				return nil, cobra.ShellCompDirectiveNoFileComp
+				return nil, cobra.ShellCompDirectiveDefault
 			}
 
-			return compListScripts(toComplete, run), cobra.ShellCompDirectiveNoFileComp
+			return compListScripts(toComplete, run), cobra.ShellCompDirectiveDefault
 		},
 		DisableFlagsInUseLine: true,
 	}

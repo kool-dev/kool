@@ -4,7 +4,9 @@ import (
 	_ "embed"
 	"kool-dev/kool/core/automate"
 	"kool-dev/kool/core/presets"
+	"strings"
 
+	"github.com/agnivade/levenshtein"
 	"github.com/spf13/cobra"
 )
 
@@ -33,28 +35,6 @@ func NewKoolRecipe() *KoolRecipe {
 func (p *KoolRecipe) Execute(args []string) (err error) {
 	var recipe string
 
-	if len(args) == 0 {
-		// no recipe; let's just print them all
-		var metas []*automate.RecipeMetadata
-
-		if metas, err = automate.GetRecipes(); err != nil {
-			return
-		}
-
-		p.Shell().Warning("You need to provide the recipe name as argument.")
-		p.Shell().Println("")
-		p.Shell().Println("Available recipes:")
-
-		for _, meta := range metas {
-			if meta.Title != "" {
-				p.Shell().Printf("  %s (%s)\n", meta.Slug, meta.Title)
-			} else {
-				p.Shell().Printf("  %s\n", meta.Slug)
-			}
-		}
-		return
-	}
-
 	recipe = args[0]
 
 	err = presets.NewParser().Add(recipe, p.Shell())
@@ -65,10 +45,29 @@ func (p *KoolRecipe) Execute(args []string) (err error) {
 // NewRecipeCommand initializes new kool add command
 func NewRecipeCommand(recipe *KoolRecipe) (recipeCmd *cobra.Command) {
 	recipeCmd = &cobra.Command{
-		Use:                   "recipe [RECIPE]",
-		Short:                 "Adds configuration for some recipe in the current work directory.",
-		Long:                  `Run the defines steps for a recipe which can add/edit files the current project directory in order to add some new service or configuration.`,
-		Args:                  cobra.MaximumNArgs(1),
+		Use:   "recipe [RECIPE]",
+		Short: "Adds configuration for some recipe in the current work directory.",
+		Long:  `Run the defines steps for a recipe which can add/edit files the current project directory in order to add some new service or configuration.`,
+		Args:  cobra.ExactArgs(1),
+		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			if len(args) == 0 {
+				return nil, cobra.ShellCompDirectiveDefault
+			}
+
+			var recipes []string
+			metas, _ := automate.GetRecipes()
+			for _, meta := range metas {
+				if meta.Slug == args[0] {
+					return nil, cobra.ShellCompDirectiveDefault
+				}
+
+				if strings.HasPrefix(meta.Slug, args[0]) || levenshtein.ComputeDistance(meta.Slug, args[0]) <= 2 {
+					recipes = append(recipes, meta.Slug)
+				}
+			}
+
+			return recipes, cobra.ShellCompDirectiveDefault
+		},
 		RunE:                  DefaultCommandRunFunction(recipe),
 		DisableFlagsInUseLine: true,
 	}
