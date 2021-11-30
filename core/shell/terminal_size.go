@@ -7,7 +7,7 @@ import (
 	"errors"
 	"os"
 
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 // GetTerminalWidth checks if input is a terminal
@@ -23,7 +23,7 @@ func GetTerminalWidth(tty interface{}) (width int, err error) {
 		return
 	}
 
-	width, _, err = terminal.GetSize(int(fh.Fd()))
+	width, _, err = term.GetSize(int(fh.Fd()))
 
 	return
 }

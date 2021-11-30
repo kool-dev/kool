@@ -27,10 +27,10 @@ require (
 	github.com/spf13/afero v1.4.1
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.6.1 // indirect
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
@@ -59,5 +59,5 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tcnksm/go-gitconfig v0.1.2 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
+	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
 )
