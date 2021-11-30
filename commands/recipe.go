@@ -33,9 +33,7 @@ func NewKoolRecipe() *KoolRecipe {
 
 // Execute runs the add logic with incoming arguments.
 func (p *KoolRecipe) Execute(args []string) (err error) {
-	var recipe string
-
-	recipe = args[0]
+	var recipe = args[0]
 
 	err = presets.NewParser().Add(recipe, p.Shell())
 
