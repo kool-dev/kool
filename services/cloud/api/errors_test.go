@@ -25,13 +25,15 @@ func TestDefinedErrors(t *testing.T) {
 func TestApiErr(t *testing.T) {
 	err := &ErrAPI{100, "message", nil}
 
-	if err.Error() != "100 - message" {
+	if err.Error() != "\n100 - message\n" {
 		t.Errorf("unexpected error message: %s", err.Error())
 	}
 
-	err.Errors = make(map[string]interface{})
+	err.Errors = map[string]interface{}{
+		"foo": []interface{}{"bar"},
+	}
 
-	if err.Error() != "100 - message (map[])" {
+	if err.Error() != "\n100 - message\n\n\tfoo > bar\n" {
 		t.Errorf("unexpected error message: %s", err.Error())
 	}
 }
