@@ -75,7 +75,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		api.SetBaseURL(url)
 	}
 
-	d.Shell().Println("Create release file...")
+	d.Shell().Info("Create release file...")
 	if filename, err = d.createReleaseFile(); err != nil {
 		return
 	}
@@ -89,14 +89,14 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 	deploy = api.NewDeploy(filename)
 
-	d.Shell().Println("Upload release file...")
+	d.Shell().Info("Upload release file...")
 	if err = deploy.SendFile(); err != nil {
 		return
 	}
 
 	d.Shell().Println("Going to deploy...")
 
-	timeout := 10 * time.Minute
+	timeout := 30 * time.Minute
 
 	if min, err := strconv.Atoi(d.env.Get("KOOL_API_TIMEOUT")); err == nil {
 		timeout = time.Duration(min) * time.Minute

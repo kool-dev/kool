@@ -63,6 +63,7 @@ func (d *Deploy) SendFile() (err error) {
 			if errAPI.Status == http.StatusUnauthorized {
 				err = ErrUnauthorized
 			} else if errAPI.Status == http.StatusUnprocessableEntity {
+				fmt.Println(err)
 				err = ErrPayloadValidation
 			} else if errAPI.Status != http.StatusOK && errAPI.Status != http.StatusCreated {
 				err = ErrBadResponseStatus
