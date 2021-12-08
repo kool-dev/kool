@@ -4,7 +4,6 @@ For generating a new release we follow the steps:
 
 - Get latest `master` branch.
 - Make sure docs are updated - `kool run make-docs`
-- Make sure presets are updated - `kool run parse-presets`
 - Make sure formatting is correct - `kool run fmt`
 - Make sure there are no syntax/stylistic errors - `kool run lint`
 - Make sure tests are passing - `kool run test`

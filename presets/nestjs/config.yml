@@ -6,8 +6,8 @@ create:
   - name: Creating new NestJS Application
     actions:
       - scripts:
-          - docker pull -q kooldev/node:14-nest
-          - kool docker kooldev/node:14-nest nest new $CREATE_DIRECTORY
+          - docker pull -q kooldev/node:16-nest
+          - kool docker kooldev/node:16-nest nest new $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -15,7 +15,7 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: app/node14-nestjs.yml
+      - merge: app/node-nestjs.yml
         dst: docker-compose.yml
 
   - name: 'Customize your setup'
