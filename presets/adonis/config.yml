@@ -15,7 +15,7 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: app/node14-adonis.yml
+      - merge: app/node-adonis.yml
         dst: docker-compose.yml
 
   - name: 'Customize your setup'
