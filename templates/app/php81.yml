@@ -1,0 +1,13 @@
+services:
+  app:
+    image: kooldev/php:8.1-nginx
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
