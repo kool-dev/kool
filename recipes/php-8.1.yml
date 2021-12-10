@@ -1,0 +1,3 @@
+actions:
+  - merge: app/php81.yml
+    dst: docker-compose.yml
