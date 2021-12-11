@@ -1,9 +1,8 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 kool run make-docs
-kool run parse-presets
 kool run fmt
 kool run lint
 kool run test
