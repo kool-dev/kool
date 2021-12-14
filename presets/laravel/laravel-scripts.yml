@@ -2,7 +2,7 @@ scripts:
   # Common commands
   composer: kool exec app composer
   artisan: kool exec app php artisan
-  phpunit: kool exec app php ./bin/phpunit
+  phpunit: kool exec app php ./vendor/bin/phpunit
 
   # Use this to setup your projects the first in a new environment.
   setup:
