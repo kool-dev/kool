@@ -14,6 +14,8 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
+      - copy: environment
+        dst: .env
       # default PHP 8 only
       - merge: app/wordpress80.yml
         dst: docker-compose.yml
