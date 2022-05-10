@@ -1,0 +1,38 @@
+categories:
+  - title: 'Added'
+    labels:
+      - 'feature'
+      - 'new'
+  - title: 'Changed'
+    labels:
+      - 'enhancement'
+      - 'chore'
+      - 'refactor'
+  - title: 'Fixed'
+    labels:
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
+  - title: 'Documentation'
+    labels:
+      - 'docs'
+      - 'documentation'
+  - title: 'Removed'
+    labels:
+      - 'remove'
+      - 'drop'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
+
+template: |
+  $CHANGES
