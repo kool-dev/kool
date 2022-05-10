@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"kool-dev/kool/services/updater"
+	"strings"
 
 	"github.com/blang/semver"
 	"github.com/spf13/cobra"
@@ -42,7 +43,7 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 	currentVersion = s.updater.GetCurrentVersion()
 
 	if latestVersion, err = s.updater.Update(currentVersion); err != nil {
-		if strings.Contains(err, "permission denied") {
+		if strings.Contains(err.Error(), "permission denied") {
 			return fmt.Errorf("kool self-update failed: %v (maybe try again with sudo)", err)
 		}
 		return fmt.Errorf("kool self-update failed: %v", err)
