@@ -190,8 +190,9 @@ func (r *KoolRun) parseScript(script string) (err error) {
 func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command) error {
 	return func(cmd *cobra.Command) (err error) {
 		var (
-			sb      strings.Builder
-			scripts []string
+			sb       strings.Builder
+			scripts  []string
+			parseErr error
 		)
 
 		// look for kool.yml on current working directory
@@ -199,9 +200,9 @@ func getRunUsageFunc(run *KoolRun, originalUsageText string) func(*cobra.Command
 		// look for kool.yml on kool folder within user home directory
 		_ = run.parser.AddLookupPath(path.Join(run.env.Get("HOME"), "kool"))
 
-		if scripts, err = run.parser.ParseAvailableScripts(""); err != nil {
+		if scripts, parseErr = run.parser.ParseAvailableScripts(""); parseErr != nil {
 			if run.env.IsTrue("KOOL_VERBOSE") {
-				run.Shell().Println("$ got an error trying to add available scripts to command usage template; error:", err.Error())
+				run.Shell().Println("$ got an error trying to add available scripts to command usage template; error:", parseErr.Error())
 			}
 			return
 		}
