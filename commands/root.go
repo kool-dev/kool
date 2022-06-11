@@ -1,9 +1,12 @@
 package commands
 
 import (
+	"fmt"
 	"io"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -50,6 +53,7 @@ func init() {
 // NewRootCmd creates the root command
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
+		Args:          cobra.ArbitraryArgs,
 		Use:           "kool",
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -71,6 +75,27 @@ Complete documentation is available at https://kool.dev/docs`,
 				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
 				hasWarnedDevelopmentVersion = true
 			}
+		},
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			if len(args) == 0 {
+				err = cmd.Help()
+				return
+			}
+
+			scriptParser := parser.NewParser()
+
+			// look for kool.yml on current working directory
+			_ = scriptParser.AddLookupPath(environment.NewEnvStorage().Get("PWD"))
+			_, err = scriptParser.Parse(args[0])
+
+			if err == nil {
+				// we did find a script for it!
+				err = fmt.Errorf("Command not found. Did you mean 'kool run %s'?", strings.Join(args, " "))
+				return
+			}
+
+			err = fmt.Errorf("command %s not found", args[0])
+			return
 		},
 	}
 
