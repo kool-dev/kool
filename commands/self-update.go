@@ -43,8 +43,10 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 	currentVersion = s.updater.GetCurrentVersion()
 
 	if latestVersion, err = s.updater.Update(currentVersion); err != nil {
-		if strings.Contains(err.Error(), "permission denied") {
-			return fmt.Errorf("kool self-update failed: %v (maybe try again with sudo)", err)
+		if strings.Contains(strings.ToLower(err.Error()), "permission denied") {
+			s.Shell().Warning("Error: %s", err)
+
+			return fmt.Errorf("kool self-update failed: (maybe try again with sudo)")
 		}
 		return fmt.Errorf("kool self-update failed: %v", err)
 	}
