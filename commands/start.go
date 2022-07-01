@@ -46,7 +46,7 @@ func NewStartCommand(start *KoolStart) (startCmd *cobra.Command) {
 		Short:      "Start service containers defined in docker-compose.yml",
 		Long: `Start one or more specified [SERVICE] containers. If no [SERVICE] is provided,
 all containers are started. If the containers are already running, they are recreated.`,
-		RunE: DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd})),
+		RunE: DefaultCommandRunFunction(CheckNewVersion(start, &updater.DefaultUpdater{RootCommand: rootCmd}, version == DEV_VERSION)),
 
 		DisableFlagsInUseLine: true,
 	}

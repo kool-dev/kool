@@ -11,19 +11,21 @@ type UpdateAwareService struct {
 	KoolService
 
 	updater updater.Updater
+	skip    bool
 }
 
 // CheckNewVersion wraps the service with checker logic
-func CheckNewVersion(service KoolService, updater updater.Updater) *UpdateAwareService {
+func CheckNewVersion(service KoolService, updater updater.Updater, skip bool) *UpdateAwareService {
 	return &UpdateAwareService{
 		service,
 		updater,
+		skip,
 	}
 }
 
 // Execute runs the check logic and proxies to original service
 func (u *UpdateAwareService) Execute(args []string) (err error) {
-	if !u.KoolService.Shell().IsTerminal() {
+	if u.skip || !u.KoolService.Shell().IsTerminal() {
 		err = u.KoolService.Execute(args)
 		return
 	}
