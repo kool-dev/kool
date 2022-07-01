@@ -12,7 +12,7 @@ RUN go build -a \
 	-ldflags '-X kool-dev/kool/cmd.version='$BUILD_VERSION' -extldflags "-static"' \
 	-o kool
 
-FROM alpine:3.16.0
+FROM alpine:3.15.4
 
 ENV DOCKER_HOST=tcp://docker:2375
 
