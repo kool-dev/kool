@@ -95,7 +95,9 @@ Complete documentation is available at https://kool.dev/docs`,
 
 			if err == nil {
 				// we did find a script for it!
-				err = fmt.Errorf("Command not found. Did you mean 'kool run %s'?", strings.Join(args, " "))
+				newDefaultKoolService().Shell().Info(fmt.Sprintf("Did you mean 'kool run %s'?", strings.Join(args, " ")))
+
+				err = fmt.Errorf("Command not found.")
 				return
 			}
 
