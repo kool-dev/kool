@@ -58,6 +58,17 @@ func NewKoolRun() *KoolRun {
 
 // Execute runs the run logic with incoming arguments.
 func (r *KoolRun) Execute(originalArgs []string) (err error) {
+	if len(originalArgs) == 0 {
+		r.shell.Info("\nAvailable scripts:\n")
+		scripts := compListScripts("", r)
+		for _, cmd := range scripts {
+			r.shell.Info("	", cmd)
+		}
+		r.shell.Println("")
+		err = errors.New("You must specify a script to run")
+		return
+	}
+
 	var (
 		script string   = originalArgs[0]
 		args   []string = originalArgs[1:]
@@ -101,10 +112,10 @@ func NewRunCommand(run *KoolRun) (runCmd *cobra.Command) {
 		Short: "Execute a script defined in kool.yml",
 		Long: `Execute the specified SCRIPT, as defined in the kool.yml file.
 A single-line SCRIPT can be run with optional arguments.`,
-		Args: cobra.MinimumNArgs(1),
+		Args: cobra.ArbitraryArgs,
 		RunE: DefaultCommandRunFunction(run),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			if len(args) != 0 {
+			if len(args) > 0 {
 				return nil, cobra.ShellCompDirectiveDefault
 			}
 

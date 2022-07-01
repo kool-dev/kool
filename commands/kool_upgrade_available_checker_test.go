@@ -13,6 +13,7 @@ func newFakeUpdateAwareService(start *KoolStart, koolFakeUpdater *updater.FakeUp
 	return &UpdateAwareService{
 		start,
 		koolFakeUpdater,
+		false,
 	}
 }
 
