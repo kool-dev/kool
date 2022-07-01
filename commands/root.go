@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
+	"path"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -83,9 +84,13 @@ Complete documentation is available at https://kool.dev/docs`,
 			}
 
 			scriptParser := parser.NewParser()
+			env := environment.NewEnvStorage()
 
 			// look for kool.yml on current working directory
-			_ = scriptParser.AddLookupPath(environment.NewEnvStorage().Get("PWD"))
+			_ = scriptParser.AddLookupPath(env.Get("PWD"))
+			// look for kool.yml on kool folder within user home directory
+			_ = scriptParser.AddLookupPath(path.Join(env.Get("HOME"), "kool"))
+
 			_, err = scriptParser.Parse(args[0])
 
 			if err == nil {
