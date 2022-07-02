@@ -18,20 +18,20 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -f .env ]; then
-    source .env
+  source .env
 fi
 
 GO_IMAGE=${GO_IMAGE:-golang:1.18}
 
 if [ "$BUILD_VERSION" == "" ]; then
-    echo "missing environment variable BUILD_VERSION"
-    exit 5
+  echo "missing environment variable BUILD_VERSION"
+  exit 5
 fi
 
 read -p "You are going to build all artifacts for version $BUILD_VERSION. Continue? (y/N) "
 if [[ ! $REPLY =~ ^(yes|YES|y|Y)$ ]]
 then
-    exit
+  exit
 fi
 
 rm -rf dist
@@ -50,16 +50,16 @@ BUILD=(\
 )
 
 for i in "${!BUILD[@]}"; do
-    dist=$(echo ${BUILD[$i]} | cut -d'|' -f1)
-    flags=$(echo ${BUILD[$i]} | cut -d'|' -f2)
-    echo "Building to ${flags}"
-    docker run --rm \
-        $flags \
-        --env CGO_ENABLED=0 \
-        -v $(pwd):/code -w /code $GO_IMAGE \
-        go build -a -tags 'osusergo netgo static_build' \
-        -ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
-        -o $dist
+  dist=$(echo ${BUILD[$i]} | cut -d'|' -f1)
+  flags=$(echo ${BUILD[$i]} | cut -d'|' -f2)
+  echo "Building to ${flags}"
+  docker run --rm \
+    $flags \
+    --env CGO_ENABLED=0 \
+    -v $(pwd):/code -w /code $GO_IMAGE \
+    go build -a -tags 'osusergo netgo static_build' \
+    -ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
+    -o $dist
 done
 
 echo "Building kool-install.exe"
@@ -67,14 +67,14 @@ echo "Building kool-install.exe"
 cp dist/kool-windows-amd64.exe dist/kool.exe
 
 docker run --rm -i \
-    -v $(pwd):/work \
-    amake/innosetup /dApplicationVersion=$BUILD_VERSION inno-setup/kool.iss
+  -v $(pwd):/work -w /work \
+  amake/innosetup /dApplicationVersion=$BUILD_VERSION inno-setup/kool.iss
 mv inno-setup/Output/mysetup.exe dist/kool-install.exe
 
 echo "Going to generate CHECKSUMS"
 
 for file in dist/*; do
-    shasum -a 256 $file > $file.sha256
+  shasum -a 256 $file > $file.sha256
 done
 
 echo "Finished building all artifacts for version $BUILD_VERSION"
