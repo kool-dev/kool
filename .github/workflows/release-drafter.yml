@@ -15,6 +15,7 @@ permissions:
 jobs:
   update_release_draft:
     permissions:
+      contents: write
       pull-requests: write
       issues: write
     runs-on: ubuntu-latest
