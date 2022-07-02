@@ -82,7 +82,7 @@ scripts:
     - kool run node-setup
 
   setup:
-    - cp .env.example .env
+    - kool docker kooldev/bash -c "cp .env.example .env"
     - kool start
     - kool run composer install
     - kool run artisan key:generate
