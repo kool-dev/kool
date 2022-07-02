@@ -8,11 +8,13 @@ Thank you for contributing through this Pull Request!
 
 | Issue | # |
 | -----: | :-----: |
-| :beetle: Bug Fix | Yes/No |
-| :trophy: Feature | Yes/No |
-| :pencil: Refactor | Yes/No |
-| :open_book: Documentation | Yes/No |
-| :warning: Break Change | Yes/No |
+| :beetle: Bug Fix | No/Yes |
+| :toolbox: Improvement | No/Yes |
+| :trophy: Feature | No/Yes |
+| :pencil: Refactor | No/Yes |
+| :x: Removed | No/Yes |
+| :open_book: Documentation | No/Yes |
+| :warning: Break Change | No/Yes |
 
 **Description**
 <!-- descriptive text on the changes made -->

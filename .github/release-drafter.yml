@@ -1,26 +1,47 @@
+autolabeler:
+  - label: 'release-drafter:added'
+    body:
+      - '/Feature\s*\|\s*Yes/'
+  - label: 'release-drafter:changed'
+    body:
+      - '/Improvement\s*\|\s*Yes/'
+  - label: 'release-drafter:fixed'
+    body:
+      - '/Bug Fix\s*\|\s*Yes/'
+  - label: 'release-drafter:documentation'
+    body:
+      - '/Documentation\s*\|\s*Yes/'
 categories:
   - title: 'Added'
     labels:
       - 'feature'
       - 'new'
+      - 'release-drafter:added'
   - title: 'Changed'
     labels:
       - 'enhancement'
       - 'chore'
       - 'refactor'
+      - 'release-drafter:changed'
   - title: 'Fixed'
     labels:
       - 'fix'
       - 'bugfix'
       - 'bug'
+      - 'release-drafter:fixed'
   - title: 'Documentation'
     labels:
       - 'docs'
       - 'documentation'
+      - 'release-drafter:documentation'
   - title: 'Removed'
     labels:
       - 'remove'
       - 'drop'
+      - 'release-drafter:removed'
+
+exclude-labels:
+  - 'release-drafter:skip'
 
 version-resolver:
   major:
