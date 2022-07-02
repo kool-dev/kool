@@ -34,13 +34,8 @@ then
   exit
 fi
 
-docker run --rm -i \
-  -v $(pwd):/work -w /work \
-  kooldev/bash -c 'rm -rf dist'
-
-docker run --rm -i \
-  -v $(pwd):/work -w /work \
-  kooldev/bash -c 'mkdir -p dist'
+rm -rf dist
+mkdir -p dist
 
 # ATTENTION - binary names must match the -GOOS-GOARCH suffix
 # because self-update relies on this pattern to work.
@@ -69,9 +64,7 @@ done
 
 echo "Building kool-install.exe"
 
-docker run --rm -i \
-  -v $(pwd):/work -w /work \
-  kooldev/bash -c 'cp dist/kool-windows-amd64.exe dist/kool.exe'
+cp dist/kool-windows-amd64.exe dist/kool.exe
 
 docker run --rm -i \
   -v $(pwd):/work -w /work \
