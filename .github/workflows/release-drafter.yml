@@ -7,6 +7,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+permissions:
+  issues: read|write
+  pull-requests: read|write
+
 jobs:
   update_release_draft:
     runs-on: ubuntu-latest
