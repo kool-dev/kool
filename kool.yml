@@ -24,3 +24,5 @@ scripts:
   make-docs:
     - rm -f docs/4-Commands/*.md
     - kool run go:linux run docs.go
+  # build docker image locally
+  docker:build: docker build --build-arg BUILD_VERSION=0.0.0-test --pull -t kooldev/kool:test .
