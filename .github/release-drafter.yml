@@ -11,6 +11,9 @@ autolabeler:
   - label: 'release-drafter:documentation'
     body:
       - '/Documentation\s*\|\s*Yes/'
+  - label: 'release-drafter:removed'
+    body:
+      - '/Removed\s*\|\s*Yes/'
 categories:
   - title: 'Added'
     labels:
