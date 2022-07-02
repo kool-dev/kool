@@ -8,11 +8,13 @@ on:
     types: [opened, reopened, synchronize]
 
 permissions:
-  issues: read|write
-  pull-requests: read|write
+  contents: read
 
 jobs:
   update_release_draft:
+    permissions:
+      pull-requests: write
+      issues: write
     runs-on: ubuntu-latest
     steps:
       - uses: release-drafter/release-drafter@v5
