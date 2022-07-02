@@ -1,4 +1,4 @@
-FROM docker/compose:alpine-1.28.2 AS docker-compose
+FROM docker/compose:alpine-1.29.2 AS docker-compose
 FROM golang:1.18 AS build
 
 ARG BUILD_VERSION=0.0.0-auto
@@ -12,7 +12,7 @@ RUN go build -a \
 	-ldflags '-X kool-dev/kool/cmd.version='$BUILD_VERSION' -extldflags "-static"' \
 	-o kool
 
-FROM alpine:3.12
+FROM alpine:3.15.4
 
 ENV DOCKER_HOST=tcp://docker:2375
 
