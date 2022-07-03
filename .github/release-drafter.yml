@@ -1,3 +1,5 @@
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
 autolabeler:
   - label: 'release-drafter:added'
     body:
@@ -5,6 +7,7 @@ autolabeler:
   - label: 'release-drafter:changed'
     body:
       - '/Improvement\s*\|\s*Yes/'
+      - '/Refactor\s*\|\s*Yes/'
   - label: 'release-drafter:fixed'
     body:
       - '/Bug Fix\s*\|\s*Yes/'
@@ -14,6 +17,19 @@ autolabeler:
   - label: 'release-drafter:removed'
     body:
       - '/Removed\s*\|\s*Yes/'
+  - label: 'release-drafter:major'
+    body:
+      - '/Removed\s*\|\s*Yes/'
+      - '/Break Change\s*\|\s*Yes/'
+  - label: 'release-drafter:minor'
+    body:
+      - '/Feature\s*\|\s*Yes/'
+      - '/Improvement\s*\|\s*Yes/'
+      - '/Refactor\s*\|\s*Yes/'
+  - label: 'release-drafter:patch'
+    body:
+      - '/Bug Fix\s*\|\s*Yes/'
+      - '/Documentation\s*\|\s*Yes/'
 categories:
   - title: 'Added'
     labels:
@@ -49,13 +65,13 @@ exclude-labels:
 version-resolver:
   major:
     labels:
-      - 'major'
+      - 'release-drafter:major'
   minor:
     labels:
-      - 'minor'
+      - 'release-drafter:minor'
   patch:
     labels:
-      - 'patch'
+      - 'release-drafter:patch'
   default: patch
 
 template: |
