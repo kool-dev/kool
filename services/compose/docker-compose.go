@@ -10,7 +10,7 @@ import (
 )
 
 // DockerComposeImage holds the Docker image:tag to use for Docker Compose
-const DockerComposeImage = "docker/compose:1.28.0"
+const DockerComposeImage = "docker/compose:1.29.2"
 
 // TtyAware interface holds functions for becoming aware of TTY
 type TtyAware interface {
