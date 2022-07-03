@@ -7,6 +7,7 @@ autolabeler:
   - label: 'release-drafter:changed'
     body:
       - '/Improvement\s*\|\s*Yes/'
+      - '/Refactor\s*\|\s*Yes/'
   - label: 'release-drafter:fixed'
     body:
       - '/Bug Fix\s*\|\s*Yes/'
@@ -24,6 +25,7 @@ autolabeler:
     body:
       - '/Feature\s*\|\s*Yes/'
       - '/Improvement\s*\|\s*Yes/'
+      - '/Refactor\s*\|\s*Yes/'
   - label: 'release-drafter:patch'
     body:
       - '/Bug Fix\s*\|\s*Yes/'
