@@ -1,0 +1,30 @@
+services:
+  frontend:
+    image: kooldev/node:16
+    command: ["npm", "run", "dev", "--", "-p", "${KOOL_FRONTEND_PORT:-80}"]
+    ports:
+      - "${KOOL_FRONTEND_PORT:-80}:${KOOL_FRONTEND_PORT:-80}"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+      KOOL_FRONTEND_PORT: "${KOOL_FRONTEND_PORT:-80}"
+    volumes:
+      - .:/app:delegated
+    working_dir: /app/frontend
+    networks:
+      - kool_local
+      - kool_global
+  backend:
+    image: kooldev/node:16
+    command: ["npm", "run", "start:dev"]
+    ports:
+      - "${KOOL_BACKEND_PORT:-81}:${KOOL_BACKEND_PORT:-81}"
+    environment:
+      ASUSER: "${KOOL_ASUSER:-0}"
+      UID: "${UID:-0}"
+      KOOL_BACKEND_PORT: "${KOOL_BACKEND_PORT:-81}"
+    volumes:
+      - ./backend:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
