@@ -4,6 +4,7 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"os"
+	"runtime"
 
 	"github.com/spf13/cobra"
 )
@@ -53,7 +54,8 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 		d.dockerRun.AppendArgs("-t")
 	}
 
-	if asuser := d.envStorage.Get("KOOL_ASUSER"); asuser != "" {
+	// only adds env ASUSER if we are not running on MacOS
+	if asuser := d.envStorage.Get("KOOL_ASUSER"); asuser != "" && runtime.GOOS != "darwin" {
 		d.dockerRun.AppendArgs("--env", "ASUSER="+asuser)
 	}
 
