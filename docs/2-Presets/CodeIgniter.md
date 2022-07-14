@@ -26,30 +26,35 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create codeigniter my-project
 ```
 
-Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter my-project` using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:7.4</a>.
+Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter my-project` using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:8.1</a>.
 
 After installing CodeIgniter, `kool create` automatically runs the `kool preset codeigniter` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
-$ Preset CodeIgniter is initializing!
-
+⇒ Customize your setup
 ? Which app service do you want to use [Use arrows to move, type to filter]
-> PHP 7.4
+> PHP 8.1
   PHP 8.0
+  PHP 7.4
 
 ? Which database service do you want to use [Use arrows to move, type to filter]
 > MySQL 8.0
   MySQL 5.7
   MariaDB 10.5
   PostgreSQL 13.0
-  none
+  None - do not use a database
 
 ? Which cache service do you want to use [Use arrows to move, type to filter]
 > Redis 6.0
   Memcached 1.6
-  none
+  None - do not use a key/value cache
 
-$ Preset codeigniter initialized!
+? Which Javascript package manager do you want to use  [Use arrows to move, type to filter]
+> npm
+  yarn
+  None
+
+Preset codeigniter created successfully!
 ```
 
 Now, move into your new CodeIgniter project:
@@ -71,47 +76,48 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 You need to update some default values in CodeIgniter's **env** file to match the services in your **docker-compose.yml** file.
 
+### App Config
+
+Set your base URL.
+
+```
+app.baseURL = 'http://localhost/'
+```
+
+Set development mode if you want.
+
+```
+CI_ENVIRONMENT = development
+```
+
 ### Database Services
 
-MySQL 5.7 and 8.0 or MariaDB 10.5
-
-```diff
--database.default.hostname = localhost
-+database.default.hostname = database
-
--database.default.database = ci4
-+DB_DATABASE = ci4
-+database.default.database = "${DB_DATABASE}"
-
-+database.default.port = 3306
+MySQL 5.7 and 8.0 or MariaDB 10.5:
+```
+DB_DATABASE = ci4
+DB_USERNAME = user
+DB_PASSWORD = pass
+database.default.hostname = database
+database.default.database = "${DB_DATABASE}"
+database.default.username = "${DB_USERNAME}"
+database.default.password = "${DB_PASSWORD}"
+database.default.DBDriver = MySQLi
+database.default.DBPrefix =
+database.default.port = 3306
 ```
 
-PostgreSQL 13.0
-
-```diff
--database.default.DBDriver = MySQLi
-+database.default.DBDriver = Postgre
-
--database.default.hostname = localhost
-+database.default.hostname = database
-
--database.default.database = ci4
-+DB_DATABASE = ci4
-+database.default.database = "${DB_DATABASE}"
-
-+database.default.port = 5432
+PostgreSQL 13.0:
 ```
-
-> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **env** file
-
-```diff
--database.default.username = root
-+DB_USERNAME = <some_user>
-+database.default.username = "${DB_USERNAME}"
-
--database.default.password = root
-+DB_PASSWORD = <somepass>
-+database.default.password = "${DB_PASSWORD}"
+DB_DATABASE = ci4
+DB_USERNAME = user
+DB_PASSWORD = pass
+database.default.hostname = database
+database.default.database = "${DB_DATABASE}"
+database.default.username = "${DB_USERNAME}"
+database.default.password = "${DB_PASSWORD}"
+database.default.DBDriver = Postgre
+database.default.DBPrefix =
+database.default.port = 5432
 ```
 
 ## 3. Update app/Config/Cache.php
@@ -120,16 +126,14 @@ You need to update some default values in CodeIgniter's **app/Config/Cache.php**
 
 ### Cache Services
 
-Redis
-
+Redis:
 ```diff
 public $redis = [
 -    'host' => '127.0.0.1',
 +    'host' => 'cache'
 ```
 
-Memcached
-
+Memcached:
 ```diff
 public $memcached = [
 -    'host' => '127.0.0.1',
