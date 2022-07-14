@@ -6,8 +6,9 @@ create:
   - name: Creating new Adonis Application
     actions:
       - scripts:
-          - docker pull -q kooldev/node:16-adonis
-          - kool docker kooldev/node:16-adonis adonis new $CREATE_DIRECTORY
+          - docker pull -q kooldev/node:16
+          - kool docker kooldev/node:16 npx -y @adonisjs/cli new $CREATE_DIRECTORY
+          - kool docker kooldev/node:16 npm --prefix=$CREATE_DIRECTORY i @adonisjs/cli
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
