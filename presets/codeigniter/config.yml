@@ -3,7 +3,7 @@ tags: [ 'PHP' ]
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
-  - name: Creating new Laravel Application
+  - name: Creating new CodeIgniter Application
     actions:
       - scripts:
           - docker pull -q kooldev/php:7.4
