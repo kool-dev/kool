@@ -108,6 +108,10 @@ func TestNoArgsNewDockerCommand(t *testing.T) {
 }
 
 func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.SkipNow()
+	}
+
 	f := newFakeKoolDocker()
 	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
