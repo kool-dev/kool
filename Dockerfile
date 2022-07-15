@@ -9,7 +9,7 @@ COPY . /app
 
 RUN go build -a \
 	-tags 'osusergo netgo static_build' \
-	-ldflags '-X kool-dev/kool/cmd.version='$BUILD_VERSION' -extldflags "-static"' \
+	-ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
 	-o kool
 
 FROM alpine:3.15.4
