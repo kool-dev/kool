@@ -19,15 +19,13 @@ preset:
       - copy: kool.yml
       - merge: nest+next-docker-compose.yml
         dst: docker-compose.yml
+      - merge: nest+next-kool.yml
+        dst: kool.yml
       - recipe: pick-db
       - recipe: pick-cache
       - copy: env.dist
         dst: .env.dist
-      - copy: env.dist
-        dst: .env
       - copy: gitignore
         dst: .gitignore
       - scripts:
-        - ln -fs .env backend/.env
-        - ln -fs .env frontend/.env.local
         - kool docker kooldev/node:16 sed -i 's/app.listen(3000)/app.listen(process.env.KOOL_BACKEND_PORT)/' backend/src/main.ts
