@@ -3,10 +3,11 @@
 > Note: this preset bootstraps both NestJS and NextJS with **Typescript** and `npm` as the package manager.
 
 1. Run `kool create nest+next my-project`
-2. Run `kool run setup`
-3. Run `kool start`
+2. Run `cd my-project`
+3. Run `kool run setup`
+4. Run `kool start`
 
-Now just give a few moments for both Nest and Next to build/start (you can check out the outputs with `kool logs -f`). After built and running you can access:
+The first step may take a couple of minutes for installing all the dependencies for both Nest and Next. After built and running you can access:
 
 - `http://localhost:81` - NestJS backend
 - `http://localhost` - NextJS frontend
