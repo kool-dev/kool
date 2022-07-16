@@ -25,7 +25,7 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create nestjs my-project
 ```
 
-Under the hood, this command will run `nest new my-project` to install NestJS using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:16-nest</a>.
+Under the hood, this command will run `nest new my-project` to install NestJS.
 
 After installing NestJS, `kool create` automatically runs the `kool preset nestjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 

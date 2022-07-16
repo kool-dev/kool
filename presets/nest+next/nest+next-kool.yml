@@ -1,0 +1,18 @@
+scripts:
+  setup:
+    # copy & link .env file
+    - cp .env.dist backend/.env
+    - ln -s backend/.env .env
+    # install backend deps
+    - kool docker kooldev/node:16 npm --prefix ./backend install
+    # install frontend deps
+    - kool docker kooldev/node:16 npm --prefix ./frontend install
+
+  # backend helpers
+  backend:npm: kool exec backend npm
+  backend:npx: kool exec backend npx
+  nest: kool run backend:npx @nestjs/cli
+
+  # frontend helpers
+  frontend:npm: kool exec frontend npm
+  frontend:npx: kool exec frontend npx

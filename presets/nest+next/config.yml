@@ -1,0 +1,31 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'Typescript' ]
+
+# Create defines the workflow for creating a new Project
+# where this preset can then be installed
+create:
+  - name: Creating new NestJS Application
+    actions:
+      - scripts:
+          - docker pull -q kooldev/node:16
+          - mkdir $CREATE_DIRECTORY
+          - kool docker kooldev/node:16 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY/backend
+          - kool docker kooldev/node:16 npx -y create-next-app@latest --ts --use-npm $CREATE_DIRECTORY/frontend
+
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - merge: nest+next-docker-compose.yml
+        dst: docker-compose.yml
+      - merge: nest+next-kool.yml
+        dst: kool.yml
+      - recipe: pick-db
+      - recipe: pick-cache
+      - copy: env.dist
+        dst: .env.dist
+      - copy: gitignore
+        dst: .gitignore
+      - scripts:
+        - kool docker kooldev/node:16 sed -i 's/app.listen(3000)/app.listen(process.env.KOOL_BACKEND_PORT)/' backend/src/main.ts

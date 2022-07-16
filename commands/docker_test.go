@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -107,6 +108,10 @@ func TestNoArgsNewDockerCommand(t *testing.T) {
 }
 
 func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.SkipNow()
+	}
+
 	f := newFakeKoolDocker()
 	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
@@ -127,6 +132,10 @@ func TestAsUserEnvKoolImageNewDockerCommand(t *testing.T) {
 }
 
 func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.SkipNow()
+	}
+
 	f := newFakeKoolDocker()
 	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
