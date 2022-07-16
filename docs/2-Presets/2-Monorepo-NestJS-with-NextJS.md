@@ -2,7 +2,7 @@
 
 > Note: this preset bootstraps both NestJS and NextJS with **Typescript** and `npm` as the package manager.
 
-1. Run `kool create mono-ts-nest-next my-project`
+1. Run `kool create nest+next my-project`
 2. Run `kool start`
 3. Give a few moments for both Nest and Next to build/start (you can check out the outputs with `kool logs -f`)
 4. After built and running you can access:
@@ -10,6 +10,10 @@
 	- `http://localhost` - NextJS frontend
 
 > Yes, using **kool** + Docker to create and work on new monorepo for NestJS and NextJS projects is that easy!
+
+### Extra steps
+
+If you are using Database or Cache services for your NestJS backend you need to setup some environment variables. [Check out our NestJS preset documentation](https://github.com/kool-dev/kool/blob/master/docs/2-Presets/NestJS.md#nestjs-configuration).
 
 ## Requirements
 
@@ -22,10 +26,6 @@ $ kool self-update
 ```
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
-
-## Extra steps
-
-If you are using Database or Cache services for your NestJS backend you need to setup some environment variables. [Check out our NestJS preset documentation]().
 
 ## Resources
 
