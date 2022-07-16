@@ -1,9 +1,9 @@
 # Creating a new preset
 
-`kool` has a custom task-runner like feature that allows us to automate any setup necessary for bootstrating a new project. We use this feature to enable our presets, accomplishing two objectives:
+`kool` has a builtin task-runner feature that allows us to automate steps/repetitive tasks - first of being all necessary setup steps for bootstrapping a new project. We use this feature to enable our presets, accomplishing two objectives:
 
-- Keeping fast, clean and simple how to setup a new development environment for a repo and start coding.
-- Have this project with all good practices and sane defaults for running with in containers - for development and later deployment.
+- Keeping fast, clean and simple how to setup a new local development environment for popular frameworks and start coding.
+- Have this project with all good practices and sane defaults for running in containers - for development and later deployment.
 
 ## Steps to create a preset
 
@@ -20,7 +20,7 @@ Both of the two tasks described above are accomplished via a set of declarative 
 
 - `scripts` - running arbitrary shell script.
 - `copy` - copying files from our preset of templates folder right into the local project.
-- `merge` - merge YAML files - helpful for building `docker-compose.yml` or `kool.yml` dynamicaly.
+- `merge` - merge YAML files - helpful for building `docker-compose.yml` or `kool.yml` dynamically.
 - `recipe`: run a Recipe which is a group of steps/actions ready to reuse
 
 You can find the full reference on the Kool Automation Langauge here TBD.
