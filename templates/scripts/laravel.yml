@@ -5,10 +5,10 @@ scripts:
 
   setup:
     - kool docker kooldev/bash -c "cp .env.example .env"
+    - kool run node-setup
     - kool start
     - kool run composer install
     - kool run artisan key:generate
-    - kool run node-setup
 
   reset:
     - kool run composer install

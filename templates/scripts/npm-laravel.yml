@@ -1,0 +1,6 @@
+scripts:
+  # npm - helpers for JS handling
+  npm: kool docker kooldev/node:16 npm
+  npx: kool docker kooldev/node:16 npx
+  node-setup:
+    - kool run npm install

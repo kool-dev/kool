@@ -17,10 +17,12 @@ preset:
       - copy: kool.yml
       - merge: laravel-scripts.yml
         dst: kool.yml
+      - copy: misc/laravel-vitejs-server.js
+        dst: vite.config.js
 
   - name: 'Customize your setup'
     actions:
       - recipe: pick-php
       - recipe: pick-db
       - recipe: pick-cache
-      - recipe: pick-node-pkg-mgr
+      - recipe: pick-laravel-node

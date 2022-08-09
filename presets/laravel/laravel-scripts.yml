@@ -7,6 +7,7 @@ scripts:
   # Use this to setup your projects the first in a new environment.
   setup:
     - kool docker kooldev/bash -c "cp .env.example .env"
+    - kool run node-setup
     - kool start
     - kool run composer install
     - kool run artisan key:generate
@@ -14,5 +15,9 @@ scripts:
   # Use this to reset the state of your database and run common hoursekeeping
   # when changing branches.
   reset:
+    - kool run node-setup
     - kool run composer install
     - kool run artisan migrate:fresh --seed
+
+  node-setup:
+    - echo 'Node setup'
