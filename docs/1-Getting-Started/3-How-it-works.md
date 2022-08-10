@@ -72,21 +72,20 @@ scripts:
   npm: kool docker kooldev/node:16 npm # or yarn
   npx: kool exec app npx
 
-  node-setup:
-    - kool run npm install # or yarn install
-    - kool run npm run dev # or yarn dev
+  setup:
+    - kool run before-start
+    - kool start
+    - kool run composer install
+    - kool run artisan key:generate
 
   reset:
     - kool run composer install
     - kool run artisan migrate:fresh --seed
-    - kool run node-setup
+    - kool run yarn install
 
-  setup:
+  before-start:
     - kool docker kooldev/bash -c "cp .env.example .env"
-    - kool start
-    - kool run composer install
-    - kool run artisan key:generate
-    - kool run node-setup
+    - kool run yarn install
 ```
 
 For example, use the `artisan` script in Laravel's **kool.yml** as follows:

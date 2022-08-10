@@ -1,5 +1,5 @@
 actions:
   - merge: scripts/npm-laravel.yml
     dst: kool.yml
-  - merge: misc/npm.yml
+  - merge: misc/npm-vitejs.yml
     dst: docker-compose.yml

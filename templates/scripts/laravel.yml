@@ -4,8 +4,7 @@ scripts:
   phpunit: kool exec app php ./bin/phpunit
 
   setup:
-    - kool docker kooldev/bash -c "cp .env.example .env"
-    - kool run node-setup
+    - kool run before-start
     - kool start
     - kool run composer install
     - kool run artisan key:generate
@@ -13,4 +12,6 @@ scripts:
   reset:
     - kool run composer install
     - kool run artisan migrate:fresh --seed
-    - kool run node-setup
+
+  before-start:
+    - kool docker kooldev/bash -c "cp .env.example .env"
