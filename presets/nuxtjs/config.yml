@@ -3,7 +3,7 @@ tags: [ 'JS' ]
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
-  - name: Creating new Symfony Application
+  - name: Creating new Nuxt Application
     actions:
       - scripts:
           - docker pull -q kooldev/node:16

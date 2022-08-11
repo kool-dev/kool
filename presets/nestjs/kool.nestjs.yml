@@ -1,0 +1,11 @@
+scripts:
+  setup:
+    # copy .env file
+    - cp .env.dist .env
+    # install backend deps
+    - kool docker kooldev/node:16 npm install
+
+  # helpers
+  npm: kool exec app npm
+  npx: kool exec app npx
+  nest: kool run npx @nestjs/cli

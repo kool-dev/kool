@@ -1,7 +1,0 @@
-scripts:
-  nest: kool exec app nest
-  yarn: kool exec app yarn
-
-  setup:
-    - kool docker kooldev/node:16 yarn install
-    - kool start

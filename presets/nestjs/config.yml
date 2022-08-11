@@ -1,5 +1,5 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
-tags: [ 'JS' ]
+tags: [ 'TS' ]
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
@@ -7,7 +7,7 @@ create:
     actions:
       - scripts:
           - docker pull -q kooldev/node:16
-          - kool docker kooldev/node:16 npx -y @nestjs/cli new $CREATE_DIRECTORY
+          - kool docker kooldev/node:16 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -15,21 +15,14 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: app/node-nestjs.yml
+      - merge: docker-compose.nestjs.yml
         dst: docker-compose.yml
+      - merge: kool.nestjs.yml
+        dst: kool.yml
+      - copy: env.dist
+        dst: .env.dist
 
   - name: 'Customize your setup'
     actions:
       - recipe: pick-db
       - recipe: pick-cache
-      - prompt: 'Which Javascript package manager do you want to use'
-        default: 'npm'
-        options:
-          - name: 'npm'
-            actions:
-              - merge: npm.yml
-                dst: kool.yml
-          - name: 'yarn'
-            actions:
-              - merge: yarn.yml
-                dst: kool.yml
