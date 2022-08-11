@@ -1,8 +1,0 @@
-scripts:
-  nest: kool exec app nest
-  npm: kool exec app npm
-  npx: kool exec app npx
-
-  setup:
-    - kool docker kooldev/node:16 npm install
-    - kool start

@@ -1,7 +1,7 @@
 # Start a NestJS Project with Docker in 2 Easy Steps
 
 1. Run `kool create nestjs my-project`
-2. Run `kool run setup`
+2. Run `cd my-project && kool run setup`
 
 > Yes, using **kool** + Docker to create and work on new NestJS projects is that easy!
 
@@ -25,7 +25,7 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create nestjs my-project
 ```
 
-Under the hood, this command will run `nest new my-project` to install NestJS.
+Under the hood, this command will run `nest new my-project` to install NestJS with Typescript and NPM as the package manager.
 
 After installing NestJS, `kool create` automatically runs the `kool preset nestjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
@@ -43,10 +43,6 @@ $ Preset nestjs is initializing!
   Memcached 1.6
   none
 
-? Which package manager did you choose during Nest setup [Use arrows to move, type to filter]
-> npm
-  yarn
-
 $ Preset nestjs initialized!
 ```
 
@@ -61,6 +57,7 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 ```bash
 +docker-compose.yml
 +kool.yml
++.env.dist
 ```
 
 > Now's a good time to review the **docker-compose.yml** file and verify the services match the choices you made earlier using the wizard.
@@ -75,24 +72,28 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 
 ```yaml
 scripts:
-  nest: kool exec app nest
-  npm: kool exec app npm # or yarn
-  npx: kool exec app npx
-
   setup:
-    - kool docker kooldev/node:16 npm install # or yarn install
-    - kool start
+    # copy .env file
+    - cp .env.dist .env
+    # install backend deps
+    - kool docker kooldev/node:16 npm install
+
+  # helpers
+  npm: kool exec app npm
+  npx: kool exec app npx
+  nest: kool run npx @nestjs/cli
 ```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
 
 ```bash
 $ kool run setup
+$ kool start
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Node packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `npm run start:dev`).
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Node packages and dependencies (by spinning up and down a temporary Node container). After that youo can start your Docker environment using **docker-compose.yml**  with the command `kool start` (which includes a container to running `npm run start:dev`).
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the NestJS "Hello World!" welcome page. Hooray!
+Once `kool start` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the NestJS "Hello World!" welcome page.
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
 
@@ -111,14 +112,15 @@ Run `kool logs app` to see the logs from the running `app` container, and confir
 
 ```bash
 $ kool logs app
-Attaching to my-project_app_1
-app_1  |
-app_1  | > my-project@0.0.1 start:dev /app
-app_1  | > nest start --watch
-app_1  |
-app_1  |
-[6:13:28 PM] Starting compilation in watch mode...
-app_1  |
+[2:55:57 AM] Starting compilation in watch mode...
+my-project-app-1  |
+my-project-app-1  | [2:56:11 AM] Found 0 errors. Watching for file changes.
+my-project-app-1  |
+my-project-app-1  | [Nest] 32  - 08/11/2022, 2:56:14 AM     LOG [NestFactory] Starting Nest application...
+my-project-app-1  | [Nest] 32  - 08/11/2022, 2:56:14 AM     LOG [InstanceLoader] AppModule dependencies initialized +85ms
+my-project-app-1  | [Nest] 32  - 08/11/2022, 2:56:14 AM     LOG [RoutesResolver] AppController {/}: +25ms
+my-project-app-1  | [Nest] 32  - 08/11/2022, 2:56:14 AM     LOG [RouterExplorer] Mapped {/, GET} route +8ms
+my-project-app-1  | [Nest] 32  - 08/11/2022, 2:56:14 AM     LOG [NestApplication] Nest application successfully started +6ms
 ```
 
 ---
