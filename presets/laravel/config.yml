@@ -15,7 +15,8 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: laravel-scripts.yml
+      - copy: vite.config.js
+      - merge: scripts/laravel.yml
         dst: kool.yml
 
   - name: 'Customize your setup'
@@ -23,4 +24,4 @@ preset:
       - recipe: pick-php
       - recipe: pick-db
       - recipe: pick-cache
-      - recipe: pick-node-pkg-mgr
+      - recipe: pick-laravel-node

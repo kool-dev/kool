@@ -1,0 +1,11 @@
+services:
+  node:
+    image: kooldev/node:16
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global

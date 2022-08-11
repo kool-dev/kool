@@ -160,15 +160,11 @@ scripts:
   node: kool docker kooldev/node:16 node
   yarn: kool docker kooldev/node:16 yarn
 
-  node-setup:
-    - kool run yarn install
-    - kool run yarn dev
-
   setup:
     - kool docker kooldev/bash -c "cp .env.example .env"
     - kool start
     - kool run composer install
-    - kool run node-setup
+    - kool run yarn install
 ```
 
 > As you can see in this **kool.yml** example, the `setup` script will do the following in sequence: copy your updated **.env.example** file to **.env**; start your Docker environment; use Composer to install vendor dependencies; generate your `APP_KEY` (in `.env`); and then build your Node packages and assets.
