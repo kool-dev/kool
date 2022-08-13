@@ -5,9 +5,9 @@ scripts:
     - kool run compile
     - kool run install
   # Runs go CLI with proper version for kool development (targets host OS passing down GOOS)
-  go: kool docker --volume=kool_gopath:/go --env='GOOS=$GOOS' golang:1.18 go
+  go: kool docker --volume=kool_gopath:/go --env='GOOS=$GOOS' golang:1.19 go
   # Runs go CLI with Linux, independent of host OS
-  go:linux: kool docker --volume=kool_gopath:/go golang:1.18 go
+  go:linux: kool docker --volume=kool_gopath:/go golang:1.19 go
   # Compiling kool itself. In case you are on MacOS make sure to have your .env
   # file properly setting GOOS=darwin so you will be able to use the binary.
   compile:
@@ -16,7 +16,7 @@ scripts:
   install:
     - mv kool /usr/local/bin/kool
   fmt: kool run go:linux fmt ./...
-  lint: kool docker --volume=kool_gopath:/go golangci/golangci-lint:v1.46.0 golangci-lint run -v
+  lint: kool docker --volume=kool_gopath:/go golangci/golangci-lint:v1.47.3 golangci-lint run -v
   test: kool run test:path ./...
   test:path: kool run go:linux test -race
   test-coverage: kool run go:linux test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
