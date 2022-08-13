@@ -201,4 +201,4 @@ We have more presets to help you start projects with **kool** in a standardized 
 - **[Symfony](/docs/2-Presets/Symfony.md)**
 - **[WordPress](/docs/2-Presets/WordPress.md)**
 
-Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/master/presets](https://github.com/kool-dev/kool/tree/master/presets) and browse the code to learn more about how presets work.
+Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/main/presets](https://github.com/kool-dev/kool/tree/main/presets) and browse the code to learn more about how presets work.

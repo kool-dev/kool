@@ -139,7 +139,7 @@ When performing an output redirect, the last argument after the redirect key **m
 
 #### Learn More
 
-Learn more by taking a closer look at the **kool.yml** files in our [Presets](https://github.com/kool-dev/kool/tree/master/presets). They contain good examples of prebuilt commands that are ready to use in a handful of different stacks. If you need help creating custom scripts based on your own unique needs, don't hesitate to [ask us on Slack](https://kool.dev/slack).
+Learn more by taking a closer look at the **kool.yml** files in our [Presets](https://github.com/kool-dev/kool/tree/main/presets). They contain good examples of prebuilt commands that are ready to use in a handful of different stacks. If you need help creating custom scripts based on your own unique needs, don't hesitate to [ask us on Slack](https://kool.dev/slack).
 
 <a name="better-development-workflow"></a>
 ## A Better Development Workflow
@@ -156,7 +156,7 @@ Use the [`kool exec` command](https://kool.dev/docs/commands/kool-exec) to execu
 $ kool exec app ls
 ```
 
-Look at the **kool.yml** files in the [Presets](https://github.com/kool-dev/kool/tree/master/presets) to see other examples of `kool exec` commands used in scripts.
+Look at the **kool.yml** files in the [Presets](https://github.com/kool-dev/kool/tree/main/presets) to see other examples of `kool exec` commands used in scripts.
 
 ### Open Sessions
 

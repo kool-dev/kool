@@ -3,7 +3,7 @@ name: Sync Docker Hub Description
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - README.md
       - .github/workflows/docker-description.yml
@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Sync Docker Hub Description
-        if: github.ref == 'refs/heads/master' && github.repository == 'kool-dev/kool'
+        if: github.ref == 'refs/heads/main' && github.repository == 'kool-dev/kool'
         uses: peter-evans/dockerhub-description@v2
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}

@@ -16,7 +16,7 @@ The first step may take a couple of minutes for installing all the dependencies 
 
 ### Extra steps
 
-If you are using Database or Cache services for your NestJS backend you need to setup some environment variables. [Check out our NestJS preset documentation](https://github.com/kool-dev/kool/blob/master/docs/2-Presets/NestJS.md#nestjs-configuration).
+If you are using Database or Cache services for your NestJS backend you need to setup some environment variables. [Check out our NestJS preset documentation](https://github.com/kool-dev/kool/blob/main/docs/2-Presets/NestJS.md#nestjs-configuration).
 
 ## Requirements
 
