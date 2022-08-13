@@ -14,7 +14,6 @@ import (
 
 // KoolExecFlags holds the flags for the exec command
 type KoolExecFlags struct {
-	DisableTty   bool
 	EnvVariables []string
 	Detach       bool
 }
@@ -41,7 +40,7 @@ func AddKoolExec(root *cobra.Command) {
 func NewKoolExec() *KoolExec {
 	return &KoolExec{
 		*newDefaultKoolService(),
-		&KoolExecFlags{false, []string{}, false},
+		&KoolExecFlags{[]string{}, false},
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "compose", "exec"),
 	}
@@ -125,7 +124,6 @@ func NewExecCommand(exec *KoolExec) (execCmd *cobra.Command) {
 		DisableFlagsInUseLine: true,
 	}
 
-	execCmd.Flags().BoolVarP(&exec.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")
 	execCmd.Flags().StringArrayVarP(&exec.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
 	execCmd.Flags().BoolVarP(&exec.Flags.Detach, "detach", "d", false, "Detached mode: Run command in the background.")
 
