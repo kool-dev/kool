@@ -1,7 +1,7 @@
 package yamler
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,7 +24,7 @@ func TestWriteYAML(t *testing.T) {
 	}
 
 	fh, _ := os.Open(f)
-	bs, _ := ioutil.ReadAll(fh)
+	bs, _ := io.ReadAll(fh)
 	fh.Close()
 	got := strings.Trim(string(bs), " \t\n")
 
@@ -47,7 +47,7 @@ func TestWriteYAMLIndentation(t *testing.T) {
 	}
 
 	fh, _ := os.Open(f)
-	bs, _ := ioutil.ReadAll(fh)
+	bs, _ := io.ReadAll(fh)
 	fh.Close()
 	got := strings.Trim(string(bs), " \t\n")
 

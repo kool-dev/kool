@@ -2,7 +2,7 @@ package automate
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/yamler"
@@ -166,7 +166,7 @@ func (e *Executor) merge(action *Action) (err error) {
 		return
 	}
 
-	if data, err = ioutil.ReadAll(file); err != nil {
+	if data, err = io.ReadAll(file); err != nil {
 		return
 	}
 
