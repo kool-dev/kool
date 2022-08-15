@@ -10,6 +10,10 @@ applications.
 
 Complete documentation is available at https://kool.dev/docs
 
+```
+kool
+```
+
 ### Options
 
 ```
