@@ -1,5 +1,7 @@
 ### `kool run npm run hot` or `kool run npm run dev`
 
+> Also valid for `kool run yarn run hot` or `kool run yarn run dev`
+
 **Problem:**
 
 > Browser cannot request "HMR" (hot module replacement) server successfully in Laravel Mix or Laravel Vite.
