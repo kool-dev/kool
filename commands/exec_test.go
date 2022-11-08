@@ -193,9 +193,6 @@ func TestDockerComposeTerminalAwarness(t *testing.T) {
 	f := newFakeKoolExec()
 	f.composeExec = compose.NewDockerCompose("cmd")
 	f.composeExec.(*compose.DockerCompose).SetShell(&shell.FakeShell{})
-	f.composeExec.(*compose.DockerCompose).SetLocalDockerCompose(&builder.FakeCommand{
-		MockLookPathError: errors.New("some error"),
-	})
 
 	cmd := NewExecCommand(f)
 	cmd.SetArgs([]string{"service", "command"})

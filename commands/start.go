@@ -100,10 +100,7 @@ func (s *KoolStart) Execute(args []string) (err error) {
 	}
 
 	if len(s.Flags.Profile) > 0 {
-		if aware, ok := s.start.(compose.LocalDockerComposeAware); ok {
-			// let DockerCompose know about whether we are under TTY or not
-			aware.LocalDockerCompose().AppendArgs("--profile", s.Flags.Profile)
-		}
+		s.start.AppendArgs("--profile", s.Flags.Profile)
 	}
 
 	if !s.Flags.Foreground {
