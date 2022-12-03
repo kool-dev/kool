@@ -85,6 +85,7 @@ func (d *Deploy) getPayload() (body io.Reader, err error) {
 		buff         bytes.Buffer
 		file         *os.File
 		fw           io.Writer
+		cluster      string
 		domain       string
 		domainExtras string
 		wwwRedirect  string
@@ -108,6 +109,12 @@ func (d *Deploy) getPayload() (body io.Reader, err error) {
 	}
 
 	defer file.Close()
+
+	if cluster = d.env.Get("KOOL_DEPLOY_CLUSTER"); cluster != "" {
+		if err = w.WriteField("cluster", cluster); err != nil {
+			return
+		}
+	}
 
 	if domain = d.env.Get("KOOL_DEPLOY_DOMAIN"); domain != "" {
 		if err = w.WriteField("domain", domain); err != nil {
