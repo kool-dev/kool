@@ -1,4 +1,3 @@
-FROM docker/compose:alpine-1.29.2 AS docker-compose
 FROM golang:1.19 AS build
 
 ARG BUILD_VERSION=0.0.0-auto
@@ -12,14 +11,13 @@ RUN go build -a \
 	-ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
 	-o kool
 
-FROM alpine:3.15.4
+FROM docker:20.10.21-cli
 
 ENV DOCKER_HOST=tcp://docker:2375
 
-COPY --from=docker-compose /usr/local/bin/docker /usr/local/bin/docker
-COPY --from=docker-compose /usr/local/bin/docker-compose /usr/local/bin/docker-compose
 COPY --from=build /app/kool /usr/local/bin/kool
 
-RUN apk add --no-cache git bash
+RUN apk add --no-cache git bash \
+	&& rm -rf /var/cache/apk/* /tmp/*
 
 CMD [ "kool" ]
