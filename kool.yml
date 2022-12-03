@@ -12,9 +12,8 @@ scripts:
   # file properly setting GOOS=darwin so you will be able to use the binary.
   compile:
     - kool run fmt
-    - kool run go build -o kool
-  install:
-    - mv kool /usr/local/bin/kool
+    - kool run go build -o kool-cli
+  install: mv ./kool-cli /usr/local/bin/kool
   fmt: kool run go:linux fmt ./...
   lint: kool docker --volume=kool_gopath:/go golangci/golangci-lint:v1.47.3 golangci-lint run -v
   test: kool run test:path ./...
