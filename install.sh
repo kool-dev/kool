@@ -14,10 +14,6 @@ if [ -z "${BIN_PATH:-}" ]; then
 	BIN_PATH=$DEFAULT_BIN
 fi
 
-command_exists() {
-	command -v "$@" > /dev/null 2>&1
-}
-
 is_darwin() {
 	case "$(uname -s)" in
 	*darwin* ) true ;;
@@ -46,11 +42,13 @@ do_install () {
 
 	# check for running kool process which would prevent
 	# replacing existing version under Linux.
-	if command_exists kool && ! is_darwin; then
-		running=$(ps aux | grep kool | grep -v grep | wc -l | awk '{ print $1 }')
-		if [ "$running" != "0" ]; then
-			echo -e "\033[31;31mThere is a kool process still running. You might need to stop them before we replace the current binary.\033[0m"
-		fi
+  if [ command -v kool &> /dev/null ]; then
+    if [ ! is_darwin ]; then
+      running=$(ps aux | grep kool | grep -v grep | wc -l | awk '{ print $1 }')
+      if [ "$running" != "0" ]; then
+        echo -e "\033[31;31mThere is a kool process still running. You might need to stop them before we replace the current binary.\033[0m"
+      fi
+    fi
 	fi
 
 	echo -e "Moving kool binary to $BIN_PATH..."
@@ -65,18 +63,23 @@ do_install () {
 
 	start_success="\033[0;32m"
 	end_success="\033[0m"
-	start_error="\033[0;32m"
+	start_error="\033[1;31m"
 	end_error="\033[0m"
 
-	if ! command_exists docker; then
-		builtin echo -e "${start_error}We could not identify the command docker installed.${end_error}"
+	if ! command -v docker &> /dev/null; then
+		builtin echo -e "${start_error}We could not identify the Docker installed.${end_error}"
 		builtin echo -e "Please refer to the official documentation to get it: https://docs.docker.com/get-docker/"
 		exit
 	fi
 
-	# pre-load docker/compose image that we will be using
-	builtin echo -e "Downloading base images..."
-	docker pull docker/compose:1.28.0 > /dev/null
+  composeVersion=$(docker compose version || true)
+	if [[ ! "$composeVersion" == *"Docker Compose version v2"* ]]; then
+		builtin echo -e "${start_error}We could not identify Composer V2 installed.${end_error}"
+		builtin echo -e "Please make sure you are running an updated Docker version that includes Compose V2:"
+		builtin echo -e "  Official Docker installation documentation: https://docs.docker.com/get-docker/"
+		builtin echo -e "  Official Docker Compose V2 documentation: https://docs.docker.com/compose/reference/"
+		exit
+	fi
 
 	# success
 	builtin echo -e "${start_success}$(kool -v) installed successfully.${end_success}"
