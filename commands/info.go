@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"os"
@@ -37,7 +38,7 @@ func NewKoolInfo() *KoolInfo {
 		*newDefaultKoolService(),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "-v"),
-		builder.NewCommand("docker-compose", "-v"),
+		builder.NewCommand("docker", "compose", "version"),
 	}
 }
 
@@ -79,16 +80,14 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 
 	i.Shell().Println("")
 
-	// docker-compose CLI info
+	// docker compose v2 info
 	if output, err = i.Shell().Exec(i.cmdDockerCompose); err != nil {
-		// just alert missing docker-compose, but don't elevate error
+		// just alert missing docker compose, but don't elevate error
 		i.Shell().Warning("Docker Compose:", err.Error())
-		i.Shell().Warning("It's okay not having docker-compose installed, as kool will fallback to using a container for it when necessary.")
-		err = nil
+		i.Shell().Error(fmt.Errorf("You need to have Docker Compose V2 available. Make sure to update your Docker installation."))
+		return
 	} else {
 		i.Shell().Println(output)
-		output, _ = exec.LookPath("docker-compose")
-		i.Shell().Println("Docker Compose Bin Path:", output)
 	}
 
 	i.Shell().Println("")
@@ -105,6 +104,9 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 			}
 		}
 	}
+
+	i.Shell().Println("")
+	i.Shell().Println("kool installation seems to be working as expected.")
 
 	return
 }

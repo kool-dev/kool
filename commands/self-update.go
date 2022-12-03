@@ -57,6 +57,7 @@ func (s *KoolSelfUpdate) Execute(args []string) (err error) {
 	}
 
 	s.Shell().Success("Successfully updated to version ", latestVersion.String())
+	s.Shell().Println("Please run 'kool info' now to validate your local environment.")
 	return
 }
 

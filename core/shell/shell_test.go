@@ -116,7 +116,7 @@ func TestExecDockerComposeDefaultShell(t *testing.T) {
 
 	s.env.Set("KOOL_NAME", "kool_test")
 
-	command := &builder.FakeCommand{MockCmd: "docker-compose"}
+	command := &builder.FakeCommand{MockCmd: "command"}
 	command.AppendArgs("ps")
 
 	var (
@@ -136,8 +136,8 @@ func TestExecDockerComposeDefaultShell(t *testing.T) {
 
 	_, _ = s.Exec(command, "extraArg")
 
-	if exeTest != "docker-compose" {
-		t.Errorf("expecting to run 'docker-compose', got '%s'", exeTest)
+	if exeTest != "command" {
+		t.Errorf("expecting to run 'command', got '%s'", exeTest)
 	}
 
 	expectedArgs := []string{"ps", "extraArg"}
@@ -210,7 +210,7 @@ func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
 
 	s.env.Set("KOOL_NAME", "kool_test")
 
-	command := &builder.FakeCommand{MockCmd: "docker-compose"}
+	command := &builder.FakeCommand{MockCmd: "command"}
 	command.AppendArgs("ps")
 
 	var (
@@ -240,8 +240,8 @@ func TestInteractiveDockerComposeDefaultShell(t *testing.T) {
 		t.Errorf("Interactive failed on *DefaultShell; expected no errors 'x', got '%v'", err)
 	}
 
-	if exeTest != "docker-compose" {
-		t.Errorf("expecting to run 'docker-compose', got '%s'", exeTest)
+	if exeTest != "command" {
+		t.Errorf("expecting to run 'command', got '%s'", exeTest)
 	}
 
 	expectedArgs := []string{"ps", "extraArg"}

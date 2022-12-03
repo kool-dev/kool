@@ -176,7 +176,7 @@ func TestNoContainersNewLogsCommand(t *testing.T) {
 	}
 
 	if val, ok := f.shell.(*shell.FakeShell).CalledInteractive["logs"]; val && ok {
-		t.Error("should not call docker-compose logs if there are no containers")
+		t.Error("should not call docker compose logs if there are no containers")
 	}
 }
 

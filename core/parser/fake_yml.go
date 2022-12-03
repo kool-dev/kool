@@ -63,7 +63,7 @@ func (f *FakeKoolYaml) SetScript(key string, commands []string) {
 	f.ScriptCommands[key] = commands
 }
 
-// String returns docker-compose as string
+// String returns docker compose as string
 func (f *FakeKoolYaml) String() (content string, err error) {
 	f.CalledString = true
 	content = f.MockString

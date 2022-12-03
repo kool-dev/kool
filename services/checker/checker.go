@@ -32,7 +32,7 @@ func (c *DefaultChecker) Check() error {
 		return ErrDockerNotFound
 	}
 
-	if err := c.shell.LookPath(c.dockerComposeCmd); err != nil {
+	if _, err := c.shell.Exec(c.dockerComposeCmd); err != nil {
 		return ErrDockerComposeNotFound
 	}
 
