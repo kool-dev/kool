@@ -3,7 +3,6 @@ package checker
 import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
-	"kool-dev/kool/services/compose"
 )
 
 // Checker defines the check kool dependencies method
@@ -22,7 +21,7 @@ type DefaultChecker struct {
 func NewChecker(s shell.Shell) *DefaultChecker {
 	return &DefaultChecker{
 		builder.NewCommand("docker", "info"),
-		compose.NewDockerCompose("ps"),
+		builder.NewCommand("docker", "compose", "ps"),
 		s,
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
 	"kool-dev/kool/services/checker"
-	"kool-dev/kool/services/compose"
 	"kool-dev/kool/services/updater"
 
 	"github.com/spf13/cobra"
@@ -68,11 +67,11 @@ func NewKoolStart() *KoolStart {
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		compose.NewDockerCompose("up", "--force-recreate"),
+		builder.NewCommand("docker", "compose", "up", "--force-recreate"),
 		&KoolRebuild{
 			*newDefaultKoolService(),
-			compose.NewDockerCompose("pull"),
-			compose.NewDockerCompose("build", "--pull"),
+			builder.NewCommand("docker", "compose", "pull"),
+			builder.NewCommand("docker", "compose", "build", "--pull"),
 		},
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/checker"
-	"kool-dev/kool/services/compose"
 	"testing"
 )
 
@@ -40,11 +39,11 @@ func TestNewKoolStop(t *testing.T) {
 		t.Errorf("unexpected checker.Checker on default KoolStop instance")
 	}
 
-	if _, ok := k.down.(*compose.DockerCompose); !ok {
+	if _, ok := k.down.(*builder.DefaultCommand); !ok {
 		t.Errorf("unexpected compose.DockerCompose on default KoolStop instance")
 	}
 
-	if k.down.(*compose.DockerCompose).Command.String() != "down" {
+	if k.down.String() != "docker compose down" {
 		t.Errorf("unexpected compose.DockerCompose.Command.String() on default KoolStop instance down")
 	}
 }

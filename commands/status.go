@@ -6,7 +6,6 @@ import (
 	"kool-dev/kool/core/network"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/checker"
-	"kool-dev/kool/services/compose"
 	"strings"
 	"sync"
 
@@ -51,8 +50,8 @@ func NewKoolStatus() *KoolStatus {
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		compose.NewDockerCompose("ps", "--services"),
-		compose.NewDockerCompose("ps", "-q"),
+		builder.NewCommand("docker", "compose", "ps", "--services"),
+		builder.NewCommand("docker", "compose", "ps", "-q"),
 		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewTableWriter(),
 	}

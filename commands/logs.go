@@ -2,7 +2,6 @@ package commands
 
 import (
 	"kool-dev/kool/core/builder"
-	"kool-dev/kool/services/compose"
 	"strconv"
 	"strings"
 
@@ -38,8 +37,8 @@ func NewKoolLogs() *KoolLogs {
 	return &KoolLogs{
 		*newDefaultKoolService(),
 		&KoolLogsFlags{25, false},
-		compose.NewDockerCompose("ps", "-aq"),
-		compose.NewDockerCompose("logs"),
+		builder.NewCommand("docker", "compose", "ps", "-aq"),
+		builder.NewCommand("docker", "compose", "logs"),
 	}
 }
 

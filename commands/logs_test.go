@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
-	"kool-dev/kool/services/compose"
 	"testing"
 )
 
@@ -46,12 +45,12 @@ func TestNewKoolLogs(t *testing.T) {
 		}
 	}
 
-	if _, ok := k.logs.(*compose.DockerCompose); !ok {
+	if _, ok := k.logs.(*builder.DefaultCommand); !ok {
 		t.Error("unexpected builder.Command on default KoolLogs instance")
 	}
 
-	if k.logs.(*compose.DockerCompose).Command.String() != "logs" {
-		t.Error("unexpected compose.DockerCompose.Command.String() on default KoolLogs instance logs")
+	if k.logs.String() != "docker compose logs" {
+		t.Error("unexpected logs .String() on default KoolLogs instance logs")
 	}
 }
 
