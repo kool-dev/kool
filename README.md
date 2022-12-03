@@ -25,7 +25,7 @@
 
 Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/). If you haven't done so already, you first need to [install Docker and the kool CLI](https://kool.dev/docs/getting-started/installation).
 
-**Important**: make sure you are running the latest version of Docker and that you do have Composer V2 available (`docker compose`). You can read more about [Compose V2 release](https://www.docker.com/blog/announcing-compose-v2-general-availability/) and the [its documentation](https://docs.docker.com/compose/reference/).
+**Important**: make sure you are running the latest version of Docker and that you do have Composer V2 available (`docker compose`). You can read more about [Compose V2 release via its documentation](https://docs.docker.com/compose/reference/).
 
 ### For Linux and macOS
 

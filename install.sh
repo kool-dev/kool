@@ -42,13 +42,13 @@ do_install () {
 
 	# check for running kool process which would prevent
 	# replacing existing version under Linux.
-  if [ command -v kool &> /dev/null ]; then
-    if [ ! is_darwin ]; then
-      running=$(ps aux | grep kool | grep -v grep | wc -l | awk '{ print $1 }')
-      if [ "$running" != "0" ]; then
-        echo -e "\033[31;31mThere is a kool process still running. You might need to stop them before we replace the current binary.\033[0m"
-      fi
-    fi
+	if [ command -v kool &> /dev/null ]; then
+		if [ ! is_darwin ]; then
+			running=$(ps aux | grep kool | grep -v grep | wc -l | awk '{ print $1 }')
+			if [ "$running" != "0" ]; then
+				echo -e "\033[31;31mThere is a kool process still running. You might need to stop them before we replace the current binary.\033[0m"
+			fi
+		fi
 	fi
 
 	echo -e "Moving kool binary to $BIN_PATH..."
@@ -72,7 +72,7 @@ do_install () {
 		exit
 	fi
 
-  composeVersion=$(docker compose version || true)
+	composeVersion=$(docker compose version || true)
 	if [[ ! "$composeVersion" == *"Docker Compose version v2"* ]]; then
 		builtin echo -e "${start_error}We could not identify Composer V2 installed.${end_error}"
 		builtin echo -e "Please make sure you are running an updated Docker version that includes Compose V2:"
