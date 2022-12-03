@@ -6,7 +6,9 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -47,6 +49,8 @@ var version string = DEV_VERSION
 
 var rootCmd = NewRootCmd(environment.NewEnvStorage())
 
+var originalWorkingDir = ""
+
 func init() {
 	AddCommands(rootCmd)
 }
@@ -67,7 +71,7 @@ Complete documentation is available at https://kool.dev/docs`,
 		Version:               version,
 		DisableAutoGenTag:     true,
 		DisableFlagsInUseLine: true,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				env.Set("KOOL_VERBOSE", verbose.Value.String())
 			}
@@ -76,6 +80,44 @@ Complete documentation is available at https://kool.dev/docs`,
 				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
 				hasWarnedDevelopmentVersion = true
 			}
+
+			workDirFlag := cmd.Flags().Lookup("working_dir")
+			if workDirFlag != nil && workDirFlag.Value.String() != "" {
+				workDir := workDirFlag.Value.String()
+
+				if originalWorkingDir != "" {
+					// having an original working dir set means we have
+					// already changed the working dir before and we are in
+					//  a recursive kool call. We need to restore the original
+					// working dir before changing it again.
+					if err = os.Chdir(originalWorkingDir); err != nil {
+						return
+					}
+				}
+
+				if !path.IsAbs(workDir) {
+					if workDir, err = filepath.Abs(workDir); err != nil {
+						return
+					}
+				}
+
+				if err = os.Chdir(workDir); err != nil {
+					return
+				}
+
+				if originalWorkingDir == "" {
+					// we only set the original working dir if it is not set
+					// yet. This is to avoid overriding the original working
+					// dir in recursive calls.
+					if originalWorkingDir, err = os.Getwd(); err != nil {
+						return
+					}
+				}
+
+				environment.NewEnvStorage().Set("PWD", workDir)
+			}
+
+			return
 		},
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if len(args) == 0 {
@@ -106,7 +148,8 @@ Complete documentation is available at https://kool.dev/docs`,
 		},
 	}
 
-	cmd.PersistentFlags().Bool("verbose", false, "increases output verbosity")
+	cmd.PersistentFlags().Bool("verbose", false, "Increases output verbosity")
+	cmd.PersistentFlags().StringP("working_dir", "w", "", "Changes the working directory for the command")
 	return
 }
 
