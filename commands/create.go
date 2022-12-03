@@ -5,6 +5,8 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
 	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 )
@@ -59,9 +61,17 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 
 	c.Shell().Println("Initializing", preset, "preset...")
 
+	if !path.IsAbs(createDirectory) {
+		if createDirectory, err = filepath.Abs(createDirectory); err != nil {
+			return
+		}
+	}
+
 	if err = os.Chdir(createDirectory); err != nil {
 		return
 	}
+
+	c.env.Set("PWD", createDirectory)
 
 	if err = c.parser.Install(preset, c.Shell()); err != nil {
 		return
