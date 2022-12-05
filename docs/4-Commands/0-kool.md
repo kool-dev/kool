@@ -17,8 +17,9 @@ kool
 ### Options
 
 ```
-  -h, --help      help for kool
-      --verbose   increases output verbosity
+  -h, --help                 help for kool
+      --verbose              Increases output verbosity
+  -w, --working_dir string   Changes the working directory for the command
 ```
 
 ### SEE ALSO
