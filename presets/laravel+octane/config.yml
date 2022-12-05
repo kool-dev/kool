@@ -27,6 +27,8 @@ preset:
         - kool docker kooldev/php:8.1-nginx-swoole composer require laravel/octane
         - kool docker kooldev/bash -c "cp .env.example .env"
         - kool docker kooldev/php:8.1-nginx-swoole php artisan key:generate
+        # making sure that .env.example always have an APP_KEY, otherwise octane won't start
+        - kool docker kooldev/bash -c "cp .env .env.example"
         - kool docker kooldev/php:8.1-nginx-swoole php artisan octane:install --server=swoole
 
   - name: 'Customize your setup'
