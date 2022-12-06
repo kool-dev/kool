@@ -6,8 +6,6 @@ import (
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
-	"kool-dev/kool/services/compose"
-	"strings"
 	"testing"
 )
 
@@ -50,10 +48,6 @@ func TestNewKoolExec(t *testing.T) {
 		if k.Flags.Detach {
 			t.Errorf("bad default value for Detach flag on default KoolExec instance")
 		}
-	}
-
-	if _, ok := k.composeExec.(*compose.DockerCompose); !ok {
-		t.Errorf("unexpected compose.DockerCompose on default KoolExec instance")
 	}
 }
 
@@ -191,31 +185,20 @@ func TestFailingNewExecCommand(t *testing.T) {
 
 func TestDockerComposeTerminalAwarness(t *testing.T) {
 	f := newFakeKoolExec()
-	f.composeExec = compose.NewDockerCompose("cmd")
-	f.composeExec.(*compose.DockerCompose).SetShell(&shell.FakeShell{})
-	f.composeExec.(*compose.DockerCompose).SetLocalDockerCompose(&builder.FakeCommand{
-		MockLookPathError: errors.New("some error"),
-	})
-
-	cmd := NewExecCommand(f)
-	cmd.SetArgs([]string{"service", "command"})
+	f.composeExec = &builder.FakeCommand{MockCmd: "docker", ArgsAppend: []string{"compose", "exec"}}
 
 	f.shell.(*shell.FakeShell).MockIsTerminal = false
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing exec command; error: %v", err)
+	f.detectTTY()
+	var l = len(f.composeExec.Args())
+	if f.composeExec.Args()[l-1] != "-T" {
+		t.Errorf("missing -T flag when NOT under TTY; %s", f.composeExec.String())
 	}
 
-	if strings.Contains(f.composeExec.String(), " -t ") {
-		t.Errorf("unexpected -t flag when NOT under TTY; %s", f.composeExec.String())
-	}
-
+	f.composeExec = &builder.FakeCommand{MockCmd: "docker", ArgsAppend: []string{"compose", "exec"}}
 	f.shell.(*shell.FakeShell).MockIsTerminal = true
-	if err := cmd.Execute(); err != nil {
-		t.Errorf("unexpected error executing exec command; error: %v", err)
-	}
-
-	if !strings.Contains(f.composeExec.String(), " -t ") {
-		t.Error("missing -t flag when under TTY")
+	l = len(f.composeExec.Args())
+	if f.composeExec.Args()[l-1] == "-T" {
+		t.Error("unexpected -t flag when under TTY")
 	}
 }
 

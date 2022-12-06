@@ -6,7 +6,6 @@ import (
 	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
-	"kool-dev/kool/services/compose"
 	"os"
 	"strings"
 
@@ -44,7 +43,7 @@ func NewKoolExec() *KoolExec {
 		*newDefaultKoolService(),
 		&KoolExecFlags{false, []string{}, false},
 		environment.NewEnvStorage(),
-		compose.NewDockerCompose("exec"),
+		builder.NewCommand("docker", "compose", "exec"),
 	}
 }
 
@@ -53,11 +52,6 @@ func (e *KoolExec) detectTTY() {
 
 	if !isTerminal {
 		e.composeExec.AppendArgs("-T")
-	}
-
-	if aware, ok := e.composeExec.(compose.TtyAware); ok {
-		// let DockerCompose know about whether we are under TTY or not
-		aware.SetIsTTY(isTerminal)
 	}
 }
 
@@ -88,9 +82,11 @@ func (e *KoolExec) checkUser(service string) {
 		// so we avoid getting cross-fire on in/out redirections
 		actualOut := e.Shell().OutStream()
 		defer e.Shell().SetOutStream(actualOut)
-
 		e.Shell().SetOutStream(os.Stderr)
-		e.Shell().Warning(fmt.Sprintf("failed to check running container for kool user; did you forget kool start? (err: %s)", err.Error()))
+
+		if e.env.IsTrue("KOOL_VERBOSE") {
+			e.Shell().Warning(fmt.Sprintf("failed to check running container for kool user; did you forget kool start? (err: %s)", err.Error()))
+		}
 	} else if strings.Contains(passwd, fmt.Sprintf("kool:x:%s", asuser)) {
 		// since user (kool:x:UID) exists within the container, we set it
 		e.composeExec.AppendArgs("--user", asuser)

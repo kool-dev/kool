@@ -10,8 +10,8 @@ func IsDockerNotFoundError(err error) bool {
 	return err.Error() == ErrDockerNotFound.Error()
 }
 
-// ErrDockerComposeNotFound happens when docker-compose is not installed
-var ErrDockerComposeNotFound = errors.New("docker-compose doesn't seem to be installed, install it first and retry")
+// ErrDockerComposeNotFound happens when docker compose V2 is not installed
+var ErrDockerComposeNotFound = errors.New("docker compose V2 doesn't seem to be installed, upgrade your docker installation and retry")
 
 // IsDockerComposeNotFoundError tells whether the given error is checker.ErrDockerComposeNotFound
 func IsDockerComposeNotFoundError(err error) bool {

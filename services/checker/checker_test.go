@@ -41,7 +41,7 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 	var c Checker
 
 	dockerCmd := &builder.FakeCommand{}
-	dockerComposeCmd := &builder.FakeCommand{MockLookPathError: errors.New("not installed")}
+	dockerComposeCmd := &builder.FakeCommand{MockExecError: errors.New("not installed")}
 
 	s := &shell.FakeShell{}
 
@@ -88,7 +88,7 @@ func TestCheckKoolDependencies(t *testing.T) {
 	dockerCmd.MockCmd = "docker"
 
 	dockerComposeCmd := &builder.FakeCommand{}
-	dockerComposeCmd.MockCmd = "docker-compose"
+	dockerComposeCmd.MockCmd = "command"
 
 	s := &shell.FakeShell{}
 
@@ -103,7 +103,7 @@ func TestCheckKoolDependencies(t *testing.T) {
 		t.Error("did not call LookPath for dockerCmd")
 	}
 
-	if val, ok := c.(*DefaultChecker).shell.(*shell.FakeShell).CalledLookPath["docker-compose"]; !val || !ok {
+	if val, ok := c.(*DefaultChecker).shell.(*shell.FakeShell).CalledExec["command"]; !val || !ok {
 		t.Error("did not call LookPath for dockerComposeCmd")
 	}
 

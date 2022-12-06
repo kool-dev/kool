@@ -140,7 +140,7 @@ func (y *KoolYaml) SetScript(key string, commands []string) {
 	}
 }
 
-// String returns docker-compose as string
+// String returns docker compose as string
 func (y *KoolYaml) String() (content string, err error) {
 	var parsedBytes []byte
 

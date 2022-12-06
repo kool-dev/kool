@@ -13,7 +13,7 @@
 
 ## About `kool`
 
-**Kool** is a CLI tool that brings the complexities of modern software development environments down to earth - making these environments lightweight, fast and reproducible. It reduces the complexity and learning curve of _Docker_ and _Docker Compose_ for local environments, and offers a simplified interface for using _Kubernetes_ to deploy staging and production environments to the cloud.
+**Kool** is a CLI tool that brings the complexities of modern software development environments down to earth - making these environments lightweight, fast and reproducible. It reduces the complexity and learning curve of _Docker_ containers for local environments, and offers a simplified interface for using _Kubernetes_ to deploy staging and production environments to the cloud.
 
 **Kool** gets your local development environment up and running easily and quickly, so you have more time to build a great application. When the time is right, you can then use Kool Cloud to deploy and share your work with the world!
 
@@ -24,6 +24,8 @@
 ## Installation
 
 Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/). If you haven't done so already, you first need to [install Docker and the kool CLI](https://kool.dev/docs/getting-started/installation).
+
+**Important**: make sure you are running the latest version of Docker and that you do have Composer V2 available (`docker compose`). You can read more about [Compose V2 release via its documentation](https://docs.docker.com/compose/reference/).
 
 ### For Linux and macOS
 
