@@ -89,7 +89,7 @@ $ kool completion fish > ~/.config/fish/completions/kool.fish
 `,
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
-		Args:                  cobra.ExactValidArgs(1),
+		Args:                  cobra.MatchAll(cobra.ExactArgs(1)),
 		Hidden:                true,
 		RunE:                  DefaultCommandRunFunction(completion),
 	}
