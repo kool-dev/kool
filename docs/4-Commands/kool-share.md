@@ -18,7 +18,8 @@ kool share
 ### Options inherited from parent commands
 
 ```
-      --verbose   increases output verbosity
+      --verbose              Increases output verbosity
+  -w, --working_dir string   Changes the working directory for the command
 ```
 
 ### SEE ALSO

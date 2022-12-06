@@ -1,0 +1,3 @@
+actions:
+  - merge: app/php81-swoole.yml
+    dst: docker-compose.yml

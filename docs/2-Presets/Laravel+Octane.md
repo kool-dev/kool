@@ -1,10 +1,10 @@
-# Start a Laravel Project with Docker in 3 Easy Steps
+# Start a Laravel Octane Project with Docker in 3 Easy Steps
 
-1. Run `kool create laravel my-project`
+1. Run `kool create laravel+octane my-project`
 2. Update **.env.example**
 3. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new Laravel projects is that easy!
+> Yes, using **kool** + Docker to create and work on new Laravel Octane projects is that easy!
 
 ## Requirements
 
@@ -18,45 +18,21 @@ $ kool self-update
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create laravel my-project`
+## 1. Run `kool create laravel+octane my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Laravel project:
-
-```bash
-$ kool create laravel my-project
-```
-
-Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist laravel/laravel my-project` using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:8.1</a>.
-
-After installing Laravel, `kool create` automatically runs the `kool preset laravel` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Laravel Octane project:
 
 ```bash
-$ Preset laravel is initializing!
-
-? Which app service do you want to use [Use arrows to move, type to filter]
-> PHP 7.4
-  PHP 8.0
-
-? Which database service do you want to use [Use arrows to move, type to filter]
-> MySQL 8.0
-  MySQL 5.7
-  MariaDB 10.5
-  PostgreSQL 13.0
-  none
-
-? Which cache service do you want to use [Use arrows to move, type to filter]
-> Redis 6.0
-  Memcached 1.6
-  none
-
-? Which javascript package manager do you want to use [Use arrows to move, type to filter]
-> npm
-  yarn
-
-$ Preset laravel initialized!
+$ kool create laravel+octane my-project
 ```
 
-Now, move into your new Laravel project:
+Under the hood, this command will run do the same as the standar Laravel preset to get a fresh install of latest Laravel using a customized **kool** Docker image with Swoole: <a href="https://github.com/kool-dev/docker-php-swoole" target="_blank">kooldev/php:8.1-nginx-swoole</a>.
+
+After installing Laravel, `kool create` automatically requires `laravel/octane` and runs `artisan octane:install`. After that you will have the options for including a database or cache service, all of which helps you easily set up the initial tech stack for your project using an interactive wizard.
+
+---
+
+Now, move into your new Laravel Octane with Swoole project:
 
 ```bash
 $ cd my-project
