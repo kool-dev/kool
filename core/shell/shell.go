@@ -144,7 +144,7 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 
 	cmd = execCmdFn(exe, args...)
 	cmd.Env = os.Environ()
-	// cmd.Stdin = s.InStream()
+	cmd.Stdin = s.InStream()
 	out, err = cmd.CombinedOutput()
 	outStr = strings.TrimSpace(string(out))
 	if err != nil && len(out) != 0 {
