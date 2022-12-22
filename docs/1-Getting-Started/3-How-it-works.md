@@ -94,6 +94,8 @@ For example, use the `artisan` script in Laravel's **kool.yml** as follows:
 kool run artisan tinker
 ```
 
+> **Tip**: be careful with the syntax of the environment variables used in scripts within `kool.yml`. It's recommended that you always escape the variable name properly to avoid parsing issues: `${ENV_NAME}` - by using `${}` you make explicit the boundaries of the variable name helping, thus to avoid confusion.
+
 #### Types of Commands
 
 The **kool.yml** file is not just for **kool** commands. You can add any type of command that you usually run in your shell, such as `cat`, `cp`, `mv`, etc.
