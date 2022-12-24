@@ -21,6 +21,9 @@ type Executor struct {
 	getFromSource RetrieveSource
 	local         afero.Fs
 	prompter      shell.PromptSelect
+
+	// promptState is a map of prompt answers
+	promptState map[string]string
 }
 
 func NewExecutor(sh shell.Shell, fn RetrieveSource) *Executor {
@@ -29,6 +32,7 @@ func NewExecutor(sh shell.Shell, fn RetrieveSource) *Executor {
 		getFromSource: fn,
 		local:         afero.NewOsFs(),
 		prompter:      shell.NewPromptSelect(),
+		promptState:   make(map[string]string),
 	}
 }
 
@@ -51,7 +55,6 @@ func (e *Executor) Do(steps []*ActionSet) (err error) {
 				if err = e.recipe(action); err != nil {
 					return
 				}
-
 			case TypeCopy:
 				if err = e.copy(action); err != nil {
 					return
@@ -199,8 +202,18 @@ func (e *Executor) prompt(action *Action) (err error) {
 		optionsMap[opt.Name] = opt
 	}
 
-	if pick, err = e.prompter.Ask(action.Prompt, optionsList); err != nil {
+	if e.promptState[action.Ref] != "" {
+		// we already got a value for this prompt, so we skip it and reuse the value
+		e.sh.Printf("→ Already selected '%s': %s\n", action.Prompt, e.promptState[action.Ref])
+
+		pick = e.promptState[action.Ref]
+	} else if pick, err = e.prompter.Ask(action.Prompt, optionsList); err != nil {
 		return
+	}
+
+	// store selection for later use if needed
+	if action.Ref != "" {
+		e.promptState[action.Ref] = pick
 	}
 
 	err = e.Do([]*ActionSet{optionsMap[pick]})

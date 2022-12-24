@@ -7,6 +7,7 @@ create:
   - name: 'Creating new Laravel Octane app'
     actions:
       - prompt: 'Which engine do you want to use?'
+        ref: 'engine'
         default: 'Swoole'
         options:
           - name: 'Swoole'
@@ -28,14 +29,23 @@ preset:
       - copy: docker-compose.yml
       - copy: kool.yml
       - copy: vite.config.js
-      - merge: scripts/laravel+octane+swoole.yml
-      # - merge: scripts/laravel+octane+roadrunner.yml
-        dst: kool.yml
 
   - name: 'Set up Laravel Octane'
     actions:
-      - recipe: php-8.1-swoole
-      # - recipe: php-8.1-roadrunner
+      - prompt: 'Which engine do you want to use?'
+        ref: 'engine' # makes reuse of the same selection as before
+        default: 'Swoole'
+        options:
+          - name: 'Swoole'
+            actions:
+              - merge: scripts/laravel+octane+swoole.yml
+                dst: kool.yml
+              - recipe: php-8.1-swoole
+          - name: 'RoadRunner'
+            actions:
+              - merge: scripts/laravel+octane+roadrunner.yml
+                dst: kool.yml
+              - recipe: php-8.1-roadrunner
 
   - name: 'Customize Database, Cache and Node Package Manager'
     actions:

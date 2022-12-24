@@ -32,6 +32,8 @@ func SetSource(src SourceFS) {
 // DefaultParser holds presets parsing data
 type DefaultParser struct {
 	presetID string
+
+	execRunner *automate.Executor
 }
 
 // Parser holds presets parsing logic
@@ -39,9 +41,11 @@ type Parser interface {
 	Exists(string) bool
 	GetTags() []string
 	GetPresets(string) []string
-	Install(string, shell.Shell) error
-	Create(string, shell.Shell) error
+	Install(string) error
+	Create(string) error
 	Add(string, shell.Shell) error
+
+	PrepareExecutor(shell.Shell)
 }
 
 // NewParser creates a new preset default parser
@@ -123,8 +127,11 @@ func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 // ErrPresetWriteAllBytes error throwed when did not write all preset file bytes
 var ErrPresetWriteAllBytes = errors.New("failed to write all bytes")
 
+// ErrExecutorNotPrepared error throwed when the executor is not prepared
+var ErrExecutorNotPrepared = errors.New("automation executor not prepared, call PrepareExecutor first")
+
 // Install executes the preset installation actions
-func (p *DefaultParser) Install(preset string, sh shell.Shell) (err error) {
+func (p *DefaultParser) Install(preset string) (err error) {
 	var (
 		config *PresetConfig
 	)
@@ -134,7 +141,13 @@ func (p *DefaultParser) Install(preset string, sh shell.Shell) (err error) {
 	}
 
 	p.presetID = preset
-	if err = automate.NewExecutor(sh, p.getSourceFile).Do(config.Preset); err != nil {
+
+	if p.execRunner == nil {
+		err = ErrExecutorNotPrepared
+		return
+	}
+
+	if err = p.execRunner.Do(config.Preset); err != nil {
 		return
 	}
 
@@ -142,7 +155,7 @@ func (p *DefaultParser) Install(preset string, sh shell.Shell) (err error) {
 }
 
 // Create executes the preset installation actions
-func (p *DefaultParser) Create(preset string, sh shell.Shell) (err error) {
+func (p *DefaultParser) Create(preset string) (err error) {
 	var (
 		config *PresetConfig
 	)
@@ -152,11 +165,21 @@ func (p *DefaultParser) Create(preset string, sh shell.Shell) (err error) {
 	}
 
 	p.presetID = preset
-	if err = automate.NewExecutor(sh, p.getSourceFile).Do(config.Create); err != nil {
+
+	if p.execRunner == nil {
+		err = ErrExecutorNotPrepared
+		return
+	}
+
+	if err = p.execRunner.Do(config.Create); err != nil {
 		return
 	}
 
 	return
+}
+
+func (p *DefaultParser) PrepareExecutor(sh shell.Shell) {
+	p.execRunner = automate.NewExecutor(sh, p.getSourceFile)
 }
 
 func (p *DefaultParser) Add(recipe string, sh shell.Shell) (err error) {

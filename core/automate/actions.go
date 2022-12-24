@@ -20,6 +20,9 @@ type ActionSet struct {
 // Action is a union kind of type that holds
 // one specific action within it; used for parsing
 type Action struct {
+	// ref
+	Ref string `yaml:"ref"`
+
 	// recipe
 	Recipe string `yaml:"recipe"`
 	// merge
