@@ -1,0 +1,42 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'PHP' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  # picks what engine to use
+  - prompt: 'Which engine do you want to use'
+    default: 'Swoole'
+    options:
+      - name: 'Swoole'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.1-nginx
+            - docker pull -q kooldev/php:8.1-nginx-swoole
+            - kool docker kooldev/php:8.1-nginx-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+      - name: 'RoadRunner'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.1-nginx
+            - kool docker kooldev/php:8.1-nginx composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - copy: vite.config.js
+      - merge: scripts/laravel+octane+swoole.yml
+      # - merge: scripts/laravel+octane+roadrunner.yml
+        dst: kool.yml
+
+  - name: 'Set up Laravel Octane'
+    actions:
+      - recipe: php-8.1-swoole
+      # - recipe: php-8.1-roadrunner
+
+  - name: 'Customize Database, Cache and Node Package Manager'
+    actions:
+      - recipe: pick-db
+      - recipe: pick-cache
+      - recipe: pick-laravel-node
