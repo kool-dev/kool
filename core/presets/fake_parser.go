@@ -26,6 +26,10 @@ func (f *FakeParser) Exists(preset string) (exists bool) {
 	return
 }
 
+func (f *FakeParser) PrepareExecutor(sh shell.Shell) {
+	// noop
+}
+
 // GetTags get all presets tags
 func (f *FakeParser) GetTags() (languages []string) {
 	f.CalledGetTags = true
@@ -41,14 +45,14 @@ func (f *FakeParser) GetPresets(tag string) (presets []string) {
 }
 
 // Install
-func (f *FakeParser) Install(tag string, sh shell.Shell) (err error) {
+func (f *FakeParser) Install(tag string) (err error) {
 	f.CalledInstall = true
 	err = f.MockInstall
 	return
 }
 
 // Create
-func (f *FakeParser) Create(tag string, sh shell.Shell) (err error) {
+func (f *FakeParser) Create(tag string) (err error) {
 	f.CalledCreate = true
 	err = f.MockCreate
 	return
