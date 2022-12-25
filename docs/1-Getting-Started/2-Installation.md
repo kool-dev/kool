@@ -6,6 +6,8 @@
 
 > Docker Compose is included with **Docker Desktop for Mac** and **Docker Desktop for Windows**.
 
+> `kool` now requires [Docker Compose V2](https://docs.docker.com/compose/install/), make sure you have it in your system.
+
 ### For Linux and macOS
 
 Install **kool** by running the following script. It will download the latest **kool** binary from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases), and save it in your `/usr/local/bin` folder.

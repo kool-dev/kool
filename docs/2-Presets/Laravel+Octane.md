@@ -10,11 +10,7 @@
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
-Also, make sure you're running the latest version of **kool**. Run the following command to compare your local version of **kool** with the latest release, and, if a newer version is available, automatically download and install it.
-
-```bash
-$ kool self-update
-```
+> Also, make sure you're running the latest version of **kool**. Run the following command: `kool self-update`
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
@@ -26,13 +22,13 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create laravel+octane my-project
 ```
 
-Under the hood, this command will run do the same as the standar Laravel preset to get a fresh install of latest Laravel using a customized **kool** Docker image with Swoole: <a href="https://github.com/kool-dev/docker-php-swoole" target="_blank">kooldev/php:8.1-nginx-swoole</a>.
+This command will guide you through setting up a new Laravel project, installing Laravel Octane with your preferred server engine (either Swoole or RoadRunner), and setting up all the Docker Compose configuration files to manage your dockerized development environment.
 
-After installing Laravel, `kool create` automatically requires `laravel/octane` and runs `artisan octane:install`. After that you will have the options for including a database or cache service, all of which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After that, you will have the option to include a database or cache service, all of which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ---
 
-Now, move into your new Laravel Octane with Swoole project:
+Now, move into your new Laravel Octane project:
 
 ```bash
 $ cd my-project
@@ -53,14 +49,14 @@ You need to update some default values in Laravel's **.env.example** file to mat
 
 ### Database Services
 
-MySQL 5.7 and 8.0 or MariaDB 10.5
+MySQL or MariaDB
 
 ```diff
 -DB_HOST=127.0.0.1
 +DB_HOST=database
 ```
 
-PostgreSQL 13.0
+PostgreSQL
 
 ```diff
 -DB_CONNECTION=mysql
@@ -73,7 +69,7 @@ PostgreSQL 13.0
 +DB_PORT=5432
 ```
 
-> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **.env.example** file
+> In order to avoid permission issues with mysql and MariaDB, add a user other than root and a password to your **.env.example** file
 
 ```diff
 -DB_USERNAME=root
@@ -101,36 +97,20 @@ Memcached
 
 ## 3. Run `kool run setup`
 
+Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
+
+```bash
+# CAUTION: this script will reset your `.env` file with `.env.example`
+$ kool run setup
+```
+
+### About `kool.yml` and `kool run setup`
+
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
 As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
 To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard), including a script called `setup`, which helps you spin up a project for the first time.
-
-```yaml
-scripts:
-  artisan: kool exec app php artisan
-  composer: kool exec app composer
-  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
-  node: kool docker kooldev/node:16 node
-  npm: kool docker kooldev/node:16 npm # or yarn
-  npx: kool exec app npx
-
-  setup:
-    - kool run before-start
-    - kool start
-    - kool run composer install
-    - kool run artisan key:generate
-
-  reset:
-    - kool run composer install
-    - kool run artisan migrate:fresh --seed
-    - kool run yarn install
-
-  before-start:
-    - kool docker kooldev/bash -c "cp .env.example .env"
-    - kool run yarn install
-```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
 
