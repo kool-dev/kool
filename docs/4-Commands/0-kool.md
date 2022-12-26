@@ -24,6 +24,7 @@ kool
 
 ### SEE ALSO
 
+* [kool cloud](kool-cloud)	 - Interact with Kool Cloud and manage your deployments.
 * [kool create](kool-create)	 - Create a new project using a preset
 * [kool docker](kool-docker)	 - Create a new container (a powered up 'docker run')
 * [kool exec](kool-exec)	 - Execute a command inside a running service container
