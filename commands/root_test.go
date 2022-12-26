@@ -244,7 +244,7 @@ func TestAddCommands(t *testing.T) {
 	var subcommands map[string]bool = map[string]bool{
 		"completion":  false,
 		"create":      false,
-		"deploy":      false,
+		"cloud":       false,
 		"docker":      false,
 		"exec":        false,
 		"info":        false,
