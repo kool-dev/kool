@@ -6,6 +6,7 @@ create:
   - name: Creating new Hugo website
     actions:
       - scripts:
+          - docker pull -q klakegg/hugo:ext-alpine
           - kool docker klakegg/hugo:ext-alpine new site $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
