@@ -248,7 +248,6 @@ func TestAddCommands(t *testing.T) {
 		"docker":      false,
 		"exec":        false,
 		"info":        false,
-		"init":        false,
 		"logs":        false,
 		"preset":      false,
 		"restart":     false,
