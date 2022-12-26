@@ -45,7 +45,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		createDirectory = args[1]
 	)
 
-	// sets env variable CREATE_DIRECTORY that aims to tell
+	// sets env variable CREATE_DIRECTORY so preset can use it
 	c.env.Set("CREATE_DIRECTORY", createDirectory)
 
 	if !c.parser.Exists(preset) {
@@ -55,7 +55,9 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 
 	c.Shell().Println("Creating new", preset, "project...")
 
-	if err = c.parser.Create(preset, c.Shell()); err != nil {
+	c.parser.PrepareExecutor(c.Shell())
+
+	if err = c.parser.Create(preset); err != nil {
 		return
 	}
 
@@ -73,7 +75,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 
 	c.env.Set("PWD", createDirectory)
 
-	if err = c.parser.Install(preset, c.Shell()); err != nil {
+	if err = c.parser.Install(preset); err != nil {
 		return
 	}
 

@@ -3,11 +3,24 @@ tags: [ 'PHP' ]
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
-  - name: Creating new Laravel Application with Octane powered by Swoole
+  # picks what engine to use
+  - name: 'Creating new Laravel Octane app'
     actions:
-      - scripts:
-          - docker pull -q kooldev/php:8.1-nginx-swoole
-          - kool docker kooldev/php:8.1-nginx-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+      - prompt: 'Which engine do you want to use?'
+        ref: 'engine'
+        default: 'Swoole'
+        options:
+          - name: 'Swoole'
+            actions:
+              - scripts:
+                - docker pull -q kooldev/php:8.1-nginx
+                - docker pull -q kooldev/php:8.1-nginx-swoole
+                - kool docker kooldev/php:8.1-nginx-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+          - name: 'RoadRunner'
+            actions:
+              - scripts:
+                - docker pull -q kooldev/php:8.1-nginx
+                - kool docker kooldev/php:8.1-nginx composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -16,22 +29,25 @@ preset:
       - copy: docker-compose.yml
       - copy: kool.yml
       - copy: vite.config.js
-      - merge: scripts/laravel.yml
-        dst: kool.yml
 
   - name: 'Set up Laravel Octane'
     actions:
-      - recipe: php-8.1-swoole
-      - scripts:
-        - kool docker kooldev/php:8.1-nginx-swoole composer install
-        - kool docker kooldev/php:8.1-nginx-swoole composer require laravel/octane
-        - kool docker kooldev/bash -c "cp .env.example .env"
-        - kool docker kooldev/php:8.1-nginx-swoole php artisan key:generate
-        # making sure that .env.example always have an APP_KEY, otherwise octane won't start
-        - kool docker kooldev/bash -c "cp .env .env.example"
-        - kool docker kooldev/php:8.1-nginx-swoole php artisan octane:install --server=swoole
+      - prompt: 'Which engine do you want to use?'
+        ref: 'engine' # makes reuse of the same selection as before
+        default: 'Swoole'
+        options:
+          - name: 'Swoole'
+            actions:
+              - merge: scripts/laravel+octane+swoole.yml
+                dst: kool.yml
+              - recipe: php-8.1-swoole
+          - name: 'RoadRunner'
+            actions:
+              - merge: scripts/laravel+octane+roadrunner.yml
+                dst: kool.yml
+              - recipe: php-8.1-roadrunner
 
-  - name: 'Customize your setup'
+  - name: 'Customize Database, Cache and Node Package Manager'
     actions:
       - recipe: pick-db
       - recipe: pick-cache

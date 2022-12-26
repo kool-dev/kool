@@ -48,7 +48,9 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 
 	p.Shell().Println("Preset", preset, "is initializing!")
 
-	if err = p.presetsParser.Install(preset, p.Shell()); err != nil {
+	p.presetsParser.PrepareExecutor(p.Shell())
+
+	if err = p.presetsParser.Install(preset); err != nil {
 		return
 	}
 

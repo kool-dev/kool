@@ -1,0 +1,17 @@
+scripts:
+  composer: kool exec app composer
+  artisan: kool exec app php artisan
+  phpunit: kool exec app php ./bin/phpunit
+
+  setup:
+    - kool run before-start
+    - kool start
+
+  reset:
+    - kool run composer install
+    - kool run artisan migrate:fresh --seed
+
+  before-start:
+    - kool docker kooldev/bash -c "cp .env.example .env"
+    - kool docker kooldev/php:8.1-nginx-swoole composer install
+    - kool docker kooldev/php:8.1-nginx-swoole php artisan key:generate
