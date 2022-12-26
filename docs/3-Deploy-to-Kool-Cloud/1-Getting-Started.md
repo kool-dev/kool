@@ -1,24 +1,26 @@
-The Kool Cloud supports a wide set of features designed to suite your dockerized web application deployment needs. It supports persisting folders across deployments, running daemons as extra containers, cron-like commands scheduling, hooks for before/after deployment, viewing running container logs, accessing the running container interactively, and much more.
+The Kool Cloud supports a wide range of features designed to suit your needs for deploying dockerized web applications. It supports features such as persisting folders across deployments, running daemons as extra containers, scheduling commands like cron jobs, adding hooks for before and after deployment, viewing running container logs, accessing the running container interactively, and much more.
 
-The Deploy API was designed taking to heart the best Developer Experience for deploying containers to the cloud. By leveraging your existing local environment structure on `docker-compose.yml` and adding a sane and intuitive configuration layer that will even feel familiar from the first contact, the goal here is to provide a best-in-class offering for cloud platform engineering, offering you a platform to leverage Kubernetes and orchestrate your web applications in the cloud without all the hassle.
+The Deploy API was designed with the best developer experience in mind for deploying containers to the cloud. By leveraging your existing local environment structure in `docker-compose.yml` and adding a sane and intuitive configuration layer that will feel familiar from the first contact, our goal is to provide a best-in-class offering for cloud platform engineering. This platform allows you to leverage Kubernetes and orchestrate your web applications in the cloud without all the hassle.
 
-**kool cloud** is a the CLI suite of commands that allows you to configure, deploy, access and tail logs from the applications to Kool Cloud via the Deploy API.
+**kool cloud** is a CLI suite of commands that allows you to configure, deploy, access, and tail logs from the applications to Kool Cloud via the Deploy API.
 
-## Deploy Docker Compose-based containerized apps in just a few simple steps
+## Deploy Docker Compose-based, containerized apps in just a few simple steps
 
 1. Sign up for Kool Cloud and get your access token.
 	- Make sure your `.env` file contains two entries for configuring your deployment:
-		- `KOOL_API_TOKEN` - the Deploy API access token you get from kool.dev web panel.
-1. Configure your deploy with files straight in your application root folder
+		- `KOOL_API_TOKEN` - the Deploy API access token you get from the kool.dev web panel.
+1. Configure your deployment with files straight in your application root folder
 	- `kool.deploy.yml` - a "mirror" of your `docker-compose.yml` file, with extra pieces of data for your cloud deployment.
-	- `Dockerfile` - usually you are going to need to build your app for deployment, in case you haven't yet.
-	- Make sure you setup the necessary environment variables for your app to run in the cloud.
+	- `Dockerfile` - usually, you are going to need to build your app for deployment if you haven't already.
+	- Make sure you set up the necessary environment variables for your app to run in the cloud.
 1. Deploy your application
-	- Run `kool cloud deploy` - this will validate & deploy your applications.
+	- Run `kool cloud deploy` - this will validate and deploy your application.
 	- Wait for it to finish and then access the provided deployment URL!
 1. Doing more
-	- View logs: `kool cloud logs` - you can check out the logs of your deployed containers.
-	- Access cloud containers: `kool cloud exec` - you are able to execute commands - including interactive TTY sessions - within your cloud deployed containers.
+	- **View logs**
+		- `kool cloud logs` - you can check the logs of your deployed containers.
+	- **Access cloud containers**
+		- `kool cloud exec` - you can execute commands, including interactive TTY sessions, within your cloud-deployed containers.
 
 ---
 
