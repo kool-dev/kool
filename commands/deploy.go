@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/cloud/api"
 	"kool-dev/kool/services/tgz"
 	"os"
@@ -58,7 +59,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		deploy   *api.Deploy
 	)
 
-	if err = d.validate(); err != nil {
+	if err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile); err != nil {
 		return
 	}
 
@@ -248,14 +249,4 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 	}
 
 	return files
-}
-
-func (d *KoolDeploy) validate() (err error) {
-	var path = filepath.Join(d.env.Get("PWD"), koolDeployFile)
-
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		err = fmt.Errorf("could not find required file (%s) on current working directory", koolDeployFile)
-	}
-
-	return
 }
