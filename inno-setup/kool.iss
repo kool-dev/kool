@@ -1,6 +1,6 @@
 #define ApplicationId "{{B26A0699-CADB-4927-82DB-82842ADB2271}"
-#define ApplicationGroup "Firework"
-#define ApplicationName "Kool"
+#define ApplicationGroup "Kool.dev"
+#define ApplicationName "Kool CLI"
 
 #include "environment.iss"
 
@@ -9,9 +9,9 @@ AppId={#ApplicationId}
 AppName={#ApplicationName}
 AppVersion={#ApplicationVersion}
 AppVerName={#ApplicationName} {#ApplicationVersion}
-AppPublisher=Firework Web & Mobile LTDA
+AppPublisher=Kool Dev Sistemas de Informacao LTDA
 AppComments=From development to production, our tools bring speed and security to software development teams from different stacks, making their development environments reproducible and easy to set up.
-AppCopyright=© 2020 kool.dev - Made by Firework
+AppCopyright=© 2022 kool.dev - All rights reserved.
 AppPublisherURL=https://kool.dev
 AppSupportURL=https://kool.dev
 AppUpdatesURL=https://kool.dev
@@ -32,7 +32,7 @@ UninstallDisplayIcon={autopf}\{#ApplicationGroup}\kool.ico
 UninstallDisplayName={#ApplicationName}
 WizardImageStretch=No
 WizardImageFile=kool-setup-small-icon.bmp
-WizardSmallImageFile=firework-setup-icon.bmp
+WizardSmallImageFile=kool-setup-icon.bmp
 ArchitecturesInstallIn64BitMode=x64
 ChangesEnvironment=true
 

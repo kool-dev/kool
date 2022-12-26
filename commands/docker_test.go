@@ -142,7 +142,7 @@ func TestAsUserEnvFireworkImageNewDockerCommand(t *testing.T) {
 
 	f.envStorage.(*environment.FakeEnvStorage).Envs["KOOL_ASUSER"] = "kooldev_user_test"
 
-	cmd.SetArgs([]string{"fireworkweb/image"})
+	cmd.SetArgs([]string{"kool-dev/image"})
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)

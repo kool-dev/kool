@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) Firework <contact@fireworkweb.com>
+Copyright (c) Kool Dev Sistemas de Informacao LTDA <contact@kool.dev>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
