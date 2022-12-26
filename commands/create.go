@@ -22,8 +22,7 @@ type KoolCreate struct {
 
 func AddKoolCreate(root *cobra.Command) {
 	var (
-		create    = NewKoolCreate()
-		createCmd = NewCreateCommand(create)
+		createCmd = NewCreateCommand(NewKoolCreate())
 	)
 
 	root.AddCommand(createCmd)
