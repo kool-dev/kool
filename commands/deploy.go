@@ -59,7 +59,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		deploy   *api.Deploy
 	)
 
-	if err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile); err != nil {
+	if err = d.validate(); err != nil {
 		return
 	}
 
@@ -249,4 +249,10 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 	}
 
 	return files
+}
+
+func (d *KoolDeploy) validate() (err error) {
+	err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile)
+
+	return
 }
