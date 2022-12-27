@@ -48,8 +48,6 @@ func ParseConsolidatedDockerComposeConfig(workingDir string) (dockerComposeConfi
 			return
 		}
 
-		content = nil
-
 		if err = merger.Merge(node, consolidatedDockerCompose); err != nil {
 			return
 		}
@@ -60,7 +58,6 @@ func ParseConsolidatedDockerComposeConfig(workingDir string) (dockerComposeConfi
 	}
 
 	contentString := string(content)
-	content = nil
 	if contentString, err = template.Substitute(contentString, os.LookupEnv); err != nil {
 		return
 	}
