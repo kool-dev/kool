@@ -32,4 +32,5 @@ kool cloud deploy
 * [kool cloud destroy](kool_cloud_destroy)	 - Destroy an environment deployed to Kool Cloud
 * [kool cloud exec](kool_cloud_exec)	 - Execute a command inside a running service container deployed to Kool Cloud
 * [kool cloud logs](kool_cloud_logs)	 - See the logs of running service container deployed to Kool Cloud
+* [kool cloud setup](kool_cloud_setup)	 - Set up local configuration files for deployment
 
