@@ -41,7 +41,7 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 	var c Checker
 
 	dockerCmd := &builder.FakeCommand{}
-	dockerComposeCmd := &builder.FakeCommand{MockExecError: errors.New("not installed")}
+	dockerComposeCmd := &builder.FakeCommand{MockExecError: errors.New("is not a docker command")}
 
 	s := &shell.FakeShell{}
 
@@ -56,6 +56,12 @@ func TestDockerComposeNotInstalled(t *testing.T) {
 
 	if !IsDockerComposeNotFoundError(err) {
 		t.Errorf("Expected the message '%s', got '%s'", ErrDockerComposeNotFound.Error(), err.Error())
+	}
+
+	dockerComposeCmd.MockExecError = errors.New("some other error")
+
+	if err := c.Check(); err == nil || err.Error() != "some other error" {
+		t.Errorf("Expected the error message 'some other error', got '%v'", err)
 	}
 }
 
