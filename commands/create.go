@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
+	"kool-dev/kool/core/shell"
 	"os"
 	"path"
 	"path/filepath"
@@ -40,9 +41,47 @@ func NewKoolCreate() *KoolCreate {
 // Execute runs the create logic with incoming arguments.
 func (c *KoolCreate) Execute(args []string) (err error) {
 	var (
-		preset          = args[0]
-		createDirectory = args[1]
+		createDirectory, preset string
 	)
+
+	if len(args) == 2 {
+		preset = args[0]
+		createDirectory = args[1]
+	} else if len(args) == 1 {
+		err = fmt.Errorf("bad number of arguments - either specify both preset and directory or none")
+		return
+	} else {
+		if preset, err = NewKoolPreset().getPreset(args); err != nil {
+			return
+		}
+
+		for {
+			if createDirectory, err = shell.NewPromptInput().Input("New folder name:", fmt.Sprintf("my-kool-%s-project", preset)); err != nil {
+				return
+			}
+
+			if createDirectory == "" {
+				c.Shell().Error(fmt.Errorf("Please enter a valid folder name"))
+				continue
+			} else if _, err = os.Stat(createDirectory); !os.IsNotExist(err) {
+				c.Shell().Error(fmt.Errorf("Folder %s already exists.", createDirectory))
+				continue
+			} else {
+				if err = os.MkdirAll(filepath.Join(os.TempDir(), createDirectory), 0755); err != nil {
+					c.Shell().Error(fmt.Errorf("Please enter a valid folder name"))
+					continue
+				} else {
+					// ok we created, let's just have it removed if we fail
+					defer func() {
+						_ = os.RemoveAll(filepath.Join(os.TempDir(), createDirectory))
+					}()
+				}
+			}
+
+			// if no error, we got our directory
+			break
+		}
+	}
 
 	// sets env variable CREATE_DIRECTORY so preset can use it
 	c.env.Set("CREATE_DIRECTORY", createDirectory)
@@ -89,7 +128,7 @@ func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 		Use:   "create PRESET FOLDER",
 		Short: "Create a new project using a preset",
 		Long:  "Create a new project using the specified PRESET in a directory named FOLDER.",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.MaximumNArgs(2),
 		RunE:  DefaultCommandRunFunction(create),
 
 		DisableFlagsInUseLine: true,
