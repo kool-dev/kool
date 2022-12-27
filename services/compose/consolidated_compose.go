@@ -15,9 +15,10 @@ import (
 
 type DockerComposeConfig struct {
 	Services map[string]*struct {
-		Image interface{} `yaml:"image"`
-		Build interface{} `yaml:"build"`
-		Ports []string    `yaml:"ports"`
+		Image   interface{} `yaml:"image"`
+		Build   interface{} `yaml:"build"`
+		Ports   []string    `yaml:"ports"`
+		Volumes []string    `yaml:"volumes"`
 	} `yaml:"services"`
 }
 
@@ -84,12 +85,15 @@ func getDockerComposeFiles(workingDir string) (files []string, err error) {
 				return
 			}
 		}
+
+		return
 	}
 
+	// fallback default file
 	file := filepath.Join(workingDir, "docker-compose.yml")
 
 	if _, err = os.Stat(file); os.IsNotExist(err) {
-		err = fmt.Errorf("could not find required file (%s) on current working directory (referenced by COMPOSE_FILE)", file)
+		err = fmt.Errorf("could not find required file 'docker-compose.yml' on current working directory")
 		return
 	} else if err == nil {
 		files = append(files, file)

@@ -11,6 +11,7 @@ func AddKoolCloud(root *cobra.Command) {
 	cloudCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
 	cloudCmd.AddCommand(NewDeployDestroyCommand(NewKoolDeployDestroy()))
 	cloudCmd.AddCommand(NewDeployLogsCommand(NewKoolDeployLogs()))
+	cloudCmd.AddCommand(NewSetupCommand(NewKoolCloudSetup()))
 
 	root.AddCommand(cloudCmd)
 }

@@ -9,15 +9,19 @@ import (
 )
 
 type DeployConfig struct {
-	Services map[string]*struct {
-		Image  *string `yaml:"image"`
-		Build  *string `yaml:"build"`
-		Port   *string `yaml:"port"`
-		Public []struct {
-			Port *string `yaml:"port"`
-			Path *string `yaml:"path"`
-		} `yaml:"public"`
-	} `yaml:"services"`
+	// services is a map of services to deploy
+	Services map[string]*DeployConfigService `yaml:"services"`
+}
+
+// DeployConfigService is the configuration for a service to deploy
+type DeployConfigService struct {
+	Image  *string `yaml:"image"`
+	Build  *string `yaml:"build"`
+	Port   *string `yaml:"port"`
+	Public []struct {
+		Port *string `yaml:"port"`
+		Path *string `yaml:"path"`
+	} `yaml:"public"`
 }
 
 func ValidateKoolDeployFile(workingDir string, koolDeployFile string) (err error) {
