@@ -15,10 +15,10 @@ import (
 
 type DockerComposeConfig struct {
 	Services map[string]*struct {
-		Image   interface{} `yaml:"image"`
-		Build   interface{} `yaml:"build"`
-		Ports   []string    `yaml:"ports"`
-		Volumes []string    `yaml:"volumes"`
+		Image   *interface{} `yaml:"image"`
+		Build   *interface{} `yaml:"build"`
+		Ports   []string     `yaml:"ports"`
+		Volumes []string     `yaml:"volumes"`
 	} `yaml:"services"`
 }
 

@@ -15,13 +15,16 @@ type DeployConfig struct {
 
 // DeployConfigService is the configuration for a service to deploy
 type DeployConfigService struct {
-	Image  *string `yaml:"image"`
-	Build  *string `yaml:"build"`
-	Port   *string `yaml:"port"`
-	Public []struct {
-		Port *string `yaml:"port"`
-		Path *string `yaml:"path"`
-	} `yaml:"public"`
+	Image *string `yaml:"image,omitempty"`
+	Build *string `yaml:"build,omitempty"`
+	Port  *string `yaml:"port,omitempty"`
+
+	Public []*DeployConfigPublicEntry `yaml:"public,omitempty"`
+}
+
+type DeployConfigPublicEntry struct {
+	Port *string `yaml:"port"`
+	Path *string `yaml:"path,omitempty"`
 }
 
 func ValidateKoolDeployFile(workingDir string, koolDeployFile string) (err error) {
