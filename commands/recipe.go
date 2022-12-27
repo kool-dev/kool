@@ -50,12 +50,23 @@ func (p *KoolRecipe) Execute(args []string) (err error) {
 		}
 
 		var choices []string
+		var mapTitleToSlug = make(map[string]string)
+		var answer string
 		for _, meta := range metas {
-			choices = append(choices, meta.Slug)
+			if mapTitleToSlug[meta.Title] != "" {
+				// we already have a recipe with this title, so we skip it
+				continue
+			}
+
+			choices = append(choices, meta.Title)
+
+			mapTitleToSlug[meta.Title] = meta.Slug
 		}
 
-		if recipe, err = p.promptSelet.Ask("Select a recipe to run", choices); err != nil {
+		if answer, err = p.promptSelet.Ask("Select a recipe to run", choices); err != nil {
 			return
+		} else {
+			recipe = mapTitleToSlug[answer]
 		}
 	}
 

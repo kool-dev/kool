@@ -1,3 +1,5 @@
+title: "npm for Laravel"
+
 actions:
   - merge: scripts/npm-laravel.yml
     dst: kool.yml

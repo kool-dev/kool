@@ -1,3 +1,5 @@
+title: "Wizard: cache service"
+
 actions:
   # Defines which cache service to use (in-memory key/value storage)
   - prompt: 'Which cache service do you want to use'
