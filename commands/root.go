@@ -61,7 +61,6 @@ func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
 		Args:          cobra.ArbitraryArgs,
 		Use:           "kool",
 		SilenceErrors: true,
-		SilenceUsage:  true,
 		Short:         "Cloud native environments made easy",
 		Long: `From development to production, a robust and easy-to-use developer tool
 that makes Docker container adoption quick and easy for building and deploying cloud native
@@ -139,7 +138,7 @@ Complete documentation is available at https://kool.dev/docs`,
 				// we did find a script for it!
 				newDefaultKoolService().Shell().Info(fmt.Sprintf("Did you mean 'kool run %s'?", strings.Join(args, " ")))
 
-				err = fmt.Errorf("Command not found.")
+				err = fmt.Errorf("command not found")
 				return
 			}
 
