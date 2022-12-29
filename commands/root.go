@@ -71,6 +71,8 @@ Complete documentation is available at https://kool.dev/docs`,
 		DisableAutoGenTag:     true,
 		DisableFlagsInUseLine: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+			cmd.SilenceUsage = true
+
 			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
 				env.Set("KOOL_VERBOSE", verbose.Value.String())
 			}
