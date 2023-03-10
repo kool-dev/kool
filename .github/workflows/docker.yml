@@ -39,7 +39,8 @@ jobs:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       run: |
-        docker tag kooldev/kool:$TAGNAME kooldev/kool:1.0
+        TAGNAME_MAJOR=${TAGNAME%%.*}
+        docker tag kooldev/kool:$TAGNAME kooldev/kool:$TAGNAME_MAJOR
         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
         docker push kooldev/kool:$TAGNAME
-        docker push kooldev/kool:1.0
+        docker push kooldev/kool:$TAGNAME_MAJOR
