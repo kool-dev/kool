@@ -9,7 +9,7 @@ create:
       - scripts:
           - docker pull -q kooldev/node:16
           - mkdir $CREATE_DIRECTORY
-          - kool docker kooldev/node:16 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY/backend
+          - kool docker kooldev/node:16 npx -y @nestjs/cli new -l Typescript -p npm --skip-git $CREATE_DIRECTORY/backend
           - kool docker kooldev/node:16 npx -y create-next-app@latest --ts --use-npm $CREATE_DIRECTORY/frontend
 
 preset:
