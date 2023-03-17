@@ -1,3 +1,5 @@
+title: "PHP 8.1 + Swoole"
+
 actions:
   - merge: app/php81-swoole.yml
     dst: docker-compose.yml

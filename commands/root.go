@@ -25,11 +25,10 @@ var hasWarnedDevelopmentVersion = false
 var AddCommands AddCommandsFN = func(root *cobra.Command) {
 	AddKoolCompletion(root)
 	AddKoolCreate(root)
-	AddKoolDeploy(root)
+	AddKoolCloud(root)
 	AddKoolDocker(root)
 	AddKoolExec(root)
 	AddKoolInfo(root)
-	AddKoolInit(root)
 	AddKoolLogs(root)
 	AddKoolPreset(root)
 	AddKoolRestart(root)

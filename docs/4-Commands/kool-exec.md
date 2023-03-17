@@ -14,7 +14,6 @@ kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
 
 ```
   -d, --detach            Detached mode: Run command in the background.
-  -T, --disable-tty       Deprecated - no effect.
   -e, --env stringArray   Environment variables.
   -h, --help              help for exec
 ```

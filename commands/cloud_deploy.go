@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/cloud/api"
 	"kool-dev/kool/services/tgz"
 	"os"
@@ -49,15 +50,6 @@ func NewKoolDeploy() *KoolDeploy {
 
 		builder.NewCommand("git"),
 	}
-}
-
-func AddKoolDeploy(root *cobra.Command) {
-	deployCmd := NewDeployCommand(NewKoolDeploy())
-
-	root.AddCommand(deployCmd)
-	deployCmd.AddCommand(NewDeployExecCommand(NewKoolDeployExec()))
-	deployCmd.AddCommand(NewDeployDestroyCommand(NewKoolDeployDestroy()))
-	deployCmd.AddCommand(NewDeployLogsCommand(NewKoolDeployLogs()))
 }
 
 // Execute runs the deploy logic.
@@ -260,11 +252,7 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 }
 
 func (d *KoolDeploy) validate() (err error) {
-	var path = filepath.Join(d.env.Get("PWD"), koolDeployFile)
-
-	if _, err = os.Stat(path); os.IsNotExist(err) {
-		err = fmt.Errorf("could not find required file (%s) on current working directory", koolDeployFile)
-	}
+	err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile)
 
 	return
 }

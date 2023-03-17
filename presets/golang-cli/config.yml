@@ -1,5 +1,5 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
-tags: [ 'PHP' ]
+tags: [ 'Golang' ]
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:

@@ -1,3 +1,5 @@
+title: "Yarn (Laravel)"
+
 actions:
   - merge: scripts/yarn-laravel.yml
     dst: kool.yml

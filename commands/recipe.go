@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"kool-dev/kool/core/automate"
 	"kool-dev/kool/core/presets"
+	"kool-dev/kool/core/shell"
 	"strings"
 
 	"github.com/agnivade/levenshtein"
@@ -13,6 +14,8 @@ import (
 // KoolRecipe holds handlers and functions to implement the preset command logic
 type KoolRecipe struct {
 	DefaultKoolService
+
+	promptSelet shell.PromptSelect
 }
 
 func AddKoolRecipe(root *cobra.Command) {
@@ -28,12 +31,44 @@ func AddKoolRecipe(root *cobra.Command) {
 func NewKoolRecipe() *KoolRecipe {
 	return &KoolRecipe{
 		*newDefaultKoolService(),
+		shell.NewPromptSelect(),
 	}
 }
 
 // Execute runs the add logic with incoming arguments.
 func (p *KoolRecipe) Execute(args []string) (err error) {
-	var recipe = args[0]
+	var recipe string
+
+	if len(args) == 1 {
+		recipe = args[0]
+	} else {
+		// we need to tell the user to choose a recipe
+		var metas []*automate.RecipeMetadata
+
+		if metas, err = automate.GetRecipes(); err != nil {
+			return
+		}
+
+		var choices []string
+		var mapTitleToSlug = make(map[string]string)
+		var answer string
+		for _, meta := range metas {
+			if mapTitleToSlug[meta.Title] != "" {
+				// we already have a recipe with this title, so we skip it
+				continue
+			}
+
+			choices = append(choices, meta.Title)
+
+			mapTitleToSlug[meta.Title] = meta.Slug
+		}
+
+		if answer, err = p.promptSelet.Ask("Select a recipe to run", choices); err != nil {
+			return
+		} else {
+			recipe = mapTitleToSlug[answer]
+		}
+	}
 
 	err = presets.NewParser().Add(recipe, p.Shell())
 
@@ -46,7 +81,7 @@ func NewRecipeCommand(recipe *KoolRecipe) (recipeCmd *cobra.Command) {
 		Use:   "recipe [RECIPE]",
 		Short: "Adds configuration for some recipe in the current work directory.",
 		Long:  `Run the defines steps for a recipe which can add/edit files the current project directory in order to add some new service or configuration.`,
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) == 0 {
 				return nil, cobra.ShellCompDirectiveDefault

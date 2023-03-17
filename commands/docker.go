@@ -11,7 +11,6 @@ import (
 
 // KoolDockerFlags holds the flags for the docker command
 type KoolDockerFlags struct {
-	DisableTty   bool
 	EnvVariables []string
 	Volumes      []string
 	Publish      []string
@@ -40,7 +39,7 @@ func AddKoolDocker(root *cobra.Command) {
 func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
-		&KoolDockerFlags{false, []string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -104,7 +103,6 @@ the [COMMAND] to provide optional arguments required by the COMMAND.`,
 		DisableFlagsInUseLine: true,
 	}
 
-	cmd.Flags().BoolVarP(&docker.Flags.DisableTty, "disable-tty", "T", false, "Deprecated - no effect.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
