@@ -1,0 +1,20 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'NGINX' ]
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new NGINX Application
+    actions:
+      - scripts:
+          - mkdir -p $CREATE_DIRECTORY/public
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: index.html
+        dst: public/index.html
+      - copy: docker-compose.yml
+      - merge: nginx.yml
+        dst: docker-compose.yml
+      - copy: kool.yml
