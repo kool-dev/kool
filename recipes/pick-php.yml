@@ -5,7 +5,10 @@ actions:
   - prompt: 'Which PHP version do you want to use'
     default: 'PHP 8.1'
     options:
-      - name: 'PHP 8.1'
+      - name: 'PHP 8.2'
+        actions:
+          - recipe: php-8.2
+      - name: 'PHP 8.2'
         actions:
           - recipe: php-8.1
       - name: 'PHP 8.0'
