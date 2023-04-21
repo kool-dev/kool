@@ -34,6 +34,10 @@ do_install () {
 		ARCH="amd64"
 	fi
 
+	if [ "$ARCH" == "aarch64" ]; then
+		ARCH="arm64"
+	fi
+
 	echo "Downloading latest binary (kool-$PLAT-$ARCH)..."
 
 	# TODO: fallback to wget if no curl available
