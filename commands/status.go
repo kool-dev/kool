@@ -50,9 +50,9 @@ func NewKoolStatus() *KoolStatus {
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		builder.NewCommand("docker", "compose", "ps", "--services"),
-		builder.NewCommand("docker", "compose", "ps", "-q"),
-		builder.NewCommand("docker", "ps", "-a", "--format", "{{.Status}}|{{.Ports}}"),
+		builder.NewCommand("docker", "compose", "ps", "--all", "--services"),
+		builder.NewCommand("docker", "compose", "ps", "--all", "--quiet"),
+		builder.NewCommand("docker", "ps", "--all", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewTableWriter(),
 	}
 }
