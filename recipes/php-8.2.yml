@@ -1,0 +1,5 @@
+title: "PHP 8.2"
+
+actions:
+  - merge: app/php82.yml
+    dst: docker-compose.yml

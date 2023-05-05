@@ -1,0 +1,10 @@
+services:
+  app:
+    image: kooldev/nginx:static
+    ports:
+      - "${KOOL_APP_PORT:-80}:80"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global
