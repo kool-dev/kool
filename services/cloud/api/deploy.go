@@ -63,7 +63,8 @@ func (d *Deploy) SendFile() (err error) {
 			if errAPI.Status == http.StatusUnauthorized {
 				err = ErrUnauthorized
 			} else if errAPI.Status == http.StatusUnprocessableEntity {
-				fmt.Println(err)
+				fmt.Println(errAPI.Message)
+				fmt.Println(errAPI.Errors)
 				err = ErrPayloadValidation
 			} else if errAPI.Status != http.StatusOK && errAPI.Status != http.StatusCreated {
 				err = ErrBadResponseStatus
@@ -74,7 +75,7 @@ func (d *Deploy) SendFile() (err error) {
 
 	d.id = fmt.Sprintf("%d", resp.ID)
 	if d.id == "0" {
-		err = errors.New("unexpected API response, please ask for support")
+		err = errors.New("unexpected API response, please reach out for support on Slack or Github")
 	}
 
 	return
