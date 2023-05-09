@@ -18,7 +18,7 @@ import (
 
 const (
 	koolDeployEnv  = "kool.deploy.env"
-	koolDeployFile = "kool.deploy.yml"
+	koolDeployFile = "kool.cloud.yml"
 )
 
 // KoolDeploy holds handlers and functions for using Deploy API
