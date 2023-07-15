@@ -4,5 +4,5 @@ actions:
   - merge: app/php81-roadrunner.yml
     dst: docker-compose.yml
   - scripts:
-    - kool docker kooldev/php:8.1-nginx composer require laravel/octane spiral/roadrunner
+    - kool docker kooldev/php:8.1-nginx composer require laravel/octane spiral/roadrunner spiral/roadrunner-http spiral/roadrunner-cli
     - kool docker kooldev/php:8.1-nginx php artisan octane:install --server=roadrunner --no-interaction
