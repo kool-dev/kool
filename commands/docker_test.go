@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"os"
+	"path"
 	"runtime"
 	"testing"
 )
@@ -14,7 +15,7 @@ import (
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*(newDefaultKoolService().Fake()),
-		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker"},
 	}
@@ -23,7 +24,7 @@ func newFakeKoolDocker() *KoolDocker {
 func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*(newDefaultKoolService().Fake()),
-		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
@@ -49,6 +50,10 @@ func TestNewKoolDocker(t *testing.T) {
 
 		if len(k.Flags.Publish) > 0 {
 			t.Errorf("bad default value for Publish flag on default KoolDocker instance")
+		}
+
+		if k.Flags.Context != "" {
+			t.Errorf("bad default value for Context flag on default KoolDocker instance")
 		}
 	}
 
@@ -268,4 +273,36 @@ func TestNonTerminalNewDockerCommand(t *testing.T) {
 	if len(argsAppend) != 2 || argsAppend[0] == "-t" {
 		t.Errorf("bad arguments to KoolDocker.dockerRun Command on non terminal environment")
 	}
+}
+
+func TestContextFlagNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
+	cmd := NewDockerCommand(f)
+
+	cmd.SetArgs([]string{"--context=context_test", "image"})
+
+	workDir, _ := os.Getwd()
+	workDir = path.Join(workDir, "context_test")
+	_ = os.MkdirAll(workDir, 0755)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing docker command; error: %v", err)
+	}
+
+	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
+
+	if argsAppend[0] != "--volume" || argsAppend[1] != workDir+":/app:delegated" {
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with context flag: %v", argsAppend)
+	}
+}
+
+func TestInvalidContextFlagNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
+	cmd := NewDockerCommand(f)
+
+	cmd.SetArgs([]string{"--context=invalid_context", "image"})
+
+	assertExecGotError(t, cmd, "please enter a valid context directory")
 }

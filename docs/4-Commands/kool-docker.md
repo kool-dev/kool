@@ -16,6 +16,7 @@ kool docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]
 ### Options
 
 ```
+  -c, --context string        Working directory context.
   -e, --env stringArray       Environment variables.
   -h, --help                  help for docker
   -n, --network stringArray   Connect a container to a network.

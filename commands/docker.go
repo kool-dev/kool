@@ -1,9 +1,11 @@
 package commands
 
 import (
+	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"os"
+	"path"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -15,6 +17,7 @@ type KoolDockerFlags struct {
 	Volumes      []string
 	Publish      []string
 	Network      []string
+	Context      string
 }
 
 // KoolDocker holds handlers and functions to implement the docker command logic
@@ -39,7 +42,7 @@ func AddKoolDocker(root *cobra.Command) {
 func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
-		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -48,6 +51,14 @@ func NewKoolDocker() *KoolDocker {
 // Execute runs the docker logic with incoming arguments.
 func (d *KoolDocker) Execute(args []string) (err error) {
 	workDir, _ := os.Getwd()
+
+	if context := d.Flags.Context; context != "" {
+		workDir = path.Join(workDir, context)
+		if _, err = os.Stat(workDir); err != nil {
+			err = fmt.Errorf("please enter a valid context directory")
+			return
+		}
+	}
 
 	if d.Shell().IsTerminal() {
 		d.dockerRun.AppendArgs("-t")
@@ -107,6 +118,7 @@ the [COMMAND] to provide optional arguments required by the COMMAND.`,
 	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Network, "network", "n", []string{}, "Connect a container to a network.")
+	cmd.Flags().StringVarP(&docker.Flags.Context, "context", "c", "", "Working directory context.")
 
 	//After a non-flag arg, stop parsing flags
 	cmd.Flags().SetInterspersed(false)
