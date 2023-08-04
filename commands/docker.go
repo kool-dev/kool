@@ -8,6 +8,7 @@ import (
 	"path"
 	"runtime"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,7 @@ type KoolDocker struct {
 	DefaultKoolService
 	Flags *KoolDockerFlags
 
+	fileSystem afero.Fs
 	envStorage environment.EnvStorage
 	dockerRun  builder.Command
 }
@@ -43,6 +45,7 @@ func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
 		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
+		afero.NewOsFs(),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -54,7 +57,7 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 
 	if context := d.Flags.Context; context != "" {
 		workDir = path.Join(workDir, context)
-		if _, err = os.Stat(workDir); err != nil {
+		if _, err = d.fileSystem.Stat(workDir); err != nil {
 			err = fmt.Errorf("please enter a valid context directory")
 			return
 		}

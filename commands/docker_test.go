@@ -10,12 +10,15 @@ import (
 	"path"
 	"runtime"
 	"testing"
+
+	"github.com/spf13/afero"
 )
 
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*(newDefaultKoolService().Fake()),
 		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
+		afero.NewMemMapFs(),
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker"},
 	}
@@ -25,6 +28,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*(newDefaultKoolService().Fake()),
 		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
+		afero.NewMemMapFs(),
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
@@ -284,7 +288,7 @@ func TestContextFlagNewDockerCommand(t *testing.T) {
 
 	workDir, _ := os.Getwd()
 	workDir = path.Join(workDir, "context_test")
-	_ = os.MkdirAll(workDir, 0755)
+	_ = f.fileSystem.MkdirAll(workDir, 0755)
 
 	if err := cmd.Execute(); err != nil {
 		t.Errorf("unexpected error executing docker command; error: %v", err)
@@ -302,7 +306,7 @@ func TestInvalidContextFlagNewDockerCommand(t *testing.T) {
 	f.shell.(*shell.FakeShell).MockIsTerminal = false
 	cmd := NewDockerCommand(f)
 
-	cmd.SetArgs([]string{"--context=invalid_context", "image"})
+	cmd.SetArgs([]string{"--context=context_test", "image"})
 
 	assertExecGotError(t, cmd, "please enter a valid context directory")
 }
