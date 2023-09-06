@@ -1,7 +1,7 @@
 scripts:
   composer: kool exec app composer
   artisan: kool exec app php artisan
-  phpunit: kool exec app php ./bin/phpunit
+  phpunit: kool exec app php ./vendor/bin/phpunit
 
   setup:
     - kool run before-start
