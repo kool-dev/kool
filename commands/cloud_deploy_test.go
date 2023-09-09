@@ -25,6 +25,10 @@ func TestNewKoolDeploy(t *testing.T) {
 func fakeKoolDeploy() *KoolDeploy {
 	return &KoolDeploy{
 		*(newDefaultKoolService().Fake()),
+		&KoolCloudDeployFlags{
+			DeployDomain: "foo",
+			Token:        "bar",
+		},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{},
 	}

@@ -21,17 +21,30 @@ const (
 	koolDeployFile = "kool.cloud.yml"
 )
 
+// KoolCloudDeployFlags holds the flags for the kool cloud deploy command
+type KoolCloudDeployFlags struct {
+	Token              string   // env: KOOL_API_TOKEN
+	Timeout            uint     // env: KOOL_API_TIMEOUT
+	WwwRedirect        bool     // env: KOOL_DEPLOY_WWW_REDIRECT
+	DeployDomain       string   // env: KOOL_DEPLOY_DOMAIN
+	DeployDomainExtras []string // env: KOOL_DEPLOY_DOMAIN_EXTRAS
+
+	// Cluster            string // env: KOOL_DEPLOY_CLUSTER
+	// env: KOOL_API_URL
+}
+
 // KoolDeploy holds handlers and functions for using Deploy API
 type KoolDeploy struct {
 	DefaultKoolService
 
-	env environment.EnvStorage
-	git builder.Command
+	flags *KoolCloudDeployFlags
+	env   environment.EnvStorage
+	git   builder.Command
 }
 
 // NewDeployCommand initializes new kool deploy Cobra command
-func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
-	return &cobra.Command{
+func NewDeployCommand(deploy *KoolDeploy) (cmd *cobra.Command) {
+	cmd = &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy a local application to a Kool Cloud environment",
 		RunE:  DefaultCommandRunFunction(deploy),
@@ -39,6 +52,14 @@ func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 
 		DisableFlagsInUseLine: true,
 	}
+
+	cmd.Flags().StringVarP(&deploy.flags.Token, "token", "", "", "Token to authenticate with Kool Cloud API")
+	cmd.Flags().StringVarP(&deploy.flags.DeployDomain, "domain", "", "", "Environment domain name to deploy to")
+	cmd.Flags().UintVarP(&deploy.flags.Timeout, "timeout", "", 0, "Timeout in minutes for waiting the deployment to finish")
+	cmd.Flags().StringArrayVarP(&deploy.flags.DeployDomainExtras, "domain-extra", "", []string{}, "List of extra domain aliases")
+	cmd.Flags().BoolVarP(&deploy.flags.WwwRedirect, "www-redirect", "", false, "Redirect www to non-www domain")
+
+	return
 }
 
 // NewKoolDeploy creates a new pointer with default KoolDeploy service
@@ -46,8 +67,8 @@ func NewDeployCommand(deploy *KoolDeploy) *cobra.Command {
 func NewKoolDeploy() *KoolDeploy {
 	return &KoolDeploy{
 		*newDefaultKoolService(),
+		&KoolCloudDeployFlags{},
 		environment.NewEnvStorage(),
-
 		builder.NewCommand("git"),
 	}
 }
@@ -88,9 +109,11 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 	d.Shell().Println("Going to deploy...")
 
-	timeout := 30 * time.Minute
+	timeout := 15 * time.Minute
 
-	if min, err := strconv.Atoi(d.env.Get("KOOL_API_TIMEOUT")); err == nil {
+	if d.flags.Timeout > 0 {
+		timeout = time.Duration(d.flags.Timeout) * time.Minute
+	} else if min, err := strconv.Atoi(d.env.Get("KOOL_API_TIMEOUT")); err == nil {
 		timeout = time.Duration(min) * time.Minute
 	}
 
@@ -252,7 +275,41 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 }
 
 func (d *KoolDeploy) validate() (err error) {
-	err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile)
+	if err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile); err != nil {
+		return
+	}
+
+	// if no domain is set, we try to get it from the environment
+	if d.flags.DeployDomain == "" && d.env.Get("KOOL_DEPLOY_DOMAIN") == "" {
+		err = fmt.Errorf("Missing deploy domain. Please set it via --domain or KOOL_DEPLOY_DOMAIN environment variable.")
+		return
+	} else if d.flags.DeployDomain != "" {
+		// shares the flag via environment variable
+		d.env.Set("KOOL_DEPLOY_DOMAIN", d.flags.DeployDomain)
+	}
+
+	// if no token is set, we try to get it from the environment
+	if d.flags.Token == "" && d.env.Get("KOOL_API_TOKEN") == "" {
+		err = fmt.Errorf("Missing Kool Cloud API token. Please set it via --token or KOOL_API_TOKEN environment variable.")
+		return
+	} else if d.flags.Token != "" {
+		d.env.Set("KOOL_API_TOKEN", d.flags.Token)
+	}
+
+	// share the www-redirection flag via environment variable
+	if d.flags.WwwRedirect {
+		d.env.Set("KOOL_DEPLOY_WWW_REDIRECT", "true")
+	}
+
+	// share the domain extras via environment variable
+	if len(d.flags.DeployDomainExtras) > 0 {
+		d.env.Set("KOOL_DEPLOY_DOMAIN_EXTRAS", strings.Join(d.flags.DeployDomainExtras, ","))
+	}
+
+	// TODO: make a call to the cloud API to validate the config
+	// - validate the token is valid
+	// - validate the domain is valid / the token gives access to it
+	// - validate the domain extras are valid / the token gives access to them
 
 	return
 }
