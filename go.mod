@@ -1,6 +1,6 @@
 module kool-dev/kool
 
-go 1.19
+go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
@@ -32,10 +32,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	github.com/compose-spec/compose-go v1.13.0
-	github.com/docker/cli v20.10.22+incompatible
-)
+require github.com/compose-spec/compose-go v1.13.0
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
