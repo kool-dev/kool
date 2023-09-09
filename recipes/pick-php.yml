@@ -8,7 +8,7 @@ actions:
       - name: 'PHP 8.2'
         actions:
           - recipe: php-8.2
-      - name: 'PHP 8.2'
+      - name: 'PHP 8.1'
         actions:
           - recipe: php-8.1
       - name: 'PHP 8.0'

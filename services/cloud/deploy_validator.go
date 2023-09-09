@@ -38,7 +38,15 @@ func ValidateKoolDeployFile(workingDir string, koolDeployFile string) (err error
 	path = filepath.Join(workingDir, koolDeployFile)
 
 	if _, err = os.Stat(path); os.IsNotExist(err) {
-		err = fmt.Errorf("could not find required file (%s) on current working directory", koolDeployFile)
+		// temporary failback to old file name
+		path = filepath.Join(workingDir, "kool.deploy.yml")
+
+		if _, err = os.Stat(path); os.IsNotExist(err) {
+			err = fmt.Errorf("could not find required file (%s) on current working directory", "kool.cloud.yml")
+			return
+		} else if err != nil {
+			return
+		}
 		return
 	} else if err != nil {
 		return
@@ -52,7 +60,6 @@ func ValidateKoolDeployFile(workingDir string, koolDeployFile string) (err error
 		return
 	}
 
-	var gotPublicService = false
 	for service, config := range deployConfig.Services {
 		// validates build file exists if defined
 		if config.Build != nil {
@@ -67,15 +74,6 @@ func ValidateKoolDeployFile(workingDir string, koolDeployFile string) (err error
 
 		// validates only one service can be public, and it must define a port
 		if config.Public != nil {
-			// this is a public service
-			if gotPublicService {
-				// we can have only the one!
-				err = fmt.Errorf("service (%s) is public, but another service is already public", service)
-				return
-			}
-
-			gotPublicService = true
-
 			// being public, it must define the `port` entry as well
 			if config.Port == nil {
 				err = fmt.Errorf("service (%s) is public, but it does not define the `port` entry", service)

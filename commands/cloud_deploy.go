@@ -18,7 +18,7 @@ import (
 
 const (
 	koolDeployEnv  = "kool.deploy.env"
-	koolDeployFile = "kool.deploy.yml"
+	koolDeployFile = "kool.cloud.yml"
 )
 
 // KoolCloudDeployFlags holds the flags for the kool cloud deploy command
