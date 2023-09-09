@@ -19,6 +19,6 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
       - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.47.3
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1
       - name: Run golangci-lint
         run: golangci-lint run --version --verbose --out-format=github-actions
