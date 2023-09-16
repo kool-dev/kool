@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/compose"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -154,12 +155,12 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 				answer = potentialPorts[0]
 			}
 
-			deployConfig.Services[serviceName].Port = new(string)
-			*deployConfig.Services[serviceName].Port = answer
+			deployConfig.Services[serviceName].Port = new(int)
+			*deployConfig.Services[serviceName].Port, _ = strconv.Atoi(answer)
 
 			public := &cloud.DeployConfigPublicEntry{}
-			public.Port = new(string)
-			*public.Port = answer
+			public.Port = new(int)
+			*public.Port = *deployConfig.Services[serviceName].Port
 
 			deployConfig.Services[serviceName].Public = append(deployConfig.Services[serviceName].Public, public)
 		}
