@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/shell"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ type Deploy struct {
 	tarballPath, id string
 
 	env environment.EnvStorage
+	out shell.Shell
 
 	Status *StatusResponse
 }
@@ -34,6 +36,7 @@ func NewDeploy(tarballPath string) *Deploy {
 	return &Deploy{
 		Endpoint:    NewDefaultEndpoint("POST"),
 		env:         environment.NewEnvStorage(),
+		out:         shell.NewShell(),
 		tarballPath: tarballPath,
 	}
 }
@@ -63,8 +66,14 @@ func (d *Deploy) SendFile() (err error) {
 			if errAPI.Status == http.StatusUnauthorized {
 				err = ErrUnauthorized
 			} else if errAPI.Status == http.StatusUnprocessableEntity {
-				fmt.Println(errAPI.Message)
-				fmt.Println(errAPI.Errors)
+				d.out.Error(errors.New(errAPI.Message))
+				for field, apiErr := range errAPI.Errors {
+					if apiErrs, ok := apiErr.([]interface{}); ok {
+						for _, apiErrStr := range apiErrs {
+							d.out.Error(fmt.Errorf("\t[%s] -> %v", field, apiErrStr))
+						}
+					}
+				}
 				err = ErrPayloadValidation
 			} else if errAPI.Status != http.StatusOK && errAPI.Status != http.StatusCreated {
 				err = ErrBadResponseStatus
@@ -99,7 +108,7 @@ func (d *Deploy) getPayload() (body io.Reader, err error) {
 	}
 
 	fi, _ := file.Stat()
-	fmt.Printf("Release tarball got %.2fMBs...\n", float64(fi.Size())/1024/1024)
+	d.out.Printf("Release tarball got %.2fMBs...\n", float64(fi.Size())/1024/1024)
 
 	if fw, err = w.CreateFormFile("deploy", "deploy.tgz"); err != nil {
 		return
