@@ -19,7 +19,8 @@ type DeployConfigService struct {
 	Build *string `yaml:"build,omitempty"`
 	Port  *int    `yaml:"port,omitempty"`
 
-	Public []*DeployConfigPublicEntry `yaml:"public,omitempty"`
+	Public      []*DeployConfigPublicEntry `yaml:"public,omitempty"`
+	Environment interface{}                `yaml:"environment"`
 }
 
 type DeployConfigPublicEntry struct {
