@@ -57,7 +57,7 @@ for i in "${!BUILD[@]}"; do
     $flags \
     --env CGO_ENABLED=0 \
     -v $(pwd):/code -w /code $GO_IMAGE \
-    go build -a -tags 'osusergo netgo static_build' \
+    go build -buildvcs=false -a -tags 'osusergo netgo static_build' \
     -ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
     -o $dist
 done

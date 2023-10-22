@@ -17,13 +17,14 @@ type DeployConfig struct {
 type DeployConfigService struct {
 	Image *string `yaml:"image,omitempty"`
 	Build *string `yaml:"build,omitempty"`
-	Port  *string `yaml:"port,omitempty"`
+	Port  *int    `yaml:"port,omitempty"`
 
-	Public []*DeployConfigPublicEntry `yaml:"public,omitempty"`
+	Public      []*DeployConfigPublicEntry `yaml:"public,omitempty"`
+	Environment interface{}                `yaml:"environment"`
 }
 
 type DeployConfigPublicEntry struct {
-	Port *string `yaml:"port"`
+	Port *int    `yaml:"port"`
 	Path *string `yaml:"path,omitempty"`
 }
 

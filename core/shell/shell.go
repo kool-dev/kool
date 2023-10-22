@@ -252,7 +252,7 @@ func (s *DefaultShell) Success(out ...interface{}) {
 
 // Info info message
 func (s *DefaultShell) Info(out ...interface{}) {
-	fmt.Fprintln(s.OutStream(), color.New(color.Blue).Sprint(out...))
+	fmt.Fprintln(s.OutStream(), color.New(color.Cyan).Sprint(out...))
 }
 
 // Exec will execute the given command silently and return the combined
