@@ -47,8 +47,13 @@ preset:
                 dst: kool.yml
               - recipe: php-8.2-roadrunner
 
-  - name: 'Customize Database, Cache and Node Package Manager'
+  - name: 'Use NPM and install dependencies'
+    actions:
+      - recipe: npm-laravel
+      - scripts:
+        - kool run npm install --save-dev chokidar
+
+  - name: 'Customize Database and Cache'
     actions:
       - recipe: pick-db
       - recipe: pick-cache
-      - recipe: pick-laravel-node
