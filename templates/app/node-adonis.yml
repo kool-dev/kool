@@ -1,7 +1,7 @@
 services:
   app:
-    image: kooldev/node:16-adonis
-    command: ["adonis", "serve", "--dev"]
+    image: kooldev/node:18
+    command: ["npx", "adonis", "serve", "--dev"]
     ports:
       - "${KOOL_APP_PORT:-3333}:3333"
     environment:

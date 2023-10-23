@@ -8,9 +8,6 @@ actions:
       - name: 'MySQL 8.0'
         actions:
           - recipe: mysql-8
-      - name: 'MySQL 5.7'
-        actions:
-          - recipe: mysql-5.7
       - name: 'MariaDB 10.5'
         actions:
           - recipe: maria-10.5
