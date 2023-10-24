@@ -13,14 +13,13 @@ create:
           - name: 'Swoole'
             actions:
               - scripts:
-                - docker pull -q kooldev/php:8.2-nginx
-                - docker pull -q kooldev/php:8.2-nginx-swoole
-                - kool docker kooldev/php:8.2-nginx-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+                - docker pull -q kooldev/php:8.2-swoole
+                - kool docker kooldev/php:8.2-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
           - name: 'RoadRunner'
             actions:
               - scripts:
-                - docker pull -q kooldev/php:8.2-nginx
-                - kool docker kooldev/php:8.2-nginx composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+                - docker pull -q kooldev/php:8.2-node
+                - kool docker kooldev/php:8.2-node composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:

@@ -4,5 +4,5 @@ actions:
   - merge: app/php82-swoole.yml
     dst: docker-compose.yml
   - scripts:
-    - kool docker kooldev/php:8.2-nginx-swoole composer require laravel/octane
-    - kool docker kooldev/php:8.2-nginx-swoole php artisan octane:install --server=swoole
+    - kool docker kooldev/php:8.2-swoole composer require laravel/octane
+    - kool docker kooldev/php:8.2-swoole php artisan octane:install --server=swoole
