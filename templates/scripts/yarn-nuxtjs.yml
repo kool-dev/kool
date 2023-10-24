@@ -2,5 +2,5 @@ scripts:
   yarn: kool exec app yarn
 
   setup:
-    - kool docker kooldev/node:16 yarn install
+    - kool docker kooldev/node:20 yarn install
     - kool start

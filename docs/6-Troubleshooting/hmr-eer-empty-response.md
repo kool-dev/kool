@@ -17,8 +17,8 @@ For the sake of clarity, let's elect port `8080` to publish.
 In your `kool.yml`, apply the following changes:
 
 ```diff
--npm: kool docker kooldev/node:16 npm
-+npm: kool docker -p 8080:8080 kooldev/node:16 npm
+-npm: kool docker kooldev/node:20 npm
++npm: kool docker -p 8080:8080 kooldev/node:20 npm
 ```
 
 - Alternatively, if you don't want to publish the port for your general `kool run npm` commands, you may add a new entry.

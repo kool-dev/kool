@@ -6,8 +6,8 @@ create:
   - name: Creating new NextJS Application
     actions:
       - scripts:
-          - docker pull -q kooldev/node:16
-          - kool docker kooldev/node:16 yarn create next-app $CREATE_DIRECTORY
+          - docker pull -q kooldev/node:20
+          - kool docker kooldev/node:20 yarn create next-app $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:

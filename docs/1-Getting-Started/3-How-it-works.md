@@ -68,8 +68,8 @@ scripts:
   artisan: kool exec app php artisan
   composer: kool exec app composer
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
-  node: kool docker kooldev/node:16 node
-  npm: kool docker kooldev/node:16 npm # or yarn
+  node: kool docker kooldev/node:20 node
+  npm: kool docker kooldev/node:20 npm # or yarn
   npx: kool exec app npx
 
   setup:

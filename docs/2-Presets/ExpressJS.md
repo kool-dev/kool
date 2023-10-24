@@ -69,7 +69,7 @@ scripts:
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:16 npm install
+    - kool docker kooldev/node:20 npm install
     - kool start
 	# - add more setup commands
 ```

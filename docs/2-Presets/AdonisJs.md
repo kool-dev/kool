@@ -147,7 +147,7 @@ scripts:
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:16 npm install # or yarn install
+    - kool docker kooldev/node:20 npm install # or yarn install
     - kool start
 ```
 

@@ -157,8 +157,8 @@ Here's a **kool.yml** example to show you the types of commands you can add and 
 ```yaml
 scripts:
   composer: kool exec app composer2
-  node: kool docker kooldev/node:16 node
-  yarn: kool docker kooldev/node:16 yarn
+  node: kool docker kooldev/node:20 node
+  yarn: kool docker kooldev/node:20 yarn
 
   setup:
     - kool docker kooldev/bash -c "cp .env.example .env"

@@ -1,6 +1,6 @@
 services:
   node:
-    image: kooldev/node:16
+    image: kooldev/node:20
     command: ["yarn", "dev"]
     ports:
       - "3001:3001"
