@@ -1,6 +1,6 @@
 services:
   cache:
-    image: redis:6-alpine
+    image: redis:7-alpine
     volumes:
       - cache:/data:delegated
     networks:

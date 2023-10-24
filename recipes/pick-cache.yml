@@ -3,11 +3,11 @@ title: "Wizard: cache service"
 actions:
   # Defines which cache service to use (in-memory key/value storage)
   - prompt: 'Which cache service do you want to use'
-    default: 'Redis 6.0'
+    default: 'Redis 7.0'
     options:
-      - name: 'Redis 6.0'
+      - name: 'Redis 7.0'
         actions:
-          - recipe: redis-6
+          - recipe: redis-7
       - name: 'Memcached 1.6'
         actions:
           - recipe: memcached-1.6

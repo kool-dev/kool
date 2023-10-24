@@ -1,0 +1,5 @@
+title: "Redis 7"
+
+actions:
+  - merge: cache/redis7.yml
+    dst: docker-compose.yml
