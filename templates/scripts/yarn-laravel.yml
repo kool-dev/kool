@@ -1,6 +1,6 @@
 scripts:
   # yarn - helpers for JS handling
-  yarn: kool docker kooldev/node:16 yarn
+  yarn: kool docker kooldev/node:20 yarn
   before-start:
     - kool run yarn install
   reset:

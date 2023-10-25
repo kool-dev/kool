@@ -3,7 +3,7 @@ scripts:
     # copy .env file
     - cp .env.dist .env
     # install backend deps
-    - kool docker kooldev/node:16 npm install
+    - kool docker kooldev/node:20 npm install
 
   # helpers
   npm: kool exec app npm

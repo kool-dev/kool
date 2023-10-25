@@ -25,7 +25,7 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create nextjs my-project
 ```
 
-Under the hood, this command will run `yarn create next-app my-project` to install Next.js using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:16</a>.
+Under the hood, this command will run `yarn create next-app my-project` to install Next.js using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:20</a>.
 
 After installing Next.js, `kool create` automatically runs the `kool preset nextjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
@@ -68,7 +68,7 @@ scripts:
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:16 npm install # or yarn install
+    - kool docker kooldev/node:20 npm install # or yarn install
     - kool start
 ```
 

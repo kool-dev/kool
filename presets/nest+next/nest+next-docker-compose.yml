@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: kooldev/node:16
+    image: kooldev/node:20
     command: ["npm", "run", "dev", "--", "-p", "${KOOL_FRONTEND_PORT:-80}"]
     ports:
       - "${KOOL_FRONTEND_PORT:-80}:${KOOL_FRONTEND_PORT:-80}"
@@ -15,7 +15,7 @@ services:
       - kool_local
       - kool_global
   backend:
-    image: kooldev/node:16
+    image: kooldev/node:20
     command: ["npm", "run", "start:dev"]
     ports:
       - "${KOOL_BACKEND_PORT:-81}:${KOOL_BACKEND_PORT:-81}"

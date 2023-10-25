@@ -1,7 +1,7 @@
 version: "3.7"
 services:
   app:
-    image: kooldev/node:16
+    image: kooldev/node:20
     command: ["node", "app.js"]
     ports:
       - "${KOOL_APP_PORT:-3000}:3000"
