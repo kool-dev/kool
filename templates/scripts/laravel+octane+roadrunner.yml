@@ -13,5 +13,5 @@ scripts:
 
   before-start:
     - kool docker kooldev/bash -c "cp .env.example .env"
-    - kool docker kooldev/php:8.1-nginx composer install
-    - kool docker kooldev/php:8.1-nginx php artisan key:generate
+    - kool docker kooldev/php:8.2-node composer install
+    - kool docker kooldev/php:8.2-node php artisan key:generate

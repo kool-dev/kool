@@ -13,5 +13,5 @@ scripts:
 
   before-start:
     - kool docker kooldev/bash -c "cp .env.example .env"
-    - kool docker kooldev/php:8.1-nginx-swoole composer install
-    - kool docker kooldev/php:8.1-nginx-swoole php artisan key:generate
+    - kool docker kooldev/php:8.2-swoole composer install
+    - kool docker kooldev/php:8.2-swoole php artisan key:generate

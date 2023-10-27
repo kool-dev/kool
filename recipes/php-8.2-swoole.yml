@@ -1,0 +1,8 @@
+title: "PHP 8.2 + Swoole"
+
+actions:
+  - merge: app/php82-swoole.yml
+    dst: docker-compose.yml
+  - scripts:
+    - kool docker kooldev/php:8.2-swoole composer require laravel/octane
+    - kool docker kooldev/php:8.2-swoole php artisan octane:install --server=swoole

@@ -13,14 +13,13 @@ create:
           - name: 'Swoole'
             actions:
               - scripts:
-                - docker pull -q kooldev/php:8.1-nginx
-                - docker pull -q kooldev/php:8.1-nginx-swoole
-                - kool docker kooldev/php:8.1-nginx-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+                - docker pull -q kooldev/php:8.2-swoole
+                - kool docker kooldev/php:8.2-swoole composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
           - name: 'RoadRunner'
             actions:
               - scripts:
-                - docker pull -q kooldev/php:8.1-nginx
-                - kool docker kooldev/php:8.1-nginx composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+                - docker pull -q kooldev/php:8.2-node
+                - kool docker kooldev/php:8.2-node composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -40,15 +39,20 @@ preset:
             actions:
               - merge: scripts/laravel+octane+swoole.yml
                 dst: kool.yml
-              - recipe: php-8.1-swoole
+              - recipe: php-8.2-swoole
           - name: 'RoadRunner'
             actions:
               - merge: scripts/laravel+octane+roadrunner.yml
                 dst: kool.yml
-              - recipe: php-8.1-roadrunner
+              - recipe: php-8.2-roadrunner
 
-  - name: 'Customize Database, Cache and Node Package Manager'
+  - name: 'Use NPM and install dependencies'
+    actions:
+      - recipe: npm-laravel
+      - scripts:
+        - kool run npm install --save-dev chokidar
+
+  - name: 'Customize Database and Cache'
     actions:
       - recipe: pick-db
       - recipe: pick-cache
-      - recipe: pick-laravel-node

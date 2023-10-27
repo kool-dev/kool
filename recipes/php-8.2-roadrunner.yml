@@ -1,0 +1,8 @@
+title: "PHP 8.2 + RoadRunner"
+
+actions:
+  - merge: app/php82-roadrunner.yml
+    dst: docker-compose.yml
+  - scripts:
+    - kool docker kooldev/php:8.2-node composer require laravel/octane spiral/roadrunner spiral/roadrunner-http spiral/roadrunner-cli
+    - kool docker kooldev/php:8.2-node php artisan octane:install --server=roadrunner --no-interaction
