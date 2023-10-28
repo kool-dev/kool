@@ -40,7 +40,7 @@ type DefaultParser struct {
 type Parser interface {
 	Exists(string) bool
 	GetTags() []string
-	GetPresets(string) []string
+	GetPresets(string) map[string]string
 	Install(string) error
 	Create(string) error
 	Add(string, shell.Shell) error
@@ -97,7 +97,7 @@ func (p *DefaultParser) GetTags() (tags []string) {
 }
 
 // GetPresets look up all presets IDs with the given tag
-func (p *DefaultParser) GetPresets(tag string) (presets []string) {
+func (p *DefaultParser) GetPresets(tag string) (presets map[string]string) {
 	var (
 		entries []fs.DirEntry
 		folder  fs.DirEntry
@@ -106,6 +106,8 @@ func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 	)
 
 	entries, _ = source.ReadDir("presets")
+
+	presets = make(map[string]string, len(entries))
 
 	for _, folder = range entries {
 		data, _ = source.ReadFile(
@@ -116,11 +118,14 @@ func (p *DefaultParser) GetPresets(tag string) (presets []string) {
 		_ = yaml.Unmarshal(data, config)
 
 		if config.HasTag(tag) {
-			presets = append(presets, folder.Name())
+			presets[folder.Name()] = folder.Name()
+
+			if config.Name != "" {
+				presets[folder.Name()] = config.Name
+			}
 		}
 	}
 
-	sort.Strings(presets)
 	return
 }
 

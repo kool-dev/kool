@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
+	"sort"
 
 	"github.com/spf13/cobra"
 )
@@ -90,6 +91,24 @@ func (p *KoolPreset) getPreset(args []string) (preset string, err error) {
 		return
 	}
 
-	preset, err = p.promptSelect.Ask("What preset do you want to use", p.presetsParser.GetPresets(tag))
+	var availablePresets = p.presetsParser.GetPresets(tag)
+	var presets []string
+
+	for _, name := range availablePresets {
+		presets = append(presets, name)
+	}
+
+	sort.Strings(presets)
+
+	var pickedPreset string
+
+	pickedPreset, err = p.promptSelect.Ask("What preset do you want to use", presets)
+
+	for preset, name := range availablePresets {
+		if name == pickedPreset {
+			pickedPreset = preset
+		}
+	}
+
 	return
 }

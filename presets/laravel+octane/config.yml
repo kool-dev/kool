@@ -1,6 +1,8 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'PHP' ]
 
+name: 'Laravel Octane'
+
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
   # picks what engine to use

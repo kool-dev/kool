@@ -1,6 +1,8 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'JS' ]
 
+name: 'NuxtJS'
+
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
   - name: Creating new Nuxt Application

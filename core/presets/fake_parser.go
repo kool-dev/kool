@@ -13,7 +13,7 @@ type FakeParser struct {
 
 	MockExists     bool
 	MockGetTags    []string
-	MockGetPresets []string
+	MockGetPresets map[string]string
 	MockInstall    error
 	MockCreate     error
 	MockAdd        error
@@ -38,7 +38,7 @@ func (f *FakeParser) GetTags() (languages []string) {
 }
 
 // GetPresets get all presets names
-func (f *FakeParser) GetPresets(tag string) (presets []string) {
+func (f *FakeParser) GetPresets(tag string) (presets map[string]string) {
 	f.CalledGetPresets = true
 	presets = f.MockGetPresets
 	return
