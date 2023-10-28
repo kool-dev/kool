@@ -50,7 +50,7 @@ func NewKoolStatus() *KoolStatus {
 		checker.NewChecker(defaultKoolService.shell),
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
-		builder.NewCommand("docker", "compose", "ps", "--all", "--services"),
+		builder.NewCommand("docker", "compose", "config", "--services"),
 		builder.NewCommand("docker", "compose", "ps", "--all", "--quiet"),
 		builder.NewCommand("docker", "ps", "--all", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewTableWriter(),
@@ -65,7 +65,9 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		return
 	}
 
-	if services, err = s.getServices(); err != nil || len(services) == 0 {
+	if services, err = s.getServices(); err != nil {
+		return
+	} else if len(services) == 0 {
 		s.Shell().Warning("No services found.")
 		return
 	}
