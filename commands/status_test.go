@@ -180,9 +180,6 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	fmt.Println("outputs", f.shell.(*shell.FakeShell).WarningOutput, f.shell.(*shell.FakeShell).OutLines, f.shell.(*shell.FakeShell).SuccessOutput)
-	t.Error("error")
-
 	expected = "No services found."
 
 	output = fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
