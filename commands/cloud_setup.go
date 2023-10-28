@@ -90,9 +90,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 		s.Shell().Info(fmt.Sprintf("Setting up service container '%s' for deployment", serviceName))
 		deployConfig.Services[serviceName] = &cloud.DeployConfigService{
-			Environment: map[string]string{
-				"FOO": "bar",
-			},
+			Environment: map[string]string{},
 		}
 
 		// handle image/build config
