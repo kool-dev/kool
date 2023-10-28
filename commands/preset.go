@@ -75,9 +75,9 @@ an interactive wizard will present the available options.`,
 	return
 }
 
-func (p *KoolPreset) getPreset(args []string) (preset string, err error) {
+func (p *KoolPreset) getPreset(args []string) (pickedPreset string, err error) {
 	if len(args) == 1 {
-		preset = args[0]
+		pickedPreset = args[0]
 		return
 	}
 
@@ -100,9 +100,9 @@ func (p *KoolPreset) getPreset(args []string) (preset string, err error) {
 
 	sort.Strings(presets)
 
-	var pickedPreset string
-
-	pickedPreset, err = p.promptSelect.Ask("What preset do you want to use", presets)
+	if pickedPreset, err = p.promptSelect.Ask("What preset do you want to use", presets); err != nil {
+		return
+	}
 
 	for preset, name := range availablePresets {
 		if name == pickedPreset {
