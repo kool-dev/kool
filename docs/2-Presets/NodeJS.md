@@ -32,11 +32,15 @@ After installing Node.js, `kool create` automatically runs the `kool preset node
 ```bash
 $ Preset nodejs is initializing!
 
-? Which javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which Javascript package manager do you want to use  [Use arrows to move, type to filter]
 > npm
   yarn
+  None
 
-$ Preset nodejs initialized!
+...
+...
+
+Preset nodejs created successfully!
 ```
 
 Now, move into your new Node.js project:
@@ -65,18 +69,21 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 ```yaml
 scripts:
   node: kool exec app node
-  npm: kool exec app npm # or yarn
-  npx: kool exec app npx
-
+  # npm - helpers for JS handling
+  npm: kool docker kooldev/node:20 npm
+  npx: kool docker kooldev/node:20 npx
   setup:
-    - kool start
-	# - add more setup commands
+    - kool run npm install
+  reset:
+    - kool run npm install
 ```
 
-Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
+Go ahead and run `kool run setup` to finish setting up your project and then `kool start` to start running the container:
 
 ```bash
 $ kool run setup
+
+$ kool start
 ```
 
 > As you can see in **kool.yml**, the `setup` script will do the following in sequence: run the `kool start` command to spin up your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `node app.js`); and then run any additional commands you add to the list.
