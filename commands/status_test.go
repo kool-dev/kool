@@ -166,9 +166,23 @@ func TestFailedGetServicesStatusCommand(t *testing.T) {
 
 	assertExecGotError(t, cmd, "exec err")
 
-	expected := "No services found."
+	expected := ""
 
 	output := fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
+
+	if output != expected {
+		t.Errorf("Expected '%s', got '%s'", expected, output)
+	}
+
+	f.getServicesCmd.(*builder.FakeCommand).MockExecError = nil
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	expected = "No services found."
+
+	output = fmt.Sprint(f.shell.(*shell.FakeShell).WarningOutput...)
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
