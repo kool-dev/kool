@@ -3,7 +3,7 @@ tags: [ 'JS' ]
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
-  - name: Creating new Laravel Application
+  - name: Creating new Node application
     actions:
       - scripts:
           - mkdir $CREATE_DIRECTORY
@@ -20,4 +20,6 @@ preset:
 
   - name: 'Customize your setup'
     actions:
+      - scripts:
+        - kool docker kooldev/node:20 npm init -f
       - recipe: pick-node-pkg-mgr
