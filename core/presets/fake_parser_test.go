@@ -15,10 +15,10 @@ func TestFakeParser(t *testing.T) {
 		t.Error("failed to use mocked Exists function on FakeParser")
 	}
 
-	f.MockGetPresets = []string{"preset"}
+	f.MockGetPresets = map[string]string{"preset": "preset"}
 	presets := f.GetPresets("")
 
-	if !f.CalledGetPresets || len(presets) != 1 || presets[0] != "preset" {
+	if !f.CalledGetPresets || len(presets) != 1 || presets["preset"] != "preset" {
 		t.Error("failed to use mocked GetPresets function on FakeParser")
 	}
 

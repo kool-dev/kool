@@ -1,6 +1,8 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'Typescript' ]
 
+name: 'NestJS + NextJS (monorepo)'
+
 # Create defines the workflow for creating a new Project
 # where this preset can then be installed
 create:

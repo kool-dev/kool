@@ -1,6 +1,8 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'Golang' ]
 
+name: 'CLI App'
+
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
   - name: 'Copy basic config files'

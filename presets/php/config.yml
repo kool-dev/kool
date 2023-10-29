@@ -1,6 +1,9 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'PHP' ]
 
+# Name of the preset
+name: 'Hello World (PHP+Nginx)'
+
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
   - name: Creating new PHP Application
