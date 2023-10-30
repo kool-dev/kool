@@ -1,11 +1,13 @@
 package commands
 
 import (
+	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
 	"kool-dev/kool/services/checker"
 	"kool-dev/kool/services/updater"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -107,6 +109,9 @@ func (s *KoolStart) Execute(args []string) (err error) {
 	}
 
 	if err = s.checkDependencies(); err != nil {
+		if strings.HasPrefix(err.Error(), "no configuration file provided: not found") {
+			err = fmt.Errorf("could not find docker-compose.yml - check your current working directory.\n\n[err: %v]", err)
+		}
 		return
 	}
 
