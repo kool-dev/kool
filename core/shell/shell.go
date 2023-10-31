@@ -136,9 +136,9 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	}
 
 	if verbose {
-		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %v\n",
+		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %s\n",
 			exe,
-			args,
+			strings.Join(args, " "),
 		)
 	}
 
