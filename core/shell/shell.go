@@ -136,9 +136,9 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	}
 
 	if verbose {
-		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %v\n",
+		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %s\n",
 			exe,
-			args,
+			strings.Join(args, " "),
 		)
 	}
 
@@ -174,11 +174,11 @@ func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...str
 
 	if verbose {
 		checker := NewTerminalChecker()
-		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %v\n",
+		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %s\n",
 			checker.IsTerminal(cmdptr.in),
 			checker.IsTerminal(cmdptr.out),
 			cmdptr.Command.Cmd(),
-			cmdptr.Command.Args(),
+			strings.Join(cmdptr.Command.Args(), " "),
 		)
 	}
 
