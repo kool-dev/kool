@@ -1,6 +1,8 @@
 package shell
 
 import (
+	"fmt"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/terminal"
 )
@@ -8,6 +10,8 @@ import (
 // PromptSelect contract that holds logic for prompt a select question
 type PromptSelect interface {
 	Ask(string, []string) (string, error)
+
+	Confirm(string, ...any) (bool, error)
 }
 
 // DefaultPromptSelect holds data for prompting a select question
@@ -27,5 +31,20 @@ func (p *DefaultPromptSelect) Ask(question string, options []string) (answer str
 	if err = survey.AskOne(prompt, &answer); err != nil && err == terminal.InterruptErr {
 		err = ErrUserCancelled
 	}
+	return
+}
+
+func (p *DefaultPromptSelect) Confirm(question string, args ...any) (confirmed bool, err error) {
+	if args != nil {
+		question = fmt.Sprintf(question, args...)
+	}
+
+	var answer string
+
+	if answer, err = p.Ask(question, []string{"Yes", "No"}); err != nil {
+		return
+	}
+
+	confirmed = answer == "Yes"
 	return
 }
