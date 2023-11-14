@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/cloud/api"
+	"kool-dev/kool/services/cloud/setup"
 	"kool-dev/kool/services/tgz"
 	"os"
 	"path/filepath"
@@ -17,8 +18,7 @@ import (
 )
 
 const (
-	koolDeployEnv  = "kool.deploy.env"
-	koolDeployFile = "kool.cloud.yml"
+	koolDeployEnv = "kool.deploy.env"
 )
 
 // KoolCloudDeployFlags holds the flags for the kool cloud deploy command
@@ -37,9 +37,10 @@ type KoolCloudDeployFlags struct {
 type KoolDeploy struct {
 	DefaultKoolService
 
-	flags *KoolCloudDeployFlags
-	env   environment.EnvStorage
-	git   builder.Command
+	setupParser setup.CloudSetupParser
+	flags       *KoolCloudDeployFlags
+	env         environment.EnvStorage
+	git         builder.Command
 }
 
 // NewDeployCommand initializes new kool deploy Cobra command
@@ -65,10 +66,12 @@ func NewDeployCommand(deploy *KoolDeploy) (cmd *cobra.Command) {
 // NewKoolDeploy creates a new pointer with default KoolDeploy service
 // dependencies.
 func NewKoolDeploy() *KoolDeploy {
+	env := environment.NewEnvStorage()
 	return &KoolDeploy{
 		*newDefaultKoolService(),
+		setup.NewDefaultCloudSetupParser(env.Get("PWD")),
 		&KoolCloudDeployFlags{},
-		environment.NewEnvStorage(),
+		env,
 		builder.NewCommand("git"),
 	}
 }
@@ -275,13 +278,13 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 }
 
 func (d *KoolDeploy) validate() (err error) {
-	if err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), koolDeployFile); err != nil {
+	if err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), setup.KoolDeployFile); err != nil {
 		return
 	}
 
 	// if no domain is set, we try to get it from the environment
 	if d.flags.DeployDomain == "" && d.env.Get("KOOL_DEPLOY_DOMAIN") == "" {
-		err = fmt.Errorf("Missing deploy domain. Please set it via --domain or KOOL_DEPLOY_DOMAIN environment variable.")
+		err = fmt.Errorf("missing deploy domain - please set it via --domain or KOOL_DEPLOY_DOMAIN environment variable")
 		return
 	} else if d.flags.DeployDomain != "" {
 		// shares the flag via environment variable
@@ -290,7 +293,7 @@ func (d *KoolDeploy) validate() (err error) {
 
 	// if no token is set, we try to get it from the environment
 	if d.flags.Token == "" && d.env.Get("KOOL_API_TOKEN") == "" {
-		err = fmt.Errorf("Missing Kool Cloud API token. Please set it via --token or KOOL_API_TOKEN environment variable.")
+		err = fmt.Errorf("missing Kool Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
 		return
 	} else if d.flags.Token != "" {
 		d.env.Set("KOOL_API_TOKEN", d.flags.Token)
