@@ -34,6 +34,7 @@ func (p *DefaultPromptSelect) Ask(question string, options []string) (answer str
 	return
 }
 
+// Confirm prompts to the user a Yes/No confirm question
 func (p *DefaultPromptSelect) Confirm(question string, args ...any) (confirmed bool, err error) {
 	if args != nil {
 		question = fmt.Sprintf(question, args...)
