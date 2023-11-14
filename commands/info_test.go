@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setup(f *KoolInfo) {
+func setupInfoTest(f *KoolInfo) {
 	f.envStorage.Set("KOOL_FILTER_TESTING", "1")
 	f.envStorage.Set("KOOL_TESTING", "1")
 }
@@ -27,7 +27,7 @@ func fakeKoolInfo() *KoolInfo {
 func TestInfo(t *testing.T) {
 	f := fakeKoolInfo()
 
-	setup(f)
+	setupInfoTest(f)
 
 	output, err := execInfoCommand(NewInfoCmd(f), f)
 
@@ -45,7 +45,7 @@ func TestInfo(t *testing.T) {
 func TestFilteredInfo(t *testing.T) {
 	f := fakeKoolInfo()
 
-	setup(f)
+	setupInfoTest(f)
 
 	cmd := NewInfoCmd(f)
 	cmd.SetArgs([]string{"FILTER"})
