@@ -64,6 +64,11 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 		postInstructions []func()
 	)
 
+	if s.setupParser.HasDeployConfig() {
+		err = fmt.Errorf("you already have a %s file - if you want to create a new one using the setup wizard rename/remove the existing file", setup.KoolDeployFile)
+		return
+	}
+
 	if !s.Shell().IsTerminal() {
 		err = fmt.Errorf("setup command is not available in non-interactive mode")
 		return
@@ -242,7 +247,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 		return
 	}
 
-	if err = os.WriteFile(koolDeployFile, yaml, 0644); err != nil {
+	if err = os.WriteFile(s.setupParser.ConfigFilePath(), yaml, 0644); err != nil {
 		return
 	}
 
