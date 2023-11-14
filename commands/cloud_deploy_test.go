@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/services/cloud/setup"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,7 @@ func TestNewKoolDeploy(t *testing.T) {
 func fakeKoolDeploy() *KoolDeploy {
 	return &KoolDeploy{
 		*(newDefaultKoolService().Fake()),
+		setup.NewDefaultCloudSetupParser(""),
 		&KoolCloudDeployFlags{
 			DeployDomain: "foo",
 			Token:        "bar",
