@@ -6,8 +6,10 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/cloud"
+	"kool-dev/kool/services/cloud/setup"
 	"kool-dev/kool/services/compose"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -19,6 +21,7 @@ import (
 type KoolCloudSetup struct {
 	DefaultKoolService
 
+	setupParser  setup.CloudSetupParser
 	promptSelect shell.PromptSelect
 	env          environment.EnvStorage
 }
@@ -37,11 +40,13 @@ func NewSetupCommand(setup *KoolCloudSetup) *cobra.Command {
 
 // NewKoolCloudSetup factories new KoolCloudSetup instance pointer
 func NewKoolCloudSetup() *KoolCloudSetup {
+	env := environment.NewEnvStorage()
 	return &KoolCloudSetup{
 		*newDefaultKoolService(),
 
+		setup.NewDefaultCloudSetupParser(env.Get("PWD")),
 		shell.NewPromptSelect(),
-		environment.NewEnvStorage(),
+		env,
 	}
 }
 
@@ -52,18 +57,25 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 		serviceName   string
 
 		deployConfig *cloud.DeployConfig = &cloud.DeployConfig{
+			Version:  "1.0",
 			Services: make(map[string]*cloud.DeployConfigService),
 		}
 
 		postInstructions []func()
 	)
 
+	if s.setupParser.HasDeployConfig() {
+		err = fmt.Errorf("you already have a %s file - if you want to create a new one using the setup wizard rename/remove the existing file", setup.KoolDeployFile)
+		return
+	}
+
 	if !s.Shell().IsTerminal() {
 		err = fmt.Errorf("setup command is not available in non-interactive mode")
 		return
 	}
 
-	s.Shell().Warning("Warning: auto-setup is an experimental feature. Review all the generated configuration files before deploying.")
+	s.Shell().Warning("Kool.dev Cloud auto-setup is an experimental feature. Make sure to review all the generated configuration files before deploying.")
+
 	s.Shell().Info("Loading docker compose configuration...")
 
 	if composeConfig, err = compose.ParseConsolidatedDockerComposeConfig(s.env.Get("PWD")); err != nil {
@@ -72,19 +84,21 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 	s.Shell().Info("Docker compose configuration loaded. Starting interactive setup:")
 
+	var hasPublicPort bool = false
+
 	for serviceName = range composeConfig.Services {
 		var (
-			answer string
+			confirmed bool
+			isPublic  bool = false
+			answer    string
 
 			composeService = composeConfig.Services[serviceName]
 		)
 
-		if answer, err = s.promptSelect.Ask(fmt.Sprintf("Do you want to deploy the service container '%s'?", serviceName), []string{"Yes", "No"}); err != nil {
+		if confirmed, err = s.promptSelect.Confirm("Do you want to deploy the service container '%s'?", serviceName); err != nil {
 			return
-		}
-
-		if answer == "No" {
-			s.Shell().Warning(fmt.Sprintf("Not going to deploy service container '%s'", serviceName))
+		} else if !confirmed {
+			s.Shell().Warning(fmt.Sprintf("SKIP - not deploying service container '%s'", serviceName))
 			continue
 		}
 
@@ -93,106 +107,104 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 			Environment: map[string]string{},
 		}
 
+		// services needs to have either a build config or refer to a pre-built image
+		if composeService.Build == nil && composeService.Image == nil {
+			err = fmt.Errorf("unable to deploy service '%s': it needs to define an image or spec to build one", serviceName)
+			return
+		}
+
 		// handle image/build config
-		if len(composeService.Volumes) == 0 && composeService.Build == nil {
-			// the simple-path - we have an image only and that is what we want to deploy
-			if image, isString := (*composeService.Image).(string); isString {
-				deployConfig.Services[serviceName].Image = new(string)
-				*deployConfig.Services[serviceName].Image = image
-			} else {
-				err = fmt.Errorf("unable to parse image configuration for service '%s'", serviceName)
+		if composeService.Build != nil {
+			// validate the referenced file exists
+			var buildFilePath string
+			if ctx, isString := (*composeService.Build).(string); isString {
+				// if it's a string, that should be the build path
+				buildFilePath = filepath.Join(ctx, "Dockerfile")
+			} else if buildConfig, isMap := (*composeService.Build).(map[string]interface{}); isMap {
+				ctx, exists := buildConfig["context"].(string)
+				if !exists || ctx == "" {
+					ctx = "."
+				}
+
+				if customFilename, exists := buildConfig["dockerfile"].(string); exists {
+					buildFilePath = filepath.Join(ctx, customFilename)
+				} else {
+					buildFilePath = filepath.Join(ctx, "Dockerfile")
+				}
+			}
+
+			// now just make sure we can see/have this file
+			if _, buildPathErr := os.Stat(buildFilePath); os.IsNotExist(buildPathErr) {
+				err = fmt.Errorf("build config error: service '%s' points to non-existing Dockerfile '%s'", serviceName, buildFilePath)
 				return
 			}
+
+			s.Shell().Info(fmt.Sprintf("Service container '%s' builds its image from '%s'", serviceName, buildFilePath))
 		} else {
-			// OK there's something for us to build... maybe the user is already building it?
-			// in case there's a build config, we'll use that
-			if composeService.Build != nil {
-				// if it's a string, that should be the build path...
-				if build, isString := (*composeService.Build).(string); isString {
-					if build != "." {
-						err = fmt.Errorf("service '%s' got a build dockerfile on path '%s'. Please move to the root folder/context to be able to deploy", serviceName, build)
-						return
-					}
+			s.Shell().Info(fmt.Sprintf("Service container '%s' uses image '%v'", serviceName, *composeService.Image))
+
+			// no build config, so we'll need to build
+			if len(composeService.Volumes) > 0 {
+				if confirmed, err = s.promptSelect.Confirm("Do you want to create a new Dockerfile to build service '%s'?", serviceName); err != nil {
+					return
+				} else if confirmed {
+					s.Shell().Info(fmt.Sprintf("Going to create Dockerfile for service '%s'", serviceName))
+
+					// so here we should build the basic/simplest Dockerfile
 					deployConfig.Services[serviceName].Build = new(string)
-					*deployConfig.Services[serviceName].Build = "Dockerfile"
-				} else if buildConfig, isMap := (*composeService.Build).(map[string]interface{}); isMap {
-					if ctx, exists := buildConfig["context"].(string); exists && ctx != "." {
-						err = fmt.Errorf("service '%s' got a build dockerfile on path '%s'. Please move to the root folder/context to be able to deploy.", serviceName, build)
-						return
-					}
+					*deployConfig.Services[serviceName].Build = "."
 
-					if dockerfile, exists := buildConfig["dockerfile"].(string); exists {
-						deployConfig.Services[serviceName].Build = new(string)
-						*deployConfig.Services[serviceName].Build = dockerfile
-					} else {
-						err = fmt.Errorf("could not tell Dockerfile for service '%s'", serviceName)
-						return
-					}
-				}
-			} else {
-				// no build config, so we'll need to build
+					if _, errStat := os.Stat("Dockerfile"); os.IsNotExist(errStat) {
+						// we don't have a Dockerfile, let's make a basic one!
+						var (
+							dockerfile *os.File
+							content    bytes.Buffer
+						)
 
-				if len(composeService.Volumes) == 0 {
-					if image, isString := (*composeService.Image).(string); isString {
-						deployConfig.Services[serviceName].Image = new(string)
-						*deployConfig.Services[serviceName].Image = image
-					} else {
-						err = fmt.Errorf("unable to parse image configuration for service '%s'", serviceName)
-						return
+						if dockerfile, err = os.Create("Dockerfile"); err != nil {
+							return
+						}
+
+						content.WriteString(fmt.Sprintf("FROM %s\n", (*composeService.Image).(string)))
+
+						for _, vol := range composeService.Volumes {
+							volParts := strings.Split(vol, ":")
+
+							if !strings.HasPrefix(volParts[0], ".") && !strings.HasPrefix(volParts[0], "/") {
+								s.Shell().Println(fmt.Sprintf("Skipping named volume '%s'", volParts[0]))
+								continue
+							}
+
+							if confirmed, err = s.promptSelect.Confirm("Do you want to add folder '%s' onto '%s' in the Dockerfile for service '%s'?", volParts[0], volParts[1], serviceName); err != nil {
+								return
+							} else if confirmed {
+								content.WriteString(fmt.Sprintf("\nCOPY %s %s\n", volParts[0], volParts[1]))
+							}
+						}
+
+						if _, err = dockerfile.Write(content.Bytes()); err != nil {
+							return
+						}
+
+						_ = dockerfile.Close()
+
+						postInstructions = append(postInstructions, func() {
+							s.Shell().Info(fmt.Sprintf("⇒ New Dockerfile was created to build service '%s' for deploy. Review and make sure it has all the required steps. ", serviceName))
+						})
 					}
 				} else {
-					if answer, err = s.promptSelect.Ask(fmt.Sprintf("Do you want to use a Dockerfile for deploying service '%s'?", serviceName), []string{"Yes", "No"}); err != nil {
-						return
-					}
-
-					if answer == "Yes" {
-						// so here we should build the basic/simplest Dockerfile
-						deployConfig.Services[serviceName].Build = new(string)
-						*deployConfig.Services[serviceName].Build = "Dockerfile"
-
-						if _, errStat := os.Stat("Dockerfile"); os.IsNotExist(errStat) {
-							// we don't have a Dockerfile, let's make a basic one!
-							var (
-								dockerfile *os.File
-								content    bytes.Buffer
-							)
-
-							if dockerfile, err = os.Create("Dockerfile"); err != nil {
-								return
-							}
-
-							content.WriteString(fmt.Sprintf("FROM %s\n", (*composeService.Image).(string)))
-
-							for _, vol := range composeService.Volumes {
-								volParts := strings.Split(vol, ":")
-
-								if answer, err = s.promptSelect.Ask(fmt.Sprintf("Do you want to add folder '%s' onto '%s' in the Dockerfile for deploying service '%s'?", volParts[0], volParts[1], serviceName), []string{"Yes", "No"}); err != nil {
-									return
-								}
-
-								if answer == "Yes" {
-									content.WriteString(fmt.Sprintf("\nCOPY %s %s\n", volParts[0], volParts[1]))
-								}
-							}
-
-							if _, err = dockerfile.Write(content.Bytes()); err != nil {
-								return
-							}
-
-							_ = dockerfile.Close()
-						}
-					}
+					postInstructions = append(postInstructions, func() {
+						s.Shell().Info(fmt.Sprintf("⇒ Service '%s' uses volumes. Make sure to create the necessary Dockerfile and build it to deploy if necessary.", serviceName))
+					})
 				}
-
-				postInstructions = append(postInstructions, func() {
-					s.Shell().Info(fmt.Sprintf("⇒ Service '%s' needs to be built. Make sure to create the necessary Dockerfile.", serviceName))
-				})
 			}
 		}
 
 		// handle port/public config
 		ports := composeService.Ports
 		if len(ports) > 0 {
+			s.Shell().Info(fmt.Sprintf("Service container '%s' exposes network ports", serviceName))
+
 			potentialPorts := []string{}
 			for i := range ports {
 				mappedPorts := strings.Split(ports[i], ":")
@@ -200,8 +212,17 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 				potentialPorts = append(potentialPorts, mappedPorts[len(mappedPorts)-1])
 			}
 
+			if !hasPublicPort {
+				if confirmed, err = s.promptSelect.Confirm("Do you want to make service '%s' publicly accessible?", serviceName); err != nil {
+					return
+				} else if confirmed {
+					hasPublicPort = true
+					isPublic = true
+				}
+			}
+
 			if len(potentialPorts) > 1 {
-				if answer, err = s.promptSelect.Ask("Which port do you want to make public?", potentialPorts); err != nil {
+				if answer, err = s.promptSelect.Ask("Which port do you want to use for this service?", potentialPorts); err != nil {
 					return
 				}
 			} else {
@@ -211,11 +232,13 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 			deployConfig.Services[serviceName].Port = new(int)
 			*deployConfig.Services[serviceName].Port, _ = strconv.Atoi(answer)
 
-			public := &cloud.DeployConfigPublicEntry{}
-			public.Port = new(int)
-			*public.Port = *deployConfig.Services[serviceName].Port
+			if isPublic {
+				public := &cloud.DeployConfigPublicEntry{}
+				public.Port = new(int)
+				*public.Port = *deployConfig.Services[serviceName].Port
 
-			deployConfig.Services[serviceName].Public = append(deployConfig.Services[serviceName].Public, public)
+				deployConfig.Services[serviceName].Public = append(deployConfig.Services[serviceName].Public, public)
+			}
 		}
 	}
 
@@ -224,7 +247,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 		return
 	}
 
-	if err = os.WriteFile(koolDeployFile, yaml, 0644); err != nil {
+	if err = os.WriteFile(s.setupParser.ConfigFilePath(), yaml, 0644); err != nil {
 		return
 	}
 
