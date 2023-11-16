@@ -1,8 +1,8 @@
-`kool.deploy.yml` will hold all the extra configuration needed to move your application from `docker-compose.yml` and run it in the cloud.
+`kool.cloud.yml` will hold all the extra configuration needed to move your application from `docker-compose.yml` and run it in the cloud.
 
 ## The basics
 
-The `kool.deploy.yml` file is an extension to your already familiar `docker-compose.yml`, having the same basic structure but introducing some configuration entries to enable you to fine-tune your deployment container needs.
+The `kool.cloud.yml` file is an extension to your already familiar `docker-compose.yml`, having the same basic structure but introducing some configuration entries to enable you to fine-tune your deployment container needs.
 
 Suppose you have the following `docker-compose.yml` file:
 
@@ -14,7 +14,7 @@ services:
         - 80:80 # maps the container port 80 to your localhost
 ```
 
-Now, if you want to deploy this single-container app to the cloud using Kool, you need the following `kool.deploy.yml` file:
+Now, if you want to deploy this single-container app to the cloud using Kool, you need the following `kool.cloud.yml` file:
 
 ```yaml
 services:
@@ -29,7 +29,7 @@ Provided you have already signed up and obtained your access token for Kool Clou
 
 ## Full example
 
-Here's an example of `kool.deploy.yml` file showcasing all the features and configuration entries available:
+Here's an example of `kool.cloud.yml` file showcasing all the features and configuration entries available:
 
 ```yaml
 services:
