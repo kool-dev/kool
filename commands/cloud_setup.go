@@ -10,6 +10,7 @@ import (
 	"kool-dev/kool/services/compose"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -86,7 +87,15 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 	var hasPublicPort bool = false
 
+	var serviceNames []string
+
 	for serviceName = range composeConfig.Services {
+		serviceNames = append(serviceNames, serviceName)
+	}
+
+	slices.Sort[[]string](serviceNames)
+
+	for _, serviceName = range serviceNames {
 		var (
 			confirmed bool
 			isPublic  bool = false
@@ -188,14 +197,18 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 						_ = dockerfile.Close()
 
-						postInstructions = append(postInstructions, func() {
-							s.Shell().Info(fmt.Sprintf("⇒ New Dockerfile was created to build service '%s' for deploy. Review and make sure it has all the required steps. ", serviceName))
-						})
+						postInstructions = append(postInstructions, func(serviceName string) func() {
+							return func() {
+								s.Shell().Info(fmt.Sprintf("⇒ New Dockerfile was created to build service '%s' for deploy. Review and make sure it has all the required steps. ", serviceName))
+							}
+						}(serviceName))
 					}
 				} else {
-					postInstructions = append(postInstructions, func() {
-						s.Shell().Info(fmt.Sprintf("⇒ Service '%s' uses volumes. Make sure to create the necessary Dockerfile and build it to deploy if necessary.", serviceName))
-					})
+					postInstructions = append(postInstructions, func(serviceName string) func() {
+						return func() {
+							s.Shell().Info(fmt.Sprintf("⇒ Service '%s' uses volumes. Make sure to create the necessary Dockerfile and build it to deploy if necessary.", serviceName))
+						}
+					}(serviceName))
 				}
 			}
 		}
@@ -260,6 +273,10 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 	s.Shell().Println("")
 	s.Shell().Println("")
 	s.Shell().Success("Setup completed. Please review the generated configuration file before deploying.")
+	s.Shell().Println("")
+	s.Shell().Println("Configuration file: " + s.setupParser.ConfigFilePath())
+	s.Shell().Println("")
+	s.Shell().Println("Reference: https://kool.dev/docs/deploy-to-kool-cloud/kool-cloud-yml-reference")
 	s.Shell().Println("")
 
 	return
