@@ -188,13 +188,17 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 						_ = dockerfile.Close()
 
-						postInstructions = append(postInstructions, func() {
-							s.Shell().Info(fmt.Sprintf("⇒ New Dockerfile was created to build service '%s' for deploy. Review and make sure it has all the required steps. ", serviceName))
-						})
+						postInstructions = append(postInstructions, func(serviceName string) func() {
+							return func() {
+								s.Shell().Info(fmt.Sprintf("⇒ New Dockerfile was created to build service '%s' for deploy. Review and make sure it has all the required steps. ", serviceName))
+							}
+						}(serviceName))
 					}
 				} else {
-					postInstructions = append(postInstructions, func(serviceName string) {
-						s.Shell().Info(fmt.Sprintf("⇒ Service '%s' uses volumes. Make sure to create the necessary Dockerfile and build it to deploy if necessary.", serviceName))
+					postInstructions = append(postInstructions, func(serviceName string) func() {
+						return func() {
+							s.Shell().Info(fmt.Sprintf("⇒ Service '%s' uses volumes. Make sure to create the necessary Dockerfile and build it to deploy if necessary.", serviceName))
+						}
 					}(serviceName))
 				}
 			}
