@@ -193,9 +193,9 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 						})
 					}
 				} else {
-					postInstructions = append(postInstructions, func() {
+					postInstructions = append(postInstructions, func(serviceName string) {
 						s.Shell().Info(fmt.Sprintf("⇒ Service '%s' uses volumes. Make sure to create the necessary Dockerfile and build it to deploy if necessary.", serviceName))
-					})
+					}(serviceName))
 				}
 			}
 		}
@@ -260,6 +260,10 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 	s.Shell().Println("")
 	s.Shell().Println("")
 	s.Shell().Success("Setup completed. Please review the generated configuration file before deploying.")
+	s.Shell().Println("")
+	s.Shell().Println("Configuration file: " + s.setupParser.ConfigFilePath())
+	s.Shell().Println("")
+	s.Shell().Println("Reference: https://kool.dev/docs/deploy-to-kool-cloud/kool-cloud-yml-reference")
 	s.Shell().Println("")
 
 	return
