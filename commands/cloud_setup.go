@@ -10,6 +10,7 @@ import (
 	"kool-dev/kool/services/compose"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -86,7 +87,15 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 	var hasPublicPort bool = false
 
+	var serviceNames []string
+
 	for serviceName = range composeConfig.Services {
+		serviceNames = append(serviceNames, serviceName)
+	}
+
+	slices.Sort[[]string](serviceNames)
+
+	for _, serviceName = range serviceNames {
 		var (
 			confirmed bool
 			isPublic  bool = false
