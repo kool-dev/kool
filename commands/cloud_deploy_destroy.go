@@ -13,7 +13,7 @@ type KoolDeployDestroy struct {
 	DefaultKoolService
 
 	env        environment.EnvStorage
-	apiDestroy api.DestroyCall
+	apiDestroy api.DeployDestroy
 }
 
 // NewDeployDestroyCommand initializes new kool deploy Cobra command
@@ -33,7 +33,7 @@ func NewKoolDeployDestroy() *KoolDeployDestroy {
 	return &KoolDeployDestroy{
 		*newDefaultKoolService(),
 		environment.NewEnvStorage(),
-		api.NewDefaultDestroyCall(),
+		*api.NewDeployDestroy(),
 	}
 }
 
@@ -41,7 +41,7 @@ func NewKoolDeployDestroy() *KoolDeployDestroy {
 func (d *KoolDeployDestroy) Execute(args []string) (err error) {
 	var (
 		domain string
-		resp   *api.DestroyResponse
+		resp   *api.DeployDestroyResponse
 	)
 
 	if url := d.env.Get("KOOL_API_URL"); url != "" {

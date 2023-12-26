@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/cloud/api"
@@ -23,24 +22,24 @@ const (
 
 // KoolCloudDeployFlags holds the flags for the kool cloud deploy command
 type KoolCloudDeployFlags struct {
-	Token              string   // env: KOOL_API_TOKEN
+	// Token              string   // env: KOOL_API_TOKEN
+	// DeployDomain       string   // env: KOOL_DEPLOY_DOMAIN
 	Timeout            uint     // env: KOOL_API_TIMEOUT
 	WwwRedirect        bool     // env: KOOL_DEPLOY_WWW_REDIRECT
-	DeployDomain       string   // env: KOOL_DEPLOY_DOMAIN
 	DeployDomainExtras []string // env: KOOL_DEPLOY_DOMAIN_EXTRAS
 
 	// Cluster            string // env: KOOL_DEPLOY_CLUSTER
-	// env: KOOL_API_URL
 }
 
 // KoolDeploy holds handlers and functions for using Deploy API
 type KoolDeploy struct {
 	DefaultKoolService
 
+	cloud       *Cloud
 	setupParser setup.CloudSetupParser
 	flags       *KoolCloudDeployFlags
 	env         environment.EnvStorage
-	git         builder.Command
+	cloudConfig *cloud.DeployConfig
 }
 
 // NewDeployCommand initializes new kool deploy Cobra command
@@ -54,66 +53,71 @@ func NewDeployCommand(deploy *KoolDeploy) (cmd *cobra.Command) {
 		DisableFlagsInUseLine: true,
 	}
 
-	cmd.Flags().StringVarP(&deploy.flags.Token, "token", "", "", "Token to authenticate with Kool Cloud API")
-	cmd.Flags().StringVarP(&deploy.flags.DeployDomain, "domain", "", "", "Environment domain name to deploy to")
-	cmd.Flags().UintVarP(&deploy.flags.Timeout, "timeout", "", 0, "Timeout in minutes for waiting the deployment to finish")
 	cmd.Flags().StringArrayVarP(&deploy.flags.DeployDomainExtras, "domain-extra", "", []string{}, "List of extra domain aliases")
 	cmd.Flags().BoolVarP(&deploy.flags.WwwRedirect, "www-redirect", "", false, "Redirect www to non-www domain")
+	cmd.Flags().UintVarP(&deploy.flags.Timeout, "timeout", "", 0, "Timeout in minutes for waiting the deployment to finish")
 
 	return
 }
 
-// NewKoolDeploy creates a new pointer with default KoolDeploy service
-// dependencies.
-func NewKoolDeploy() *KoolDeploy {
+// NewKoolDeploy creates a new pointer with default KoolDeploy service dependencies.
+func NewKoolDeploy(cloud *Cloud) *KoolDeploy {
 	env := environment.NewEnvStorage()
 	return &KoolDeploy{
 		*newDefaultKoolService(),
+		cloud,
 		setup.NewDefaultCloudSetupParser(env.Get("PWD")),
 		&KoolCloudDeployFlags{},
 		env,
-		builder.NewCommand("git"),
+		nil,
 	}
 }
 
 // Execute runs the deploy logic.
 func (d *KoolDeploy) Execute(args []string) (err error) {
 	var (
-		filename string
-		deploy   *api.Deploy
+		filename      string
+		deployCreated *api.DeployCreateResponse
+
+		deployer = cloud.NewDeployer()
 	)
 
-	if err = d.validate(); err != nil {
-		return
-	}
+	d.Shell().Info("Load and validate config files...")
 
-	if url := d.env.Get("KOOL_API_URL"); url != "" {
-		api.SetBaseURL(url)
+	if err = d.loadAndValidateConfig(); err != nil {
+		return
 	}
 
 	d.Shell().Info("Create release file...")
 	if filename, err = d.createReleaseFile(); err != nil {
 		return
 	}
+	defer d.cleanupReleaseFile(filename)
 
-	defer func(file string) {
-		var err error
-		if err = os.Remove(file); err != nil {
-			d.Shell().Error(fmt.Errorf("error trying to remove temporary tarball: %v", err))
-		}
-	}(filename)
-
-	deploy = api.NewDeploy(filename)
-
-	d.Shell().Info("Upload release file...")
-	if err = deploy.SendFile(); err != nil {
+	d.Shell().Info("Creating new deployment...")
+	if deployCreated, err = deployer.CreateDeploy(filename); err != nil {
 		return
 	}
 
-	d.Shell().Println("Going to deploy...")
+	d.Shell().Info("Building images...")
+	for svcName, svc := range d.cloudConfig.Cloud.Services {
+		if svc.Build != nil {
+			d.Shell().Info("  > Build deploy image for service: ", svcName)
+
+			if err = cloud.BuildPushImageForDeploy(svcName, svc, deployCreated); err != nil {
+				return
+			}
+
+			d.Shell().Info("  > Image for service: ", svcName, " built & pushed successfully.")
+		}
+	}
+
+	d.Shell().Println("Start deploying...")
+	if _, err = deployer.StartDeploy(deployCreated); err != nil {
+		return
+	}
 
 	timeout := 15 * time.Minute
-
 	if d.flags.Timeout > 0 {
 		timeout = time.Duration(d.flags.Timeout) * time.Minute
 	} else if min, err := strconv.Atoi(d.env.Get("KOOL_API_TIMEOUT")); err == nil {
@@ -122,17 +126,20 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 	var finishes chan bool = make(chan bool)
 
-	go func(deploy *api.Deploy, finishes chan bool) {
+	go func(deployCreated *api.DeployCreateResponse, finishes chan bool) {
 		var (
+			status     *api.DeployStatusResponse
 			lastStatus string
 			err        error
 		)
 
 		for {
-			err = deploy.FetchLatestStatus()
+			if status, err = api.NewDeployStatus(deployCreated).Run(); err != nil {
+				return
+			}
 
-			if lastStatus != deploy.Status.Status {
-				lastStatus = deploy.Status.Status
+			if lastStatus != status.Status {
+				lastStatus = status.Status
 				d.Shell().Println("  > deploy:", lastStatus)
 			}
 
@@ -142,21 +149,24 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 				break
 			}
 
-			if deploy.IsSuccessful() {
-				finishes <- true
+			if status.Status == "success" || status.Status == "failed" {
+				finishes <- status.Status == "success"
 				break
 			}
 
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 2)
 		}
-	}(deploy, finishes)
+	}(deployCreated, finishes)
 
 	var success bool
 	select {
 	case success = <-finishes:
 		{
 			if success {
-				d.Shell().Success("Deploy finished: ", deploy.GetURL())
+				d.Shell().Success("Deploy finished: ", deployCreated.Deploy.Environment.Name)
+				d.Shell().Success("")
+				d.Shell().Success("Access your environment at: ", deployCreated.Deploy.Url)
+				d.Shell().Success("")
 			} else {
 				err = fmt.Errorf("deploy failed")
 				return
@@ -177,7 +187,6 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 	var (
 		tarball *tgz.TarGz
-		cwd     string
 	)
 
 	tarball, err = tgz.NewTemp()
@@ -186,68 +195,44 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 		return
 	}
 
-	var hasGit bool = true
-	if errGit := d.Shell().LookPath(d.git); errGit != nil {
-		hasGit = false
+	var allFiles []string
+
+	// d.Shell().Println("Fallback to tarball full current working directory...")
+	// cwd, _ = os.Getwd()
+	// filename, err = tarball.CompressFolder(cwd)
+	// return
+
+	// new behavior - tarball only the required files
+	if cf := d.env.Get("COMPOSE_FILE"); cf != "" {
+		allFiles = strings.Split(cf, ":")
+	} else {
+		allFiles = []string{"docker-compose.yml"}
 	}
 
-	if _, errGit := os.Stat(".git"); !hasGit || os.IsNotExist(errGit) {
-		// not a GIT repo/environment!
-		d.Shell().Println("Fallback to tarball full current working directory...")
-		cwd, _ = os.Getwd()
-		filename, err = tarball.CompressFolder(cwd)
-		return
+	var possibleKoolDeployYmlFiles []string = []string{
+		"kool.deploy.yml",
+		"kool.deploy.yaml",
+		"kool.cloud.yml",
+		"kool.cloud.yaml",
 	}
 
-	// we are in a GIT environment!
-	var (
-		files, allFiles []string
-
-		gitListingFilesFlags = [][]string{
-			// Include commited files - git ls-files -c
-			{"-c"},
-
-			// Untracked files - git ls-files -o --exclude-standard
-			{"-o", "--exclude-standard"},
+	for _, file := range possibleKoolDeployYmlFiles {
+		if _, err = os.Stat(file); err == nil {
+			allFiles = append(allFiles, file)
 		}
-	)
-
-	// Exclude list - git ls-files -d
-	if files, err = d.parseFilesListFromGIT([]string{"-d"}); err != nil {
-		return
 	}
-	tarball.SetIgnoreList(files)
 
-	for _, lsArgs := range gitListingFilesFlags {
-		if files, err = d.parseFilesListFromGIT(lsArgs); err != nil {
-			return
-		}
-
-		allFiles = append(allFiles, files...)
+	d.shell.Println("Compressing files:")
+	for _, file := range allFiles {
+		d.shell.Println("  -", file)
 	}
+
 	filename, err = tarball.CompressFiles(d.handleDeployEnv(allFiles))
-	return
-}
 
-func (d *KoolDeploy) parseFilesListFromGIT(args []string) (files []string, err error) {
-	var (
-		output, file string
-	)
-
-	output, err = d.Shell().Exec(d.git, append([]string{"ls-files", "-z"}, args...)...)
-	if err != nil {
-		err = fmt.Errorf("failed listing GIT files: %s", err.Error())
-		return
+	if err == nil {
+		d.shell.Println("Files compression done.")
 	}
 
-	// -z parameter returns the utf-8 file names separated by 0 bytes
-	for _, file = range strings.Split(output, string(rune(0x00))) {
-		if file == "" {
-			continue
-		}
-
-		files = append(files, file)
-	}
 	return
 }
 
@@ -277,26 +262,13 @@ func (d *KoolDeploy) handleDeployEnv(files []string) []string {
 	return files
 }
 
-func (d *KoolDeploy) validate() (err error) {
-	if err = cloud.ValidateKoolDeployFile(d.env.Get("PWD"), setup.KoolDeployFile); err != nil {
+func (d *KoolDeploy) loadAndValidateConfig() (err error) {
+	if d.cloudConfig, err = cloud.ParseCloudConfig(d.env.Get("PWD"), setup.KoolDeployFile); err != nil {
 		return
 	}
 
-	// if no domain is set, we try to get it from the environment
-	if d.flags.DeployDomain == "" && d.env.Get("KOOL_DEPLOY_DOMAIN") == "" {
-		err = fmt.Errorf("missing deploy domain - please set it via --domain or KOOL_DEPLOY_DOMAIN environment variable")
+	if err = cloud.ValidateConfig(d.cloudConfig); err != nil {
 		return
-	} else if d.flags.DeployDomain != "" {
-		// shares the flag via environment variable
-		d.env.Set("KOOL_DEPLOY_DOMAIN", d.flags.DeployDomain)
-	}
-
-	// if no token is set, we try to get it from the environment
-	if d.flags.Token == "" && d.env.Get("KOOL_API_TOKEN") == "" {
-		err = fmt.Errorf("missing Kool Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
-		return
-	} else if d.flags.Token != "" {
-		d.env.Set("KOOL_API_TOKEN", d.flags.Token)
 	}
 
 	// share the www-redirection flag via environment variable
@@ -315,4 +287,10 @@ func (d *KoolDeploy) validate() (err error) {
 	// - validate the domain extras are valid / the token gives access to them
 
 	return
+}
+
+func (d *KoolDeploy) cleanupReleaseFile(filename string) {
+	if err := os.Remove(filename); err != nil {
+		d.Shell().Error(fmt.Errorf("error trying to remove temporary tarball: %v", err))
+	}
 }

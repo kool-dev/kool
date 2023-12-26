@@ -316,6 +316,8 @@ func (s *DefaultShell) execute(cmd *exec.Cmd) (err error) {
 	for {
 		select {
 		case err = <-waitCh:
+			signal.Reset()
+			defer close(sigChan)
 			return
 		case sig := <-sigChan:
 			if err := cmd.Process.Signal(sig); err != nil {

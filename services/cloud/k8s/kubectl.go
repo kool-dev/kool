@@ -17,8 +17,8 @@ type K8S interface {
 }
 
 type DefaultK8S struct {
-	apiExec api.ExecCall
-	resp    *api.ExecResponse
+	deployExec api.DeployExec
+	resp       *api.DeployExecResponse
 }
 
 var authTempPath = "/tmp"
@@ -26,15 +26,15 @@ var authTempPath = "/tmp"
 // NewDefaultK8S returns a new pointer for DefaultK8S with dependencies
 func NewDefaultK8S() *DefaultK8S {
 	return &DefaultK8S{
-		apiExec: api.NewDefaultExecCall(),
+		deployExec: *api.NewDeployExec(),
 	}
 }
 
 func (k *DefaultK8S) Authenticate(domain, service string) (cloudService string, err error) {
-	k.apiExec.Body().Set("domain", domain)
-	k.apiExec.Body().Set("service", service)
+	k.deployExec.Body().Set("domain", domain)
+	k.deployExec.Body().Set("service", service)
 
-	if k.resp, err = k.apiExec.Call(); err != nil {
+	if k.resp, err = k.deployExec.Call(); err != nil {
 		return
 	}
 
