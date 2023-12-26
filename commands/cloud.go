@@ -55,7 +55,11 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 		DisableFlagsInUseLine: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// calls root PersistentPreRunE
-			var root *cobra.Command = cmd
+			var (
+				requiredFlags bool           = cmd.Use != "setup"
+				root          *cobra.Command = cmd
+			)
+
 			for root.HasParent() {
 				root = root.Parent()
 			}
@@ -69,8 +73,10 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 
 			// if no domain is set, we try to get it from the environment
 			if cloud.flags.DeployDomain == "" && cloud.env.Get("KOOL_DEPLOY_DOMAIN") == "" {
-				err = fmt.Errorf("missing deploy domain - please set it via --domain or KOOL_DEPLOY_DOMAIN environment variable")
-				return
+				if requiredFlags {
+					err = fmt.Errorf("missing deploy domain - please set it via --domain or KOOL_DEPLOY_DOMAIN environment variable")
+					return
+				}
 			} else if cloud.flags.DeployDomain != "" {
 				// shares the flag via environment variable
 				cloud.env.Set("KOOL_DEPLOY_DOMAIN", cloud.flags.DeployDomain)
@@ -78,8 +84,10 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 
 			// if no token is set, we try to get it from the environment
 			if cloud.flags.Token == "" && cloud.env.Get("KOOL_API_TOKEN") == "" {
-				err = fmt.Errorf("missing Kool Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
-				return
+				if requiredFlags {
+					err = fmt.Errorf("missing Kool Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
+					return
+				}
 			} else if cloud.flags.Token != "" {
 				cloud.env.Set("KOOL_API_TOKEN", cloud.flags.Token)
 			}
@@ -88,8 +96,8 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 		},
 	}
 
-	cloudCmd.Flags().StringVarP(&cloud.flags.Token, "token", "", "", "Token to authenticate with Kool Cloud API")
-	cloudCmd.Flags().StringVarP(&cloud.flags.DeployDomain, "domain", "", "", "Environment domain name to deploy to")
+	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.Token, "token", "", "", "Token to authenticate with Kool Cloud API")
+	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.DeployDomain, "domain", "", "", "Environment domain name to deploy to")
 
 	return
 }
