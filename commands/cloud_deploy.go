@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/utils"
 	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/cloud/api"
 	"kool-dev/kool/services/cloud/setup"
@@ -94,10 +95,11 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	}
 	defer d.cleanupReleaseFile(filename)
 
-	d.Shell().Info("Creating new deployment...")
+	s := utils.MakeFastLoading("Creating deploy...", "Deploy created.", d.Shell().OutStream())
 	if deployCreated, err = deployer.CreateDeploy(filename); err != nil {
 		return
 	}
+	s.Stop()
 
 	d.Shell().Info("Building images...")
 	for svcName, svc := range d.cloudConfig.Cloud.Services {
@@ -112,10 +114,11 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		}
 	}
 
-	d.Shell().Println("Start deploying...")
+	s = utils.MakeFastLoading("Start deploying...", "Deploy started.", d.Shell().OutStream())
 	if _, err = deployer.StartDeploy(deployCreated); err != nil {
 		return
 	}
+	s.Stop()
 
 	timeout := 15 * time.Minute
 	if d.flags.Timeout > 0 {
@@ -133,6 +136,8 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 			err        error
 		)
 
+		s = utils.MakeSlowLoading("Waiting deploy to finish...", "Deploy finished.", d.Shell().OutStream())
+
 		for {
 			if status, err = api.NewDeployStatus(deployCreated).Run(); err != nil {
 				return
@@ -144,12 +149,14 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 			}
 
 			if err != nil {
+				s.Stop()
 				finishes <- false
 				d.Shell().Error(err)
 				break
 			}
 
 			if status.Status == "success" || status.Status == "failed" {
+				s.Stop()
 				finishes <- status.Status == "success"
 				break
 			}
