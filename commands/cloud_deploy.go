@@ -204,18 +204,7 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 
 	var allFiles []string
 
-	// d.Shell().Println("Fallback to tarball full current working directory...")
-	// cwd, _ = os.Getwd()
-	// filename, err = tarball.CompressFolder(cwd)
-	// return
-
 	// new behavior - tarball only the required files
-	if cf := d.env.Get("COMPOSE_FILE"); cf != "" {
-		allFiles = strings.Split(cf, ":")
-	} else {
-		allFiles = []string{"docker-compose.yml"}
-	}
-
 	var possibleKoolDeployYmlFiles []string = []string{
 		"kool.deploy.yml",
 		"kool.deploy.yaml",
@@ -224,9 +213,24 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 	}
 
 	for _, file := range possibleKoolDeployYmlFiles {
+		if !strings.HasPrefix(file, "/") {
+			file = filepath.Join(d.env.Get("PWD"), file)
+		}
+
 		if _, err = os.Stat(file); err == nil {
 			allFiles = append(allFiles, file)
 		}
+	}
+
+	if len(allFiles) == 0 {
+		err = fmt.Errorf("no deploy config files found")
+		return
+	}
+
+	if cf := d.env.Get("COMPOSE_FILE"); cf != "" {
+		allFiles = append(allFiles, strings.Split(cf, ":")...)
+	} else {
+		allFiles = append(allFiles, filepath.Join(d.env.Get("PWD"), "docker-compose.yml"))
 	}
 
 	d.shell.Println("Compressing files:")
