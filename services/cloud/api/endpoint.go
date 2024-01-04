@@ -48,6 +48,10 @@ type DefaultEndpoint struct {
 
 	postBodyBuff bytes.Buffer
 	postBodyFmtr *multipart.Writer
+
+	fake     bool
+	mockErr  error
+	mockResp any
 }
 
 // NewDefaultEndpoint creates an Endpoint with given method
@@ -149,6 +153,16 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		body    io.Reader
 		verbose = e.env.IsTrue("KOOL_VERBOSE")
 	)
+
+	if e.fake {
+		// fake call
+		err = e.mockErr
+		if e.mockResp != nil {
+			raw, _ := json.Marshal(e.mockResp)
+			json.Unmarshal(raw, e.response)
+		}
+		return
+	}
 
 	if e.postBodyFmtr != nil {
 		e.SetContentType(e.postBodyFmtr.FormDataContentType())
@@ -253,4 +267,16 @@ func (e *DefaultEndpoint) initPostBody() {
 	if e.postBodyFmtr == nil {
 		e.postBodyFmtr = multipart.NewWriter(&e.postBodyBuff)
 	}
+}
+
+func (e *DefaultEndpoint) Fake() {
+	e.fake = true
+}
+
+func (e *DefaultEndpoint) MockErr(err error) {
+	e.mockErr = err
+}
+
+func (e *DefaultEndpoint) MockResp(i any) {
+	e.mockResp = i
 }
