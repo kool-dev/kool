@@ -1,159 +1,118 @@
 package k8s
 
-// import (
-// 	"errors"
-// 	"kool-dev/kool/core/shell"
-// 	"kool-dev/kool/services/cloud/api"
-// 	"os"
-// 	"strings"
-// 	"testing"
-// )
+import (
+	"errors"
+	"kool-dev/kool/core/shell"
+	"kool-dev/kool/services/cloud/api"
+	"os"
+	"strings"
+	"testing"
+)
 
-// // fake api.ExecCall
-// type fakeExecCall struct {
-// 	api.DefaultEndpoint
+func TestAuthenticate(t *testing.T) {
+	k := NewDefaultK8S()
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).Fake()
 
-// 	err  error
-// 	resp *api.DeployExecResponse
-// }
+	expectedErr := errors.New("call error")
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockErr(expectedErr)
 
-// func (d *fakeExecCall) Call() (*api.ExecResponse, error) {
-// 	return d.resp, d.err
-// }
+	if _, err := k.Authenticate("foo", "bar"); !errors.Is(err, expectedErr) {
+		t.Error("unexpected error return from Authenticate")
+	}
 
-// func newFakeExecCall() *fakeExecCall {
-// 	return &fakeExecCall{
-// 		DefaultEndpoint: *api.NewDefaultEndpoint(""),
-// 	}
-// }
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockErr(nil)
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployExecResponse{
+		Server:    "server",
+		Namespace: "ns",
+		Path:      "path",
+		Token:     "",
+		CA:        "ca",
+	})
 
-// // fake shell.OutputWritter
-// type fakeOutputWritter struct {
-// 	warned []interface{}
-// }
+	if _, err := k.Authenticate("foo", "bar"); !strings.Contains(err.Error(), "failed to generate access credentials") {
+		t.Errorf("unexpected error from DeployExec call: %v", err)
+	}
 
-// func (*fakeOutputWritter) Println(args ...interface{}) {
-// }
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployExecResponse{
+		Server:    "server",
+		Namespace: "ns",
+		Path:      "path",
+		Token:     "token",
+		CA:        "ca",
+	})
 
-// func (*fakeOutputWritter) Printf(s string, args ...interface{}) {
-// }
+	authTempPath = t.TempDir()
 
-// func (f *fakeOutputWritter) Warning(args ...interface{}) {
-// 	f.warned = append(f.warned, args...)
-// }
+	if cloudService, err := k.Authenticate("foo", "bar"); err != nil {
+		t.Errorf("unexpected error from Authenticate call: %v", err)
+	} else if cloudService != "path" {
+		t.Errorf("unexpected cloudService return: %s", cloudService)
+	}
+}
 
-// func (*fakeOutputWritter) Success(args ...interface{}) {
-// }
+func TestTempCAPath(t *testing.T) {
+	k := NewDefaultK8S()
 
-// func (*fakeOutputWritter) Info(args ...interface{}) {
-// }
+	authTempPath = "fake-path"
 
-// func TestNewDefaultK8S(t *testing.T) {
-// 	k := NewDefaultK8S()
-// 	if _, ok := k.apiExec.(*api.DefaultExecCall); !ok {
-// 		t.Error("invalid type on apiExec")
-// 	}
-// }
+	if !strings.Contains(k.getTempCAPath(), authTempPath) {
+		t.Error("missing authTempPath from temp CA path")
+	}
+}
 
-// func TestAuthenticate(t *testing.T) {
-// 	k := &DefaultK8S{
-// 		apiExec: newFakeExecCall(),
-// 	}
+func TestCleanup(t *testing.T) {
+	k := NewDefaultK8S()
 
-// 	expectedErr := errors.New("call error")
-// 	k.apiExec.(*fakeExecCall).err = expectedErr
+	authTempPath = t.TempDir()
+	if err := os.WriteFile(k.getTempCAPath(), []byte("ca"), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
 
-// 	if _, err := k.Authenticate("foo", "bar"); !errors.Is(err, expectedErr) {
-// 		t.Error("unexpected error return from Authenticate")
-// 	}
+	fakeShell := &shell.FakeShell{}
+	k.Cleanup(fakeShell)
 
-// 	k.apiExec.(*fakeExecCall).err = nil
-// 	k.apiExec.(*fakeExecCall).resp = &api.ExecResponse{
-// 		Server:    "server",
-// 		Namespace: "ns",
-// 		Path:      "path",
-// 		Token:     "",
-// 		CA:        "ca",
-// 	}
+	if fakeShell.CalledWarning {
+		t.Error("should not have warned on removing the file")
+	}
 
-// 	if _, err := k.Authenticate("foo", "bar"); !strings.Contains(err.Error(), "failed to generate access credentials") {
-// 		t.Errorf("unexpected error from DeployExec call: %v", err)
-// 	}
+	authTempPath = t.TempDir() + "test"
+	fakeShell = &shell.FakeShell{}
+	k.Cleanup(fakeShell)
 
-// 	k.apiExec.(*fakeExecCall).resp.Token = "token"
-// 	authTempPath = t.TempDir()
+	if !fakeShell.CalledWarning || len(fakeShell.WarningOutput) != 2 {
+		t.Error("should have warned on removing the file once")
+	}
+}
 
-// 	if cloudService, err := k.Authenticate("foo", "bar"); err != nil {
-// 		t.Errorf("unexpected error from Authenticate call: %v", err)
-// 	} else if cloudService != "path" {
-// 		t.Errorf("unexpected cloudService return: %s", cloudService)
-// 	}
-// }
+func TestKubectl(t *testing.T) {
+	authTempPath = t.TempDir()
 
-// func TestTempCAPath(t *testing.T) {
-// 	k := NewDefaultK8S()
+	k := NewDefaultK8S()
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).Fake()
 
-// 	authTempPath = "fake-path"
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployExecResponse{
+		Server:    "server",
+		Namespace: "ns",
+		Path:      "path",
+		Token:     "token",
+		CA:        "ca",
+	})
 
-// 	if !strings.Contains(k.getTempCAPath(), authTempPath) {
-// 		t.Error("missing authTempPath from temp CA path")
-// 	}
-// }
+	fakeShell := &shell.FakeShell{}
 
-// func TestCleanup(t *testing.T) {
-// 	k := NewDefaultK8S()
+	if _, err := k.Kubectl(fakeShell); !strings.Contains(err.Error(), "but did not auth") {
+		t.Error("should get error before authenticating")
+	}
 
-// 	authTempPath = t.TempDir()
-// 	if err := os.WriteFile(k.getTempCAPath(), []byte("ca"), os.ModePerm); err != nil {
-// 		t.Fatal(err)
-// 	}
+	_, _ = k.Authenticate("foo", "bar")
 
-// 	fakeOut := &fakeOutputWritter{}
+	if cmd, _ := k.Kubectl(fakeShell); cmd.Cmd() != "kubectl" {
+		t.Error("should use kubectl")
+	}
 
-// 	k.Cleanup(fakeOut)
+	fakeShell.MockLookPath = errors.New("err")
 
-// 	if len(fakeOut.warned) != 0 {
-// 		t.Error("should not have warned on removing the file")
-// 	}
-
-// 	authTempPath = t.TempDir() + "test"
-// 	k.Cleanup(fakeOut)
-
-// 	if len(fakeOut.warned) != 2 {
-// 		t.Error("should have warned on removing the file once")
-// 	}
-// }
-
-// func TestKubectl(t *testing.T) {
-// 	authTempPath = t.TempDir()
-
-// 	k := &DefaultK8S{
-// 		apiExec: newFakeExecCall(),
-// 	}
-
-// 	k.apiExec.(*fakeExecCall).resp = &api.ExecResponse{
-// 		Server:    "server",
-// 		Namespace: "ns",
-// 		Path:      "path",
-// 		Token:     "token",
-// 		CA:        "ca",
-// 	}
-
-// 	fakeShell := &shell.FakeShell{}
-
-// 	if _, err := k.Kubectl(fakeShell); !strings.Contains(err.Error(), "but did not auth") {
-// 		t.Error("should get error before authenticating")
-// 	}
-
-// 	_, _ = k.Authenticate("foo", "bar")
-
-// 	if cmd, _ := k.Kubectl(fakeShell); cmd.Cmd() != "kubectl" {
-// 		t.Error("should use kubectl")
-// 	}
-
-// 	fakeShell.MockLookPath = errors.New("err")
-
-// 	if cmd, _ := k.Kubectl(fakeShell); cmd.Cmd() != "kool" {
-// 		t.Error("should use kool")
-// 	}
-// }
+	if cmd, _ := k.Kubectl(fakeShell); cmd.Cmd() != "kool" {
+		t.Error("should use kool")
+	}
+}

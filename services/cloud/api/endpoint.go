@@ -221,24 +221,6 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		err = apiErr
 		return
 	}
-	// if errAPI, is := err.(*ErrAPI); is {
-	// 	// override the error for a better message
-	// 	if errAPI.Status == http.StatusUnauthorized {
-	// 		err = ErrUnauthorized
-	// 	} else if errAPI.Status == http.StatusUnprocessableEntity {
-	// 		d.out.Error(errors.New(errAPI.Message))
-	// 		for field, apiErr := range errAPI.Errors {
-	// 			if apiErrs, ok := apiErr.([]interface{}); ok {
-	// 				for _, apiErrStr := range apiErrs {
-	// 					d.out.Error(fmt.Errorf("\t[%s] -> %v", field, apiErrStr))
-	// 				}
-	// 			}
-	// 		}
-	// 		err = ErrPayloadValidation
-	// 	} else if errAPI.Status != http.StatusOK && errAPI.Status != http.StatusCreated {
-	// 		err = ErrBadResponseStatus
-	// 	}
-	// }
 
 	if err = json.Unmarshal(raw, e.response); err != nil {
 		err = fmt.Errorf("%v (parse error: %v", ErrUnexpectedResponse, err)
