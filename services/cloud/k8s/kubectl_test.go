@@ -9,78 +9,38 @@ import (
 	"testing"
 )
 
-// fake api.ExecCall
-type fakeExecCall struct {
-	api.DefaultEndpoint
-
-	err  error
-	resp *api.ExecResponse
-}
-
-func (d *fakeExecCall) Call() (*api.ExecResponse, error) {
-	return d.resp, d.err
-}
-
-func newFakeExecCall() *fakeExecCall {
-	return &fakeExecCall{
-		DefaultEndpoint: *api.NewDefaultEndpoint(""),
-	}
-}
-
-// fake shell.OutputWritter
-type fakeOutputWritter struct {
-	warned []interface{}
-}
-
-func (*fakeOutputWritter) Println(args ...interface{}) {
-}
-
-func (*fakeOutputWritter) Printf(s string, args ...interface{}) {
-}
-
-func (f *fakeOutputWritter) Warning(args ...interface{}) {
-	f.warned = append(f.warned, args...)
-}
-
-func (*fakeOutputWritter) Success(args ...interface{}) {
-}
-
-func (*fakeOutputWritter) Info(args ...interface{}) {
-}
-
-func TestNewDefaultK8S(t *testing.T) {
-	k := NewDefaultK8S()
-	if _, ok := k.apiExec.(*api.DefaultExecCall); !ok {
-		t.Error("invalid type on apiExec")
-	}
-}
-
 func TestAuthenticate(t *testing.T) {
-	k := &DefaultK8S{
-		apiExec: newFakeExecCall(),
-	}
+	k := NewDefaultK8S()
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).Fake()
 
 	expectedErr := errors.New("call error")
-	k.apiExec.(*fakeExecCall).err = expectedErr
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockErr(expectedErr)
 
 	if _, err := k.Authenticate("foo", "bar"); !errors.Is(err, expectedErr) {
 		t.Error("unexpected error return from Authenticate")
 	}
 
-	k.apiExec.(*fakeExecCall).err = nil
-	k.apiExec.(*fakeExecCall).resp = &api.ExecResponse{
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockErr(nil)
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployExecResponse{
 		Server:    "server",
 		Namespace: "ns",
 		Path:      "path",
 		Token:     "",
 		CA:        "ca",
-	}
+	})
 
 	if _, err := k.Authenticate("foo", "bar"); !strings.Contains(err.Error(), "failed to generate access credentials") {
 		t.Errorf("unexpected error from DeployExec call: %v", err)
 	}
 
-	k.apiExec.(*fakeExecCall).resp.Token = "token"
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployExecResponse{
+		Server:    "server",
+		Namespace: "ns",
+		Path:      "path",
+		Token:     "token",
+		CA:        "ca",
+	})
+
 	authTempPath = t.TempDir()
 
 	if cloudService, err := k.Authenticate("foo", "bar"); err != nil {
@@ -108,18 +68,18 @@ func TestCleanup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fakeOut := &fakeOutputWritter{}
+	fakeShell := &shell.FakeShell{}
+	k.Cleanup(fakeShell)
 
-	k.Cleanup(fakeOut)
-
-	if len(fakeOut.warned) != 0 {
+	if fakeShell.CalledWarning {
 		t.Error("should not have warned on removing the file")
 	}
 
 	authTempPath = t.TempDir() + "test"
-	k.Cleanup(fakeOut)
+	fakeShell = &shell.FakeShell{}
+	k.Cleanup(fakeShell)
 
-	if len(fakeOut.warned) != 2 {
+	if !fakeShell.CalledWarning || len(fakeShell.WarningOutput) != 2 {
 		t.Error("should have warned on removing the file once")
 	}
 }
@@ -127,17 +87,16 @@ func TestCleanup(t *testing.T) {
 func TestKubectl(t *testing.T) {
 	authTempPath = t.TempDir()
 
-	k := &DefaultK8S{
-		apiExec: newFakeExecCall(),
-	}
+	k := NewDefaultK8S()
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).Fake()
 
-	k.apiExec.(*fakeExecCall).resp = &api.ExecResponse{
+	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployExecResponse{
 		Server:    "server",
 		Namespace: "ns",
 		Path:      "path",
 		Token:     "token",
 		CA:        "ca",
-	}
+	})
 
 	fakeShell := &shell.FakeShell{}
 

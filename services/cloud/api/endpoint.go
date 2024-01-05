@@ -1,10 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"kool-dev/kool/core/environment"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -29,6 +31,9 @@ type Endpoint interface {
 	SetRawBody(io.Reader)
 	SetContentType(string)
 	StatusCode() int
+
+	PostFile(string, string, string) error
+	PostField(string, string) error
 }
 
 // DefaultEndpoint holds common data and logic for making API calls
@@ -40,6 +45,13 @@ type DefaultEndpoint struct {
 	rawBody      io.Reader
 	env          environment.EnvStorage
 	statusCode   int
+
+	postBodyBuff bytes.Buffer
+	postBodyFmtr *multipart.Writer
+
+	fake     bool
+	mockErr  error
+	mockResp any
 }
 
 // NewDefaultEndpoint creates an Endpoint with given method
@@ -49,6 +61,48 @@ func NewDefaultEndpoint(method string) *DefaultEndpoint {
 		query:  url.Values{},
 		env:    environment.NewEnvStorage(),
 	}
+}
+
+// PostFile sets the URL path to be called
+func (e *DefaultEndpoint) PostFile(fieldName, filePath, postFilename string) (err error) {
+	var (
+		file *os.File
+		fw   io.Writer
+	)
+
+	if file, err = os.Open(filePath); err != nil {
+		return
+	}
+
+	fi, _ := file.Stat()
+
+	if float64(fi.Size())/1024/1024 > 100 {
+		err = fmt.Errorf("file size exceeds 10MB")
+		return
+	}
+
+	e.initPostBody()
+
+	if fw, err = e.postBodyFmtr.CreateFormFile(fieldName, postFilename); err != nil {
+		return
+	}
+
+	if _, err = io.Copy(fw, file); err != nil {
+		return
+	}
+
+	err = file.Close()
+
+	return
+}
+
+// PostField adds a field to the request body
+func (e *DefaultEndpoint) PostField(fieldName, fieldValue string) (err error) {
+	e.initPostBody()
+
+	err = e.postBodyFmtr.WriteField(fieldName, fieldValue)
+
+	return
 }
 
 // SetPath sets the URL path to be called
@@ -99,6 +153,22 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		body    io.Reader
 		verbose = e.env.IsTrue("KOOL_VERBOSE")
 	)
+
+	if e.fake {
+		// fake call
+		err = e.mockErr
+		if e.mockResp != nil {
+			raw, _ := json.Marshal(e.mockResp)
+			json.Unmarshal(raw, e.response)
+		}
+		return
+	}
+
+	if e.postBodyFmtr != nil {
+		e.SetContentType(e.postBodyFmtr.FormDataContentType())
+		e.postBodyFmtr.Close()
+		e.SetRawBody(&e.postBodyBuff)
+	}
 
 	if e.method == "POST" {
 		if e.rawBody != nil {
@@ -173,4 +243,22 @@ func (e *DefaultEndpoint) doRequest(request *http.Request) (resp *http.Response,
 	resp, err = httpRequester.Do(request)
 
 	return
+}
+
+func (e *DefaultEndpoint) initPostBody() {
+	if e.postBodyFmtr == nil {
+		e.postBodyFmtr = multipart.NewWriter(&e.postBodyBuff)
+	}
+}
+
+func (e *DefaultEndpoint) Fake() {
+	e.fake = true
+}
+
+func (e *DefaultEndpoint) MockErr(err error) {
+	e.mockErr = err
+}
+
+func (e *DefaultEndpoint) MockResp(i any) {
+	e.mockResp = i
 }

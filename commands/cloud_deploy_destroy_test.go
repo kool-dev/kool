@@ -21,24 +21,11 @@ func TestNewDeployDestroyCommand(t *testing.T) {
 	}
 }
 
-type fakeDestroyCall struct {
-	api.DefaultEndpoint
-
-	err  error
-	resp *api.DestroyResponse
-}
-
-func (d *fakeDestroyCall) Call() (*api.DestroyResponse, error) {
-	return d.resp, d.err
-}
-
 func TestDeployDestroyExec(t *testing.T) {
 	destroy := &KoolDeployDestroy{
 		*(newDefaultKoolService().Fake()),
 		environment.NewFakeEnvStorage(),
-		&fakeDestroyCall{
-			DefaultEndpoint: *api.NewDefaultEndpoint(""),
-		},
+		*api.NewDeployDestroy(),
 	}
 
 	destroy.env.Set("KOOL_API_TOKEN", "fake token")
@@ -52,16 +39,21 @@ func TestDeployDestroyExec(t *testing.T) {
 
 	destroy.env.Set("KOOL_DEPLOY_DOMAIN", "domain.com")
 
-	destroy.apiDestroy.(*fakeDestroyCall).err = errors.New("failed call")
+	destroy.apiDestroy.Endpoint.(*api.DefaultEndpoint).Fake()
+	destroy.apiDestroy.Endpoint.(*api.DefaultEndpoint).MockErr(errors.New("failed call"))
 
 	if err := destroy.Execute(args); !strings.Contains(err.Error(), "failed call") {
 		t.Errorf("unexpected error - expected failed call, got: %v", err)
 	}
 
-	destroy.apiDestroy.(*fakeDestroyCall).err = nil
-	resp := new(api.DestroyResponse)
-	resp.Environment.ID = 100
-	destroy.apiDestroy.(*fakeDestroyCall).resp = resp
+	destroy.apiDestroy.Endpoint.(*api.DefaultEndpoint).MockErr(nil)
+	destroy.apiDestroy.Endpoint.(*api.DefaultEndpoint).MockResp(&api.DeployDestroyResponse{
+		Environment: struct {
+			ID int `json:"id"`
+		}{
+			ID: 100,
+		},
+	})
 
 	if err := destroy.Execute(args); err != nil {
 		t.Errorf("unexpected error, got: %v", err)

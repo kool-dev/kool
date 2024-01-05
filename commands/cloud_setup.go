@@ -57,7 +57,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 		composeConfig *compose.DockerComposeConfig
 		serviceName   string
 
-		deployConfig *cloud.DeployConfig = &cloud.DeployConfig{
+		deployConfig *cloud.CloudConfig = &cloud.CloudConfig{
 			Version:  "1.0",
 			Services: make(map[string]*cloud.DeployConfigService),
 		}
@@ -160,8 +160,9 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 					s.Shell().Info(fmt.Sprintf("Going to create Dockerfile for service '%s'", serviceName))
 
 					// so here we should build the basic/simplest Dockerfile
-					deployConfig.Services[serviceName].Build = new(string)
-					*deployConfig.Services[serviceName].Build = "."
+					var strPtr interface{} = new(string)
+					deployConfig.Services[serviceName].Build = &strPtr
+					(*deployConfig.Services[serviceName].Build) = "."
 
 					if _, errStat := os.Stat("Dockerfile"); os.IsNotExist(errStat) {
 						// we don't have a Dockerfile, let's make a basic one!
@@ -242,15 +243,16 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 				answer = potentialPorts[0]
 			}
 
-			deployConfig.Services[serviceName].Port = new(int)
-			*deployConfig.Services[serviceName].Port, _ = strconv.Atoi(answer)
+			deployConfig.Services[serviceName].Expose = new(int)
+			*deployConfig.Services[serviceName].Expose, _ = strconv.Atoi(answer)
 
 			if isPublic {
-				public := &cloud.DeployConfigPublicEntry{}
-				public.Port = new(int)
-				*public.Port = *deployConfig.Services[serviceName].Port
+				// public := &cloud.DeployConfigPublicEntry{}
+				// public.Port = new(int)
+				// *public.Port = *deployConfig.Services[serviceName].Expose
 
-				deployConfig.Services[serviceName].Public = append(deployConfig.Services[serviceName].Public, public)
+				// deployConfig.Services[serviceName].Public = append(deployConfig.Services[serviceName].Public, public)
+				deployConfig.Services[serviceName].Public = true
 			}
 		}
 	}

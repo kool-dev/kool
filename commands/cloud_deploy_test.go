@@ -1,9 +1,8 @@
 package commands
 
 import (
-	"errors"
-	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/cloud/setup"
 	"os"
 	"path/filepath"
@@ -12,27 +11,31 @@ import (
 )
 
 func TestNewKoolDeploy(t *testing.T) {
-	kd := NewKoolDeploy()
+	kd := NewKoolDeploy(NewCloud())
 
 	if _, is := kd.env.(*environment.DefaultEnvStorage); !is {
 		t.Error("failed asserting default env storage")
 	}
 
-	if _, is := kd.git.(*builder.DefaultCommand); !is {
-		t.Error("failed asserting default git command")
+	if _, is := kd.cloud.env.(*environment.DefaultEnvStorage); !is {
+		t.Error("failed asserting default cloud.env storage")
+	}
+
+	if _, is := kd.setupParser.(*setup.DefaultCloudSetupParser); !is {
+		t.Error("failed asserting default cloud setup parser")
 	}
 }
 
 func fakeKoolDeploy() *KoolDeploy {
+	c := NewCloud()
+	c.Fake()
 	return &KoolDeploy{
 		*(newDefaultKoolService().Fake()),
+		c,
 		setup.NewDefaultCloudSetupParser(""),
-		&KoolCloudDeployFlags{
-			DeployDomain: "foo",
-			Token:        "bar",
-		},
+		&KoolCloudDeployFlags{},
 		environment.NewFakeEnvStorage(),
-		&builder.FakeCommand{},
+		nil,
 	}
 }
 
@@ -67,45 +70,87 @@ func TestHandleDeployEnv(t *testing.T) {
 	}
 }
 
-func TestValidate(t *testing.T) {
+func TestCreateReleaseFile(t *testing.T) {
 	fake := fakeKoolDeploy()
 
 	tmpDir := t.TempDir()
 	fake.env.Set("PWD", tmpDir)
 
-	if err := fake.validate(); err == nil || !strings.Contains(err.Error(), "could not find required file") {
-		t.Error("failed getting proper error out of validate when no kool.deploy.yml exists in current working directory")
+	if _, err := fake.createReleaseFile(); err == nil || !strings.Contains(err.Error(), "no deploy config files found") {
+		t.Errorf("expected error on createReleaseFile when no kool.deploy.yml exists in current working directory; got: %v", err)
 	}
 
-	if err := os.WriteFile(filepath.Join(tmpDir, "kool.deploy.yml"), []byte("services:\n"), os.ModePerm); err != nil {
-		t.Fatal(err)
-	}
+	mockConfig(tmpDir, t, nil)
 
-	if err := fake.validate(); err != nil {
-		t.Errorf("unexpcted error on validate when file exists: %v", err)
+	if tg, err := fake.createReleaseFile(); err != nil {
+		t.Errorf("unexpected error on createReleaseFile; got: %v", err)
+	} else if _, err := os.Stat(tg); err != nil {
+		t.Errorf("expected tgz file to be created; got: %v", err)
 	}
 }
 
-func TestParseFilesListFromGIT(t *testing.T) {
+func TestCleanupReleaseFile(t *testing.T) {
 	fake := fakeKoolDeploy()
 
-	if files, err := fake.parseFilesListFromGIT([]string{}); err != nil {
-		t.Errorf("unexpected error from parseFileListFromGIT: %v", err)
-	} else if len(files) != 0 {
-		t.Errorf("unexpected return of files: %#v", files)
+	tmpDir := t.TempDir()
+	fake.env.Set("PWD", tmpDir)
+
+	mockConfig(tmpDir, t, nil)
+
+	f := filepath.Join(tmpDir, "kool.cloud.yml")
+	fake.cleanupReleaseFile(f)
+	if _, err := os.Stat(f); !os.IsNotExist(err) {
+		t.Errorf("expected file to be removed")
 	}
 
-	fake.git.(*builder.FakeCommand).MockExecOut = strings.Join([]string{"foo", string(rune(0x00)), "bar"}, "")
+	fake.cleanupReleaseFile(f)
+	if !fake.shell.(*shell.FakeShell).CalledError {
+		t.Errorf("expected for Error to have been called on shell")
+	}
+	if !strings.Contains(fake.shell.(*shell.FakeShell).Err.Error(), "error trying to remove temporary tarball") {
+		t.Errorf("expected to print proper error message if file removal fails")
+	}
+}
 
-	if files, err := fake.parseFilesListFromGIT([]string{}); err != nil {
-		t.Errorf("unexpected error from parseFileListFromGIT: %v", err)
-	} else if len(files) != 2 {
-		t.Errorf("unexpected return of files: %#v", files)
+func TestLoadAndValidateConfig(t *testing.T) {
+	fake := fakeKoolDeploy()
+
+	tmpDir := t.TempDir()
+	fake.env.Set("PWD", tmpDir)
+
+	if err := fake.loadAndValidateConfig(); err == nil || !strings.Contains(err.Error(), "could not find required file") {
+		t.Error("failed getting proper error out of loadAndValidateConfig when no kool.cloud.yml exists in current working directory")
 	}
 
-	fake.git.(*builder.FakeCommand).MockExecError = errors.New("error")
+	mockConfig(tmpDir, t, []byte("services:\n\tfoo:\n"))
 
-	if _, err := fake.parseFilesListFromGIT([]string{"foo", "bar"}); err == nil || !strings.Contains(err.Error(), "failed listing GIT") {
-		t.Errorf("unexpected error from parseFileListFromGIT: %v", err)
+	if err := fake.loadAndValidateConfig(); err == nil || !strings.Contains(err.Error(), "found character that cannot start") {
+		t.Errorf("unexpcted error on loadAndValidateConfig with bad config: %v", err)
+	}
+
+	mockConfig(tmpDir, t, nil)
+
+	if err := fake.loadAndValidateConfig(); err != nil {
+		t.Errorf("unexpcted error on loadAndValidateConfig when file exists: %v", err)
+	}
+
+	if fake.cloudConfig.Cloud.Services == nil {
+		t.Error("failed loading cloud config")
+	}
+
+	if len(fake.cloudConfig.Cloud.Services) != 1 {
+		t.Error("service count mismatch - should be 1")
+	} else if *fake.cloudConfig.Cloud.Services["foo"].Image != "bar" {
+		t.Error("failed loading service foo image 'bar'")
+	}
+}
+
+func mockConfig(tmpDir string, t *testing.T, mock []byte) {
+	if mock == nil {
+		mock = []byte("services:\n  foo:\n    image: bar\n")
+	}
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "kool.cloud.yml"), mock, os.ModePerm); err != nil {
+		t.Fatal(err)
 	}
 }
