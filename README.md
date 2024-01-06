@@ -27,7 +27,7 @@ Requirements: Kool is powered by [Docker](https://docs.docker.com/get-docker/). 
 
 **Important**: make sure you are running the latest version of Docker and that you do have Compose V2 available (`docker compose`). You can read more about [Compose V2 release via its documentation](https://docs.docker.com/compose/reference/). Checkout out instructions for [installing Docker Compose V2 in the official documentation](https://docs.docker.com/compose/install/#scenario-two-install-the-compose-plugin).
 
-### For Linux and macOS
+### For Linux and MacOS
 
 Install **kool** by running the following script. It will download the latest **kool** binary from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases), and save it in your `/usr/local/bin` folder.
 
@@ -37,7 +37,7 @@ curl -fsSL https://kool.dev/install | bash
 
 ### For Windows
 
-Install **kool** by downloading the appropriate installer from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases). At the bottom of the release notes for the latest version, expand the list of "Assets", and download the installer that matches your machine.
+You must run `kool` on Windows via [WSL - Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) - once you have a WSL environment properly set up, make sure you have [Docker available on it](https://docs.docker.com/desktop/wsl/), then you can install the CLI as you would in any Linux or MacOS (see above).
 
 ## Getting Started
 
@@ -50,7 +50,7 @@ To help you start building real-world applications, we've created Kool Presets a
 #### Popular stacks and frameworks
 
 - **Node**: [NestJS](docs/2-Presets/NestJS.md), [AdonisJs](docs/2-Presets/AdonisJs.md), [Express.js](/docs/2-Presets/ExpressJS.md)
-- **PHP**: [Laravel](docs/2-Presets/Laravel.md), [Symfony](docs/2-Presets/Symfony.md), [CodeIgniter](docs/2-Presets/CodeIgniter.md)
+- **PHP**: [Laravel](docs/2-Presets/Laravel.md), [Laravel Octane](docs/2-Presets/Laravel+Octane.md), [Symfony](docs/2-Presets/Symfony.md), [CodeIgniter](docs/2-Presets/CodeIgniter.md)
 - **Javascript**: [Next.js](docs/2-Presets/NextJS.md), [NuxtJS](docs/2-Presets/NuxtJS.md)
 - **Others**: [Hugo](docs/2-Presets/Hugo.md), [WordPress](docs/2-Presets/WordPress.md)
 

@@ -5,7 +5,6 @@ import (
 	"kool-dev/kool/services/user"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
@@ -74,39 +73,28 @@ func (u *DefaultUpdater) CheckForUpdates(current semver.Version, chHasNewVersion
 // user has not enough privileges to perform this task,
 // OS wise.
 func (u *DefaultUpdater) CheckPermission() (err error) {
-	if runtime.GOOS != "windows" && runtime.GOOS != "linux" {
-		// we should be fine in other plataforms, permission-wise
+	var (
+		binPath string
+	)
+
+	if binPath, err = os.Executable(); err != nil {
 		return
 	}
 
-	if runtime.GOOS == "linux" {
-		var (
-			binPath string
-		)
+	if binPath, err = filepath.EvalSymlinks(binPath); err != nil {
+		return
+	}
 
-		if binPath, err = os.Executable(); err != nil {
-			return
-		}
-
-		if binPath, err = filepath.EvalSymlinks(binPath); err != nil {
-			return
-		}
-
-		if isWriteable(binPath) && isWriteable(filepath.Dir(binPath)) {
-			// the folder the binary file lives is IS writeable
-			// for the current user
-			return
-		}
+	if isWriteable(binPath) && isWriteable(filepath.Dir(binPath)) {
+		// the folder the binary file lives is IS writeable
+		// for the current user
+		return
 	}
 
 	// we need elevated privileges!
 	var isAdmin = user.CurrentUserIsElevated()
 	if !isAdmin {
-		if runtime.GOOS == "linux" {
-			err = fmt.Errorf("you need to use 'sudo' to perform this task")
-		} else if runtime.GOOS == "windows" {
-			err = fmt.Errorf("you need to Run as Administrator to perform this task")
-		}
+		err = fmt.Errorf("you need to use 'sudo' to perform this task")
 	}
 
 	return

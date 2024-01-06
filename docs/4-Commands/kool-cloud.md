@@ -15,7 +15,9 @@ kool cloud deploy
 ### Options
 
 ```
-  -h, --help   help for cloud
+      --domain string   Environment domain name to deploy to
+  -h, --help            help for cloud
+      --token string    Token to authenticate with Kool Cloud API
 ```
 
 ### Options inherited from parent commands

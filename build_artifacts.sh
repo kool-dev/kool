@@ -45,7 +45,6 @@ BUILD=(\
   "dist/kool-linux-amd64|--env GOOS=linux --env GOARCH=amd64" \
   "dist/kool-linux-arm6|--env GOOS=linux --env GOARCH=arm --env GOARM=6" \
   "dist/kool-linux-arm7|--env GOOS=linux --env GOARCH=arm --env GOARM=7" \
-  "dist/kool-windows-amd64.exe|--env GOOS=windows --env GOARCH=amd64" \
   "dist/kool-linux-arm64|--env GOOS=linux --env GOARCH=arm64" \
 )
 
@@ -61,15 +60,6 @@ for i in "${!BUILD[@]}"; do
     -ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
     -o $dist
 done
-
-echo "Building kool-install.exe"
-
-cp dist/kool-windows-amd64.exe dist/kool.exe
-
-docker run --rm -i \
-  -v $(pwd):/work -w /work \
-  amake/innosetup /dApplicationVersion=$BUILD_VERSION inno-setup/kool.iss
-mv inno-setup/Output/mysetup.exe dist/kool-install.exe
 
 echo "Going to generate CHECKSUMS"
 
