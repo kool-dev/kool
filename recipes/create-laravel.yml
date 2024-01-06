@@ -1,4 +1,4 @@
-title: "Wizard: PHP"
+title: "Creating Laravel Application"
 
 actions:
   - prompt: 'Which PHP version do you want to use?'

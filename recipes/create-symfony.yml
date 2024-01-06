@@ -1,0 +1,32 @@
+title: "Creating Symfony Application"
+
+actions:
+  - prompt: 'Which PHP version do you want to use?'
+    ref: 'php-version'
+    default: 'PHP 8.2'
+    options:
+      - name: 'PHP 8.3'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.3
+            - kool docker kooldev/php:8.3 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
+      - name: 'PHP 8.2'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.2
+            - kool docker kooldev/php:8.2 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
+      - name: 'PHP 8.1'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.1
+            - kool docker kooldev/php:8.1 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
+      - name: 'PHP 8.0'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8
+            - kool docker kooldev/php:p:8 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
+      - name: 'PHP 7.4'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:7.4
+            - kool docker kooldev/php:7.4 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
