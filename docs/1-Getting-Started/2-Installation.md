@@ -2,11 +2,11 @@
 
 ### Requirements
 
-**kool** is powered by **Docker**. To use **kool**, you need to **[install the Docker Engine](https://docs.docker.com/get-docker/)** and **[Docker Compose](https://docs.docker.com/compose/install/)** on your local machine, and make sure they're both running.
+**kool** is powered by **Docker**. To use **kool**, you need to **[install the Docker Engine and Docker Compose](https://docs.docker.com/get-docker/)** on your local machine, and make sure they're both running.
 
-> Docker Compose is included with **Docker Desktop for Mac** and **Docker Desktop for Windows**.
+Important to notice: `kool` relies on the `docker` and `docker compose` CLI commands - that being said, you can pick any other Docker-compatibable container engine and use it seamlessly, like OrbStack for example.
 
-> `kool` now requires [Docker Compose V2](https://docs.docker.com/compose/install/), make sure you have it in your system.
+> `kool` now requires [Docker Compose V2](https://docs.docker.com/compose/install/), make sure you have it enabled in your system.
 
 ### For Linux and macOS
 
@@ -18,7 +18,7 @@ $ curl -fsSL https://kool.dev/install | bash
 
 ### For Windows
 
-Install **kool** by downloading the appropriate installer from [https://github.com/kool-dev/kool/releases](https://github.com/kool-dev/kool/releases). At the bottom of the release notes for the latest version, expand the list of "Assets", and download the installer that matches your machine.
+You must run `kool` on Windows via [WSL - Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) - once you have a WSL environment properly set up, make sure you have [Docker available on it](https://docs.docker.com/desktop/wsl/), then you can install the CLI as you would in any Linux or MacOS (see above).
 
 ### Verification
 
