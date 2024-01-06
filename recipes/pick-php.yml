@@ -2,9 +2,13 @@ title: "Wizard: PHP"
 
 actions:
   # Defines which app service to use (PHP version)
-  - prompt: 'Which PHP version do you want to use'
-    default: 'PHP 8.1'
+  - prompt: 'Which PHP version do you want to use?'
+    ref: 'php-version'
+    default: 'PHP 8.2'
     options:
+      - name: 'PHP 8.3'
+        actions:
+          - recipe: php-8.3
       - name: 'PHP 8.2'
         actions:
           - recipe: php-8.2

@@ -7,9 +7,7 @@ name: 'Laravel'
 create:
   - name: Creating new Laravel Application
     actions:
-      - scripts:
-          - docker pull -q kooldev/php:8.1
-          - kool docker kooldev/php:8.1 composer create-project --no-install --no-scripts --prefer-dist laravel/laravel $CREATE_DIRECTORY
+      - recipe: create-laravel
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:

@@ -7,9 +7,7 @@ name: 'Symfony'
 create:
   - name: Creating new Symfony Application
     actions:
-      - scripts:
-          - docker pull -q kooldev/php:8.1
-          - kool docker kooldev/php:8.1 composer create-project --no-install --prefer-dist symfony/website-skeleton $CREATE_DIRECTORY
+      - recipe: create-symfony
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
