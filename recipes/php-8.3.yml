@@ -1,0 +1,5 @@
+title: "PHP 8.3"
+
+actions:
+  - merge: app/php83.yml
+    dst: docker-compose.yml
