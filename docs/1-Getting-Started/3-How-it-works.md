@@ -84,7 +84,7 @@ scripts:
     - kool run yarn install
 
   before-start:
-    - kool docker kooldev/bash -c "cp .env.example .env"
+    - cp .env.example .env
     - kool run yarn install
 ```
 

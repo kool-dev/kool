@@ -155,7 +155,7 @@ scripts:
   phpunit: kool exec app php ./bin/phpunit
 
   setup:
-    - kool docker kooldev/bash -c "cp env .env"
+    - cp env .env
     - kool start
     - kool run composer install
     - kool run spark key:generate
