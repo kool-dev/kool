@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.21.x]
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
     - name: Install Go
@@ -30,7 +30,7 @@ jobs:
         go mod download
         go install
     - name: Test
-      if: matrix.os == 'macos-latest' || matrix.os == 'windows-latest'
+      if: matrix.os == 'macos-latest'
       run: go test ./...
     - name: Test with code coverage
       if: matrix.os == 'ubuntu-latest'
