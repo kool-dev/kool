@@ -3,6 +3,12 @@ tags: [ 'Golang' ]
 
 name: 'CLI App'
 
+create:
+  - name: Creating new Golang CLI Application
+    actions:
+      - scripts:
+          - mkdir -p $CREATE_DIRECTORY
+
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
   - name: 'Copy basic config files'
