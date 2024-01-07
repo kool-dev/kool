@@ -1,0 +1,16 @@
+title: "Creating NestJS Application"
+
+actions:
+  - prompt: 'Which language do you want to use?'
+    ref: 'node-pick-ts-js'
+    default: 'Typescript'
+    options:
+      - name: 'Typescript'
+        actions:
+          - scripts:
+            - kool docker kooldev/node:20 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY
+      - name: 'Javascript'
+        actions:
+          - scripts:
+            - kool docker kooldev/node:20 npx -y @nestjs/cli new -l Javascript -p npm $CREATE_DIRECTORY
+

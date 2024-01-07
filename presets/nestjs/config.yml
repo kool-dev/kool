@@ -1,5 +1,5 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
-tags: [ 'Typescript' ]
+tags: [ 'Typescript', 'Javascript' ]
 
 name: 'NestJS'
 
@@ -9,7 +9,7 @@ create:
     actions:
       - scripts:
           - docker pull -q kooldev/node:20
-          - kool docker kooldev/node:20 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY
+      - recipe: create-nestjs
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
