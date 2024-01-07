@@ -12,6 +12,6 @@ scripts:
     - kool run artisan migrate:fresh --seed
 
   before-start:
-    - kool docker kooldev/bash -c "cp .env.example .env"
+    - cp .env.example .env
     - kool docker kooldev/php:8.2-node composer install
     - kool docker kooldev/php:8.2-node php artisan key:generate

@@ -161,7 +161,7 @@ scripts:
   yarn: kool docker kooldev/node:20 yarn
 
   setup:
-    - kool docker kooldev/bash -c "cp .env.example .env"
+    - cp .env.example .env
     - kool start
     - kool run composer install
     - kool run yarn install

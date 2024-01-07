@@ -5,7 +5,7 @@ scripts:
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
 
   setup:
-    - kool docker kooldev/bash -c "cp env .env"
+    - cp env .env
     - kool start
     - kool run composer install
     - kool run spark key:generate
