@@ -1,11 +1,11 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
 tags: [ 'Javascript' ]
 
-name: 'Hello World'
+name: 'Vanilla Node.js'
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:
-  - name: Creating new Node application
+  - name: Creating new Node.js application
     actions:
       - scripts:
           - mkdir $CREATE_DIRECTORY
