@@ -2,7 +2,7 @@
 tags: [ 'PHP' ]
 
 # Name of the preset
-name: 'Hello World (PHP+Nginx)'
+name: 'Vanilla PHP (Nginx+PHP-FPM)'
 
 # Create defines the workflow for creating a new Project where this preset can then be installed
 create:

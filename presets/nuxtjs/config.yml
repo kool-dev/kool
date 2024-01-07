@@ -1,5 +1,5 @@
 # Which tags are related to this preset; used for branching the choices on preset wizard
-tags: [ 'JS' ]
+tags: [ 'Javascript' ]
 
 name: 'NuxtJS'
 
