@@ -49,10 +49,10 @@ To help you start building real-world applications, we've created Kool Presets a
 
 #### Popular stacks and frameworks
 
-- **Node**: [NestJS](docs/2-Presets/NestJS.md), [AdonisJs](docs/2-Presets/AdonisJs.md), [Express.js](/docs/2-Presets/ExpressJS.md)
-- **PHP**: [Laravel](docs/2-Presets/Laravel.md), [Laravel Octane](docs/2-Presets/Laravel+Octane.md), [Symfony](docs/2-Presets/Symfony.md), [CodeIgniter](docs/2-Presets/CodeIgniter.md)
-- **Javascript**: [Next.js](docs/2-Presets/NextJS.md), [NuxtJS](docs/2-Presets/NuxtJS.md)
-- **Others**: [Hugo](docs/2-Presets/Hugo.md), [WordPress](docs/2-Presets/WordPress.md)
+- **Node**: [NestJS](docs/03-Presets/NestJS.md), [AdonisJs](docs/03-Presets/AdonisJs.md), [Express.js](/docs/03-Presets/ExpressJS.md)
+- **PHP**: [Laravel](docs/03-Presets/Laravel.md), [Laravel Octane](docs/03-Presets/Laravel+Octane.md), [Symfony](docs/03-Presets/Symfony.md), [CodeIgniter](docs/03-Presets/CodeIgniter.md)
+- **Javascript**: [Next.js](docs/03-Presets/NextJS.md), [NuxtJS](docs/03-Presets/NuxtJS.md)
+- **Others**: [Hugo](docs/03-Presets/Hugo.md), [WordPress](docs/03-Presets/WordPress.md)
 
 #### Monorepo structures
 
@@ -60,7 +60,7 @@ It's a common challange mixing up different frameworks for the frontned and a ba
 
 Check out our pre-shaped [mono-repo structures](https://monorepo.tools/#what-is-a-monorepo) in a single preset:
 
-- [Monorepo NestJS + Next.js](docs/2-Presets/2-Monorepo-NestJS-with-NextJS.md) with Typescript on both the frontend and the backend.
+- [Monorepo NestJS + Next.js](docs/03-Presets/2-Monorepo-NestJS-with-NextJS.md) with Typescript on both the frontend and the backend.
 
 > If you don't see your favorite framework in the list above, please let us know by creating a GitHub issue, or, better yet, feel free to submit a PR!
 

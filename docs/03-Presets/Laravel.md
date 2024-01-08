@@ -1,34 +1,62 @@
-# Start a Laravel Octane Project with Docker in 3 Easy Steps
+# Start a Laravel Project with Docker in 3 Easy Steps
 
-1. Run `kool create laravel+octane my-project`
+1. Run `kool create laravel my-project`
 2. Update **.env.example**
 3. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new Laravel Octane projects is that easy!
+> Yes, using **kool** + Docker to create and work on new Laravel projects is that easy!
 
 ## Requirements
 
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
-> Also, make sure you're running the latest version of **kool**. Run the following command: `kool self-update`
+Also, make sure you're running the latest version of **kool**. Run the following command to compare your local version of **kool** with the latest release, and, if a newer version is available, automatically download and install it.
+
+```bash
+$ kool self-update
+```
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create laravel+octane my-project`
+## 1. Run `kool create laravel my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Laravel Octane project:
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Laravel project:
 
 ```bash
-$ kool create laravel+octane my-project
+$ kool create laravel my-project
 ```
 
-This command will guide you through setting up a new Laravel project, installing Laravel Octane with your preferred server engine (either Swoole or RoadRunner), and setting up all the Docker Compose configuration files to manage your dockerized development environment.
+Under the hood, this command will run `composer create-project --no-install --no-scripts --prefer-dist laravel/laravel my-project` using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-php" target="_blank">kooldev/php:8.1</a>.
 
-After that, you will have the option to include a database or cache service, all of which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After installing Laravel, `kool create` automatically runs the `kool preset laravel` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
----
+```bash
+$ Preset laravel is initializing!
 
-Now, move into your new Laravel Octane project:
+? Which app service do you want to use [Use arrows to move, type to filter]
+> PHP 7.4
+  PHP 8.0
+
+? Which database service do you want to use [Use arrows to move, type to filter]
+> MySQL 8.0
+  MySQL 5.7
+  MariaDB 10.5
+  PostgreSQL 13.0
+  none
+
+? Which cache service do you want to use [Use arrows to move, type to filter]
+> Redis 6.0
+  Memcached 1.6
+  none
+
+? Which javascript package manager do you want to use [Use arrows to move, type to filter]
+> npm
+  yarn
+
+$ Preset laravel initialized!
+```
+
+Now, move into your new Laravel project:
 
 ```bash
 $ cd my-project
@@ -49,14 +77,14 @@ You need to update some default values in Laravel's **.env.example** file to mat
 
 ### Database Services
 
-MySQL or MariaDB
+MySQL 5.7 and 8.0 or MariaDB 10.5
 
 ```diff
 -DB_HOST=127.0.0.1
 +DB_HOST=database
 ```
 
-PostgreSQL
+PostgreSQL 13.0
 
 ```diff
 -DB_CONNECTION=mysql
@@ -69,7 +97,7 @@ PostgreSQL
 +DB_PORT=5432
 ```
 
-> In order to avoid permission issues with mysql and MariaDB, add a user other than root and a password to your **.env.example** file
+> In order to avoid permission issues with mysql and mariaDB, add a user other than root and a password to your **.env.example** file
 
 ```diff
 -DB_USERNAME=root
@@ -97,20 +125,36 @@ Memcached
 
 ## 3. Run `kool run setup`
 
-Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
-
-```bash
-# CAUTION: this script will reset your `.env` file with `.env.example`
-$ kool run setup
-```
-
-### About `kool.yml` and `kool run setup`
-
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
 As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run artisan`). You can add your own single line commands (see `composer` below), or add a list of commands that will be executed in sequence (see `setup` below).
 
 To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the choices you made earlier using the **preset** wizard), including a script called `setup`, which helps you spin up a project for the first time.
+
+```yaml
+scripts:
+  artisan: kool exec app php artisan
+  composer: kool exec app composer
+  mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
+  node: kool docker kooldev/node:20 node
+  npm: kool docker kooldev/node:20 npm # or yarn
+  npx: kool exec app npx
+
+  setup:
+    - kool run before-start
+    - kool start
+    - kool run composer install
+    - kool run artisan key:generate
+
+  reset:
+    - kool run composer install
+    - kool run artisan migrate:fresh --seed
+    - kool run yarn install
+
+  before-start:
+    - cp .env.example .env
+    - kool run yarn install
+```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
 
@@ -187,16 +231,16 @@ $ kool start
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
-- **[AdonisJs](/docs/2-Presets/AdonisJs.md)**
-- **[CodeIgniter](/docs/2-Presets/CodeIgniter.md)**
-- **[Express.js](/docs/2-Presets/ExpressJS.md)**
-- **[Hugo](/docs/2-Presets/Hugo.md)**
-- **[NestJS](/docs/2-Presets/NestJS.md)**
-- **[Next.js](/docs/2-Presets/NextJS.md)**
-- **[Node.js](/docs/2-Presets/NodeJS.md)**
-- **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
-- **[PHP](/docs/2-Presets/PHP.md)**
-- **[Symfony](/docs/2-Presets/Symfony.md)**
-- **[WordPress](/docs/2-Presets/WordPress.md)**
+- **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
+- **[Express.js](/docs/03-Presets/ExpressJS.md)**
+- **[Hugo](/docs/03-Presets/Hugo.md)**
+- **[NestJS](/docs/03-Presets/NestJS.md)**
+- **[Next.js](/docs/03-Presets/NextJS.md)**
+- **[Node.js](/docs/03-Presets/NodeJS.md)**
+- **[Nuxt.js](/docs/03-Presets/NuxtJS.md)**
+- **[PHP](/docs/03-Presets/PHP.md)**
+- **[Symfony](/docs/03-Presets/Symfony.md)**
+- **[WordPress](/docs/03-Presets/WordPress.md)**
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/main/presets](https://github.com/kool-dev/kool/tree/main/presets) and browse the code to learn more about how presets work.

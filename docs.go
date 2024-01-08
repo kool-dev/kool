@@ -51,7 +51,7 @@ func main() {
 	re := regexp.MustCompile("(?m)[\r\n]+^.*kool_deploy.*$")
 	koolMarkdown = re.ReplaceAllString(koolMarkdown, "")
 
-	koolFile, err = CreateFile("0-kool", "docs/4-Commands")
+	koolFile, err = CreateFile("0-kool", "docs/05-Commands-Reference")
 
 	if err != nil {
 		log.Fatal(err)
@@ -100,7 +100,7 @@ func exportCmdDocs(childCmd *cobra.Command, koolMarkdown *string) (err error) {
 		return
 	}
 
-	if cmdFile, err = CreateFile(newName, "docs/4-Commands"); err != nil {
+	if cmdFile, err = CreateFile(newName, "docs/05-Commands-Reference"); err != nil {
 		return
 	}
 
