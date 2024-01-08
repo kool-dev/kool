@@ -30,4 +30,4 @@ The Kool.dev Cloud API was designed with the best developer experience in mind f
 
 Full documentation:
 
-- [`kool.deploy.yml` Reference](/docs/02-Kool-Cloud/2-kool.deploy.yml-Reference.md)
+- [`kool.deploy.yml` Reference](/docs/02-Kool-Cloud/10-kool.deploy.yml-Reference.md)
