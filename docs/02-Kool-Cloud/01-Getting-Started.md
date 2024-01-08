@@ -2,7 +2,7 @@ The [Kool Cloud](https://kool.dev/cloud) supports a wide range of features desig
 
 The Kool.dev Cloud API was designed with the best developer experience in mind for deploying containers to the cloud. By leveraging your existing local environment structure in `docker-compose.yml` and adding a sane and intuitive configuration layer that will feel familiar from the first sight, our goal is to provide a best-in-class offering for cloud platform engineering. This platform allows you to leverage Kubernetes and orchestrate your web applications in the cloud without all the hassle.
 
-> **Enterprise**: you can use Kool.dev Cloud to deploy workloads to your own cloud vendor to keep things compliant - [contact us](mailto:contact@kool.dev) for **"Bring your Own Cloud"** offer.
+> **Enterprise**: you can use Kool.dev Cloud to deploy workloads to your own cloud vendor to keep things compliant - [contact us](mailto:contact@kool.dev) for the **"Bring your Own Cloud"** offer.
 
 **kool cloud** is the CLI suite of commands that allows you to configure, deploy, access, and tail logs from the applications to the cloud via the Kool.dev Cloud API.
 
@@ -28,6 +28,6 @@ The Kool.dev Cloud API was designed with the best developer experience in mind f
 
 ---
 
-Full documentation:
+Reference:
 
-- [`kool.deploy.yml` Reference](/docs/02-Kool-Cloud/10-kool.deploy.yml-Reference.md)
+- [`kool.deploy.yml` Reference](/docs/02-Kool-Cloud/20-kool.deploy.yml-Reference.md)

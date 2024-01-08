@@ -35,10 +35,14 @@ Here's an example of `kool.cloud.yml` file showcasing all the features and confi
 services:
   app:
     # Applications usually will require a special image built for deployment.
-    build: Dockerfile
+    # Reference: https://docs.docker.com/compose/compose-file/compose-file-v3/#build
+    build: .
 
     # Tells Kool Cloud that this service is accessible through the deployment URL.
     # Note: only one service can be set to be public.
+    public: true # simply defining true is enough to most cases where your `expose` port will be used for routing incoming HTTP requests.
+
+    # Another option is advanced definition:
     public:
       # Tells the port that should be used for routing incoming HTTP traffic.
       - port: 80
@@ -50,7 +54,7 @@ services:
         path: /ws
 
     # Tells what port the app will listen to (optional).
-    port: 80
+    expose: 80
 
     # Tells your app's root folder so all other paths can be relative (optional).
     root: /app
@@ -74,7 +78,7 @@ services:
 
     # By default, Kool Cloud will rollout new deployments in a blue-green fashion.
     # If you want to disable it and make sure the current running container
-    # stopped before the new one is created, set 'recreate: true'.
+    # is stopped before the new one is created, set 'recreate: true'.
     recreate: false
 
     # Sometimes you may make changes to your app that wouldn't necessarily trigger
