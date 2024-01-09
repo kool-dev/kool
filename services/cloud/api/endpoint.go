@@ -182,7 +182,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 	reqURL := fmt.Sprintf("%s/%s?%s", apiBaseURL, e.path, e.query.Encode())
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "[Kool Cloud] Going to call: %s\n", reqURL)
+		fmt.Fprintf(os.Stderr, "[Kool.dev Cloud] Going to call: %s\n", reqURL)
 	}
 
 	if request, err = http.NewRequest(e.method, reqURL, body); err != nil {
@@ -207,7 +207,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 	}
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "[Kool Cloud] Got: %s\n", string(raw))
+		fmt.Fprintf(os.Stderr, "[Kool.dev Cloud] Got: %s\n", string(raw))
 	}
 
 	if e.statusCode >= 400 {

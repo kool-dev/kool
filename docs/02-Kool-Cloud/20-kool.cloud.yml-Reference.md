@@ -23,7 +23,7 @@ services:
       - port: 80
 ```
 
-Provided you have already signed up and obtained your access token for Kool Cloud in your `.env`, simply by running `kool cloud deploy`, you will get your container with `some/image` deployed to the cloud and a URL with HTTPS that will route incoming traffic to port 80 of that container.
+Provided you have already signed up and obtained your access token for Kool.dev Cloud in your `.env`, simply by running `kool cloud deploy`, you will get your container with `some/image` deployed to the cloud and a URL with HTTPS that will route incoming traffic to port 80 of that container.
 
 ## Reference
 
@@ -38,7 +38,7 @@ services:
     # Reference: https://docs.docker.com/compose/compose-file/compose-file-v3/#build
     build: .
 
-    # Tells Kool Cloud that this service is accessible through the deployment URL.
+    # Tells Kool.dev Cloud that this service is accessible through the deployment URL.
     # Note: only one service can be set to be public.
     public: true # simply defining true is enough to most cases where your `expose` port will be used for routing incoming HTTP requests.
 
@@ -76,7 +76,7 @@ services:
           # Tells what user and group should own the persisted folder (only used along the sync: true)
           chown: user:group
 
-    # By default, Kool Cloud will rollout new deployments in a blue-green fashion.
+    # By default, Kool.dev Cloud will rollout new deployments in a blue-green fashion.
     # If you want to disable it and make sure the current running container
     # is stopped before the new one is created, set 'recreate: true'.
     recreate: false

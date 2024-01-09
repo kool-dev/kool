@@ -28,8 +28,8 @@ type KoolDeployLogsFlags struct {
 func NewDeployLogsCommand(deployLogs *KoolDeployLogs) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "logs [OPTIONS] SERVICE",
-		Short: "See the logs of running service container deployed to Kool Cloud",
-		Long: `After deploying an application to Kool Cloud using 'kool deploy',
+		Short: "See the logs of running service container deployed to Kool.dev Cloud",
+		Long: `After deploying an application to Kool.dev Cloud using 'kool deploy',
 you can see the logs from the specified SERVICE container.
 Must use a KOOL_API_TOKEN environment variable for authentication.`,
 		Args: cobra.ExactArgs(1),

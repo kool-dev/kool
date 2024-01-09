@@ -15,7 +15,7 @@
 
 **Kool** is a CLI tool that brings the complexities of modern software development environments down to earth - making these environments lightweight, fast and reproducible. It reduces the complexity and learning curve of _Docker_ containers for local environments, and offers a simplified interface for using _Kubernetes_ to deploy staging and production environments to the cloud.
 
-**Kool** gets your local development environment up and running easily and quickly, so you have more time to build a great application. When the time is right, you can then use Kool Cloud to deploy and share your work with the world!
+**Kool** gets your local development environment up and running easily and quickly, so you have more time to build a great application. When the time is right, you can then use Kool.dev Cloud to deploy and share your work with the world!
 
 **Kool** is suitable for solo developers and teams of all sizes. It provides a hassle-free way to handle the Docker basics and immediately start using containers for development, while simultaneously guaranteeing no loss of control over more specialized Docker environments.
 

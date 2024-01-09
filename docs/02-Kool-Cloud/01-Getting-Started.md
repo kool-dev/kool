@@ -1,14 +1,14 @@
-The [Kool Cloud](https://kool.dev/cloud) supports a wide range of features designed to suit your needs for deploying containerized web applications. It includes features such as **persisting folders** across deployments, running **daemons** as extra containers, scheduling commands like **cron jobs**, adding **hooks to run before or after** deployment, **viewing logs** of running containers, accessing the running container **interactively**, and much more.
+The [Kool.dev Cloud](https://kool.dev/cloud) supports a wide range of features designed to suit your needs for deploying containerized web applications. It includes features such as **persisting folders** across deployments, running **daemons** as extra containers, scheduling commands like **cron jobs**, adding **hooks to run before or after** deployment, **viewing logs** of running containers, accessing the running container **interactively**, and much more.
 
 The Kool.dev Cloud API was designed with the best developer experience in mind for deploying containers to the cloud. By leveraging your existing local environment structure in `docker-compose.yml` and adding a sane and intuitive configuration layer that will feel familiar from the first sight, our goal is to provide a best-in-class offering for cloud platform engineering. This platform allows you to leverage Kubernetes and orchestrate your web applications in the cloud without all the hassle.
 
 > **Enterprise**: You can use Kool.dev Cloud to deploy workloads to your own cloud vendor to keep things compliant - [contact us](mailto:contact@kool.dev) for the **"Bring your Own Cloud"** offer.
 
-**Kool Cloud** is the CLI suite of commands that allows you to configure, deploy, access, and tail logs from the applications to the cloud via the Kool.dev Cloud API.
+**Kool.dev Cloud** is the CLI suite of commands that allows you to configure, deploy, access, and tail logs from the applications to the cloud via the Kool.dev Cloud API.
 
 ## Deploy Docker Compose-based, containerized apps in just a few simple steps
 
-1. [Sign up for Kool Cloud](https://kool.dev/register) and get your access token.
+1. [Sign up for Kool.dev Cloud](https://kool.dev/register) and get your access token.
 	- You can store your token in your `.env` file if you are using one:
 		- `echo "KOOL_API_TOKEN=<my-token>" >> .env`
 	- Or you can store your token in a real environment variable:
