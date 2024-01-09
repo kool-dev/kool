@@ -15,18 +15,18 @@ Out of the box, Kool ships with a collection of Presets that will help you quick
 
 > As an example of the Preset developer experience, check out the [Laravel preset](https://kool.dev/docs/presets/laravel).
 
-- [AdonisJs](/docs/2-Presets/AdonisJs.md)
-- [CodeIgniter](/docs/2-Presets/CodeIgniter.md)
-- [Express.js](/docs/2-Presets/ExpressJS.md)
-- [Hugo](/docs/2-Presets/Hugo.md)
-- [Laravel](/docs/2-Presets/Laravel.md)
-- [NestJS](/docs/2-Presets/NestJS.md)
-- [Next.js](/docs/2-Presets/NextJS.md)
-- [Node.js](/docs/2-Presets/NodeJS.md)
-- [Nuxt.js](/docs/2-Presets/NuxtJS.md)
-- [PHP](/docs/2-Presets/PHP.md)
-- [Symfony](/docs/2-Presets/Symfony.md)
-- [WordPress](/docs/2-Presets/WordPress.md)
+- [AdonisJs](/docs/03-Presets/AdonisJs.md)
+- [CodeIgniter](/docs/03-Presets/CodeIgniter.md)
+- [Express.js](/docs/03-Presets/ExpressJS.md)
+- [Hugo](/docs/03-Presets/Hugo.md)
+- [Laravel](/docs/03-Presets/Laravel.md)
+- [NestJS](/docs/03-Presets/NestJS.md)
+- [Next.js](/docs/03-Presets/NextJS.md)
+- [Node.js](/docs/03-Presets/NodeJS.md)
+- [Nuxt.js](/docs/03-Presets/NuxtJS.md)
+- [PHP](/docs/03-Presets/PHP.md)
+- [Symfony](/docs/03-Presets/Symfony.md)
+- [WordPress](/docs/03-Presets/WordPress.md)
 
 ### Docker and Docker Compose
 

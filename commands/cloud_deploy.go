@@ -47,7 +47,7 @@ type KoolDeploy struct {
 func NewDeployCommand(deploy *KoolDeploy) (cmd *cobra.Command) {
 	cmd = &cobra.Command{
 		Use:   "deploy",
-		Short: "Deploy a local application to a Kool Cloud environment",
+		Short: "Deploy a local application to a Kool.dev Cloud environment",
 		RunE:  DefaultCommandRunFunction(deploy),
 		Args:  cobra.NoArgs,
 

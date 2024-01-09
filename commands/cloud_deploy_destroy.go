@@ -20,7 +20,7 @@ type KoolDeployDestroy struct {
 func NewDeployDestroyCommand(destroy *KoolDeployDestroy) *cobra.Command {
 	return &cobra.Command{
 		Use:   "destroy",
-		Short: "Destroy an environment deployed to Kool Cloud",
+		Short: "Destroy an environment deployed to Kool.dev Cloud",
 		Args:  cobra.NoArgs,
 		RunE:  DefaultCommandRunFunction(destroy),
 

@@ -21,7 +21,7 @@ type DeployConfig struct {
 
 // CloudConfig is the configuration for a deploy parsed from kool.cloud.yml
 type CloudConfig struct {
-	// version of the Kool Cloud config file
+	// version of the Kool.dev Cloud config file
 	Version string `yaml:"version"`
 
 	// services is a map of services to deploy

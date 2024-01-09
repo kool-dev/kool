@@ -246,16 +246,16 @@ $ kool start
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
-- **[CodeIgniter](/docs/2-Presets/CodeIgniter.md)**
-- **[Express.js](/docs/2-Presets/ExpressJS.md)**
-- **[Hugo](/docs/2-Presets/Hugo.md)**
-- **[Laravel](/docs/2-Presets/Laravel.md)**
-- **[NestJS](/docs/2-Presets/NestJS.md)**
-- **[Next.js](/docs/2-Presets/NextJS.md)**
-- **[Node.js](/docs/2-Presets/NodeJS.md)**
-- **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
-- **[PHP](/docs/2-Presets/PHP.md)**
-- **[Symfony](/docs/2-Presets/Symfony.md)**
-- **[WordPress](/docs/2-Presets/WordPress.md)**
+- **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
+- **[Express.js](/docs/03-Presets/ExpressJS.md)**
+- **[Hugo](/docs/03-Presets/Hugo.md)**
+- **[Laravel](/docs/03-Presets/Laravel.md)**
+- **[NestJS](/docs/03-Presets/NestJS.md)**
+- **[Next.js](/docs/03-Presets/NextJS.md)**
+- **[Node.js](/docs/03-Presets/NodeJS.md)**
+- **[Nuxt.js](/docs/03-Presets/NuxtJS.md)**
+- **[PHP](/docs/03-Presets/PHP.md)**
+- **[Symfony](/docs/03-Presets/Symfony.md)**
+- **[WordPress](/docs/03-Presets/WordPress.md)**
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/main/presets](https://github.com/kool-dev/kool/tree/main/presets) and browse the code to learn more about how presets work.

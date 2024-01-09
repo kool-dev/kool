@@ -16,7 +16,7 @@ The first step may take a couple of minutes for installing all the dependencies 
 
 ### Extra steps
 
-If you are using Database or Cache services for your NestJS backend you need to setup some environment variables. [Check out our NestJS preset documentation](https://github.com/kool-dev/kool/blob/main/docs/2-Presets/NestJS.md#nestjs-configuration).
+If you are using Database or Cache services for your NestJS backend you need to setup some environment variables. [Check out our NestJS preset documentation](https://github.com/kool-dev/kool/blob/main/docs/03-Presets/NestJS.md#nestjs-configuration).
 
 ## Requirements
 
@@ -58,7 +58,7 @@ $ kool exec frontend bash # opens a shell on the container running NextJS
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
-- **[Next.js](/docs/2-Presets/NextJS.md)**
-- **[NestJS](/docs/2-Presets/NestJS.md)**
-- **[AdonisJs](/docs/2-Presets/AdonisJs.md)**
-- **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
+- **[Next.js](/docs/03-Presets/NextJS.md)**
+- **[NestJS](/docs/03-Presets/NestJS.md)**
+- **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[Nuxt.js](/docs/03-Presets/NuxtJS.md)**

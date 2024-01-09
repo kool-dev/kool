@@ -48,8 +48,8 @@ func AddKoolCloud(root *cobra.Command) {
 func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 	cloudCmd = &cobra.Command{
 		Use:     "cloud COMMAND [flags]",
-		Short:   "Interact with Kool Cloud and manage your deployments.",
-		Long:    "The cloud subcommand encapsulates a set of APIs to interact with Kool Cloud and deploy, access and tail logs from your deployments.",
+		Short:   "Interact with Kool.dev Cloud and manage your deployments.",
+		Long:    "The cloud subcommand encapsulates a set of APIs to interact with Kool.dev Cloud and deploy, access and tail logs from your deployments.",
 		Example: `kool cloud deploy`,
 		//	add cobra usage help content
 		DisableFlagsInUseLine: true,
@@ -85,7 +85,7 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 			// if no token is set, we try to get it from the environment
 			if cloud.flags.Token == "" && cloud.env.Get("KOOL_API_TOKEN") == "" {
 				if requiredFlags {
-					err = fmt.Errorf("missing Kool Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
+					err = fmt.Errorf("missing Kool.dev Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
 					return
 				}
 			} else if cloud.flags.Token != "" {
@@ -96,7 +96,7 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 		},
 	}
 
-	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.Token, "token", "", "", "Token to authenticate with Kool Cloud API")
+	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.Token, "token", "", "", "Token to authenticate with Kool.dev Cloud API")
 	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.DeployDomain, "domain", "", "", "Environment domain name to deploy to")
 
 	return

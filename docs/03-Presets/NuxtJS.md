@@ -1,9 +1,10 @@
-# Start a Express.js Project with Docker in 2 Easy Steps
+# Start a NuxtJS Project with Docker in 2 Easy Steps
 
-1. Run `kool create expressjs my-project`
-2. Run `kool run setup`
+1. Run `kool create nuxtjs my-project`
+2. Update **nuxt.config.js**
+3. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new Express.js projects is that easy!
+> Yes, using **kool** + Docker to create and work on new NuxtJS projects is that easy!
 
 ## Requirements
 
@@ -17,29 +18,29 @@ $ kool self-update
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create expressjs my-project`
+## 1. Run `kool create nuxtjs my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Express.js project:
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new NuxtJS project:
 
 ```bash
-$ kool create expressjs my-project
+$ kool create nuxtjs my-project
 ```
 
-Under the hood, this command will create a "Hello world!" **app.js** file in the root of your new project directory.
+Under the hood, this command will run `yarn create nuxt-app my-project` to install NuxtJS using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:20</a>.
 
-After installing Express.js, `kool create` automatically runs the `kool preset expressjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After installing NuxtJS, `kool create` automatically runs the `kool preset nuxtjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
-$ Preset expressjs is initializing!
+$ Preset nuxtjs is initializing!
 
-? Which javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which package manager did you choose during NuxtJS setup [Use arrows to move, type to filter]
 > npm
   yarn
 
-$ Preset expressjs initialized!
+$ Preset nuxtjs initialized!
 ```
 
-Now, move into your new Node.js project:
+Now, move into your new NuxtJS project:
 
 ```bash
 $ cd my-project
@@ -54,7 +55,25 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 > Now's a good time to review the services added to the **docker-compose.yml** file.
 
-## 2. Run `kool run setup`
+## 2. Update nuxt.config.js
+
+You need to configure the `host` in NuxtJS's **nuxt.config.js** file to map it to the `app` service container in your **docker-compose.yml** file.
+
+```javascript
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Add this server config
+  server: {
+    host: '0.0.0.0',
+  },
+
+  ...
+}
+```
+
+## 3. Run `kool run setup`
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
@@ -64,14 +83,12 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 
 ```yaml
 scripts:
-  node: kool exec app node
   npm: kool exec app npm # or yarn
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:20 npm install
+    - kool docker kooldev/node:20 npm install # or yarn install
     - kool start
-	# - add more setup commands
 ```
 
 Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
@@ -80,29 +97,43 @@ Go ahead and run `kool run setup` to start your Docker environment and finish se
 $ kool run setup
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Express packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `node app.js`).
+> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Node packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `npm run dev`).
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the "Hello world!" page. Hooray!
+Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the NuxtJS welcome page. Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
 
 ```bash
 $ kool status
-+---------+---------+-------------------------------------------+--------------+
-| SERVICE | RUNNING | PORTS                                     | STATE        |
-+---------+---------+-------------------------------------------+--------------+
-| app     | Running | 0.0.0.0:3000->3000/tcp, :::3000->3000/tcp | Up 4 seconds |
-+---------+---------+-------------------------------------------+--------------+
++---------+---------+------------------------+--------------+
+| SERVICE | RUNNING | PORTS                  | STATE        |
++---------+---------+------------------------+--------------+
+| app     | Running | 0.0.0.0:3000->3000/tcp | Up 5 seconds |
++---------+---------+------------------------+--------------+
 ```
 
-Run `kool logs app` to see the logs from the running `app` container, and confirm the Node.js server was started.
+Run `kool logs app` to see the logs from the running `app` container, and confirm the NuxtJS server was started.
 
 > Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
 
 ```bash
 $ kool logs app
 Attaching to my-project_app_1
-app_1  | Server running at http://localhost:3000/
+app_1  |
+app_1  | > my-project@1.0.0 dev /app
+app_1  | > nuxt
+app_1  |
+app_1  | ℹ Listening on: http://localhost:3000/
+app_1  | ℹ Preparing project for development
+app_1  | ℹ Initial build may take a while
+app_1  | ℹ Discovered Components: .nuxt/components/readme.md
+app_1  | ✔ Builder initialized
+app_1  | ✔ Nuxt files generated
+app_1  | ℹ Compiling Client
+app_1  | ✔ Client: Compiled successfully in 26.31s
+app_1  | ℹ Waiting for file changes
+app_1  | ℹ Memory usage: 143 MB (RSS: 233 MB)
+app_1  | ℹ Listening on: http://localhost:3000/
 ```
 
 ---
@@ -117,7 +148,7 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 $ kool exec app node -v
 ```
 
-Try `kool run node -h` to execute the `kool exec app node -h` command in your running `app` container and print out information about Node.js.
+Try `kool run npx nuxt -h` (or `kool run yarn nuxt -h`) to execute the `kool exec app npx nuxt -h` command in your running `app` container and print out information about NuxtJS CLI commands.
 
 ### Open Sessions in Docker Containers
 
@@ -159,16 +190,15 @@ $ kool start
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
-- **[AdonisJs](/docs/2-Presets/AdonisJs.md)**
-- **[CodeIgniter](/docs/2-Presets/CodeIgniter.md)**
-- **[Hugo](/docs/2-Presets/Hugo.md)**
-- **[Laravel](/docs/2-Presets/Laravel.md)**
-- **[NestJS](/docs/2-Presets/NestJS.md)**
-- **[Next.js](/docs/2-Presets/NextJS.md)**
-- **[Node.js](/docs/2-Presets/NodeJS.md)**
-- **[Nuxt.js](/docs/2-Presets/NuxtJS.md)**
-- **[PHP](/docs/2-Presets/PHP.md)**
-- **[Symfony](/docs/2-Presets/Symfony.md)**
-- **[WordPress](/docs/2-Presets/WordPress.md)**
+- **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
+- **[Express.js](/docs/03-Presets/ExpressJS.md)**
+- **[Hugo](/docs/03-Presets/Hugo.md)**
+- **[Laravel](/docs/03-Presets/Laravel.md)**
+- **[NestJS](/docs/03-Presets/NestJS.md)**
+- **[Next.js](/docs/03-Presets/NextJS.md)**
+- **[PHP](/docs/03-Presets/PHP.md)**
+- **[Symfony](/docs/03-Presets/Symfony.md)**
+- **[WordPress](/docs/03-Presets/WordPress.md)**
 
 Missing a preset? **[Make a request](https://github.com/kool-dev/kool/issues/new)**, or contribute by opening a Pull Request. Go to [https://github.com/kool-dev/kool/tree/main/presets](https://github.com/kool-dev/kool/tree/main/presets) and browse the code to learn more about how presets work.
