@@ -2,7 +2,7 @@
 
 ## The basics
 
-The `kool.cloud.yml` file is an extension to your already familiar `docker-compose.yml`, having the same basic structure but introducing some configuration entries to enable you to fine-tune your deployment container needs.
+The `kool.cloud.yml` file is an extension of your already familiar `docker-compose.yml`, having the same basic structure but introducing some configuration entries to enable you to fine-tune your deployment container needs.
 
 Suppose you have the following `docker-compose.yml` file:
 
@@ -27,9 +27,9 @@ Provided you have already signed up and obtained your access token for Kool Clou
 
 ## Reference
 
-## Full example
+### Full example
 
-Here's an example of `kool.cloud.yml` file showcasing all the features and configuration entries available:
+Here's an example of a `kool.cloud.yml` file showcasing all the features and configuration entries available:
 
 ```yaml
 services:

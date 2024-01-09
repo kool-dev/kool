@@ -1,6 +1,6 @@
-Containers were built to be ephemeral - and that is how we like them and how Kubernetes and all other container orchestrators usually work the best with them as well.
+Containers were built to be ephemeral—and that is how we like them and how Kubernetes and all other container orchestrators usually work the best with them as well.
 
-But at times we know that tradicional web applications may not be ready to switch to network-based object storage instead of local disk storage.
+But at times, we know that traditional web applications may not be ready to switch to network-based object storage instead of local disk storage.
 
 Kool.dev Cloud does offer you the ability to create persisted paths within your deployed containers.
 

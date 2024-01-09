@@ -1,6 +1,6 @@
-Most application and frameworks nowadays will rely on environment variables to configure important aspects of its functions, mainly providing credentials and other secrets your app need to work and access other resources.
+Most applications and frameworks nowadays rely on environment variables to configure important aspects of their functions, mainly providing credentials and other secrets your app needs to work and access other resources.
 
-Kool.dev Cloud supports a few different ways you can define your environment variables for a given deploying container, so pick the one that best suits you.
+Kool.dev Cloud supports a few different ways you can define your environment variables for a deploying container, so pick the one that best suits you.
 
 ### Using `kool.deploy.env` file for deploy
 
@@ -13,9 +13,9 @@ services:
     environment: kool.deploy.env
 ```
 
-Upong deployment, all of the variables within that file will be parsed, placeholders replaced - if you have any - and then **each variable will become a real environment variables in the running container**.
+Upon deployment, all of the variables within that file will be parsed, placeholders replaced—if you have any—and then **each variable will become a real environment variable in the running container**.
 
-This option is usually best suited for automated CI routines since you work your way to have a different `kool.deploy.env` file for each of your deploying environments (i.e staging and production).
+This option is usually best suited for automated CI routines since you work your way to have a different `kool.deploy.env` file for each of your deploying environments (i.e., staging and production).
 
 ### Using a plain YAML object for environment variables
 
@@ -31,7 +31,7 @@ You can simply use a YAML map of values that will become your environment variab
 
 ### Build a `.env` file inside the running container
 
-If you application does rely and requires a `.env` file existing in the running container you may achieve so by using the `env:` entry:
+If your application does rely on and requires a `.env` file existing in the running container, you may achieve so by using the `env:` entry:
 
 ```yaml
 services:
@@ -44,4 +44,4 @@ services:
       target: .env
 ```
 
-This is useful for apps that have require the .env file, but you do not wish to have that built into your Docker image itself.
+This is useful for apps that require the .env file, but you do not wish to have that built into your Docker image itself.

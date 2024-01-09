@@ -1,4 +1,4 @@
-All deployed environments will run under HTTPS. Kool.dev Cloud will automatically generate certificates for your environment the first time it is deployed using Let'sEncrypt engine.
+All deployed environments will run under HTTPS. Kool.dev Cloud will automatically generate certificates for your environment the first time it is deployed using the Let'sEncrypt engine.
 
 You always need to provide the environment domain when running a deploy.
 
@@ -15,7 +15,7 @@ Important to notice: if you deploy to a new domain that doesn't currently exist 
 
 ### Test deployment domains
 
-You are welcome to use a subdomain like `my-super-app.kool.cloud` on your staging or development environments. By using that you will have HTTPS certificates up and running instantly for that environment after first deploy.
+You are welcome to use a subdomain like `my-super-app.kool.cloud` on your staging or development environments. By using that, you will have HTTPS certificates up and running instantly for that environment after the first deploy.
 
 ### Production and custom domains
 
