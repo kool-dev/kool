@@ -223,7 +223,7 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 	}
 
 	if len(allFiles) == 0 {
-		err = fmt.Errorf("no deploy config files found")
+		err = fmt.Errorf("no kool.cloud.yml config files found")
 		return
 	}
 
@@ -237,6 +237,8 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 	for _, file := range allFiles {
 		d.shell.Println("  -", file)
 	}
+
+	tarball.SourceDir(d.env.Get("PWD"))
 
 	filename, err = tarball.CompressFiles(d.handleDeployEnv(allFiles))
 

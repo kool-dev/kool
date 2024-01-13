@@ -62,6 +62,11 @@ func (tgz *TarGz) CompressFiles(files []string) (tmpfile string, err error) {
 	return
 }
 
+// SourceDir defines the source directory that is going to be compressed
+func (tgz *TarGz) SourceDir(dir string) {
+	tgz.sourceDir = dir
+}
+
 // CompressFolder adds the given folder to the tarball archive
 func (tgz *TarGz) CompressFolder(dir string) (tmpfile string, err error) {
 	tgz.sourceDir = dir
