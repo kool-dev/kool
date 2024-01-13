@@ -76,7 +76,7 @@ func TestCreateReleaseFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	fake.env.Set("PWD", tmpDir)
 
-	if _, err := fake.createReleaseFile(); err == nil || !strings.Contains(err.Error(), "no deploy config files found") {
+	if _, err := fake.createReleaseFile(); err == nil || !strings.Contains(err.Error(), "no kool.cloud.yml config files found") {
 		t.Errorf("expected error on createReleaseFile when no kool.deploy.yml exists in current working directory; got: %v", err)
 	}
 
