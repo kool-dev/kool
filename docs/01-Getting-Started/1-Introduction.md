@@ -27,11 +27,11 @@ Using **kool** offers several advantages:
 
 Getting started with **kool** is straightforward:
 
-1. **Installation:** Ensure you have Docker installed and then follow the [installation instructions](2-Installation.md) to set up **kool**.
+1. **Installation:** Ensure you have Docker installed and then follow the [installation instructions](/docs/01-Getting-Started/2-Installation.md) to set up **kool**.
 
-2. **Start new Local Environment:** Explore the [Starting new Project](4-Starting-new-project.md) for a spinning up local environments to kickstart your development journey with **kool**.
+2. **Start new Local Environment:** Explore the [Starting new Project](/docs/01-Getting-Started/4-Starting-new-project.md) for a spinning up local environments to kickstart your development journey with **kool**.
 
-3. **Explore Presets:** Check out available [Presets](https://kool.dev/docs/getting-started/available-presets) tailored for popular stacks and frameworks, providing a head start for your real-world applications.
+3. **Explore Presets:** Check out available [Presets](/docs/03-Presets/1-Creating-a-Preset.md) tailored for popular stacks and frameworks, providing a head start for your real-world applications.
 
 4. **Deployment to the Cloud:** Check out [Kool.dev Cloud](https://kool.dev/cloud) to elevate your Developer Experience to new highs - start deploying containerized apps the way you always dreamed should be possible.
 
