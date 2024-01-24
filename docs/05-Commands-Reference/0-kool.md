@@ -5,7 +5,8 @@ Cloud native environments made easy
 ### Synopsis
 
 From development to production, a robust and easy-to-use developer tool
-that makes Docker container adoption quick and easy for building and deploying applications running on containers.
+that makes Docker container adoption quick and easy for building and deploying cloud native
+applications.
 
 Complete documentation is available at https://kool.dev/docs
 
