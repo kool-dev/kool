@@ -1,4 +1,8 @@
-**Kool** is a suite of open source dev tools that level up the way you build and deploy modern, cloud native web applications. By using Kool, you'll get a better development environment and a better development workflow, which adds up to **a better developer experience**.
+# How does Kool work?
+
+**Kool** stands as a comprehensive suite of open-source development tools meticulously crafted to enhance the process of building and deploying modern containerized web applications. Leveraging **Kool** doesn't just improve your development environment; it transforms your entire development workflow, resulting in a significantly enhanced developer experience. With Kool, every step of the development journey becomes smoother and more efficient.
+
+The way **Kool** delivers on these promises is by providing a unified and intuitive command-line interface (CLI) that seamlessly integrates with Docker and Kubernetes. **Kool** simplifies the complexities of setting up, configuring, and managing containers, allowing you to focus on your code and application logic. Behind the scenes, **Kool** employs custom Docker images optimized for local development and deployment, ensuring a consistent environment across different projects. Additionally, **Kool** offers pre-configured Presets for various stacks and frameworks, eliminating the need to start from scratch every time. This thoughtful approach streamlines the development process, making it not only powerful but also accessible to developers of all levels of expertise.
 
 <a name="better-development-environment"></a>
 ## A Better Development Environment
@@ -46,20 +50,26 @@ Kool loads environment variables from a **.env** file. If there's a **.env.local
 
 > It's important to keep in mind that **real** environment variables defined inline as `VAR=value kool ...` or via `export VAR=value` will take precedence over the same variables in your **.env** files.
 
-### Kool Snippets
+### Kool Recipes
 
-Add services to your development environment by copying and pasting code snippets into your project's **docker-compose.yml** file. We just have a couple at the moment, but we'll be adding more soon.
+In the realm of Kool, Recipes serve as concise sets of automated steps to tailor and enhance your project's environment. Typically, these steps involve the addition of new services to the docker-compose.yml file, complemented by companion scripts within kool.yml. These recipes come bundled with clear instructions and learning resources, empowering you to swiftly tweak and set up new functionalities in your development environment.
 
-- [Generate PDFs](https://kool.dev/docs/snippets/generate-pdfs)
-- [Mailhog](https://kool.dev/docs/snippets/mailhog)
+It's worth noting that Kool Presets are essentially compositions of different recipes. The modular nature of these recipes allows you the flexibility to use them independently, standalone, if you prefer to cherry-pick specific enhancements for your projects. This modular approach adds versatility to your development process, letting you customize your environment based on your project's unique requirements.
+
+```bash
+# see a list with all recipes available to pick from
+kool recipe
+```
 
 ### kool.yml
 
-This is your Kool configuration file. It defines scripts (commands) that you execute in your local environment or CI/CD workflows. It should be placed inside your project and committed to version control. Think of **kool.yml** as a super easy-to-use task helper. Instead of writing custom shell scripts, you can add your own scripts to **kool.yml** (under the scripts key), and run them with `kool run SCRIPT`. You can add single line commands (`kool run artisan`), or add a list of commands that will be executed in sequence (`kool run setup`).
+### kool.yml
 
-> Use **environment variables** within your scripts to **parameterize** them, and give them an extra bit of power and flexibility.
+The **kool.yml** file serves as your Kool configuration file, defining scripts (commands) to execute in your local environment or CI/CD workflows. Place it within your project and commit it to version control. Think of **kool.yml** as an exceptionally user-friendly task helper. Rather than crafting custom shell scripts, you can effortlessly add your own scripts to **kool.yml** (under the `scripts` key) and run them with `kool run SCRIPT`. Scripts can be single-line commands (`kool run artisan`) or lists of commands executed sequentially (`kool run setup`).
 
-Every **Kool Preset** auto-generates a **kool.yml** file with prebuilt scripts customized for that framework and/or stack. You can then modify this file and add your own custom scripts to facilitate your development process and share knowledge across your team. For example, add scripts to run database migrations, reset local environments, run static analysis tools, and so on. Think about how much easier it will be to onboard a teammate or new developer :)
+> Harness the power of **environment variables** within your scripts to **parameterize** them, adding an extra layer of versatility and flexibility.
+
+Each **Kool Preset** auto-generates a **kool.yml** file with prebuilt scripts tailored for the specific framework or stack. You can modify this file and incorporate your custom scripts to streamline your development process and share knowledge across your team. For instance, include scripts to run database migrations, reset local environments, perform static analysis, and more. Consider the ease with which your team can onboard new members or developers with this organized and standardized approach.
 
 ```yaml
 # ./kool.yml for the Laravel preset
@@ -233,3 +243,21 @@ $ kool start
 Pretty _kool_, right?
 
 > If you like what we're doing, show your support for this new open source project by [**starring us on GitHub**](https://github.com/kool-dev/kool)!
+
+## A Better Cloud Deployment Experience
+
+Elevating your cloud deployment experience is a core aspect of **Kool**. Beyond revolutionizing local development environments, **Kool** seamlessly extends its benefits to the cloud, providing a streamlined and efficient deployment process.
+
+### Kool Cloud Integration
+
+**Kool.dev Cloud** is the gateway to a simplified cloud deployment journey. Seamlessly integrated with **Kool**, it offers a platform where you can effortlessly deploy your containerized applications. By leveraging the power of `kool cloud setup`, you can seamlessly transition from local development to cloud deployment, ensuring consistency and minimizing friction in the process.
+
+### Streamlined Deployments with Kool Presets
+
+Each **Kool Preset** not only optimizes your local development but also facilitates cloud deployment. We are building deploying recipes for each Preset so you can leverage Kool.dev Cloud without the usual hassle and without fighting with Kubernetes.
+
+### Fine-Tuning Deployment Workflows
+
+**Kool** understands that flexibility is key. While **Kool Presets** together with `kool cloud setup` offer out-of-the-box deployment solutions, you have the freedom to fine-tune and customize deployment workflows to match your specific needs. Leverage the capabilities of **kool.yml** to add bespoke scripts that cater to your deployment requirements.
+
+Discover a better way to deploy your containerized applications to the cloud with **Kool**, ensuring a consistent and efficient cloud deployment experience.

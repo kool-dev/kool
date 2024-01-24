@@ -4,9 +4,9 @@
 
 **kool** is powered by **Docker**. To use **kool**, you need to **[install the Docker Engine and Docker Compose](https://docs.docker.com/get-docker/)** on your local machine, and make sure they're both running.
 
-Important to notice: `kool` relies on the `docker` and `docker compose` CLI commands - that being said, you can pick any other Docker-compatibable container engine and use it seamlessly, like OrbStack for example.
+Important to notice: `kool` relies on the `docker` and `docker compose` CLI commands - that being said, you can pick any other Docker-compatibable container engine and use it the same way, like **OrbStack** on MacOS or **Podman** on Linux.
 
-> `kool` now requires [Docker Compose V2](https://docs.docker.com/compose/install/), make sure you have it enabled in your system.
+> `kool` now requires [Docker Compose V2](https://docs.docker.com/compose/install/) API. Make sure you have the latest container engine in your .
 
 ## For Linux and macOS
 
