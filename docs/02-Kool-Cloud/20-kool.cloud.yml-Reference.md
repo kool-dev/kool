@@ -110,6 +110,9 @@ services:
     #
     # The 'before' hook is a special section where we can define commands to be executed
     # right before a new deployment happens.
+    # ATTENTION: this hook can only be used after a first successful deploy happened to
+    # create the environment in the first place. If used on first deploy, will halt the deploy.
+    # This limitation should be lifted hopefully soon.
     before:
       - script_to_run.sh
     # The 'after' hook is a special section where we can define procedures to be executed
