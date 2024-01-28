@@ -93,7 +93,7 @@ func ValidateConfig(deployConfig *DeployConfig) (err error) {
 				}
 
 				if !buildStat.IsDir() {
-					err = fmt.Errorf("service '%s' build entry '%s' is not a directory", service, buildStr)
+					err = fmt.Errorf("service '%s' build entry '%s' is not a directory (check v3 upgrade guide)", service, buildStr)
 					return
 				}
 			}
