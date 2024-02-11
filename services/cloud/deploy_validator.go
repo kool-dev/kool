@@ -19,6 +19,34 @@ type DeployConfig struct {
 	Cloud *CloudConfig
 }
 
+func (c *DeployConfig) GetEnvFiles() []string {
+	files := make(map[string]bool)
+
+	for _, srv := range c.Cloud.Services {
+		if srv.Env != nil {
+			if env, ok := srv.Env.(map[interface{}]interface{}); ok {
+				if envFile, okSrc := env["source"].(string); okSrc {
+					files[envFile] = true
+				}
+			}
+		}
+
+		if srv.Environment != nil {
+			if envFile, ok := srv.Environment.(string); ok {
+				files[envFile] = true
+			}
+		}
+	}
+
+	envs := make([]string, 0, len(files))
+
+	for envFile := range files {
+		envs = append(envs, filepath.Join(c.Meta.WorkingDir, envFile))
+	}
+
+	return envs
+}
+
 // CloudConfig is the configuration for a deploy parsed from kool.cloud.yml
 type CloudConfig struct {
 	// version of the Kool.dev Cloud config file
@@ -36,6 +64,7 @@ type DeployConfigService struct {
 
 	Public      interface{} `yaml:"public,omitempty"`
 	Environment interface{} `yaml:"environment"`
+	Env         interface{} `yaml:"env"`
 }
 
 // DeployConfigBuild is the configuration for a service to be built
