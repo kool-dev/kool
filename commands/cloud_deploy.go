@@ -107,6 +107,10 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 			d.Shell().Info("  > Build deploy image for service: ", svcName)
 
 			if err = cloud.BuildPushImageForDeploy(svcName, svc, deployCreated); err != nil {
+				if reportErr := deployer.BuildError(deployCreated, err); reportErr != nil {
+					d.Shell().Error(fmt.Errorf("error reporting build error: %v", reportErr))
+				}
+
 				return
 			}
 

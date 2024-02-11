@@ -43,3 +43,10 @@ func (d *Deployer) StartDeploy(created *api.DeployCreateResponse) (started *api.
 	started, err = start.Run()
 	return
 }
+
+func (d *Deployer) BuildError(created *api.DeployCreateResponse, gotErr error) (err error) {
+	var buildErr = api.NewDeployError(created, gotErr)
+
+	err = buildErr.Run()
+	return
+}
