@@ -65,6 +65,74 @@ func TestCreateReleaseFileCreatesTgz(t *testing.T) {
 	}
 }
 
+func TestCreateReleaseFileCreatesTgzWithEnvFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	mockConfig(tmpDir, t, []byte("services:\n  foo:\n    image: bar\n    env:\n      source: 'foo.env'\n"))
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "foo.env"), []byte("FOO=BAR"), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	fake := fakeKoolDeploy(tmpDir)
+	fake.env.Set("PWD", tmpDir)
+
+	if err := fake.loadAndValidateConfig(); err != nil {
+		t.Errorf("unexpected error on loadAndValidateConfig; got: %v", err)
+	}
+
+	if tg, err := fake.createReleaseFile(); err != nil {
+		t.Errorf("unexpected error on createReleaseFile; got: %v", err)
+	} else if _, err := os.Stat(tg); err != nil {
+		t.Errorf("expected tgz file to be created; got: %v", err)
+	}
+
+	if !fake.shell.(*shell.FakeShell).CalledPrintln {
+		t.Error("expected Println to have been called on shell")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[0], "Compressing files:") {
+		t.Error("expected to print 'Compressing files:'")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[1], "- "+filepath.Join(tmpDir, "kool.cloud.yml")) {
+		t.Error("expected to print '- " + filepath.Join(tmpDir, "kool.cloud.yml") + "'")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[2], "- "+filepath.Join(tmpDir, "docker-compose.yml")) {
+		t.Error("expected to print '- " + filepath.Join(tmpDir, "docker-compose.yml") + "'")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[3], "- "+filepath.Join(tmpDir, "foo.env")) {
+		t.Error("expected to print '- " + filepath.Join(tmpDir, "foo.env") + "'")
+	}
+}
+
+func TestCreateReleaseFileCreatesTgzWithEnvironmentFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	mockConfig(tmpDir, t, []byte("services:\n  foo:\n    image: bar\n    environment: 'bar.env'\n"))
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "bar.env"), []byte("BAR=FOO"), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	fake := fakeKoolDeploy(tmpDir)
+	fake.env.Set("PWD", tmpDir)
+
+	if err := fake.loadAndValidateConfig(); err != nil {
+		t.Errorf("unexpected error on loadAndValidateConfig; got: %v", err)
+	}
+
+	if tg, err := fake.createReleaseFile(); err != nil {
+		t.Errorf("unexpected error on createReleaseFile; got: %v", err)
+	} else if _, err := os.Stat(tg); err != nil {
+		t.Errorf("expected tgz file to be created; got: %v", err)
+	}
+
+	if !fake.shell.(*shell.FakeShell).CalledPrintln {
+		t.Error("expected Println to have been called on shell")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[0], "Compressing files:") {
+		t.Error("expected to print 'Compressing files:'")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[1], "- "+filepath.Join(tmpDir, "kool.cloud.yml")) {
+		t.Error("expected to print '- " + filepath.Join(tmpDir, "kool.cloud.yml") + "'")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[2], "- "+filepath.Join(tmpDir, "docker-compose.yml")) {
+		t.Error("expected to print '- " + filepath.Join(tmpDir, "docker-compose.yml") + "'")
+	} else if !strings.Contains(fake.shell.(*shell.FakeShell).OutLines[3], "- "+filepath.Join(tmpDir, "bar.env")) {
+		t.Error("expected to print '- " + filepath.Join(tmpDir, "bar.env") + "'")
+	}
+}
+
 func TestCleanupReleaseFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	mockConfig(tmpDir, t, nil)

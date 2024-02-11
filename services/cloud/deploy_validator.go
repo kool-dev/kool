@@ -24,7 +24,7 @@ func (c *DeployConfig) GetEnvFiles() []string {
 
 	for _, srv := range c.Cloud.Services {
 		if srv.Env != nil {
-			if env, ok := srv.Env.(map[string]interface{}); ok {
+			if env, ok := srv.Env.(map[interface{}]interface{}); ok {
 				if envFile, okSrc := env["source"].(string); okSrc {
 					files[envFile] = true
 				}
@@ -38,7 +38,7 @@ func (c *DeployConfig) GetEnvFiles() []string {
 		}
 	}
 
-	envs := make([]string, len(files))
+	envs := make([]string, 0, len(files))
 
 	for envFile := range files {
 		envs = append(envs, filepath.Join(c.Meta.WorkingDir, envFile))
