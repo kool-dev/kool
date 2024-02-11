@@ -16,7 +16,7 @@ It is recommended to rename your configuration file for **Kool.dev Cloud** from 
 
 Version 3.x introduces two significant changes:
 
-- The YAML syntax for `services.<service>.build` in the `kool.cloud.yml` file must now align with the official Docker Compose reference for the `service.<service>.build` entry.
+- The YAML syntax for `services.<service>.build` in the `kool.cloud.yml` configuration file must now align with the official [Docker Compose reference for the `service.<service>.build`](https://docs.docker.com/compose/compose-file/compose-file-v3/#build) entry.
 - Image building now occurs in your local environment—specifically, on the host where you execute `kool cloud deploy`. Therefore, ensure that the environment from which you run this command has a properly configured Docker-image build engine (that means Kool to be able to run `docker build` command).
 
 ### Github Action `kool-dev/action`
