@@ -26,61 +26,37 @@ func TestNewKoolDeploy(t *testing.T) {
 	}
 }
 
-func fakeKoolDeploy() *KoolDeploy {
+func fakeKoolDeploy(pwd string) *KoolDeploy {
 	c := NewCloud()
 	c.Fake()
 	return &KoolDeploy{
 		*(newDefaultKoolService().Fake()),
 		c,
-		setup.NewDefaultCloudSetupParser(""),
+		setup.NewDefaultCloudSetupParser(pwd),
 		&KoolCloudDeployFlags{},
 		environment.NewFakeEnvStorage(),
 		nil,
 	}
 }
 
-func TestHandleDeployEnv(t *testing.T) {
-	fake := fakeKoolDeploy()
-
-	files := []string{}
-
-	tmpDir := t.TempDir()
-	fake.env.Set("PWD", tmpDir)
-
-	files = fake.handleDeployEnv(files)
-
-	if len(files) != 0 {
-		t.Errorf("expected files to continue empty - no kool.deploy.env exists")
-	}
-
-	if err := os.WriteFile(filepath.Join(tmpDir, "kool.deploy.env"), []byte("FOO=BAR"), os.ModePerm); err != nil {
-		t.Fatal(err)
-	}
-
-	files = fake.handleDeployEnv(files)
-
-	if len(files) != 1 {
-		t.Errorf("expected files to have added kool.deploy.env")
-	}
-
-	files = fake.handleDeployEnv(files)
-
-	if len(files) != 1 {
-		t.Errorf("expected files to continue since was already there kool.deploy.env")
-	}
-}
-
-func TestCreateReleaseFile(t *testing.T) {
-	fake := fakeKoolDeploy()
-
-	tmpDir := t.TempDir()
-	fake.env.Set("PWD", tmpDir)
+func TestCreateReleaseFileNoConfig(t *testing.T) {
+	fake := fakeKoolDeploy("")
 
 	if _, err := fake.createReleaseFile(); err == nil || !strings.Contains(err.Error(), "no kool.cloud.yml config files found") {
 		t.Errorf("expected error on createReleaseFile when no kool.deploy.yml exists in current working directory; got: %v", err)
 	}
+}
 
+func TestCreateReleaseFileCreatesTgz(t *testing.T) {
+	tmpDir := t.TempDir()
 	mockConfig(tmpDir, t, nil)
+
+	fake := fakeKoolDeploy(tmpDir)
+	fake.env.Set("PWD", tmpDir)
+
+	if err := fake.loadAndValidateConfig(); err != nil {
+		t.Errorf("unexpected error on loadAndValidateConfig; got: %v", err)
+	}
 
 	if tg, err := fake.createReleaseFile(); err != nil {
 		t.Errorf("unexpected error on createReleaseFile; got: %v", err)
@@ -90,12 +66,11 @@ func TestCreateReleaseFile(t *testing.T) {
 }
 
 func TestCleanupReleaseFile(t *testing.T) {
-	fake := fakeKoolDeploy()
-
 	tmpDir := t.TempDir()
-	fake.env.Set("PWD", tmpDir)
-
 	mockConfig(tmpDir, t, nil)
+
+	fake := fakeKoolDeploy("")
+	fake.env.Set("PWD", tmpDir)
 
 	f := filepath.Join(tmpDir, "kool.cloud.yml")
 	fake.cleanupReleaseFile(f)
@@ -113,7 +88,7 @@ func TestCleanupReleaseFile(t *testing.T) {
 }
 
 func TestLoadAndValidateConfig(t *testing.T) {
-	fake := fakeKoolDeploy()
+	fake := fakeKoolDeploy("")
 
 	tmpDir := t.TempDir()
 	fake.env.Set("PWD", tmpDir)
