@@ -233,6 +233,9 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 		allFiles = append(allFiles, filepath.Join(d.env.Get("PWD"), "docker-compose.yml"))
 	}
 
+	// we need to include the .env files as well
+	allFiles = append(allFiles, d.cloudConfig.GetEnvFiles()...)
+
 	d.shell.Println("Compressing files:")
 	for _, file := range allFiles {
 		d.shell.Println("  -", file)
@@ -240,39 +243,13 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 
 	tarball.SourceDir(d.env.Get("PWD"))
 
-	filename, err = tarball.CompressFiles(d.handleDeployEnv(allFiles))
+	filename, err = tarball.CompressFiles(allFiles)
 
 	if err == nil {
 		d.shell.Println("Files compression done.")
 	}
 
 	return
-}
-
-// handleDeployEnv tackles a special case on kool.deploy.env file.
-// This file can or cannot be versioned (good practice not to, since
-// it may include sensitive data). In the case of it being ignored
-// from GIT, we still are required to send it - it is required for
-// the Deploy API.
-func (d *KoolDeploy) handleDeployEnv(files []string) []string {
-	path := filepath.Join(d.env.Get("PWD"), koolDeployEnv)
-	if _, envErr := os.Stat(path); os.IsNotExist(envErr) {
-		return files
-	}
-
-	var isAlreadyIncluded bool = false
-	for _, file := range files {
-		if file == koolDeployEnv {
-			isAlreadyIncluded = true
-			break
-		}
-	}
-
-	if !isAlreadyIncluded {
-		files = append(files, koolDeployEnv)
-	}
-
-	return files
 }
 
 func (d *KoolDeploy) loadAndValidateConfig() (err error) {
