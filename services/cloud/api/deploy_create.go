@@ -25,6 +25,8 @@ type DeployCreateResponse struct {
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	} `json:"docker"`
+
+	LogsUrl string `json:"logs_url"`
 }
 
 // DeployCreate consumes the API endpoint to create a new deployment

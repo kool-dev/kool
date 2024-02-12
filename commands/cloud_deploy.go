@@ -118,6 +118,12 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		}
 	}
 
+	if deployCreated.LogsUrl != "" {
+		d.Shell().Info(strings.Repeat("-", 40))
+		d.Shell().Info("Logs available at: ", deployCreated.LogsUrl)
+		d.Shell().Info(strings.Repeat("-", 40))
+	}
+
 	s = utils.MakeFastLoading("Start deploying...", "Deploy started.", d.Shell().OutStream())
 	if _, err = deployer.StartDeploy(deployCreated); err != nil {
 		return
