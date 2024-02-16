@@ -29,7 +29,7 @@ func (d *Deployer) CreateDeploy(tarballPath string) (resp *api.DeployCreateRespo
 
 	create.PostField("cluster", d.env.Get("KOOL_CLOUD_CLUSTER"))
 	create.PostField("domain", d.env.Get("KOOL_DEPLOY_DOMAIN"))
-	create.PostField("additional_domains", d.env.Get("KOOL_DEPLOY_DOMAIN_EXTRAS"))
+	create.PostField("domain_extras", d.env.Get("KOOL_DEPLOY_DOMAIN_EXTRAS"))
 	create.PostField("www_redirect", d.env.Get("KOOL_DEPLOY_WWW_REDIRECT"))
 
 	resp, err = create.Run()
