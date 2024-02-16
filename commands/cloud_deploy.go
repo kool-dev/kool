@@ -229,6 +229,7 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 
 		if _, err = os.Stat(file); err == nil {
 			allFiles = append(allFiles, file)
+			break
 		}
 	}
 
