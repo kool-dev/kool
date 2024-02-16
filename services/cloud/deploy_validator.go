@@ -88,9 +88,6 @@ func ParseCloudConfig(workingDir string, koolDeployFile string) (deployConfig *D
 			err = fmt.Errorf("could not find required file '%s' on current working directory: %v", koolDeployFile, err)
 			return
 		}
-
-		koolDeployFile = "kool.deploy.yml"
-		return
 	}
 
 	if content, err = os.ReadFile(path); err != nil {

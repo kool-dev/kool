@@ -25,12 +25,14 @@ func NewDeployer() *Deployer {
 func (d *Deployer) CreateDeploy(tarballPath string) (resp *api.DeployCreateResponse, err error) {
 	var create = api.NewDeployCreate()
 
-	create.PostFile("deploy", tarballPath, "deploy.tgz")
+	if err = create.PostFile("deploy", tarballPath, "deploy.tgz"); err != nil {
+		return
+	}
 
-	create.PostField("cluster", d.env.Get("KOOL_CLOUD_CLUSTER"))
-	create.PostField("domain", d.env.Get("KOOL_DEPLOY_DOMAIN"))
-	create.PostField("domain_extras", d.env.Get("KOOL_DEPLOY_DOMAIN_EXTRAS"))
-	create.PostField("www_redirect", d.env.Get("KOOL_DEPLOY_WWW_REDIRECT"))
+	_ = create.PostField("cluster", d.env.Get("KOOL_CLOUD_CLUSTER"))
+	_ = create.PostField("domain", d.env.Get("KOOL_DEPLOY_DOMAIN"))
+	_ = create.PostField("domain_extras", d.env.Get("KOOL_DEPLOY_DOMAIN_EXTRAS"))
+	_ = create.PostField("www_redirect", d.env.Get("KOOL_DEPLOY_WWW_REDIRECT"))
 
 	resp, err = create.Run()
 
