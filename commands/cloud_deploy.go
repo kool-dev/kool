@@ -216,10 +216,10 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 
 	// new behavior - tarball only the required files
 	var possibleKoolDeployYmlFiles []string = []string{
-		"kool.deploy.yml",
-		"kool.deploy.yaml",
 		"kool.cloud.yml",
 		"kool.cloud.yaml",
+		"kool.deploy.yml",
+		"kool.deploy.yaml",
 	}
 
 	for _, file := range possibleKoolDeployYmlFiles {
