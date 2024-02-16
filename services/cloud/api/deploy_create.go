@@ -41,7 +41,7 @@ func NewDeployCreate() (c *DeployCreate) {
 	}
 
 	c.SetPath("deploy/create")
-	c.PostField("is_local", "1")
+	_ = c.PostField("is_local", "1")
 
 	return
 }

@@ -17,10 +17,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	koolDeployEnv = "kool.deploy.env"
-)
-
 // KoolCloudDeployFlags holds the flags for the kool cloud deploy command
 type KoolCloudDeployFlags struct {
 	// Token              string   // env: KOOL_API_TOKEN

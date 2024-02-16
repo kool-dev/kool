@@ -159,7 +159,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		err = e.mockErr
 		if e.mockResp != nil {
 			raw, _ := json.Marshal(e.mockResp)
-			json.Unmarshal(raw, e.response)
+			_ = json.Unmarshal(raw, e.response)
 		}
 		return
 	}
