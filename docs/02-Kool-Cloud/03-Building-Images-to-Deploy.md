@@ -37,6 +37,19 @@ services:
 
 Your image will be built locally when running the `kool` CLI for a deploy and then pushed securely to the Kool.dev Cloud registry to a repository dedicated to your app environment.
 
+### Build arguments (`args`) variables
+
+As stated above the args provided to Docker when building the image will come from the `services.<service>.build.args` configuration entry.
+
+It's a common need to have different values for different environments (i.e staging vs production). Kool Cloud supports two different ways for you to have a single `kool.cloud.yml` definition and still use different values per environment:
+
+- **Environment Variables**: we will parse environment variables before passing the build args to Docker so you can use the common syntax `FOO: "$FOO"` and the value will be interpolated to the current value of `FOO` when running the `kool cloud deploy` command.
+- **Kool Cloud Environment Variables**: you can define the variables under the Environment on Kool.dev Cloud panel, and then use the special `FOO: {{FOO}}` syntax to have the value interpolated with the web panel managed value for `FOO`.
+
+#### Escaping variables
+
+If the value you want to use contains `$` sign that could lead to trouble on having the sign mistakenly parsed as a variable marker. To scape it you need to double it: `FOO=$$bar` will have the desired effect of getting the actual `$bar` string as the value of `FOO` environment variable.
+
 ### Using a Private Registry
 
 You may already have or use your own private registry for handling images. You are welcome to hold the build process apart from the `kool cloud deploy` step and just use the already built images in your `kool.cloud.yml` file:

@@ -1,4 +1,4 @@
-Most applications and frameworks nowadays rely on environment variables to configure important aspects of their functions, mainly providing credentials and other secrets your app needs to work and access other resources.
+Most applications and frameworks will rely on environment variables to configure important aspects of their functions, specially for providing credentials and other secrets your app needs to work and access other resources.
 
 Kool.dev Cloud supports a few different ways you can define your environment variables for a deploying container, so pick the one that best suits you.
 
