@@ -125,11 +125,11 @@ func ValidateConfig(deployConfig *DeployConfig) (err error) {
 			}
 		}
 
-		// validates only one service can be public, and it must define a port
+		// validates only one service can be public, and it must define a port to be exposed
 		if config.Public != nil {
-			// being public, it must define the `port` entry as well
+			// being public, it must define the `expose` entry as well
 			if config.Expose == nil {
-				err = fmt.Errorf("service (%s) is public, but it does not define the `export` entry", service)
+				err = fmt.Errorf("service (%s) is public, but it does not define the `expose` entry", service)
 				return
 			}
 		}
