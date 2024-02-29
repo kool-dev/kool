@@ -8,6 +8,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/cloud/api"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -51,7 +52,7 @@ func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy
 
 		if buildConfig.Args != nil {
 			for k, v := range *buildConfig.Args {
-				dockerBuild.AppendArgs("--build-arg", fmt.Sprintf("%s=%s", k, v))
+				dockerBuild.AppendArgs("--build-arg", fmt.Sprintf("%s=%s", k, parseDeployEnvs(v, deploy.Deploy.Environment.Env)))
 			}
 		}
 
@@ -123,4 +124,24 @@ func parseBuild(build interface{}) (config *DeployConfigBuild, err error) {
 
 	err = yaml.Unmarshal(b, config)
 	return
+}
+
+func parseDeployEnvs(i interface{}, env interface{}) string {
+	// workaround to allow for escaping $ with a double $$
+	_ = os.Setenv("$", "$")
+
+	var value = os.ExpandEnv(fmt.Sprintf("%s", i))
+
+	if strings.Contains(value, "{{") && strings.Contains(value, "}}") {
+		// we have something to replace!
+		if recs, ok := env.(map[string]interface{}); ok {
+			for k, v := range recs {
+				if strings.Contains(value, "{{"+k+"}}") {
+					value = strings.ReplaceAll(value, "{{"+k+"}}", fmt.Sprintf("%v", v))
+				}
+			}
+		}
+	}
+
+	return value
 }
