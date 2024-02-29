@@ -32,7 +32,7 @@ func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy
 	var in = bytes.NewBuffer([]byte{})
 	sh.SetInStream(in)
 
-	dockerBuild := builder.NewCommand("docker", "build", "-t", image)
+	dockerBuild := builder.NewCommand("docker", "build", "-t", image, "--platform", "linux/amd64")
 
 	if folder, isStr := (*config.Build).(string); isStr {
 		// this should be a simple build with a context folder
