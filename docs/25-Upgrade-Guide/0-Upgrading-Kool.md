@@ -19,6 +19,12 @@ Version 3.x introduces two significant changes:
 - The YAML syntax for `services.<service>.build` in the `kool.cloud.yml` configuration file must now align with the official [Docker Compose reference for the `service.<service>.build`](https://docs.docker.com/compose/compose-file/compose-file-v3/#build) entry.
 - Image building now occurs in your local environment—specifically, on the host where you execute `kool cloud deploy`. Therefore, ensure that the environment from which you run this command has a properly configured Docker-image build engine (that means Kool to be able to run `docker build` command).
 
+### Deployment network configuration: `services.<service>.public` and `services.<service>.expose`
+
+The old `services.<service>.port` should now be `services.<service>.expose` - which aligns the format to Docker Compose native configuration.
+
+The `services.<service>.public` entry is now preferred to be a *boolean* value - simply set to `true` to indicate that the service should be made publicly available upon deployment.
+
 ### Github Action `kool-dev/action`
 
 There's a new version of our official installation GH action `kool-dev/action@v3` - that will always install the latest v3 series release.
