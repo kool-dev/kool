@@ -100,21 +100,21 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 	var chPingDone = make(chan bool)
 	go func() {
-		select {
-		case <-chPingDone:
-			if isVerbose {
-				fmt.Println(" - ending deploy ping routine")
-			}
-			return
-		case <-time.After(30 * time.Second):
-			if isVerbose {
-				fmt.Println(" - going to ping API while local build runs")
-			}
-			if _, err = deployer.PingDeploy(deployCreated); err != nil {
-				d.Shell().Error(err)
+		for {
+			select {
+			case <-chPingDone:
+				if isVerbose {
+					fmt.Println(" - ending deploy ping routine")
+				}
 				return
+			case <-time.After(30 * time.Second):
+				if isVerbose {
+					fmt.Println(" - going to ping API while local build runs")
+				}
+				if _, err = deployer.PingDeploy(deployCreated); err != nil {
+					d.Shell().Error(err)
+				}
 			}
-			break
 		}
 	}()
 
