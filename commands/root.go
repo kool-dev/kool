@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
+	"kool-dev/kool/services/cloud/api"
 	"os"
 	"path"
 	"path/filepath"
@@ -52,6 +53,9 @@ var originalWorkingDir = ""
 
 func init() {
 	AddCommands(rootCmd)
+
+	// pass in the version
+	api.SetCliVersion(version)
 }
 
 // NewRootCmd creates the root command

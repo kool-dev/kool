@@ -46,6 +46,13 @@ func (d *Deployer) StartDeploy(created *api.DeployCreateResponse) (started *api.
 	return
 }
 
+func (d *Deployer) PingDeploy(created *api.DeployCreateResponse) (pinged *api.DeployPingResponse, err error) {
+	var ping = api.NewDeployPing(created)
+
+	pinged, err = ping.Run()
+	return
+}
+
 func (d *Deployer) BuildError(created *api.DeployCreateResponse, gotErr error) (err error) {
 	var buildErr = api.NewDeployError(created, gotErr)
 

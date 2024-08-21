@@ -75,6 +75,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	var (
 		filename      string
 		deployCreated *api.DeployCreateResponse
+		isVerbose     = d.env.IsTrue("KOOL_VERBOSE")
 
 		deployer = cloud.NewDeployer()
 	)
@@ -97,10 +98,30 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	}
 	s.Stop()
 
+	var chPingDone = make(chan bool)
+	go func() {
+		select {
+		case <-chPingDone:
+			if isVerbose {
+				fmt.Println(" - ending deploy ping routine")
+			}
+			return
+		case <-time.After(30 * time.Second):
+			if isVerbose {
+				fmt.Println(" - going to ping API while local build runs")
+			}
+			if _, err = deployer.PingDeploy(deployCreated); err != nil {
+				d.Shell().Error(err)
+				return
+			}
+			break
+		}
+	}()
+
 	d.Shell().Info("Building images...")
 	for svcName, svc := range d.cloudConfig.Cloud.Services {
 		if svc.Build != nil {
-			d.Shell().Info("  > Build deploy image for service: ", svcName)
+			d.Shell().Info("  > Build deploy image for service '", svcName, "'")
 
 			if err = cloud.BuildPushImageForDeploy(svcName, svc, deployCreated); err != nil {
 				if reportErr := deployer.BuildError(deployCreated, err); reportErr != nil {
@@ -110,9 +131,12 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 				return
 			}
 
-			d.Shell().Info("  > Image for service: ", svcName, " built & pushed successfully.")
+			d.Shell().Info("  > Image for service '", svcName, "' built & pushed successfully.")
 		}
 	}
+
+	// ends ping
+	chPingDone <- true
 
 	if deployCreated.LogsUrl != "" {
 		d.Shell().Info(strings.Repeat("-", 40))
