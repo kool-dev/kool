@@ -189,6 +189,8 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		return
 	}
 
+	request.Header.Add("x-kool-cli-version", cliVersion)
+
 	if e.contentType != "" {
 		request.Header.Add("Content-type", e.contentType)
 	}
