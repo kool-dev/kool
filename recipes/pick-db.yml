@@ -14,4 +14,7 @@ actions:
       - name: 'PostgreSQL 13.0'
         actions:
           - recipe: postgresql-13
+      - name: 'Mongodb'
+        actions:
+          - recipe: mongodb
       - name: 'None - do not use a database'
