@@ -1,0 +1,7 @@
+title: "Mongodb"
+
+actions:
+  - merge: database/mongodb.yml
+    dst: docker-compose.yml
+  - merge: scripts/mongodb.yml
+    dst: kool.yml

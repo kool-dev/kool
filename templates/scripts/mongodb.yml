@@ -1,0 +1,3 @@
+scripts:
+  # CLI access to MongoDB
+  mongodb: kool exec database mongosh --port=27017 --username=root --password=root 
