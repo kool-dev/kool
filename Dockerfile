@@ -11,7 +11,7 @@ RUN go build -a \
 	-ldflags '-X kool-dev/kool/commands.version='$BUILD_VERSION' -extldflags "-static"' \
 	-o kool
 
-FROM docker:20.10.21-cli
+FROM docker:27-cli
 
 ENV DOCKER_HOST=tcp://docker:2375
 
