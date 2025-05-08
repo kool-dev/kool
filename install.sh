@@ -40,9 +40,17 @@ do_install () {
 
 	echo "Downloading latest binary (kool-$PLAT-$ARCH)..."
 
-	# TODO: fallback to wget if no curl available
-	rm -f /tmp/kool_binary
-	curl -fsSL "$DOWNLOAD_URL/kool-$PLAT-$ARCH" -o /tmp/kool_binary
+    rm -f /tmp/kool_binary
+	
+	# fallback to wget if no curl available
+    if command -v curl &> /dev/null; then
+        curl -fsSL "$DOWNLOAD_URL/kool-$PLAT-$ARCH" -o /tmp/kool_binary
+    elif command -v wget &> /dev/null; then
+        wget -qO /tmp/kool_binary "$DOWNLOAD_URL/kool-$PLAT-$ARCH"
+    else
+        echo -e "\033[31;31mError: Neither curl nor wget is available. Please install one of them to proceed.\033[0m"
+        exit 1
+    fi
 
 	# check for running kool process which would prevent
 	# replacing existing version under Linux.
