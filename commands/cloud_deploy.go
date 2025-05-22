@@ -24,7 +24,7 @@ type KoolCloudDeployFlags struct {
 	Timeout            uint     // env: KOOL_API_TIMEOUT
 	WwwRedirect        bool     // env: KOOL_DEPLOY_WWW_REDIRECT
 	DeployDomainExtras []string // env: KOOL_DEPLOY_DOMAIN_EXTRAS
-
+	Platform           string   // platform for docker build, e.g. linux/amd64
 	// Cluster            string // env: KOOL_DEPLOY_CLUSTER
 }
 
@@ -53,6 +53,7 @@ func NewDeployCommand(deploy *KoolDeploy) (cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&deploy.flags.DeployDomainExtras, "domain-extra", "", []string{}, "List of extra domain aliases")
 	cmd.Flags().BoolVarP(&deploy.flags.WwwRedirect, "www-redirect", "", false, "Redirect www to non-www domain")
 	cmd.Flags().UintVarP(&deploy.flags.Timeout, "timeout", "", 0, "Timeout in minutes for waiting the deployment to finish")
+	cmd.Flags().StringVarP(&deploy.flags.Platform, "platform", "", "linux/amd64", "Platform for docker build (default: linux/amd64)")
 
 	return
 }
@@ -123,7 +124,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		if svc.Build != nil {
 			d.Shell().Info("  > Build deploy image for service '", svcName, "'")
 
-			if err = cloud.BuildPushImageForDeploy(svcName, svc, deployCreated); err != nil {
+			if err = cloud.BuildPushImageForDeploy(svcName, svc, deployCreated, d.flags.Platform); err != nil {
 				if reportErr := deployer.BuildError(deployCreated, err); reportErr != nil {
 					d.Shell().Error(fmt.Errorf("error reporting build error: %v", reportErr))
 				}

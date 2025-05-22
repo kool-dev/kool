@@ -15,7 +15,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy *api.DeployCreateResponse) (err error) {
+func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy *api.DeployCreateResponse, platform string) (err error) {
 	if config.Build == nil {
 		err = errors.New("service " + service + " has no build configuration")
 		return
@@ -33,7 +33,7 @@ func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy
 	var in = bytes.NewBuffer([]byte{})
 	sh.SetInStream(in)
 
-	dockerBuild := builder.NewCommand("docker", "build", "-t", image, "--platform", "linux/amd64")
+	dockerBuild := builder.NewCommand("docker", "build", "-t", image, "--platform", platform)
 
 	if folder, isStr := (*config.Build).(string); isStr {
 		// this should be a simple build with a context folder
