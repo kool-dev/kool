@@ -11,6 +11,7 @@ kool cloud deploy
 ```
       --domain-extra stringArray   List of extra domain aliases
   -h, --help                       help for deploy
+      --platform string            Platform for docker build (default: linux/amd64) (default "linux/amd64")
       --timeout uint               Timeout in minutes for waiting the deployment to finish
       --www-redirect               Redirect www to non-www domain
 ```
