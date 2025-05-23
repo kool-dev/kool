@@ -16,7 +16,7 @@ func TestAuthenticate(t *testing.T) {
 	expectedErr := errors.New("call error")
 	k.deployExec.Endpoint.(*api.DefaultEndpoint).MockErr(expectedErr)
 
-	if _, err := k.Authenticate("foo", "bar"); !errors.Is(err, expectedErr) {
+	if _, err := k.Authenticate("foo", "bar", ""); !errors.Is(err, expectedErr) {
 		t.Error("unexpected error return from Authenticate")
 	}
 
@@ -29,7 +29,7 @@ func TestAuthenticate(t *testing.T) {
 		CA:        "ca",
 	})
 
-	if _, err := k.Authenticate("foo", "bar"); !strings.Contains(err.Error(), "failed to generate access credentials") {
+	if _, err := k.Authenticate("foo", "bar", ""); !strings.Contains(err.Error(), "failed to generate access credentials") {
 		t.Errorf("unexpected error from DeployExec call: %v", err)
 	}
 
@@ -43,7 +43,7 @@ func TestAuthenticate(t *testing.T) {
 
 	authTempPath = t.TempDir()
 
-	if cloudService, err := k.Authenticate("foo", "bar"); err != nil {
+	if cloudService, err := k.Authenticate("foo", "bar", ""); err != nil {
 		t.Errorf("unexpected error from Authenticate call: %v", err)
 	} else if cloudService != "path" {
 		t.Errorf("unexpected cloudService return: %s", cloudService)
@@ -104,7 +104,7 @@ func TestKubectl(t *testing.T) {
 		t.Error("should get error before authenticating")
 	}
 
-	_, _ = k.Authenticate("foo", "bar")
+	_, _ = k.Authenticate("foo", "bar", "")
 
 	if cmd, _ := k.Kubectl(fakeShell); cmd.Cmd() != "kubectl" {
 		t.Error("should use kubectl")

@@ -73,7 +73,9 @@ func (e *KoolDeployLogs) Execute(args []string) (err error) {
 		return
 	}
 
-	if cloudService, err = e.cloud.Authenticate(domain, service); err != nil {
+	cluster := e.env.Get("KOOL_CLOUD_CLUSTER")
+
+	if cloudService, err = e.cloud.Authenticate(domain, service, cluster); err != nil {
 		return
 	}
 
