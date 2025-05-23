@@ -15,6 +15,7 @@ type fakeK8S struct {
 	CalledAuthenticate             bool
 	CalledAuthenticateParamDomain  string
 	CalledAuthenticateParamService string
+	CalledAuthenticateParamCluster string
 	MockAuthenticateCloudService   string
 	MockAuthenticateErr            error
 
@@ -29,10 +30,11 @@ type fakeK8S struct {
 	CalledCleanupParamOut shell.OutputWritter
 }
 
-func (f *fakeK8S) Authenticate(domain, service string) (cloudService string, err error) {
+func (f *fakeK8S) Authenticate(domain, service, cluster string) (cloudService string, err error) {
 	f.CalledAuthenticate = true
 	f.CalledAuthenticateParamDomain = domain
 	f.CalledAuthenticateParamService = service
+	f.CalledAuthenticateParamCluster = cluster
 
 	cloudService = f.MockAuthenticateCloudService
 	err = f.MockAuthenticateErr

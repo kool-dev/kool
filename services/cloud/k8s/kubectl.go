@@ -11,7 +11,7 @@ import (
 )
 
 type K8S interface {
-	Authenticate(string, string) (string, error)
+	Authenticate(string, string, string) (string, error)
 	Kubectl(shell.PathChecker) (builder.Command, error)
 	Cleanup(shell.OutputWritter)
 }
@@ -30,9 +30,10 @@ func NewDefaultK8S() *DefaultK8S {
 	}
 }
 
-func (k *DefaultK8S) Authenticate(domain, service string) (cloudService string, err error) {
+func (k *DefaultK8S) Authenticate(domain, service, cluster string) (cloudService string, err error) {
 	k.deployExec.Body().Set("domain", domain)
 	k.deployExec.Body().Set("service", service)
+	k.deployExec.Body().Set("cluster", cluster)
 
 	if k.resp, err = k.deployExec.Call(); err != nil {
 		return
