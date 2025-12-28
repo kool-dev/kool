@@ -61,3 +61,23 @@ func TestInitEnvironmentVariables(t *testing.T) {
 		t.Errorf("expecting $KOOL_GLOBAL_NETWORK value 'kool_global', got '%s'", envKoolNet)
 	}
 }
+
+func TestInitEnvironmentVariablesOverridesStalePWD(t *testing.T) {
+	f := NewFakeEnvStorage()
+
+	// Simulate a stale PWD value (as might happen when spawned with cwd option)
+	f.Envs["PWD"] = "/some/stale/path"
+
+	originalEnvFiles := envFiles
+	defer func() { envFiles = originalEnvFiles }()
+	envFiles = []string{} // no env files needed for this test
+
+	InitEnvironmentVariables(f)
+
+	workDir, _ := os.Getwd()
+
+	// PWD should be overridden with the actual working directory
+	if envWorkDir := f.Envs["PWD"]; envWorkDir != workDir {
+		t.Errorf("expecting $PWD to be overridden to '%s', got '%s'", workDir, envWorkDir)
+	}
+}

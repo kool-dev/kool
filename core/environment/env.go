@@ -29,13 +29,14 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 
 	initUid(envStorage)
 
-	if envStorage.Get("PWD") == "" {
-		workDir, err = os.Getwd()
-		if err != nil {
-			log.Fatal("Could not evaluate working directory - ", err)
-		}
-		envStorage.Set("PWD", workDir)
+	// Always use os.Getwd() to determine the working directory rather than
+	// trusting the PWD environment variable. PWD may be stale if a parent
+	// process spawned kool with a different cwd without updating PWD.
+	workDir, err = os.Getwd()
+	if err != nil {
+		log.Fatal("Could not evaluate working directory - ", err)
 	}
+	envStorage.Set("PWD", workDir)
 
 	for _, envFile := range envFiles {
 		if _, err = os.Stat(envFile); os.IsNotExist(err) {
