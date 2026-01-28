@@ -793,3 +793,60 @@ func TestNewRunCommandJsonOutput(t *testing.T) {
 		t.Errorf("unexpected scripts order or names: %v", output)
 	}
 }
+
+func TestNewRunCommandJsonOutputEmpty(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	f.parser.(*parser.FakeParser).MockScriptDetails = []parser.ScriptDetail{}
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"--json"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command with --json; error: %v", err)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+
+	if len(fakeShell.OutLines) == 0 {
+		t.Error("expected JSON output")
+		return
+	}
+
+	// Should output empty array, not null
+	if fakeShell.OutLines[0] != "[]" {
+		t.Errorf("expected empty JSON array '[]', got '%s'", fakeShell.OutLines[0])
+	}
+}
+
+func TestNewRunCommandJsonOutputNullSafety(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	f.parser.(*parser.FakeParser).MockScriptDetails = []parser.ScriptDetail{
+		{
+			Name:     "test",
+			Comments: nil, // nil comments
+			Commands: nil, // nil commands
+		},
+	}
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"--json"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command with --json; error: %v", err)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+
+	var output []parser.ScriptDetail
+	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &output); err != nil {
+		t.Fatalf("failed to parse json output: %v", err)
+	}
+
+	// Verify nil values are converted to empty arrays
+	if output[0].Comments == nil {
+		t.Error("Comments should not be nil in JSON output")
+	}
+	if output[0].Commands == nil {
+		t.Error("Commands should not be nil in JSON output")
+	}
+}
