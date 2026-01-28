@@ -78,7 +78,7 @@ func (p *DefaultParser) Parse(script string) (commands []builder.Command, err er
 	}
 
 	for _, koolFile = range p.targetFiles {
-		if parsedFile, err = ParseKoolYamlWithDetails(koolFile); err != nil {
+		if parsedFile, err = ParseKoolYaml(koolFile); err != nil {
 			return
 		}
 
