@@ -150,3 +150,34 @@ func TestParserParseAvailableScriptsFilter(t *testing.T) {
 		t.Error("failed to get filtered scripts from kool.yml")
 	}
 }
+
+func TestParserParseAvailableScriptsDetails(t *testing.T) {
+	var (
+		p       Parser = NewParser()
+		details []ScriptDetail
+		err     error
+	)
+
+	if _, err = p.ParseAvailableScriptsDetails(""); err == nil {
+		t.Error("expecting 'kool.yml not found' error, got none")
+	}
+
+	if err != nil && err.Error() != "kool.yml not found" {
+		t.Errorf("expecting error 'kool.yml not found', got '%s'", err.Error())
+	}
+
+	workDir, _ := os.Getwd()
+	_ = p.AddLookupPath(path.Join(workDir, "testing_files"))
+
+	if details, err = p.ParseAvailableScriptsDetails(""); err != nil {
+		t.Errorf("unexpected error; error: %s", err)
+	}
+
+	if len(details) != 1 || details[0].Name != "testing" {
+		t.Error("failed to get script details from kool.yml")
+	}
+
+	if len(details[0].Commands) != 1 || details[0].Commands[0] != "echo testing" {
+		t.Errorf("unexpected command details: %v", details[0].Commands)
+	}
+}

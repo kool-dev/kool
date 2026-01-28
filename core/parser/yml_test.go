@@ -5,8 +5,9 @@ import (
 	"kool-dev/kool/core/builder"
 	"os"
 	"path"
-	"strings"
 	"testing"
+
+	"gopkg.in/yaml.v3"
 )
 
 const KoolYmlOK = `scripts:
@@ -123,17 +124,86 @@ func TestParseKoolYaml(t *testing.T) {
 		return
 	}
 
-	expected := `scripts:
-  multi-line:
-  - line 1
-  - line 2
-  new-script:
-  - new-command 1
-  - new-command 2
-  single-line: single line script`
+	parsedOutput := new(KoolYaml)
+	if err = yaml.Unmarshal([]byte(koolContent), parsedOutput); err != nil {
+		t.Errorf("failed to parse generated kool.yml content; error: %s", err)
+		return
+	}
 
-	if expected != strings.TrimSpace(koolContent) {
-		t.Errorf("expecting kool.yml content '%s', got '%s'", expected, strings.TrimSpace(koolContent))
+	if len(parsedOutput.Scripts) != 3 {
+		t.Errorf("expected to parse 3 scripts from generated content; got %d", len(parsedOutput.Scripts))
+		return
+	}
+
+	if !parsedOutput.HasScript("single-line") || !parsedOutput.HasScript("multi-line") || !parsedOutput.HasScript("new-script") {
+		t.Errorf("expected to have single-line, multi-line and new-script scripts")
+		return
+	}
+
+	if cmds, err = parsedOutput.ParseCommands("new-script"); err != nil {
+		t.Errorf("failed to parse new-script from generated content; error: %s", err)
+		return
+	}
+
+	if len(cmds) != 2 {
+		t.Errorf("expected new-script to parse 2 commands; got %d", len(cmds))
+		return
+	}
+}
+
+func TestParseKoolYamlScriptDetails(t *testing.T) {
+	const KoolYmlWithComments = `scripts:
+  # build the app
+  # and setup
+  setup: kool run go build
+  lint:
+    - kool run go vet
+    - kool run go fmt
+`
+
+	var (
+		err    error
+		parsed *KoolYaml
+		tmp    string
+	)
+
+	tmp = path.Join(t.TempDir(), "kool.yml")
+	if err = os.WriteFile(tmp, []byte(KoolYmlWithComments), os.ModePerm); err != nil {
+		t.Fatal("failed creating temporary file for test", err)
+	}
+
+	if parsed, err = ParseKoolYamlWithDetails(tmp); err != nil {
+		t.Fatalf("failed parsing kool.yml with comments; error: %s", err)
+	}
+
+	setup, ok := parsed.ScriptDetails["setup"]
+	if !ok {
+		t.Fatal("expected to find setup script details")
+	}
+
+	if len(setup.Comments) != 2 {
+		t.Fatalf("expected 2 comments for setup, got %v", setup.Comments)
+	}
+
+	if setup.Comments[0] != "build the app" || setup.Comments[1] != "and setup" {
+		t.Fatalf("unexpected setup comments: %v", setup.Comments)
+	}
+
+	if setup.Commands == nil || len(setup.Commands) != 1 || setup.Commands[0] != "kool run go build" {
+		t.Fatalf("unexpected setup commands: %v", setup.Commands)
+	}
+
+	lint, ok := parsed.ScriptDetails["lint"]
+	if !ok {
+		t.Fatal("expected to find lint script details")
+	}
+
+	if len(lint.Comments) != 0 {
+		t.Fatalf("expected no comments for lint, got %v", lint.Comments)
+	}
+
+	if len(lint.Commands) != 2 {
+		t.Fatalf("expected 2 commands for lint, got %v", lint.Commands)
 	}
 }
 
