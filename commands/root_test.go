@@ -249,7 +249,6 @@ func TestAddCommands(t *testing.T) {
 		"preset":      false,
 		"restart":     false,
 		"run":         false,
-		"scripts":     false,
 		"self-update": false,
 		"share":       false,
 		"start":       false,

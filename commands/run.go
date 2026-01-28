@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"errors"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
@@ -15,6 +16,7 @@ import (
 // KoolRunFlags holds the flags for the run command
 type KoolRunFlags struct {
 	EnvVariables []string
+	JSON         bool
 }
 
 // KoolRun holds handlers and functions to implement the run command logic
@@ -48,7 +50,7 @@ func AddKoolRun(root *cobra.Command) {
 func NewKoolRun() *KoolRun {
 	return &KoolRun{
 		*newDefaultKoolService(),
-		&KoolRunFlags{[]string{}},
+		&KoolRunFlags{[]string{}, false},
 		parser.NewParser(),
 		environment.NewEnvStorage(),
 		shell.NewPromptSelect(),
@@ -58,7 +60,15 @@ func NewKoolRun() *KoolRun {
 
 // Execute runs the run logic with incoming arguments.
 func (r *KoolRun) Execute(originalArgs []string) (err error) {
+	// look for kool.yml on current working directory
+	_ = r.parser.AddLookupPath(r.env.Get("PWD"))
+	// look for kool.yml on kool folder within user home directory
+	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
+
 	if len(originalArgs) == 0 {
+		if r.Flags.JSON {
+			return r.printScriptsJSON("")
+		}
 		r.shell.Info("\nAvailable scripts:\n")
 		scripts := compListScripts("", r)
 		for _, cmd := range scripts {
@@ -73,11 +83,6 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 		script string   = originalArgs[0]
 		args   []string = originalArgs[1:]
 	)
-
-	// look for kool.yml on current working directory
-	_ = r.parser.AddLookupPath(r.env.Get("PWD"))
-	// look for kool.yml on kool folder within user home directory
-	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
 	if err = r.parseScript(script); err != nil {
 		return
@@ -125,6 +130,7 @@ A single-line SCRIPT can be run with optional arguments.`,
 	}
 
 	runCmd.Flags().StringArrayVarP(&run.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
+	runCmd.Flags().BoolVar(&run.Flags.JSON, "json", false, "Output available scripts as JSON (use without script argument)")
 
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
@@ -245,4 +251,32 @@ func compListScripts(toComplete string, run *KoolRun) (scripts []string) {
 	}
 
 	return
+}
+
+func (r *KoolRun) printScriptsJSON(filter string) (err error) {
+	var details []parser.ScriptDetail
+	if details, err = r.parser.ParseAvailableScriptsDetails(filter); err != nil {
+		return
+	}
+
+	if details == nil {
+		details = []parser.ScriptDetail{}
+	}
+
+	for i := range details {
+		if details[i].Comments == nil {
+			details[i].Comments = []string{}
+		}
+		if details[i].Commands == nil {
+			details[i].Commands = []string{}
+		}
+	}
+
+	var payload []byte
+	if payload, err = json.Marshal(details); err != nil {
+		return
+	}
+
+	r.Shell().Println(string(payload))
+	return nil
 }

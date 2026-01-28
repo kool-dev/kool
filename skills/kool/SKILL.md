@@ -1,6 +1,6 @@
 ---
 name: kool
-description: Discovers and runs project scripts with the kool CLI. Use when the user wants to list custom commands from kool.yml, understand project tasks, or run kool scripts. Lists scripts in JSON for agents and reads kool.yml for context.
+description: Discovers and runs project scripts with the kool CLI. Use when the user wants to list custom commands from kool.yml, understand project tasks, or run kool scripts. Use --json flag for machine-readable output.
 ---
 
 # Kool CLI
@@ -10,8 +10,8 @@ Use kool to discover and run project scripts defined in `kool.yml`.
 ## Quick Start
 
 ```bash
-kool scripts --json
-kool run <script>
+kool run --json        # List scripts as JSON
+kool run <script>      # Run a script
 ```
 
 ## Core Workflow
@@ -20,8 +20,8 @@ kool run <script>
 2. Discover scripts:
 
 ```bash
-kool scripts --json   # Preferred: returns [{name, comments, commands}]
-kool scripts          # Human-readable list
+kool run --json   # Preferred: returns [{name, comments, commands}]
+kool run          # Human-readable list
 ```
 
 3. Run scripts:

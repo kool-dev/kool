@@ -18,7 +18,7 @@ import (
 func newFakeKoolRun(mockParsedCommands map[string][]builder.Command, mockParseError map[string]error) *KoolRun {
 	return &KoolRun{
 		*(newDefaultKoolService().Fake()),
-		&KoolRunFlags{[]string{}},
+		&KoolRunFlags{[]string{}, false},
 		&parser.FakeParser{MockParsedCommands: mockParsedCommands, MockParseError: mockParseError},
 		environment.NewFakeEnvStorage(),
 		&shell.FakePromptSelect{},
