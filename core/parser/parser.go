@@ -15,6 +15,7 @@ type Parser interface {
 	AddLookupPath(string) error
 	Parse(string) ([]builder.Command, error)
 	ParseAvailableScripts(string) ([]string, error)
+	ParseAvailableScriptsDetails(string) ([]ScriptDetail, error)
 }
 
 // DefaultParser implements all default behavior for using kool.yml files.
@@ -77,7 +78,7 @@ func (p *DefaultParser) Parse(script string) (commands []builder.Command, err er
 	}
 
 	for _, koolFile = range p.targetFiles {
-		if parsedFile, err = ParseKoolYaml(koolFile); err != nil {
+		if parsedFile, err = ParseKoolYamlWithDetails(koolFile); err != nil {
 			return
 		}
 
@@ -139,6 +140,53 @@ func (p *DefaultParser) ParseAvailableScripts(filter string) (scripts []string, 
 	}
 
 	sort.Strings(scripts)
+
+	return
+}
+
+// ParseAvailableScriptsDetails parses all available scripts with details
+func (p *DefaultParser) ParseAvailableScriptsDetails(filter string) (details []ScriptDetail, err error) {
+	var (
+		koolFile   string
+		parsedFile *KoolYaml
+		found      map[string]ScriptDetail
+		keys       []string
+	)
+
+	if len(p.targetFiles) == 0 {
+		err = errors.New("kool.yml not found")
+		return
+	}
+
+	found = make(map[string]ScriptDetail)
+
+	for _, koolFile = range p.targetFiles {
+		if parsedFile, err = ParseKoolYamlWithDetails(koolFile); err != nil {
+			return
+		}
+
+		for name, detail := range parsedFile.ScriptDetails {
+			if _, exists := found[name]; exists {
+				continue
+			}
+			if filter != "" && !strings.HasPrefix(name, filter) {
+				continue
+			}
+			found[name] = detail
+		}
+	}
+
+	for name := range found {
+		keys = append(keys, name)
+	}
+	if len(keys) == 0 {
+		return
+	}
+
+	sort.Strings(keys)
+	for _, name := range keys {
+		details = append(details, found[name])
+	}
 
 	return
 }

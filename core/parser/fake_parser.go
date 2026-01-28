@@ -2,6 +2,7 @@ package parser
 
 import (
 	"kool-dev/kool/core/builder"
+	"sort"
 	"strings"
 )
 
@@ -11,10 +12,13 @@ type FakeParser struct {
 	TargetFiles                    []string
 	CalledParse                    bool
 	CalledParseAvailableScripts    bool
+	CalledParseAvailableDetails    bool
 	MockParsedCommands             map[string][]builder.Command
 	MockParseError                 map[string]error
 	MockScripts                    []string
+	MockScriptDetails              []ScriptDetail
 	MockParseAvailableScriptsError error
+	MockParseAvailableDetailsError error
 }
 
 // AddLookupPath implements fake AddLookupPath behavior
@@ -47,5 +51,29 @@ func (f *FakeParser) ParseAvailableScripts(filter string) (scripts []string, err
 	}
 
 	err = f.MockParseAvailableScriptsError
+	return
+}
+
+// ParseAvailableScriptsDetails implements fake ParseAvailableScriptsDetails behavior
+func (f *FakeParser) ParseAvailableScriptsDetails(filter string) (details []ScriptDetail, err error) {
+	f.CalledParseAvailableDetails = true
+
+	if filter == "" {
+		details = append(details, f.MockScriptDetails...)
+	} else {
+		for _, detail := range f.MockScriptDetails {
+			if strings.HasPrefix(detail.Name, filter) {
+				details = append(details, detail)
+			}
+		}
+	}
+
+	if len(details) > 1 {
+		sort.Slice(details, func(i, j int) bool {
+			return details[i].Name < details[j].Name
+		})
+	}
+
+	err = f.MockParseAvailableDetailsError
 	return
 }

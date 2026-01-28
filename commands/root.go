@@ -34,6 +34,7 @@ var AddCommands AddCommandsFN = func(root *cobra.Command) {
 	AddKoolPreset(root)
 	AddKoolRestart(root)
 	AddKoolRun(root)
+	AddKoolScripts(root)
 	AddKoolSelfUpdate(root)
 	AddKoolShare(root)
 	AddKoolStart(root)

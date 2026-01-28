@@ -34,9 +34,9 @@ kool
 * [kool recipe](kool-recipe)	 - Adds configuration for some recipe in the current work directory.
 * [kool restart](kool-restart)	 - Restart running service containers (the same as 'kool stop' followed by 'kool start')
 * [kool run](kool-run)	 - Execute a script defined in kool.yml
+* [kool scripts](kool-scripts)	 - List scripts defined in kool.yml
 * [kool self-update](kool-self-update)	 - Update kool to the latest version
 * [kool share](kool-share)	 - Live share your local environment on the Internet using an HTTP tunnel
 * [kool start](kool-start)	 - Start service containers defined in docker-compose.yml
 * [kool status](kool-status)	 - Show the status of all service containers
 * [kool stop](kool-stop)	 - Stop and destroy running service containers
-
