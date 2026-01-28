@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -743,5 +744,52 @@ func TestNewRunCommandWithTypoErrorCancelled(t *testing.T) {
 
 	if output != expected {
 		t.Errorf("expecting warning '%s', got '%s'", expected, output)
+	}
+}
+
+func TestNewRunCommandJsonOutput(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	f.parser.(*parser.FakeParser).MockScriptDetails = []parser.ScriptDetail{
+		{
+			Name:     "setup",
+			Comments: []string{"Sets up dependencies"},
+			Commands: []string{"kool run composer install"},
+		},
+		{
+			Name:     "lint",
+			Comments: []string{},
+			Commands: []string{"kool run go:linux fmt ./..."},
+		},
+	}
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"--json"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command with --json; error: %v", err)
+	}
+
+	if !f.parser.(*parser.FakeParser).CalledParseAvailableDetails {
+		t.Error("did not call ParseAvailableScriptsDetails")
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+
+	if len(fakeShell.OutLines) == 0 {
+		t.Error("expected JSON output")
+		return
+	}
+
+	var output []parser.ScriptDetail
+	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &output); err != nil {
+		t.Fatalf("failed to parse json output: %v", err)
+	}
+
+	if len(output) != 2 {
+		t.Fatalf("expected 2 script entries, got %d", len(output))
+	}
+
+	if output[0].Name != "lint" || output[1].Name != "setup" {
+		t.Errorf("unexpected scripts order or names: %v", output)
 	}
 }
