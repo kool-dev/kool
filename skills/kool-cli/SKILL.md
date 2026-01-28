@@ -1,5 +1,5 @@
 ---
-name: kool
+name: kool-cli
 description: Docker development environment CLI. Use for managing containers (start/stop/restart), executing commands in services, viewing logs, and running project scripts from kool.yml.
 ---
 
