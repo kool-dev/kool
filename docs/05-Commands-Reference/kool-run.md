@@ -16,6 +16,7 @@ kool run SCRIPT [--] [ARG...]
 ```
   -e, --env stringArray   Environment variables.
   -h, --help              help for run
+      --json              Output available scripts as JSON (use without script argument)
 ```
 
 ### Options inherited from parent commands
