@@ -84,12 +84,14 @@ do_install () {
 		exit
 	fi
 
-	composeVersion=$(docker compose version || true)
-	if [[ ! "$composeVersion" == *"Docker Compose version v2"* ]]; then
-		builtin echo -e "${start_error}We could not identify Composer V2 installed.${end_error}"
-		builtin echo -e "Please make sure you are running an updated Docker version that includes Compose V2:"
+	composeVersion=$(docker compose version --short 2>/dev/null || true)
+	composeMajor="${composeVersion%%.*}"
+	composeMajor="${composeMajor#v}"
+	if [[ -z "$composeMajor" ]] || ! [[ "$composeMajor" =~ ^[0-9]+$ ]] || (( composeMajor < 2 )); then
+		builtin echo -e "${start_error}We could not identify Docker Compose v2 or newer installed.${end_error}"
+		builtin echo -e "Please make sure you are running an updated Docker version that includes Compose V2 (or newer):"
 		builtin echo -e "  Official Docker installation documentation: https://docs.docker.com/get-docker/"
-		builtin echo -e "  Official Docker Compose V2 documentation: https://docs.docker.com/compose/reference/"
+		builtin echo -e "  Official Docker Compose documentation: https://docs.docker.com/compose/reference/"
 		exit
 	fi
 
