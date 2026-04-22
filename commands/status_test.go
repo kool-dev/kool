@@ -43,7 +43,7 @@ func newFakeKoolStatus() *KoolStatus {
 func TestNewKoolStatus(t *testing.T) {
 	k := NewKoolStatus()
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolStatus instance")
 	}
 

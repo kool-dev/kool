@@ -158,7 +158,7 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		timeout = time.Duration(min) * time.Minute
 	}
 
-	var finishes chan bool = make(chan bool)
+	var finishes = make(chan bool)
 
 	go func(deployCreated *api.DeployCreateResponse, finishes chan bool) {
 		var (
@@ -236,7 +236,7 @@ func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
 	var allFiles []string
 
 	// new behavior - tarball only the required files
-	var possibleKoolDeployYmlFiles []string = []string{
+	var possibleKoolDeployYmlFiles = []string{
 		"kool.cloud.yml",
 		"kool.cloud.yaml",
 		"kool.deploy.yml",

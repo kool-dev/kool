@@ -21,7 +21,7 @@ if [ -f .env ]; then
   source .env
 fi
 
-GO_IMAGE=${GO_IMAGE:-golang:1.21}
+GO_IMAGE=${GO_IMAGE:-golang:1.25}
 
 if [ "$BUILD_VERSION" == "" ]; then
   echo "missing environment variable BUILD_VERSION"

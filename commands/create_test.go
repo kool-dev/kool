@@ -22,7 +22,7 @@ func newFakeKoolCreate() *KoolCreate {
 func TestNewKoolCreate(t *testing.T) {
 	k := NewKoolCreate()
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolCreate instance")
 	}
 

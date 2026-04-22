@@ -126,9 +126,9 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	var (
 		cmd     *exec.Cmd
 		out     []byte
-		args    []string = command.Args()
-		exe     string   = command.Cmd()
-		verbose bool     = s.env.IsTrue("KOOL_VERBOSE")
+		args    = command.Args()
+		exe     = command.Cmd()
+		verbose = s.env.IsTrue("KOOL_VERBOSE")
 	)
 
 	if len(extraArgs) > 0 {
@@ -136,7 +136,7 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	}
 
 	if verbose {
-		fmt.Fprintf(s.ErrStream(), "$ (exec) %s %s\n",
+		_, _ = fmt.Fprintf(s.ErrStream(), "$ (exec) %s %s\n",
 			exe,
 			strings.Join(args, " "),
 		)
@@ -160,8 +160,8 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...string) (err error) {
 	var (
 		cmdptr  *CommandWithPointers
-		verbose bool = s.env.IsTrue("KOOL_VERBOSE")
-		command      = originalCmd.Copy()
+		verbose = s.env.IsTrue("KOOL_VERBOSE")
+		command = originalCmd.Copy()
 	)
 
 	command.AppendArgs(extraArgs...)
@@ -174,19 +174,19 @@ func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...str
 
 	if verbose {
 		checker := NewTerminalChecker()
-		fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %s\n",
+		_, _ = fmt.Fprintf(s.ErrStream(), "$ (TTY in: %v out: %v) %s %s\n",
 			checker.IsTerminal(cmdptr.in),
 			checker.IsTerminal(cmdptr.out),
 			cmdptr.Command.Cmd(),
-			strings.Join(cmdptr.Command.Args(), " "),
+			strings.Join(cmdptr.Args(), " "),
 		)
 	}
 
 	if cmdptr.Command.Cmd() == "kool" && RecursiveCall != nil {
 		if verbose {
-			fmt.Fprintln(s.ErrStream(), "[recursive call]")
+			_, _ = fmt.Fprintln(s.ErrStream(), "[recursive call]")
 		}
-		err = RecursiveCall(cmdptr.Command.Args(), cmdptr.in, cmdptr.out, cmdptr.err)
+		err = RecursiveCall(cmdptr.Args(), cmdptr.in, cmdptr.out, cmdptr.err)
 	} else {
 		if err = s.LookPath(cmdptr.Command); err != nil {
 			err = ErrLookPath
@@ -203,7 +203,7 @@ func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...str
 // LookPath returns if the command exists
 func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 	var (
-		exe       string = command.Cmd()
+		exe       = command.Cmd()
 		hasLooked bool
 	)
 
@@ -227,32 +227,32 @@ func (s *DefaultShell) LookPath(command builder.Command) (err error) {
 
 // Println execs Println on writer
 func (s *DefaultShell) Println(out ...interface{}) {
-	fmt.Fprintln(s.OutStream(), out...)
+	_, _ = fmt.Fprintln(s.OutStream(), out...)
 }
 
 // Printf execs Printf on writer
 func (s *DefaultShell) Printf(format string, a ...interface{}) {
-	fmt.Fprintf(s.OutStream(), format, a...)
+	_, _ = fmt.Fprintf(s.OutStream(), format, a...)
 }
 
 // Error error output
 func (s *DefaultShell) Error(err error) {
-	fmt.Fprintf(s.OutStream(), "%v\n", color.New(color.BgRed, color.FgWhite).Sprintf("error: %v", err))
+	_, _ = fmt.Fprintf(s.OutStream(), "%v\n", color.New(color.BgRed, color.FgWhite).Sprintf("error: %v", err))
 }
 
 // Warning warning message
 func (s *DefaultShell) Warning(out ...interface{}) {
-	fmt.Fprintln(s.OutStream(), color.New(color.Yellow).Sprint(out...))
+	_, _ = fmt.Fprintln(s.OutStream(), color.New(color.Yellow).Sprint(out...))
 }
 
 // Success success message
 func (s *DefaultShell) Success(out ...interface{}) {
-	fmt.Fprintln(s.OutStream(), color.New(color.Green).Sprint(out...))
+	_, _ = fmt.Fprintln(s.OutStream(), color.New(color.Green).Sprint(out...))
 }
 
 // Info info message
 func (s *DefaultShell) Info(out ...interface{}) {
-	fmt.Fprintln(s.OutStream(), color.New(color.Cyan).Sprint(out...))
+	_, _ = fmt.Fprintln(s.OutStream(), color.New(color.Cyan).Sprint(out...))
 }
 
 // Exec will execute the given command silently and return the combined

@@ -40,7 +40,7 @@ func TestParseRedirectParseNoRedirects(t *testing.T) {
 	// test input redirect
 	input := filepath.Join(t.TempDir(), "input")
 	file, _ := os.Create(input)
-	file.Close()
+	_ = file.Close()
 
 	s := NewShell()
 	s.SetInStream(file)

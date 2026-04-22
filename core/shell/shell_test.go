@@ -179,7 +179,7 @@ func TestInteractiveDefaultShell(t *testing.T) {
 
 	err := s.Interactive(command)
 
-	w.Close()
+	_ = w.Close()
 
 	if err != nil {
 		t.Errorf("Interactive failed on *DefaultShell; expected no errors 'x', got '%v'", err)
@@ -257,7 +257,7 @@ func TestInteractive(t *testing.T) {
 
 	err := Interactive("echo", "x")
 
-	w.Close()
+	_ = w.Close()
 
 	if err != nil {
 		t.Errorf("Interactive failed on *DefaultShell; expected no errors 'x', got '%v'", err)

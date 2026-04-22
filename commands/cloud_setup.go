@@ -57,7 +57,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 		composeConfig *compose.DockerComposeConfig
 		serviceName   string
 
-		deployConfig *cloud.CloudConfig = &cloud.CloudConfig{
+		deployConfig = &cloud.CloudConfig{
 			Version:  "1.0",
 			Services: make(map[string]*cloud.DeployConfigService),
 		}
@@ -85,7 +85,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 
 	s.Shell().Info("Docker compose configuration loaded. Starting interactive setup:")
 
-	var hasPublicPort bool = false
+	var hasPublicPort = false
 
 	var serviceNames []string
 
@@ -98,7 +98,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 	for _, serviceName = range serviceNames {
 		var (
 			confirmed bool
-			isPublic  bool = false
+			isPublic  = false
 			answer    string
 
 			composeService = composeConfig.Services[serviceName]
@@ -175,7 +175,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 							return
 						}
 
-						content.WriteString(fmt.Sprintf("FROM %s\n", (*composeService.Image).(string)))
+						fmt.Fprintf(&content, "FROM %s\n", (*composeService.Image).(string))
 
 						for _, vol := range composeService.Volumes {
 							volParts := strings.Split(vol, ":")
@@ -188,7 +188,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 							if confirmed, err = s.promptSelect.Confirm("Do you want to add folder '%s' onto '%s' in the Dockerfile for service '%s'?", volParts[0], volParts[1], serviceName); err != nil {
 								return
 							} else if confirmed {
-								content.WriteString(fmt.Sprintf("\nCOPY %s %s\n", volParts[0], volParts[1]))
+								fmt.Fprintf(&content, "\nCOPY %s %s\n", volParts[0], volParts[1])
 							}
 						}
 

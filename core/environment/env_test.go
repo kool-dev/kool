@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 func TestInitEnvironmentVariables(t *testing.T) {
@@ -24,7 +22,7 @@ func TestInitEnvironmentVariables(t *testing.T) {
 
 	InitEnvironmentVariables(f)
 
-	homeDir, _ := homedir.Dir()
+	homeDir, _ := os.UserHomeDir()
 
 	if envHomeDir := f.Envs["HOME"]; envHomeDir != homeDir {
 		t.Errorf("expecting $HOME value '%s', got '%s'", homeDir, envHomeDir)

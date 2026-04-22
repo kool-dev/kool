@@ -27,7 +27,7 @@ func newFakeKoolSelfUpdate(currentVersion string, latestVersion string, errU, er
 func TestNewKoolSelfUpdate(t *testing.T) {
 	k := NewKoolSelfUpdate()
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on KoolSelfUpdate KoolRun instance")
 	}
 

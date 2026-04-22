@@ -75,13 +75,13 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 			r.shell.Info("	", cmd)
 		}
 		r.shell.Println("")
-		err = errors.New("You must specify a script to run")
+		err = errors.New("you must specify a script to run")
 		return
 	}
 
 	var (
-		script string   = originalArgs[0]
-		args   []string = originalArgs[1:]
+		script = originalArgs[0]
+		args   = originalArgs[1:]
 	)
 
 	if err = r.parseScript(script); err != nil {
@@ -146,7 +146,7 @@ func SetRunUsageFunc(run *KoolRun, runCmd *cobra.Command) {
 
 func (r *KoolRun) parseScript(script string) (err error) {
 	var (
-		originalEnvs     map[string]string = make(map[string]string)
+		originalEnvs     = make(map[string]string)
 		similarIsCorrect string
 		chosenSimilar    string
 	)

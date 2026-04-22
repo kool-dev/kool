@@ -166,7 +166,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 
 	if e.postBodyFmtr != nil {
 		e.SetContentType(e.postBodyFmtr.FormDataContentType())
-		e.postBodyFmtr.Close()
+		_ = e.postBodyFmtr.Close()
 		e.SetRawBody(&e.postBodyBuff)
 	}
 
@@ -200,7 +200,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 	}
 
 	request = nil
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	e.statusCode = resp.StatusCode
 
@@ -232,7 +232,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 }
 
 func (e *DefaultEndpoint) doRequest(request *http.Request) (resp *http.Response, err error) {
-	var apiToken string = e.env.Get("KOOL_API_TOKEN")
+	var apiToken = e.env.Get("KOOL_API_TOKEN")
 
 	if apiToken == "" {
 		err = ErrMissingToken

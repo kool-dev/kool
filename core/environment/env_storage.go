@@ -30,7 +30,7 @@ func (es *DefaultEnvStorage) Get(key string) string {
 
 // Set set environment variable value
 func (es *DefaultEnvStorage) Set(key string, value string) {
-	os.Setenv(key, value)
+	_ = os.Setenv(key, value)
 }
 
 // Load load environment file

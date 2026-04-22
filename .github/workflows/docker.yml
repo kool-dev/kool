@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
 
     - uses: olegtarasov/get-tag@v2.1
       id: tagName

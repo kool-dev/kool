@@ -32,7 +32,7 @@ func newFailedFakeKoolDocker() *KoolDocker {
 func TestNewKoolDocker(t *testing.T) {
 	k := NewKoolDocker()
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolDocker instance")
 	}
 

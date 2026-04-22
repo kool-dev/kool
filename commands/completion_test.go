@@ -67,7 +67,7 @@ func expectedCompletionOutput(shellType string) (expected string, err error) {
 func TestNewKoolCompletion(t *testing.T) {
 	k := NewKoolCompletion(rootCmd)
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Error("unexpected shell.Shell on default KoolCompletion instance")
 	}
 

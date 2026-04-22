@@ -53,7 +53,7 @@ func ParseKoolYaml(filePath string) (parsed *KoolYaml, err error) {
 		return
 	}
 
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if raw, err = io.ReadAll(file); err != nil {
 		return
@@ -79,7 +79,7 @@ func ParseKoolYamlWithDetails(filePath string) (parsed *KoolYaml, err error) {
 		return
 	}
 
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if raw, err = io.ReadAll(file); err != nil {
 		return

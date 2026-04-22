@@ -56,8 +56,8 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			// calls root PersistentPreRunE
 			var (
-				requiredFlags bool           = cmd.Use != "setup"
-				root          *cobra.Command = cmd
+				requiredFlags = cmd.Use != "setup"
+				root          = cmd
 			)
 
 			for root.HasParent() {

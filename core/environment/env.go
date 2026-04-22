@@ -4,8 +4,6 @@ import (
 	"log"
 	"os"
 	"strings"
-
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 var envFiles = []string{".env.local", ".env"}
@@ -19,7 +17,7 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		err              error
 	)
 
-	homeDir, err = homedir.Dir()
+	homeDir, err = os.UserHomeDir()
 	if err != nil {
 		log.Fatal("Could not evaluate HOME directory - ", err)
 	}

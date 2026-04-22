@@ -39,6 +39,10 @@ curl -fsSL https://kool.dev/install | bash
 
 You must run `kool` on Windows via [WSL - Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) - once you have a WSL environment properly set up, make sure you have [Docker available on it](https://docs.docker.com/desktop/wsl/), then you can install the CLI as you would in any Linux or MacOS (see above).
 
+### In CI pipelines
+
+For CI/CD use cases — most commonly **GitLab CI** with a `docker:dind` service — we publish a pre-built image at [**kooldev/kool**](https://hub.docker.com/r/kooldev/kool) that bundles `kool` together with `docker`, `docker compose`, `git`, and `bash`. See the [CI Integration guide](docs/01-Getting-Started/5-CI-Integration.md) for the DinD sidecar pattern and example `.gitlab-ci.yml` / GitHub Actions configs, plus a [known security caveat](docs/01-Getting-Started/5-CI-Integration.md#known-security-caveat) about CVEs inherited from the upstream `docker:X-cli` base image.
+
 ## Getting Started
 
 It's really easy to get started with `kool`. Check out our [Getting Started documentation for a generic PHP web app](https://kool.dev/docs/getting-started/starting-new-project).
@@ -83,6 +87,8 @@ Our work is organized according to a loosely defined but clear roadmap. Check ou
 ## Security
 
 If you find a security issue, please let us know right away, before making it public, by creating a GitHub issue. We'll take action as soon as possible. You can email questions and concerns to `contact@kool.dev`.
+
+For known CVEs inherited by the `kooldev/kool` Docker image from its upstream `docker:X-cli` base, see the [known security caveat](docs/01-Getting-Started/5-CI-Integration.md#known-security-caveat) in the CI Integration guide. These affect only users running the published Docker image in CI pipelines — the native **kool** binary installed via `curl | bash` is unaffected.
 
 ## License
 

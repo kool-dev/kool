@@ -148,7 +148,7 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 		return
 	}
 
-	parsedServices := strings.Split(strings.Replace(output, "\r\n", "\n", -1), "\n")
+	parsedServices := strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n")
 	for _, s := range parsedServices {
 		if s != "" {
 			services = append(services, s)
