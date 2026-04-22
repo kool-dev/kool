@@ -1,0 +1,18 @@
+# Grype config for the kooldev/kool Docker image scan (.github/workflows/scan.yml).
+#
+# The ignore list below is reserved for CVEs we inherit from upstream images
+# and cannot fix ourselves — each entry must link to the upstream tracker and
+# be revisited (and ideally removed) when upstream rebuilds.
+#
+# See docs/01-Getting-Started/5-CI-Integration.md#known-security-caveat for the
+# user-facing context.
+
+ignore:
+  # Inherited from docker:29-cli (Docker 29.4.1). The bundled
+  # /usr/local/libexec/docker/cli-plugins/{docker-compose,docker-buildx}
+  # are Go binaries built with go1.25.8; CVE-2026-27143 is fixed in go1.25.9.
+  # Will clear automatically when docker-library/docker rebuilds the 29-cli
+  # image with a newer Go toolchain. Tracked upstream:
+  #   https://github.com/docker-library/docker
+  # Remove this entry once `grype kooldev/kool:<tag>` no longer reports it.
+  - vulnerability: CVE-2026-27143
