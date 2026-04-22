@@ -13,7 +13,6 @@ require (
 	github.com/gookit/color v1.6.0
 	github.com/jedib0t/go-pretty/v6 v6.7.9
 	github.com/leaanthony/debme v1.2.1
-	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/term v0.5.2
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/rhysd/go-github-selfupdate v1.2.3
