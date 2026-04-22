@@ -25,7 +25,7 @@ func TestWriteYAML(t *testing.T) {
 
 	fh, _ := os.Open(f)
 	bs, _ := io.ReadAll(fh)
-	fh.Close()
+	_ = fh.Close()
 	got := strings.Trim(string(bs), " \t\n")
 
 	if got != yml {
@@ -48,7 +48,7 @@ func TestWriteYAMLIndentation(t *testing.T) {
 
 	fh, _ := os.Open(f)
 	bs, _ := io.ReadAll(fh)
-	fh.Close()
+	_ = fh.Close()
 	got := strings.Trim(string(bs), " \t\n")
 
 	expect := "foo:\n  bar: xxx"

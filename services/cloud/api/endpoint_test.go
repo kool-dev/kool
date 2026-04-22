@@ -30,14 +30,14 @@ func TestNewDefaultEndpoint(t *testing.T) {
 		t.Error("unexpected environment storage")
 	}
 
-	var path string = "path"
+	var path = "path"
 	e.SetPath(path)
 
 	if e.path != path {
 		t.Error("failed to SetPath")
 	}
 
-	var contentType string = "type"
+	var contentType = "type"
 	e.SetContentType(contentType)
 
 	if e.contentType != contentType {

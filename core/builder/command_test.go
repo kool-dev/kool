@@ -33,7 +33,7 @@ func TestParseCommand(t *testing.T) {
 
 func TestParseCommandWithEnvironmentVariable(t *testing.T) {
 	env := "arbitraty-value-to-environment-var"
-	os.Setenv("ENVVAR", env)
+	_ = os.Setenv("ENVVAR", env)
 	line := "exec --opt $ENVVAR"
 	cmd, err := ParseCommand(line)
 

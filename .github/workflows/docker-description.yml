@@ -16,7 +16,7 @@ jobs:
 
       - name: Sync Docker Hub Description
         if: github.ref == 'refs/heads/main' && github.repository == 'kool-dev/kool'
-        uses: peter-evans/dockerhub-description@v2
+        uses: peter-evans/dockerhub-description@v4
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

@@ -49,7 +49,7 @@ func AddKoolInfo(root *cobra.Command) {
 // Execute executes info logic
 func (i *KoolInfo) Execute(args []string) (err error) {
 	var (
-		filter string = "KOOL_"
+		filter = "KOOL_"
 		output string
 	)
 
@@ -84,7 +84,7 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 	if output, err = i.Shell().Exec(i.cmdDockerCompose); err != nil {
 		// just alert missing docker compose, but don't elevate error
 		i.Shell().Warning("Docker Compose:", err.Error())
-		i.Shell().Error(fmt.Errorf("You need to have Docker Compose V2 available. Make sure to update your Docker installation."))
+		i.Shell().Error(fmt.Errorf("you need to have Docker Compose V2 available; make sure to update your Docker installation"))
 		return
 	} else {
 		i.Shell().Println(output)

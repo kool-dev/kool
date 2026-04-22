@@ -12,7 +12,7 @@ type KoolRestartFlags struct {
 
 // NewRestartCommand initializes new kool start command
 func NewRestartCommand(stop KoolService, start KoolService) (restartCmd *cobra.Command) {
-	var flags *KoolRestartFlags = &KoolRestartFlags{false, false}
+	var flags = &KoolRestartFlags{false, false}
 
 	restartCmd = &cobra.Command{
 		Use:   "restart",

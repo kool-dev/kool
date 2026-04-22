@@ -30,7 +30,7 @@ func newFakeKoolRun(mockParsedCommands map[string][]builder.Command, mockParseEr
 func TestNewKoolRun(t *testing.T) {
 	k := NewKoolRun()
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolRun instance")
 	}
 
@@ -408,7 +408,7 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 	outputFilePath2 := fmt.Sprintf("%s/output2_file", tmp)
 	outputFilePath3 := fmt.Sprintf("%s/output3_file", tmp)
 
-	os.Setenv("KOOL_VERBOSE", "true")
+	_ = os.Setenv("KOOL_VERBOSE", "true")
 
 	originalAddCommandsFn := AddCommands
 	defer func() { AddCommands = originalAddCommandsFn }()
@@ -437,7 +437,7 @@ func TestRunRecursiveCallsWithMultiRedirection(t *testing.T) {
 			rootArg.AddCommand(&cobra.Command{
 				Use: "echo",
 				Run: func(cmd *cobra.Command, args []string) {
-					fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
+					_, _ = fmt.Fprintf(cmd.OutOrStdout(), "%s", args[0])
 				},
 			})
 			rootArg.AddCommand(&cobra.Command{

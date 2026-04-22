@@ -24,7 +24,7 @@ func TestAskPromptSelect(t *testing.T) {
 
 	_, _ = p.Ask("testing_question", []string{"testing_option1", "testing_option2"})
 
-	w.Close()
+	_ = w.Close()
 	out, err := io.ReadAll(r)
 	os.Stdout = oldStdout
 
@@ -48,7 +48,7 @@ func TestConfirmPromptSelect(t *testing.T) {
 
 	_, _ = p.Confirm("testing_question %s", "arg1")
 
-	w.Close()
+	_ = w.Close()
 	out, err := io.ReadAll(r)
 	os.Stdout = oldStdout
 

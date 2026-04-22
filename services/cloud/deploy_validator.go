@@ -76,7 +76,7 @@ type DeployConfigBuild struct {
 
 func ParseCloudConfig(workingDir string, koolDeployFile string) (deployConfig *DeployConfig, err error) {
 	var (
-		path    string = filepath.Join(workingDir, koolDeployFile)
+		path    = filepath.Join(workingDir, koolDeployFile)
 		content []byte
 	)
 

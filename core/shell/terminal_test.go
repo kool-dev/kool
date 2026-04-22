@@ -20,7 +20,7 @@ func TestPipeIsTerminal(t *testing.T) {
 	_ = c1.Start()
 	_ = c2.Start()
 	go func() {
-		defer w.Close()
+		defer func() { _ = w.Close() }()
 
 		_ = c1.Wait()
 	}()

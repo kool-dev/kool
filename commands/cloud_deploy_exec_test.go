@@ -43,7 +43,7 @@ func TestKoolDeployExec(t *testing.T) {
 		t.Errorf("expected: missing deploy domain; got something else")
 	}
 
-	var domain string = "example.com"
+	var domain = "example.com"
 	e.env.Set("KOOL_DEPLOY_DOMAIN", domain)
 
 	mock := e.cloud.(*fakeK8S)

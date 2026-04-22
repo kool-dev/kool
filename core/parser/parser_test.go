@@ -23,7 +23,7 @@ func TestErrPossibleTypo(t *testing.T) {
 }
 
 func TestDefaultParser(t *testing.T) {
-	var p Parser = NewParser()
+	var p = NewParser()
 
 	if _, assert := p.(*DefaultParser); !assert {
 		t.Errorf("NewParser() did not return a *DefaultParser")
@@ -32,7 +32,7 @@ func TestDefaultParser(t *testing.T) {
 
 func TestParserAddLookupPath(t *testing.T) {
 	var (
-		p      Parser = NewParser()
+		p      = NewParser()
 		err    error
 		tmpDir = t.TempDir()
 	)
@@ -58,7 +58,7 @@ func TestParserAddLookupPath(t *testing.T) {
 
 func TestParserParse(t *testing.T) {
 	var (
-		p        Parser = NewParser()
+		p        = NewParser()
 		commands []builder.Command
 		err      error
 	)
@@ -99,7 +99,7 @@ func TestParserParse(t *testing.T) {
 
 func TestParserParseAvailableScripts(t *testing.T) {
 	var (
-		p       Parser = NewParser()
+		p       = NewParser()
 		scripts []string
 		err     error
 	)
@@ -126,7 +126,7 @@ func TestParserParseAvailableScripts(t *testing.T) {
 
 func TestParserParseAvailableScriptsFilter(t *testing.T) {
 	var (
-		p       Parser = NewParser()
+		p       = NewParser()
 		scripts []string
 		err     error
 	)
@@ -153,7 +153,7 @@ func TestParserParseAvailableScriptsFilter(t *testing.T) {
 
 func TestParserParseAvailableScriptsDetails(t *testing.T) {
 	var (
-		p       Parser = NewParser()
+		p       = NewParser()
 		details []ScriptDetail
 		err     error
 	)

@@ -25,7 +25,7 @@ func newFakeKoolStop() *KoolStop {
 func TestNewKoolStop(t *testing.T) {
 	k := NewKoolStop()
 
-	if _, ok := k.DefaultKoolService.shell.(*shell.DefaultShell); !ok {
+	if _, ok := k.shell.(*shell.DefaultShell); !ok {
 		t.Errorf("unexpected shell.Shell on default KoolStop instance")
 	}
 

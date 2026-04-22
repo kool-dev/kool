@@ -46,7 +46,7 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 
 	t.originalOut = t.Shell().OutStream()
 	if t.termWidth, err = shell.GetTerminalWidth(t.originalOut); err != nil {
-		fmt.Fprintf(t.Shell().ErrStream(), "[bad TTY] %s", err.Error())
+		_, _ = fmt.Fprintf(t.Shell().ErrStream(), "[bad TTY] %s", err.Error())
 		err = nil
 	}
 	t.actualOut.SetOutStream(t.originalOut)
@@ -64,7 +64,7 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 	donePrinting := t.printServiceOutput(lines)
 
 	err = <-t.execService(args)
-	pipeWriter.Close()
+	_ = pipeWriter.Close()
 	<-donePrinting
 	var statusMessage string
 	if err != nil {

@@ -12,13 +12,13 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@master
+      uses: actions/checkout@v4
 
     - name: Build image
       run: docker build --pull -t kooldev/kool:4scan .
 
     - name: Scan image
-      uses: anchore/scan-action@v2
+      uses: anchore/scan-action@v6
       with:
         image: "kooldev/kool:4scan"
         fail-build: true

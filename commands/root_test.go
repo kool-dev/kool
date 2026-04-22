@@ -238,7 +238,7 @@ func TestAddCommands(t *testing.T) {
 
 	AddCommands(root)
 
-	var subcommands map[string]bool = map[string]bool{
+	var subcommands = map[string]bool{
 		"completion":  false,
 		"create":      false,
 		"cloud":       false,
@@ -319,8 +319,8 @@ func TestDevelopmentVersionWarning(t *testing.T) {
 	} else {
 		root.SetOut(tty)
 
-		defer pty.Close()
-		defer tty.Close()
+		defer func() { _ = pty.Close() }()
+		defer func() { _ = tty.Close() }()
 	}
 	version = DEV_VERSION
 	if err := root.Execute(); err != nil {

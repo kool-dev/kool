@@ -48,19 +48,19 @@ type ParsedRedirect interface {
 func (c *CommandWithPointers) Close() {
 	if c.hasCustomStdin {
 		if cl, ok := c.in.(io.Closer); ok {
-			cl.Close()
+			_ = cl.Close()
 		}
 	}
 	if c.hasCustomStdout {
 		if cl, ok := c.out.(io.WriteCloser); ok {
-			cl.Close()
+			_ = cl.Close()
 		}
 	}
 }
 
 // Cmd creates a new *exec.Command for given command
 func (c *CommandWithPointers) Cmd() (cmd *exec.Cmd) {
-	cmd = execCmdFn(c.Command.Cmd(), c.Command.Args()...)
+	cmd = execCmdFn(c.Command.Cmd(), c.Args()...)
 	cmd.Env = os.Environ()
 	cmd.Stdout = c.out
 	cmd.Stderr = c.err
@@ -69,7 +69,7 @@ func (c *CommandWithPointers) Cmd() (cmd *exec.Cmd) {
 }
 
 func hasRedirect(command builder.Command) bool {
-	var count int = len(command.Args())
+	var count = len(command.Args())
 
 	if count < 2 {
 		return false
@@ -136,7 +136,7 @@ func splitRedirect(cmd builder.Command) (cmdptr *CommandWithPointers, err error)
 		}
 	case OutputRedirect, OutputRedirectAppend:
 		{
-			var mode int = os.O_CREATE | os.O_WRONLY
+			var mode = os.O_CREATE | os.O_WRONLY
 			if args[numArgs-2] == OutputRedirectAppend {
 				mode |= os.O_APPEND
 			} else {

@@ -61,14 +61,14 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 			}
 
 			if createDirectory == "" {
-				c.Shell().Error(fmt.Errorf("Please enter a valid folder name"))
+				c.Shell().Error(fmt.Errorf("please enter a valid folder name"))
 				continue
 			} else if _, err = os.Stat(createDirectory); !os.IsNotExist(err) {
-				c.Shell().Error(fmt.Errorf("Folder %s already exists.", createDirectory))
+				c.Shell().Error(fmt.Errorf("folder %s already exists", createDirectory))
 				continue
 			} else {
 				if err = os.MkdirAll(filepath.Join(os.TempDir(), createDirectory), 0755); err != nil {
-					c.Shell().Error(fmt.Errorf("Please enter a valid folder name"))
+					c.Shell().Error(fmt.Errorf("please enter a valid folder name"))
 					continue
 				} else {
 					// ok we created, let's just have it removed if we fail

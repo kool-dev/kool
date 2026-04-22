@@ -27,9 +27,9 @@ func ParseConsolidatedDockerComposeConfig(workingDir string) (dockerComposeConfi
 		composerFiles []string
 		content       []byte
 
-		consolidatedDockerCompose *yaml3.Node = &yaml3.Node{}
+		consolidatedDockerCompose = &yaml3.Node{}
 
-		merger *yamler.DefaultMerger = &yamler.DefaultMerger{}
+		merger = &yamler.DefaultMerger{}
 	)
 
 	dockerComposeConfig = &DockerComposeConfig{}
