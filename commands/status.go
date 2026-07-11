@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
@@ -31,6 +32,18 @@ type statusService struct {
 	service, state, ports string
 	running               string
 	err                   error
+}
+
+type statusServiceJSON struct {
+	Service string `json:"service"`
+	Running bool   `json:"running"`
+	Ports   string `json:"ports"`
+	State   string `json:"state"`
+}
+
+type statusOutputJSON struct {
+	Services []statusServiceJSON `json:"services"`
+	Count    int                 `json:"count"`
 }
 
 func AddKoolStatus(root *cobra.Command) {
@@ -74,8 +87,10 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 
 	chStatus := make(chan *statusService, len(services))
 
-	s.table.SetWriter(s.Shell().OutStream())
-	s.table.AppendHeader("Service", "Running", "Ports", "State")
+	if !s.Shell().IsJSONOutput() {
+		s.table.SetWriter(s.Shell().OutStream())
+		s.table.AppendHeader("Service", "Running", "Ports", "State")
+	}
 
 	go func() {
 		var wg sync.WaitGroup
@@ -90,17 +105,43 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		wg.Wait()
 	}()
 
+	var statuses []*statusService
+
 	for ss := range chStatus {
 		if ss.err != nil {
 			err = ss.err
 			return
 		}
 
-		s.table.AppendRow(ss.service, ss.running, ss.ports, ss.state)
+		if s.Shell().IsJSONOutput() {
+			statuses = append(statuses, ss)
+		} else {
+			s.table.AppendRow(ss.service, ss.running, ss.ports, ss.state)
+		}
 	}
 
-	s.table.SortBy(1)
-	s.table.Render()
+	if s.Shell().IsJSONOutput() {
+		output := statusOutputJSON{
+			Services: make([]statusServiceJSON, 0, len(statuses)),
+			Count:    len(statuses),
+		}
+		for _, ss := range statuses {
+			output.Services = append(output.Services, statusServiceJSON{
+				Service: ss.service,
+				Running: ss.running == "Running",
+				Ports:   ss.ports,
+				State:   ss.state,
+			})
+		}
+		var payload []byte
+		if payload, err = json.Marshal(output); err != nil {
+			return
+		}
+		s.Shell().Println(string(payload))
+	} else {
+		s.table.SortBy(1)
+		s.table.Render()
+	}
 	return
 }
 

@@ -14,7 +14,12 @@ func main() {
 	environment.InitEnvironmentVariables(environment.NewEnvStorage())
 
 	if err := commands.Execute(); err != nil {
-		shell.NewShell().Println(err)
+		s := shell.NewShell()
+		if s.IsJSONOutput() {
+			s.Error(err)
+		} else {
+			s.Println(err)
+		}
 		code := 1
 		if ex, ok := err.(shell.ErrExitable); ok {
 			code = ex.Code

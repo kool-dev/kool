@@ -9,17 +9,18 @@ import (
 
 // FakeShell fake shell data
 type FakeShell struct {
-	CalledInStream     bool
-	CalledSetInStream  bool
-	CalledOutStream    bool
-	CalledSetOutStream bool
-	CalledErrStream    bool
-	CalledSetErrStream bool
-	CalledIsTerminal   bool
-	CalledExec         map[string]bool
-	CalledInteractive  map[string]bool
-	CalledLookPath     map[string]bool
-	ArgsInteractive    map[string][]string
+	CalledInStream      bool
+	CalledSetInStream   bool
+	CalledOutStream     bool
+	CalledSetOutStream  bool
+	CalledErrStream     bool
+	CalledSetErrStream  bool
+	CalledIsTerminal    bool
+	CalledIsJSONOutput  bool
+	CalledExec          map[string]bool
+	CalledInteractive   map[string]bool
+	CalledLookPath      map[string]bool
+	ArgsInteractive     map[string][]string
 
 	Err           error
 	OutLines      []string
@@ -30,11 +31,12 @@ type FakeShell struct {
 
 	CalledPrintln, CalledPrintf, CalledError, CalledWarning, CalledSuccess, CalledInfo bool
 
-	MockOutStream  io.Writer
-	MockErrStream  io.Writer
-	MockInStream   io.Reader
-	MockLookPath   error
-	MockIsTerminal bool
+	MockOutStream    io.Writer
+	MockErrStream    io.Writer
+	MockInStream     io.Reader
+	MockLookPath     error
+	MockIsTerminal   bool
+	MockIsJSONOutput bool
 }
 
 // InStream is a mocked testing function
@@ -47,6 +49,12 @@ func (f *FakeShell) InStream() (inStream io.Reader) {
 func (f *FakeShell) IsTerminal() bool {
 	f.CalledIsTerminal = true
 	return f.MockIsTerminal
+}
+
+// IsJSONOutput is a mocked testing function
+func (f *FakeShell) IsJSONOutput() bool {
+	f.CalledIsJSONOutput = true
+	return f.MockIsJSONOutput
 }
 
 // SetInStream is a mocked testing function

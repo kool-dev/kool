@@ -1,7 +1,11 @@
 package commands
 
 import (
+	"bufio"
+	"encoding/json"
 	"kool-dev/kool/core/builder"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -13,6 +17,13 @@ type KoolLogsFlags struct {
 	Tail   int
 	Follow bool
 }
+
+type logEntryJSON struct {
+	Service string `json:"service"`
+	Message string `json:"message"`
+}
+
+var execLogsCmd = exec.Command
 
 // KoolLogs holds handlers and functions to implement the logs command logic
 type KoolLogs struct {
@@ -65,6 +76,10 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 		l.logs.AppendArgs("--follow")
 	}
 
+	if l.Shell().IsJSONOutput() {
+		return l.printLogsJSON(args...)
+	}
+
 	err = l.Shell().Interactive(l.logs, args...)
 	return
 }
@@ -85,4 +100,75 @@ the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').`,
 	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. A value equal to 0 will show all lines.")
 	logsCmd.Flags().BoolVarP(&logs.Flags.Follow, "follow", "f", false, "Follow log output.")
 	return
+}
+
+func (l *KoolLogs) printLogsJSON(args ...string) (err error) {
+	if l.Flags.Follow {
+		return l.streamLogsJSON(args...)
+	}
+
+	var output string
+	if output, err = l.Shell().Exec(l.logs, args...); err != nil {
+		return
+	}
+
+	for _, line := range strings.Split(output, "\n") {
+		if line = strings.TrimSpace(line); line == "" {
+			continue
+		}
+		entry := parseLogLine(line)
+		var payload []byte
+		if payload, err = json.Marshal(entry); err != nil {
+			return
+		}
+		l.Shell().Println(string(payload))
+	}
+	return
+}
+
+func (l *KoolLogs) streamLogsJSON(args ...string) (err error) {
+	cmdArgs := l.logs.Args()
+	if len(args) > 0 {
+		cmdArgs = append(cmdArgs, args...)
+	}
+	cmd := execLogsCmd(l.logs.Cmd(), cmdArgs...)
+	cmd.Env = os.Environ()
+	cmd.Stderr = l.Shell().ErrStream()
+
+	stdout, e := cmd.StdoutPipe()
+	if e != nil {
+		err = e
+		return
+	}
+
+	if err = cmd.Start(); err != nil {
+		return
+	}
+
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		entry := parseLogLine(line)
+		if payload, e := json.Marshal(entry); e == nil {
+			l.Shell().Println(string(payload))
+		}
+	}
+
+	err = cmd.Wait()
+	return
+}
+
+// parseLogLine parses a docker-compose log line into a logEntryJSON.
+// Docker compose log format: "service_name | message" (with optional padding).
+// If the line doesn't match, service is empty and message is the full line.
+func parseLogLine(line string) logEntryJSON {
+	if idx := strings.Index(line, "|"); idx >= 0 {
+		service := strings.TrimSpace(line[:idx])
+		message := strings.TrimSpace(line[idx+1:])
+		return logEntryJSON{Service: service, Message: message}
+	}
+	return logEntryJSON{Service: "", Message: line}
 }

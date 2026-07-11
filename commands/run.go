@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
@@ -66,7 +67,7 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	_ = r.parser.AddLookupPath(path.Join(r.env.Get("HOME"), "kool"))
 
 	if len(originalArgs) == 0 {
-		if r.Flags.JSON {
+		if r.Flags.JSON || r.Shell().IsJSONOutput() {
 			return r.printScriptsJSON("")
 		}
 		r.shell.Info("\nAvailable scripts:\n")
@@ -89,6 +90,7 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	}
 
 	if len(r.commands) == 0 {
+		r.emitJSONError("script not found", []string{})
 		err = ErrKoolScriptNotFound
 		return
 	}
@@ -131,6 +133,7 @@ A single-line SCRIPT can be run with optional arguments.`,
 
 	runCmd.Flags().StringArrayVarP(&run.Flags.EnvVariables, "env", "e", []string{}, "Environment variables.")
 	runCmd.Flags().BoolVar(&run.Flags.JSON, "json", false, "Output available scripts as JSON (use without script argument)")
+	_ = runCmd.Flags().MarkHidden("json")
 
 	// after a non-flag arg, stop parsing flags
 	runCmd.Flags().SetInterspersed(false)
@@ -142,6 +145,18 @@ A single-line SCRIPT can be run with optional arguments.`,
 func SetRunUsageFunc(run *KoolRun, runCmd *cobra.Command) {
 	originalUsageText := runCmd.UsageString()
 	runCmd.SetUsageFunc(getRunUsageFunc(run, originalUsageText))
+}
+
+func (r *KoolRun) emitJSONError(errorMsg string, suggestions []string) {
+	if !r.Shell().IsJSONOutput() {
+		return
+	}
+	payload := map[string]interface{}{
+		"error":       errorMsg,
+		"suggestions": suggestions,
+	}
+	errPayload, _ := json.Marshal(payload)
+	fmt.Fprintln(r.Shell().ErrStream(), string(errPayload))
 }
 
 func (r *KoolRun) parseScript(script string) (err error) {
@@ -164,6 +179,12 @@ func (r *KoolRun) parseScript(script string) (err error) {
 	}()
 
 	if r.commands, err = r.parser.Parse(script); err != nil {
+		if parser.IsPossibleTypoError(err) && r.Shell().IsJSONOutput() {
+			r.emitJSONError("script not found", err.(*parser.ErrPossibleTypo).Similars())
+			err = ErrKoolScriptNotFound
+			return
+		}
+
 		if parser.IsPossibleTypoError(err) && r.Shell().IsTerminal() {
 			var promptError error
 
@@ -195,9 +216,12 @@ func (r *KoolRun) parseScript(script string) (err error) {
 		}
 
 		if parser.IsMultipleDefinedScriptError(err) {
-			// we should just warn the user about multiple finds for the script
 			r.Shell().Warning("Attention: the script was found in more than one kool.yml file")
 			err = nil
+		} else if r.Shell().IsJSONOutput() {
+			r.emitJSONError("script not found", []string{})
+			err = ErrKoolScriptNotFound
+			return
 		}
 	}
 

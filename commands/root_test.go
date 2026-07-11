@@ -191,6 +191,26 @@ func TestVerboseFlagRootCommand(t *testing.T) {
 	}
 }
 
+func TestOutputFlagRootCommand(t *testing.T) {
+	fakeEnv := environment.NewFakeEnvStorage()
+
+	fInfo := fakeKoolInfo()
+
+	root := NewRootCmd(fakeEnv)
+	info := NewInfoCmd(fInfo)
+	root.AddCommand(info)
+
+	root.SetArgs([]string{"--output", "json", "info"})
+
+	if err := root.Execute(); err != nil {
+		t.Errorf("unexpected error executing command; error: %v", err)
+	}
+
+	if fakeEnv.Get("KOOL_OUTPUT") != "json" {
+		t.Errorf("expecting 'KOOL_OUTPUT' to be 'json', got '%s'", fakeEnv.Get("KOOL_OUTPUT"))
+	}
+}
+
 func TestRecursiveCall(t *testing.T) {
 	recursive := &cobra.Command{
 		Use: "recursive",
