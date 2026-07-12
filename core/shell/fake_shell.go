@@ -5,6 +5,7 @@ import (
 	"io"
 	"kool-dev/kool/core/builder"
 	"strings"
+	"sync"
 )
 
 // FakeShell fake shell data
@@ -21,6 +22,8 @@ type FakeShell struct {
 	CalledInteractive   map[string]bool
 	CalledLookPath      map[string]bool
 	ArgsInteractive     map[string][]string
+
+	mu sync.Mutex
 
 	Err           error
 	OutLines      []string
@@ -86,6 +89,9 @@ func (f *FakeShell) SetErrStream(errStream io.Writer) {
 
 // Exec is a mocked testing function
 func (f *FakeShell) Exec(command builder.Command, extraArgs ...string) (outStr string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
 	if f.CalledExec == nil {
 		f.CalledExec = make(map[string]bool)
 	}
@@ -101,6 +107,9 @@ func (f *FakeShell) Exec(command builder.Command, extraArgs ...string) (outStr s
 
 // Interactive is a mocked testing function
 func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
 	if f.CalledInteractive == nil {
 		f.CalledInteractive = make(map[string]bool)
 	}
@@ -121,6 +130,9 @@ func (f *FakeShell) Interactive(command builder.Command, extraArgs ...string) (e
 
 // LookPath is a mocked testing function
 func (f *FakeShell) LookPath(command builder.Command) (err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
 	if f.CalledLookPath == nil {
 		f.CalledLookPath = make(map[string]bool)
 	}

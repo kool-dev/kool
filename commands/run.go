@@ -156,7 +156,7 @@ func (r *KoolRun) emitJSONError(errorMsg string, suggestions []string) {
 		"suggestions": suggestions,
 	}
 	errPayload, _ := json.Marshal(payload)
-	fmt.Fprintln(r.Shell().ErrStream(), string(errPayload))
+	_, _ = fmt.Fprintln(r.Shell().ErrStream(), string(errPayload))
 }
 
 func (r *KoolRun) parseScript(script string) (err error) {
