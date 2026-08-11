@@ -216,8 +216,12 @@ func TestWorkingDirectoryInitializesTargetEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got := env.Get("PWD"); got != target {
-		t.Errorf("expected target PWD %q, got %q", target, got)
+	expectedTarget, err := filepath.EvalSymlinks(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := env.Get("PWD"); got != expectedTarget {
+		t.Errorf("expected target PWD %q, got %q", expectedTarget, got)
 	}
 	if got := env.Get("TARGET_ENV"); got != "loaded" {
 		t.Errorf("expected target .env to be loaded, got %q", got)
