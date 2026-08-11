@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
 	"kool-dev/kool/services/checker"
+	"kool-dev/kool/services/proxy"
 	"kool-dev/kool/services/updater"
 	"strings"
 
@@ -84,18 +85,22 @@ func AddKoolStart(root *cobra.Command) {
 
 // Execute runs the rebuild logic
 func (r *KoolRebuild) Execute(args []string) (err error) {
-	if err = r.Shell().Interactive(r.pull); err != nil {
+	if err = r.Shell().Interactive(r.pull, args...); err != nil {
 		return
 	}
 
-	err = r.Shell().Interactive(r.build)
+	err = r.Shell().Interactive(r.build, args...)
 	return
 }
 
 // Execute runs the start logic with incoming arguments
 func (s *KoolStart) Execute(args []string) (err error) {
+	if args, err = selectWorkspaceServices(s.envStorage, args); err != nil {
+		return
+	}
+
 	if s.Flags.Rebuild {
-		if err = s.rebuild(); err != nil {
+		if err = s.rebuild(args); err != nil {
 			return
 		}
 	}
@@ -107,6 +112,9 @@ func (s *KoolStart) Execute(args []string) (err error) {
 	if !s.Flags.Foreground {
 		s.start.AppendArgs("-d")
 	}
+	if isWorkspace(s.envStorage) {
+		s.start.AppendArgs("--no-deps")
+	}
 
 	if err = s.checkDependencies(); err != nil {
 		if strings.HasPrefix(err.Error(), "no configuration file provided: not found") {
@@ -114,12 +122,21 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		}
 		return
 	}
+	proxyManager := proxy.NewManager(s.Shell(), s.envStorage)
+	cleanupProxy, proxyErr := proxyManager.Prepare(args)
+	if proxyErr != nil {
+		return proxyErr
+	}
+	defer cleanupProxy()
 
 	err = s.Shell().Interactive(s.start, args...)
+	if err != nil {
+		_ = proxyManager.Remove(args)
+	}
 	return
 }
 
-func (s *KoolStart) rebuild() (err error) {
+func (s *KoolStart) rebuild(args []string) (err error) {
 	var task = NewKoolTask("Updating service's images", s.rebuilder)
 
 	task.SetFrameOutput(false)
@@ -128,7 +145,7 @@ func (s *KoolStart) rebuild() (err error) {
 	task.Shell().SetOutStream(s.Shell().OutStream())
 	task.Shell().SetErrStream(s.Shell().ErrStream())
 
-	err = task.Run(nil)
+	err = task.Run(args)
 	return
 }
 

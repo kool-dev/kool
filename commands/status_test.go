@@ -31,11 +31,13 @@ func newFakeKoolStatus() *KoolStatus {
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 		&shell.FakeTableWriter{},
 	}
 
 	fs.shell.(*shell.FakeShell).MockErrStream = io.Discard
 	fs.shell.(*shell.FakeShell).MockOutStream = io.Discard
+	fs.env.Set("KOOL_NAME", "example")
 
 	return fs
 }
@@ -85,8 +87,8 @@ func TestStatusCommand(t *testing.T) {
 		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `Service | Running | Ports | State
-app | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour`
+	expected := `Project | Service | Running | Ports | State
+example | app | Running | 0.0.0.0:80->80/tcp, 9000/tcp | Up About an hour`
 
 	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 
@@ -108,8 +110,8 @@ func TestNotRunningStatusCommand(t *testing.T) {
 		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `Service | Running | Ports | State
-app | Not running |  | Exited an hour ago`
+	expected := `Project | Service | Running | Ports | State
+example | app | Not running |  | Exited an hour ago`
 
 	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 
@@ -130,8 +132,8 @@ func TestNoStatusPortStatusCommand(t *testing.T) {
 		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `Service | Running | Ports | State
-app | Not running |  |`
+	expected := `Project | Service | Running | Ports | State
+example | app | Not running |  |`
 
 	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 
@@ -154,6 +156,61 @@ func TestNoServicesStatusCommand(t *testing.T) {
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
+	}
+}
+
+func TestStatusFiltersWorkspaceServices(t *testing.T) {
+	f := newFakeKoolStatus()
+	f.shell = &FakeRaceShell{FakeShell: shell.FakeShell{MockErrStream: io.Discard, MockOutStream: io.Discard}}
+	f.env.Set("KOOL_WORKSPACE", "true")
+	f.env.Set("KOOL_WORKSPACE_SERVICES", "app,node")
+	f.env.Set("KOOL_WORKSPACE_SOURCE_PROJECT", "example")
+	f.env.Set("KOOL_WORKSPACE_PROJECT", "example-workspace-task-a")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app\ndatabase\nnode"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+
+	cmd := NewStatusCommand(f)
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := f.table.(*shell.FakeTableWriter).TableOut
+	for _, expected := range []string{"example | database", "example-workspace-task-a | app", "example-workspace-task-a | node"} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected status to contain %q, got %q", expected, output)
+		}
+	}
+	if strings.Contains(output, "example-workspace-task-a | database") {
+		t.Errorf("did not expect shared database in workspace project, got %q", output)
+	}
+}
+
+func TestStatusShowsMainAndAllActiveWorkspaces(t *testing.T) {
+	f := newFakeKoolStatus()
+	f.shell = &FakeRaceShell{FakeShell: shell.FakeShell{MockErrStream: io.Discard, MockOutStream: io.Discard}}
+	f.env.Set("KOOL_NAME", "example")
+	f.env.Set("KOOL_WORKSPACE_SERVICES", "app")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app\ndatabase"
+	f.getProjectsCmd.(*builder.FakeCommand).MockExecOut = "example-workspace-task-b\nexample-workspace-task-a\nexample-workspace-task-b"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+
+	if err := NewStatusCommand(f).Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := f.table.(*shell.FakeTableWriter).TableOut
+	for _, expected := range []string{
+		"example | app",
+		"example | database",
+		"example-workspace-task-a | app",
+		"example-workspace-task-b | app",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected status to contain %q, got %q", expected, output)
+		}
+	}
+	if strings.Contains(output, "example-workspace-task-a | database") || strings.Contains(output, "example-workspace-task-b | database") {
+		t.Errorf("did not expect shared database in workspace projects, got %q", output)
 	}
 }
 
@@ -227,6 +284,7 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 		&shell.FakeTableWriter{},
 	}
 
@@ -238,6 +296,7 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 	}
 	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = `cache
 app`
+	f.env.Set("KOOL_NAME", "example")
 	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "output"
 	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "output"
 
@@ -247,9 +306,9 @@ app`
 		t.Errorf("unexpected error executing status command; error: %v", err)
 	}
 
-	expected := `Service | Running | Ports | State
-app | Not running |  | output
-cache | Not running |  | output`
+	expected := `Project | Service | Running | Ports | State
+example | app | Not running |  | output
+example | cache | Not running |  | output`
 
 	output := strings.TrimSpace(f.table.(*shell.FakeTableWriter).TableOut)
 

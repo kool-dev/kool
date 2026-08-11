@@ -3,6 +3,7 @@ package environment
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -47,6 +48,11 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		}
 	}
 
+	initRift(envStorage, workDir)
+	initGitWorktree(envStorage, workDir)
+	initSourceProject(envStorage, workDir)
+	initProxy(envStorage, workDir)
+
 	// Now that we loaded up the files, we will check for
 	// missing variables that we need to fix
 	if envStorage.Get("KOOL_NAME") == "" {
@@ -59,4 +65,18 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 	}
 
 	initAsuser(envStorage)
+}
+
+func initSourceProject(envStorage EnvStorage, workDir string) {
+	if envStorage.Get("KOOL_WORKSPACE_SOURCE_PROJECT") != "" {
+		return
+	}
+	project := envStorage.Get("COMPOSE_PROJECT_NAME")
+	if project == "" {
+		project = composeSourceProject(envStorage, workDir)
+	}
+	if project == "" {
+		project = composeProjectName(filepath.Base(workDir))
+	}
+	envStorage.Set("KOOL_WORKSPACE_SOURCE_PROJECT", project)
 }

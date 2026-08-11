@@ -79,3 +79,17 @@ func TestInitEnvironmentVariablesOverridesStalePWD(t *testing.T) {
 		t.Errorf("expecting $PWD to be overridden to '%s', got '%s'", workDir, envWorkDir)
 	}
 }
+
+func TestInitSourceProjectUsesComposeName(t *testing.T) {
+	workDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("name: ${PROJECT_NAME:-custom-project}\nservices: {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := NewFakeEnvStorage()
+
+	initSourceProject(env, workDir)
+
+	if got := env.Get("KOOL_WORKSPACE_SOURCE_PROJECT"); got != "custom-project" {
+		t.Errorf("expected Compose name custom-project, got %q", got)
+	}
+}

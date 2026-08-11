@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"kool-dev/kool/core/environment"
@@ -32,6 +33,7 @@ var AddCommands AddCommandsFN = func(root *cobra.Command) {
 	AddKoolInfo(root)
 	AddKoolLogs(root)
 	AddKoolPreset(root)
+	AddKoolProxy(root)
 	AddKoolRestart(root)
 	AddKoolRun(root)
 	AddKoolSelfUpdate(root)
@@ -47,7 +49,7 @@ const DEV_VERSION = "0.0.0-dev"
 
 var version string = DEV_VERSION
 
-var rootCmd = NewRootCmd(environment.NewEnvStorage())
+var rootCmd = newRootCmd(environment.NewEnvStorage(), true)
 
 var originalWorkingDir = ""
 
@@ -60,6 +62,11 @@ func init() {
 
 // NewRootCmd creates the root command
 func NewRootCmd(env environment.EnvStorage) (cmd *cobra.Command) {
+	return newRootCmd(env, false)
+}
+
+func newRootCmd(env environment.EnvStorage, initializeEnvironment bool) (cmd *cobra.Command) {
+	environmentInitialized := false
 	cmd = &cobra.Command{
 		Args:          cobra.ArbitraryArgs,
 		Use:           "kool",
@@ -75,20 +82,17 @@ Complete documentation is available at https://kool.dev/docs`,
 		DisableFlagsInUseLine: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			cmd.SilenceUsage = true
-
-			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
-				env.Set("KOOL_VERBOSE", verbose.Value.String())
-			}
-
-			if !hasWarnedDevelopmentVersion && version == DEV_VERSION && shell.NewTerminalChecker().IsTerminal(cmd.OutOrStdout()) {
-				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
-				hasWarnedDevelopmentVersion = true
-			}
-
 			workDirFlag := cmd.Flags().Lookup("working_dir")
 			if workDirFlag != nil && workDirFlag.Value.String() != "" {
 				workDir := workDirFlag.Value.String()
 
+				currentWorkingDir, getwdErr := os.Getwd()
+				if getwdErr != nil {
+					return getwdErr
+				}
+				if originalWorkingDir == "" {
+					originalWorkingDir = currentWorkingDir
+				}
 				if originalWorkingDir != "" {
 					// having an original working dir set means we have
 					// already changed the working dir before and we are in
@@ -109,16 +113,22 @@ Complete documentation is available at https://kool.dev/docs`,
 					return
 				}
 
-				if originalWorkingDir == "" {
-					// we only set the original working dir if it is not set
-					// yet. This is to avoid overriding the original working
-					// dir in recursive calls.
-					if originalWorkingDir, err = os.Getwd(); err != nil {
-						return
-					}
-				}
+			}
+			if initializeEnvironment && !environmentInitialized {
+				environment.InitEnvironmentVariables(env)
+				environmentInitialized = true
+			}
+			if workspaceError := env.Get("KOOL_WORKSPACE_ERROR"); workspaceError != "" {
+				return errors.New(workspaceError)
+			}
 
-				environment.NewEnvStorage().Set("PWD", workDir)
+			if verbose := cmd.Flags().Lookup("verbose"); verbose != nil && verbose.Value.String() == "true" {
+				env.Set("KOOL_VERBOSE", verbose.Value.String())
+			}
+
+			if !hasWarnedDevelopmentVersion && version == DEV_VERSION && shell.NewTerminalChecker().IsTerminal(cmd.OutOrStdout()) {
+				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
+				hasWarnedDevelopmentVersion = true
 			}
 
 			return
@@ -165,7 +175,7 @@ func Execute() error {
 
 func setRecursiveCall(root *cobra.Command) {
 	shell.RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
-		childRoot := NewRootCmd(environment.NewEnvStorage())
+		childRoot := newRootCmd(environment.NewEnvStorage(), false)
 
 		childRoot.SetArgs(args)
 

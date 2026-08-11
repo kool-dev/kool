@@ -6,6 +6,7 @@ import (
 	"kool-dev/kool/core/network"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/checker"
+	"sort"
 	"strings"
 	"sync"
 
@@ -21,6 +22,7 @@ type KoolStatus struct {
 	env   environment.EnvStorage
 
 	getServicesCmd          builder.Command
+	getProjectsCmd          builder.Command
 	getServiceIDCmd         builder.Command
 	getServiceStatusPortCmd builder.Command
 
@@ -28,9 +30,9 @@ type KoolStatus struct {
 }
 
 type statusService struct {
-	service, state, ports string
-	running               string
-	err                   error
+	project, service, state, ports string
+	running                        string
+	err                            error
 }
 
 func AddKoolStatus(root *cobra.Command) {
@@ -51,7 +53,8 @@ func NewKoolStatus() *KoolStatus {
 		network.NewHandler(defaultKoolService.shell),
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "compose", "config", "--services"),
-		builder.NewCommand("docker", "compose", "ps", "--all", "--quiet"),
+		builder.NewCommand("docker", "ps", "--all"),
+		builder.NewCommand("docker", "ps", "--all", "--quiet"),
 		builder.NewCommand("docker", "ps", "--all", "--format", "{{.Status}}|{{.Ports}}"),
 		shell.NewTableWriter(),
 	}
@@ -59,49 +62,93 @@ func NewKoolStatus() *KoolStatus {
 
 // Execute runs the status logic with incoming arguments.
 func (s *KoolStatus) Execute(args []string) (err error) {
-	var services []string
+	var projects []statusProject
 
 	if err = s.checkDependencies(); err != nil {
 		return
 	}
 
-	if services, err = s.getServices(); err != nil {
+	if projects, err = s.getProjects(); err != nil {
 		return
-	} else if len(services) == 0 {
+	} else if len(projects) == 0 {
+		s.Shell().Warning("No services found.")
+		return
+	}
+	serviceCount := 0
+	for _, project := range projects {
+		serviceCount += len(project.services)
+	}
+	if serviceCount == 0 {
 		s.Shell().Warning("No services found.")
 		return
 	}
 
-	chStatus := make(chan *statusService, len(services))
+	chStatus := make(chan *statusService, serviceCount)
 
 	s.table.SetWriter(s.Shell().OutStream())
-	s.table.AppendHeader("Service", "Running", "Ports", "State")
+	s.table.AppendHeader("Project", "Service", "Running", "Ports", "State")
 
 	go func() {
 		var wg sync.WaitGroup
 
 		defer close(chStatus)
 
-		for _, service := range services {
-			wg.Add(1)
-			go s.fetchServiceInfo(service, chStatus, &wg)
+		for _, project := range projects {
+			for _, service := range project.services {
+				wg.Add(1)
+				go s.fetchServiceInfo(project.name, service, chStatus, &wg)
+			}
 		}
 
 		wg.Wait()
 	}()
 
+	var statuses []*statusService
 	for ss := range chStatus {
 		if ss.err != nil {
 			err = ss.err
 			return
 		}
-
-		s.table.AppendRow(ss.service, ss.running, ss.ports, ss.state)
+		statuses = append(statuses, ss)
 	}
-
-	s.table.SortBy(1)
+	sort.Slice(statuses, func(i, j int) bool {
+		if statuses[i].project == statuses[j].project {
+			return statuses[i].service < statuses[j].service
+		}
+		return statuses[i].project < statuses[j].project
+	})
+	for _, ss := range statuses {
+		s.table.AppendRow(ss.project, ss.service, ss.running, ss.ports, ss.state)
+	}
 	s.table.Render()
 	return
+}
+
+type statusProject struct {
+	name     string
+	services []string
+}
+
+func (s *KoolStatus) getProjects() ([]statusProject, error) {
+	services, err := s.getServices()
+	if err != nil {
+		return nil, err
+	}
+	mainProject := sourceProject(s.env)
+	projects := []statusProject{{name: mainProject, services: services}}
+	workspaceProjectNames := []string{}
+	if isWorkspace(s.env) {
+		workspaceProjectNames = append(workspaceProjectNames, currentProject(s.env))
+	} else if workspaceProjectNames, err = activeWorkspaceProjects(s.Shell(), s.getProjectsCmd, s.env); err != nil {
+		return nil, err
+	}
+	workspaceProjectServices := configuredWorkspaceServices(s.env)
+	for _, project := range workspaceProjectNames {
+		if project != "" && project != mainProject {
+			projects = append(projects, statusProject{name: project, services: workspaceProjectServices})
+		}
+	}
+	return projects, nil
 }
 
 func (s *KoolStatus) checkDependencies() (err error) {
@@ -154,17 +201,16 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 			services = append(services, s)
 		}
 	}
-
 	return
 }
 
-func (s *KoolStatus) fetchServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
+func (s *KoolStatus) fetchServiceInfo(project, service string, chStatus chan *statusService, wg *sync.WaitGroup) {
 	var isRunning bool
 
 	defer wg.Done()
 
-	ss := &statusService{service: service, running: "Not running"}
-	isRunning, ss.state, ss.ports, ss.err = s.getServiceInfo(service)
+	ss := &statusService{project: project, service: service, running: "Not running"}
+	isRunning, ss.state, ss.ports, ss.err = s.getServiceInfo(project, service)
 	if isRunning {
 		ss.running = "Running"
 	}
@@ -172,9 +218,9 @@ func (s *KoolStatus) fetchServiceInfo(service string, chStatus chan *statusServi
 	chStatus <- ss
 }
 
-func (s *KoolStatus) getServiceInfo(service string) (isRunning bool, status, port string, err error) {
+func (s *KoolStatus) getServiceInfo(project, service string) (isRunning bool, status, port string, err error) {
 	var serviceID string
-	if serviceID, err = s.Shell().Exec(s.getServiceIDCmd, service); err == nil && serviceID != "" {
+	if serviceID, err = s.Shell().Exec(s.getServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service); err == nil && serviceID != "" {
 		status, port = s.getStatusPort(serviceID)
 		if strings.HasPrefix(status, "Up") {
 			isRunning = true

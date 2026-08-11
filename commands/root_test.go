@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -191,6 +192,38 @@ func TestVerboseFlagRootCommand(t *testing.T) {
 	}
 }
 
+func TestWorkingDirectoryInitializesTargetEnvironment(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(originalDirectory)
+		originalWorkingDir = ""
+		environment.CleanupWorkspace()
+	})
+	originalWorkingDir = ""
+	target := t.TempDir()
+	if err = os.WriteFile(filepath.Join(target, ".env"), []byte("TARGET_ENV=loaded\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	env := environment.NewFakeEnvStorage()
+	root := newRootCmd(env, true)
+	root.AddCommand(&cobra.Command{Use: "target", Run: func(*cobra.Command, []string) {}})
+	root.SetArgs([]string{"-w", target, "target"})
+	if err = root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	if got := env.Get("PWD"); got != target {
+		t.Errorf("expected target PWD %q, got %q", target, got)
+	}
+	if got := env.Get("TARGET_ENV"); got != "loaded" {
+		t.Errorf("expected target .env to be loaded, got %q", got)
+	}
+}
+
 func TestRecursiveCall(t *testing.T) {
 	recursive := &cobra.Command{
 		Use: "recursive",
@@ -247,6 +280,7 @@ func TestAddCommands(t *testing.T) {
 		"info":        false,
 		"logs":        false,
 		"preset":      false,
+		"proxy":       false,
 		"restart":     false,
 		"run":         false,
 		"self-update": false,

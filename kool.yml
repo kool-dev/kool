@@ -13,7 +13,10 @@ scripts:
   compile:
     - kool run fmt
     - kool run go build -buildvcs=false -o kool-cli
-  install: mv ./kool-cli /usr/local/bin/kool
+  install:
+    - sudo install -m 0755 ./kool-cli /usr/local/bin/.kool.new
+    - sudo mv /usr/local/bin/.kool.new /usr/local/bin/kool
+    - rm -f $HOME/.local/bin/kool
   fmt: kool run go:linux fmt ./...
   lint: kool docker --volume=kool_gopath:/go golangci/golangci-lint:v2.11.4 golangci-lint run -v
   test: kool run test:path ./...

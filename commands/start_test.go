@@ -140,6 +140,65 @@ func TestStartServicesCommand(t *testing.T) {
 	}
 }
 
+func TestStartWorkspaceServicesCommand(t *testing.T) {
+	koolStart := newFakeKoolStart()
+	koolStart.envStorage.Set("KOOL_WORKSPACE", "true")
+	koolStart.envStorage.Set("KOOL_WORKSPACE_SERVICES", "app,node")
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	interactiveArgs := koolStart.shell.(*shell.FakeShell).ArgsInteractive["start"]
+	expected := []string{"app", "node"}
+	if !startedServicesAreEqual(interactiveArgs, expected) {
+		t.Errorf("expected workspace services %v, got %v", expected, interactiveArgs)
+	}
+	args := koolStart.start.(*builder.FakeCommand).ArgsAppend
+	if !containsArg(args, "--no-deps") {
+		t.Errorf("expected --no-deps for workspace start, got %v", args)
+	}
+}
+
+func TestRebuildWorkspaceServicesCommand(t *testing.T) {
+	koolStart := newFakeKoolStart()
+	koolStart.envStorage.Set("KOOL_WORKSPACE", "true")
+	koolStart.envStorage.Set("KOOL_WORKSPACE_SERVICES", "app,node")
+	koolStart.Flags.Rebuild = true
+	rebuilder := koolStart.rebuilder.(*KoolRebuild)
+	rebuilder.shell.(*shell.FakeShell).MockOutStream = io.Discard
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, command := range []string{"pull", "build"} {
+		args := rebuilder.shell.(*shell.FakeShell).ArgsInteractive[command]
+		if !startedServicesAreEqual(args, []string{"app", "node"}) {
+			t.Errorf("expected %s to target workspace services, got %v", command, args)
+		}
+	}
+}
+
+func TestStartWorkspaceRequiresServices(t *testing.T) {
+	koolStart := newFakeKoolStart()
+	koolStart.envStorage.Set("KOOL_WORKSPACE", "true")
+
+	if err := koolStart.Execute(nil); err == nil || !strings.Contains(err.Error(), "workspaces in kool.yml") {
+		t.Fatalf("expected workspace configuration error, got %v", err)
+	}
+}
+
+func TestStartRejectsSharedServiceInWorkspace(t *testing.T) {
+	koolStart := newFakeKoolStart()
+	koolStart.envStorage.Set("KOOL_WORKSPACE", "true")
+	koolStart.envStorage.Set("KOOL_WORKSPACE_SERVICES", "app,node")
+
+	if err := koolStart.Execute([]string{"database"}); err == nil || !strings.Contains(err.Error(), "not enabled for workspaces") {
+		t.Fatalf("expected shared service error, got %v", err)
+	}
+}
+
 func TestFailedDependenciesStartCommand(t *testing.T) {
 	koolStart := newFakeKoolStart()
 	koolStart.check.(*checker.FakeChecker).MockError = errors.New("dependencies")
@@ -194,4 +253,13 @@ func startedServicesAreEqual(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+func containsArg(args []string, expected string) bool {
+	for _, arg := range args {
+		if arg == expected {
+			return true
+		}
+	}
+	return false
 }

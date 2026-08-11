@@ -17,6 +17,33 @@ const KoolYmlOK = `scripts:
     - line 2
 `
 
+func TestParseWorkspaceAndProxyConfig(t *testing.T) {
+	file := path.Join(t.TempDir(), "kool.yml")
+	content := `workspaces: [app, node]
+proxy:
+  domain: app.localhost
+  https: true
+  routes:
+    app:
+      ports: ["80:8080"]
+      hosts: ["@", "*"]
+`
+	if err := os.WriteFile(file, []byte(content), os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	parsed, err := ParseKoolYaml(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(parsed.Workspaces) != 2 || parsed.Workspaces[0] != "app" || parsed.Workspaces[1] != "node" {
+		t.Errorf("unexpected workspaces: %v", parsed.Workspaces)
+	}
+	if parsed.Proxy == nil || parsed.Proxy.Domain != "app.localhost" || !parsed.Proxy.HTTPS || parsed.Proxy.Routes["app"].Ports[0] != "80:8080" || parsed.Proxy.Routes["app"].Hosts[1] != "*" {
+		t.Errorf("unexpected proxy config: %#v", parsed.Proxy)
+	}
+}
+
 func TestParseKoolYaml(t *testing.T) {
 	var (
 		err         error
