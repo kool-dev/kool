@@ -1165,9 +1165,15 @@ func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []
 	committedServers := caddyServers(states["committed"])
 	snapshotServers := caddyServers(states["snapshot"])
 	previousRoutes := make(map[string]interface{})
+	committedRoutes := make(map[string]interface{})
 	for _, server := range snapshotServers {
 		for _, route := range caddyRoutes(server) {
 			previousRoutes[caddyObjectID(route)] = route
+		}
+	}
+	for _, server := range committedServers {
+		for _, route := range caddyRoutes(server) {
+			committedRoutes[caddyObjectID(route)] = route
 		}
 	}
 	failedOwnsProjectRoute := false
@@ -1189,7 +1195,8 @@ func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []
 			}
 			nonGenerationRouteSurvives = true
 			if routeBelongsToMarker(route, m.projectMarker()) {
-				newerProjectRouteExists = true
+				committedRoute, existed := committedRoutes[caddyObjectID(route)]
+				newerProjectRouteExists = newerProjectRouteExists || !existed || !reflect.DeepEqual(route, committedRoute)
 			}
 			routes = append(routes, route)
 		}

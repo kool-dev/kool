@@ -496,6 +496,26 @@ func TestMergeGenerationRollbackPreservesSharedListenerAndNewerTLS(t *testing.T)
 	}
 }
 
+func TestMergeGenerationRollbackRestoresTLSWithUnchangedProjectRoute(t *testing.T) {
+	manager := testRouteManager("", "app", "app.localhost")
+	manager.generation = "failed"
+	marker := manager.projectMarker()
+	unchanged := `{"@id":"existing","handle":[{"@id":"` + marker + `-existing-old"}]}`
+	failed := `{"@id":"failed","handle":[{"@id":"` + marker + `-failed-failed"}]}`
+	current := []byte(`{"http":{"servers":{"kool-443":{"routes":[` + unchanged + `,` + failed + `,{"@id":"other","handle":[{"@id":"other-new"}]}]}}},"tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["failed.localhost"]}]}}}`)
+	committed := []byte(`{"http":{"servers":{"kool-443":{"routes":[` + unchanged + `,` + failed + `]}}},"tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["failed.localhost"]}]}}}`)
+	snapshot := []byte(`{"http":{"servers":{"kool-443":{"routes":[` + unchanged + `]}}},"tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["previous.localhost"]}]}}}`)
+
+	merged, err := manager.mergeGenerationRollback(current, committed, snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := string(merged)
+	if !strings.Contains(result, "previous.localhost") || strings.Contains(result, "failed.localhost") {
+		t.Fatalf("expected prior TLS policy to be restored despite unchanged project route, got %s", result)
+	}
+}
+
 func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")
