@@ -461,9 +461,24 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 		}
 		expectedCommand := `["/bin/sh"]|["-c","` + strings.ReplaceAll(caddyStartCmd, `"`, `\"`) + `"]`
 		if !strings.Contains(compatibility, `"`+caddyAdminNet+`"`) || !strings.HasSuffix(compatibility, expectedCommand) {
+			if preservedApps, preservedAppsExist, err = m.snapshotApps(); err != nil {
+				return err
+			}
+			bindings, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
+			if inspectErr != nil {
+				return inspectErr
+			}
+			ports = parseContainerPorts(bindings)
+			originalPorts = copyPortSet(ports)
+			networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
+			if inspectErr != nil {
+				return inspectErr
+			}
+			preservedNetworks = parseDockerObjectKeys(networks)
 			if err = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer); err != nil {
 				return err
 			}
+			expanding = true
 			err = errors.New("legacy proxy container removed")
 		} else {
 			for _, route := range routes {
