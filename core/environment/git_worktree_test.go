@@ -39,8 +39,9 @@ func TestInitGitWorktree(t *testing.T) {
 	if got := env.Get("KOOL_WORKSPACE_PATH"); got != workspace {
 		t.Errorf("expected workspace path %q, got %q", workspace, got)
 	}
-	if got := env.Get("COMPOSE_PROJECT_NAME"); got != "myapp-workspace-task-a" {
-		t.Errorf("expected worktree Compose project, got %q", got)
+	expectedProject := "myapp-workspace-" + composeProjectName(workspaceIdentity(workspace))
+	if got := env.Get("COMPOSE_PROJECT_NAME"); got != expectedProject {
+		t.Errorf("expected worktree Compose project %q, got %q", expectedProject, got)
 	}
 }
 

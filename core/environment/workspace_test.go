@@ -2,8 +2,23 @@ package environment
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
+
+func TestWorkspaceIdentityDistinguishesDuplicateBasenames(t *testing.T) {
+	root := t.TempDir()
+	first := filepath.Join(root, "one", "task")
+	second := filepath.Join(root, "two", "task")
+	for _, workspace := range []string{first, second} {
+		if err := os.MkdirAll(workspace, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if workspaceIdentity(first) == workspaceIdentity(second) {
+		t.Fatal("expected duplicate workspace basenames to have distinct identities")
+	}
+}
 
 func TestIsolateWorkspacePreservesParentOverride(t *testing.T) {
 	parent, err := os.CreateTemp("", "kool-workspace-parent-*.yml")

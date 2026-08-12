@@ -274,7 +274,8 @@ func (s *KoolStatus) fetchLegacyServiceInfo(service string, chStatus chan *statu
 
 func (s *KoolStatus) getServiceInfo(project, service string) (isRunning bool, status, port string, err error) {
 	var serviceID string
-	if serviceID, err = s.Shell().Exec(s.getProjectServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service); err == nil && serviceID != "" {
+	if serviceID, err = s.Shell().Exec(s.getProjectServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service, "--filter", "label=com.docker.compose.oneoff=False"); err == nil && serviceID != "" {
+		serviceID = strings.Fields(serviceID)[0]
 		status, port = s.getStatusPort(serviceID)
 		if strings.HasPrefix(status, "Up") {
 			isRunning = true

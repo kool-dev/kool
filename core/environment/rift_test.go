@@ -43,8 +43,9 @@ func TestInitRiftWorkspace(t *testing.T) {
 	if got := env.Get("KOOL_WORKSPACE_PATH"); got != workspace {
 		t.Errorf("expected KOOL_WORKSPACE_PATH %q, got %q", workspace, got)
 	}
-	if got := env.Get("COMPOSE_PROJECT_NAME"); got != "myapp-workspace-task-a" {
-		t.Errorf("expected COMPOSE_PROJECT_NAME %q, got %q", "myapp-workspace-task-a", got)
+	expectedProject := "myapp-workspace-" + composeProjectName(workspaceIdentity(workspace))
+	if got := env.Get("COMPOSE_PROJECT_NAME"); got != expectedProject {
+		t.Errorf("expected COMPOSE_PROJECT_NAME %q, got %q", expectedProject, got)
 	}
 }
 
@@ -79,7 +80,7 @@ func TestInitRiftUsesConfiguredSourceProjectName(t *testing.T) {
 	env.Set("COMPOSE_PROJECT_NAME", "custom-project")
 	initRift(env, workspace)
 
-	expected := "custom-project-workspace-" + composeProjectName(filepath.Base(workspace))
+	expected := "custom-project-workspace-" + composeProjectName(workspaceIdentity(workspace))
 	if got := env.Get("COMPOSE_PROJECT_NAME"); got != expected {
 		t.Errorf("expected COMPOSE_PROJECT_NAME %q, got %q", expected, got)
 	}
@@ -124,8 +125,9 @@ services:
 	if !env.IsTrue("KOOL_WORKSPACE") {
 		t.Error("expected KOOL_WORKSPACE to be enabled")
 	}
-	if got := env.Get("COMPOSE_PROJECT_NAME"); got != "custom-app-workspace-task-a" {
-		t.Errorf("expected workspace Compose project, got %q", got)
+	expectedProject := "custom-app-workspace-" + composeProjectName(workspaceIdentity(workspace))
+	if got := env.Get("COMPOSE_PROJECT_NAME"); got != expectedProject {
+		t.Errorf("expected workspace Compose project %q, got %q", expectedProject, got)
 	}
 	if got := env.Get("KOOL_WORKSPACE_SERVICES"); got != "app,node" {
 		t.Errorf("expected sorted workspace services, got %q", got)
@@ -163,7 +165,7 @@ func TestInitRiftPreservesComposeFileProjectName(t *testing.T) {
 	env := NewFakeEnvStorage()
 	initRift(env, workspace)
 
-	expected := "custom-project-workspace-" + composeProjectName(filepath.Base(workspace))
+	expected := "custom-project-workspace-" + composeProjectName(workspaceIdentity(workspace))
 	if got := env.Get("COMPOSE_PROJECT_NAME"); got != expected {
 		t.Errorf("expected top-level Compose project name %q, got %q", expected, got)
 	}

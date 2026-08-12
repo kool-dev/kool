@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"kool-dev/kool/core/parser"
 	"os"
@@ -36,7 +37,7 @@ func initWorkspaceContext(envStorage EnvStorage, workDir, source, workspace, pro
 		return
 	}
 
-	workspaceName := filepath.Base(workspace)
+	workspaceName := workspaceIdentity(workspace)
 	workspaceProject := sourceProject + "-workspace-" + composeProjectName(workspaceName)
 	envStorage.Set("KOOL_WORKSPACE", "true")
 	envStorage.Set("KOOL_WORKSPACE_NAME", workspaceHostName(workspaceName))
@@ -44,6 +45,18 @@ func initWorkspaceContext(envStorage EnvStorage, workDir, source, workspace, pro
 	envStorage.Set("KOOL_WORKSPACE_PROJECT", workspaceProject)
 	envStorage.Set("COMPOSE_PROJECT_NAME", workspaceProject)
 	initWorkspaceCompose(envStorage, workDir)
+}
+
+func workspaceIdentity(workspace string) string {
+	canonical, err := filepath.EvalSymlinks(workspace)
+	if err != nil {
+		canonical, err = filepath.Abs(workspace)
+		if err != nil {
+			canonical = workspace
+		}
+	}
+	digest := sha256.Sum256([]byte(canonical))
+	return fmt.Sprintf("%s-%x", filepath.Base(workspace), digest[:4])
 }
 
 func workspaceHostName(name string) string {

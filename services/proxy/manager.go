@@ -567,6 +567,17 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 		}
 	}
 	if !replaced {
+		var incoming caddyRouteMetadata
+		_ = json.Unmarshal(routeBody, &incoming)
+		for _, existing := range routes {
+			var metadata caddyRouteMetadata
+			if json.Unmarshal(existing, &metadata) != nil || m.routeBelongsToProject(metadata) {
+				continue
+			}
+			if hostSetsEqual(routeMetadataHosts(metadata), routeMetadataHosts(incoming)) {
+				return false, fmt.Errorf("proxy listener host conflict with route %s", metadata.ID)
+			}
+		}
 		routes = append(routes, routeBody)
 	}
 	routes = orderCaddyRoutes(routes)
@@ -580,6 +591,24 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 		return false, responseError(response)
 	}
 	return !replaced, nil
+}
+
+func hostSetsEqual(first, second []string) bool {
+	if len(first) != len(second) {
+		return false
+	}
+	normalized := make(map[string]int, len(first))
+	for _, host := range first {
+		normalized[strings.ToLower(strings.TrimSuffix(host, "."))]++
+	}
+	for _, host := range second {
+		host = strings.ToLower(strings.TrimSuffix(host, "."))
+		if normalized[host] == 0 {
+			return false
+		}
+		normalized[host]--
+	}
+	return true
 }
 
 type caddyRouteMetadata struct {

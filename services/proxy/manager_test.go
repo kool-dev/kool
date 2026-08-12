@@ -333,6 +333,19 @@ func TestRegisterRouteReportsWhetherRouteWasCreated(t *testing.T) {
 	state.requireRoutes(t, "kool-80", []string{"kool-example-app-80-80"})
 }
 
+func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
+	_, server := newCaddyRouteState(t)
+	first := testRouteManager(server.URL, "first", "app.localhost")
+	second := testRouteManager(server.URL, "second", "app.localhost")
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+	mustRegister(t, first, proxyRoute)
+
+	err := second.register(proxyRoute)
+	if err == nil || !strings.Contains(err.Error(), "host conflict") {
+		t.Fatalf("expected cross-project host conflict, got %v", err)
+	}
+}
+
 func TestRegisterRouteChangesListenerMode(t *testing.T) {
 	tests := []struct {
 		name   string

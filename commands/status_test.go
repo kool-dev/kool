@@ -17,6 +17,21 @@ type FakeRaceShell struct {
 	shell.FakeShell
 }
 
+type statusRecordingShell struct {
+	shell.FakeShell
+	args [][]string
+}
+
+func (f *statusRecordingShell) Exec(command builder.Command, extraArgs ...string) (string, error) {
+	if len(extraArgs) > 0 {
+		f.args = append(f.args, append([]string(nil), extraArgs...))
+	}
+	if fake, ok := command.(*builder.FakeCommand); ok {
+		return fake.MockExecOut, fake.MockExecError
+	}
+	return "", nil
+}
+
 func (f *FakeRaceShell) Exec(command builder.Command, extraArgs ...string) (string, error) {
 	output := command.(*builder.FakeCommand).MockExecOut
 	return output, nil
@@ -214,6 +229,29 @@ func TestStatusShowsMainAndAllActiveWorkspaces(t *testing.T) {
 	}
 	if strings.Contains(output, "example-workspace-task-a | database") || strings.Contains(output, "example-workspace-task-b | database") {
 		t.Errorf("did not expect shared database in workspace projects, got %q", output)
+	}
+}
+
+func TestWorkspaceServiceInfoExcludesOneOffContainers(t *testing.T) {
+	f := newFakeKoolStatus()
+	recorder := &statusRecordingShell{}
+	f.shell = recorder
+	f.getProjectServiceIDCmd.(*builder.FakeCommand).MockExecOut = "regular-id\noneoff-id\n"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up 1 minute|80/tcp"
+
+	running, _, _, err := f.getServiceInfo("example-workspace-task", "app")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !running {
+		t.Error("expected canonical service container to be running")
+	}
+	var recorded []string
+	for _, args := range recorder.args {
+		recorded = append(recorded, args...)
+	}
+	if !strings.Contains(strings.Join(recorded, " "), "label=com.docker.compose.oneoff=False") {
+		t.Fatalf("expected one-off container filter, got %v", recorder.args)
 	}
 }
 
