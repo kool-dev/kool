@@ -2,6 +2,7 @@ package environment
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -80,6 +81,24 @@ func TestInitGitWorktreePreservesRiftContext(t *testing.T) {
 
 	if got := env.Get("KOOL_WORKSPACE_PROVIDER"); got != "rift" {
 		t.Errorf("expected Rift context to be preserved, got %q", got)
+	}
+}
+
+func TestDuplicateGitWorktreeBasenamesUseUniqueHosts(t *testing.T) {
+	root := t.TempDir()
+	first := filepath.Join(root, "one", "task")
+	second := filepath.Join(root, "two", "task")
+	for _, workspace := range []string{first, second} {
+		if err := os.MkdirAll(workspace, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	output := []byte("worktree " + first + "\x00HEAD abc\x00\x00worktree " + second + "\x00HEAD def\x00")
+	if !hasDuplicateWorktreeBasename(output, first) || !hasDuplicateWorktreeBasename(output, second) {
+		t.Fatal("expected duplicate worktree basenames to require unique hosts")
+	}
+	if hasDuplicateWorktreeBasename(output, filepath.Join(root, "three", "unique")) {
+		t.Fatal("did not expect a unique worktree basename to require a hash")
 	}
 }
 

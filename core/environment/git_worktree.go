@@ -51,7 +51,7 @@ func initGitWorktree(envStorage EnvStorage, workDir string) {
 		return
 	}
 
-	initWorkspaceContext(envStorage, workDir, source, root, "worktree", true)
+	initWorkspaceContext(envStorage, workDir, source, root, "worktree", true, hasDuplicateWorktreeBasename(listOutput, root))
 }
 
 func absoluteGitPath(workDir, path string) string {
@@ -72,6 +72,21 @@ func firstGitWorktree(output []byte) string {
 		}
 	}
 	return ""
+}
+
+func hasDuplicateWorktreeBasename(output []byte, workspace string) bool {
+	name := filepath.Base(workspace)
+	workspace = canonicalDirectory(workspace)
+	for _, field := range strings.Split(string(output), "\x00") {
+		if !strings.HasPrefix(field, "worktree ") {
+			continue
+		}
+		candidate := strings.TrimPrefix(field, "worktree ")
+		if filepath.Base(candidate) == name && canonicalDirectory(candidate) != workspace {
+			return true
+		}
+	}
+	return false
 }
 
 func setGitWorktreeError(envStorage EnvStorage, err error) {

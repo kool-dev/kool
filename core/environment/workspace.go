@@ -18,7 +18,7 @@ var workspaceOverrideFile string
 // WorkspaceSourceLabel identifies containers owned by a source project's workspaces.
 const WorkspaceSourceLabel = "dev.kool.workspace.source"
 
-func initWorkspaceContext(envStorage EnvStorage, workDir, source, workspace, provider string, active bool) {
+func initWorkspaceContext(envStorage EnvStorage, workDir, source, workspace, provider string, active, uniqueHost bool) {
 	envStorage.Set("KOOL_WORKSPACE_PROVIDER", provider)
 	envStorage.Set("KOOL_WORKSPACE_SOURCE", source)
 	if envStorage.Get("KOOL_NAME") == "" {
@@ -39,8 +39,12 @@ func initWorkspaceContext(envStorage EnvStorage, workDir, source, workspace, pro
 
 	workspaceName := filepath.Base(workspace)
 	workspaceProject := sourceProject + "-workspace-" + composeProjectName(workspaceIdentity(workspace))
+	workspaceHost := workspaceName
+	if uniqueHost {
+		workspaceHost = workspaceIdentity(workspace)
+	}
 	envStorage.Set("KOOL_WORKSPACE", "true")
-	envStorage.Set("KOOL_WORKSPACE_NAME", workspaceHostName(workspaceName))
+	envStorage.Set("KOOL_WORKSPACE_NAME", workspaceHostName(workspaceHost))
 	envStorage.Set("KOOL_WORKSPACE_PATH", workspace)
 	envStorage.Set("KOOL_WORKSPACE_PROJECT", workspaceProject)
 	envStorage.Set("COMPOSE_PROJECT_NAME", workspaceProject)

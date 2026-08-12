@@ -35,7 +35,7 @@ func initRift(envStorage EnvStorage, workDir string) {
 		source = ancestors[len(ancestors)-1]
 	}
 
-	initWorkspaceContext(envStorage, workDir, source, workspace, "rift", len(ancestors) > 0)
+	initWorkspaceContext(envStorage, workDir, source, workspace, "rift", len(ancestors) > 0, false)
 }
 
 func findRiftWorkspace(workDir string) (string, bool) {

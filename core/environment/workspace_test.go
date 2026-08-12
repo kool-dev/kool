@@ -47,7 +47,7 @@ func TestWorkspaceHostDoesNotExposeIdentityHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	env := NewFakeEnvStorage()
-	initWorkspaceContext(env, workspace, filepath.Dir(workspace), workspace, "worktree", true)
+	initWorkspaceContext(env, workspace, filepath.Dir(workspace), workspace, "worktree", true, false)
 
 	if got := env.Get("KOOL_WORKSPACE_NAME"); got != "quiet-yarrow" {
 		t.Fatalf("expected clean workspace host name, got %q", got)
