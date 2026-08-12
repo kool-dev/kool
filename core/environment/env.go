@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"kool-dev/kool/core/parser"
 	"log"
 	"os"
 	"path/filepath"
@@ -48,10 +49,18 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		}
 	}
 
-	initRift(envStorage, workDir)
-	initGitWorktree(envStorage, workDir)
-	initSourceProject(envStorage, workDir)
-	initProxy(envStorage, workDir)
+	config := loadKoolConfig(workDir)
+	if config != nil && len(config.Workspaces) > 0 {
+		envStorage.Set("KOOL_WORKSPACES_ENABLED", "true")
+		initRift(envStorage, workDir)
+		initGitWorktree(envStorage, workDir)
+		initSourceProject(envStorage, workDir)
+	}
+	if config != nil && config.Proxy != nil {
+		envStorage.Set("KOOL_PROXY_ENABLED", "true")
+		initSourceProject(envStorage, workDir)
+		initProxy(envStorage, workDir)
+	}
 
 	// Now that we loaded up the files, we will check for
 	// missing variables that we need to fix
@@ -65,6 +74,16 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 	}
 
 	initAsuser(envStorage)
+}
+
+func loadKoolConfig(workDir string) *parser.KoolYaml {
+	for _, name := range []string{"kool.yml", "kool.yaml"} {
+		config, err := parser.ParseKoolYaml(filepath.Join(workDir, name))
+		if err == nil {
+			return config
+		}
+	}
+	return nil
 }
 
 func initSourceProject(envStorage EnvStorage, workDir string) {

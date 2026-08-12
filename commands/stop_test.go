@@ -155,6 +155,7 @@ func TestStopMainStopsWorkspacesFirst(t *testing.T) {
 	recorder := &workspaceStopShell{}
 	f.shell = recorder
 	f.env.Set("KOOL_NAME", "example")
+	f.env.Set("KOOL_WORKSPACES_ENABLED", "true")
 	f.getProjects = builder.NewCommand("docker", "ps", "--all")
 	f.down = builder.NewCommand("docker", "compose", "down")
 

@@ -65,7 +65,7 @@ func (s *KoolShare) validSubdomain(subdomain string) bool {
 func (s *KoolShare) Execute(args []string) (err error) {
 	var isRunning bool
 
-	if isRunning, _, _, err = s.status.getServiceInfo(currentProject(s.env), s.Flags.Service); err != nil {
+	if isRunning, _, _, err = s.status.getCurrentServiceInfo(s.Flags.Service); err != nil {
 		return
 	}
 

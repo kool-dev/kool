@@ -15,6 +15,14 @@ func isWorkspace(env environment.EnvStorage) bool {
 	return env.IsTrue("KOOL_WORKSPACE")
 }
 
+func workspacesEnabled(env environment.EnvStorage) bool {
+	return env.IsTrue("KOOL_WORKSPACES_ENABLED")
+}
+
+func proxyEnabled(env environment.EnvStorage) bool {
+	return env.IsTrue("KOOL_PROXY_ENABLED")
+}
+
 func workspaceServices(env environment.EnvStorage) []string {
 	configured := env.Get("KOOL_WORKSPACE_SERVICES")
 	if configured == "" {

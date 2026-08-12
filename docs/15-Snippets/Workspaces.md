@@ -25,6 +25,8 @@ scripts:
   # Existing scripts remain here.
 ```
 
+Both features are opt-in. Without a non-empty `workspaces` list, Rift and Git worktree detection is skipped and existing Kool commands retain their legacy behavior. Without `proxy`, Kool does not inspect or manage the global Caddy proxy.
+
 A port uses `listen:target`:
 
 ```text

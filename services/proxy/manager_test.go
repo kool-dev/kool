@@ -124,6 +124,26 @@ func TestCreateAliasOverride(t *testing.T) {
 	}
 }
 
+func TestPrepareRestoresComposeFile(t *testing.T) {
+	workDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte("proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['80:80']\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewFakeEnvStorage()
+	env.Set("PWD", workDir)
+	env.Set("COMPOSE_FILE", "compose.yml:compose.dev.yml")
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+
+	cleanup, err := manager.Prepare([]string{"app"})
+	if err == nil {
+		t.Fatal("expected fake shell to fail while ensuring Caddy")
+	}
+	cleanup()
+	if value := env.Get("COMPOSE_FILE"); value != "compose.yml:compose.dev.yml" {
+		t.Fatalf("expected COMPOSE_FILE to be restored, got %q", value)
+	}
+}
+
 func TestPrepareReconcilesWhenProxyRoutesBecomeEmpty(t *testing.T) {
 	state, server := newCaddyRouteState(t)
 	workDir := t.TempDir()
@@ -259,6 +279,34 @@ func TestRegisterRouteWithExistingServer(t *testing.T) {
 	}
 	if !routePostCalled {
 		t.Error("expected route to be registered on the existing server")
+	}
+}
+
+func TestRegisterRouteRejectsMixedListenerModes(t *testing.T) {
+	tests := []struct {
+		name     string
+		server   string
+		https    bool
+		expected string
+	}{
+		{name: "HTTPS on HTTP listener", server: `{"listen":[":80"],"automatic_https":{"disable":true},"routes":[]}`, https: true, expected: "already configured for HTTP"},
+		{name: "HTTP on HTTPS listener", server: `{"listen":[":80"],"tls_connection_policies":[{}],"routes":[]}`, expected: "already configured for HTTPS"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+				_, _ = response.Write([]byte(test.server))
+			}))
+			defer server.Close()
+
+			env := environment.NewFakeEnvStorage()
+			manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+			manager.adminURL = server.URL
+			err := manager.register(route{Service: "app", Listen: 80, Target: 8080, HTTPS: test.https})
+			if err == nil || !strings.Contains(err.Error(), test.expected) {
+				t.Fatalf("expected %q conflict, got %v", test.expected, err)
+			}
+		})
 	}
 }
 

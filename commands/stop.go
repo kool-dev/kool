@@ -57,7 +57,7 @@ func (s *KoolStop) Execute(args []string) (err error) {
 	if err = s.check.Check(); err != nil {
 		return
 	}
-	if len(args) == 0 && !isWorkspace(s.env) {
+	if len(args) == 0 && workspacesEnabled(s.env) && !isWorkspace(s.env) {
 		var projects []string
 		if projects, err = activeWorkspaceProjects(s.Shell(), s.getProjects, s.env); err != nil {
 			return
@@ -70,8 +70,10 @@ func (s *KoolStop) Execute(args []string) (err error) {
 			if err = s.Shell().Interactive(workspaceDown); err != nil {
 				return
 			}
-			if proxyErr := proxy.NewManager(s.Shell(), s.env).RemoveProject(project, nil); proxyErr != nil {
-				s.Shell().Warning("Could not remove proxy routes:", proxyErr)
+			if proxyEnabled(s.env) {
+				if proxyErr := proxy.NewManager(s.Shell(), s.env).RemoveProject(project, nil); proxyErr != nil {
+					s.Shell().Warning("Could not remove proxy routes:", proxyErr)
+				}
 			}
 		}
 	}
@@ -103,8 +105,10 @@ func (s *KoolStop) Execute(args []string) (err error) {
 	if err != nil {
 		return
 	}
-	if proxyErr := proxy.NewManager(s.Shell(), s.env).Remove(args); proxyErr != nil {
-		s.Shell().Warning("Could not remove proxy routes:", proxyErr)
+	if proxyEnabled(s.env) {
+		if proxyErr := proxy.NewManager(s.Shell(), s.env).Remove(args); proxyErr != nil {
+			s.Shell().Warning("Could not remove proxy routes:", proxyErr)
+		}
 	}
 	time.Sleep(time.Second * 2)
 	return

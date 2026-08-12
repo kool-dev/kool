@@ -112,6 +112,10 @@ Complete documentation is available at https://kool.dev/docs`,
 				if err = os.Chdir(workDir); err != nil {
 					return
 				}
+				if workDir, err = os.Getwd(); err != nil {
+					return
+				}
+				env.Set("PWD", workDir)
 
 			}
 			if initializeEnvironment && !environmentInitialized {
@@ -175,7 +179,25 @@ func Execute() error {
 
 func setRecursiveCall(root *cobra.Command) {
 	shell.RecursiveCall = func(args []string, in io.Reader, out, err io.Writer) error {
-		childRoot := newRootCmd(environment.NewEnvStorage(), false)
+		currentDirectory, getwdErr := os.Getwd()
+		if getwdErr != nil {
+			return getwdErr
+		}
+		currentPWD := os.Getenv("PWD")
+		currentOriginalWorkingDir := originalWorkingDir
+		defer func() {
+			_ = os.Chdir(currentDirectory)
+			_ = os.Setenv("PWD", currentPWD)
+			originalWorkingDir = currentOriginalWorkingDir
+		}()
+
+		initializeEnvironment := hasWorkingDirArg(args)
+		if initializeEnvironment {
+			restoreEnvironment := clearDirectoryEnvironment()
+			defer restoreEnvironment()
+			originalWorkingDir = currentDirectory
+		}
+		childRoot := newRootCmd(environment.NewEnvStorage(), initializeEnvironment)
 
 		childRoot.SetArgs(args)
 
@@ -186,6 +208,44 @@ func setRecursiveCall(root *cobra.Command) {
 		AddCommands(childRoot)
 
 		return childRoot.Execute()
+	}
+}
+
+func hasWorkingDirArg(args []string) bool {
+	for _, arg := range args {
+		if arg == "-w" || arg == "--working_dir" || strings.HasPrefix(arg, "--working_dir=") {
+			return true
+		}
+	}
+	return false
+}
+
+func clearDirectoryEnvironment() func() {
+	previous := make(map[string]string)
+	for _, entry := range os.Environ() {
+		parts := strings.SplitN(entry, "=", 2)
+		previous[parts[0]] = parts[1]
+	}
+	keys := []string{
+		"PWD", "KOOL_NAME", "KOOL_WORKSPACES_ENABLED", "KOOL_PROXY_ENABLED",
+		"KOOL_WORKSPACE", "KOOL_WORKSPACE_PROVIDER", "KOOL_WORKSPACE_ERROR",
+		"KOOL_WORKSPACE_SOURCE", "KOOL_WORKSPACE_SOURCE_PROJECT", "KOOL_WORKSPACE_NAME",
+		"KOOL_WORKSPACE_PATH", "KOOL_WORKSPACE_PROJECT", "KOOL_WORKSPACE_SERVICES",
+		"KOOL_PROXY_DOMAIN", "KOOL_PROXY_HOST", "COMPOSE_PROJECT_NAME", "COMPOSE_FILE",
+	}
+	for _, key := range keys {
+		_ = os.Unsetenv(key)
+	}
+	return func() {
+		for _, entry := range os.Environ() {
+			key := strings.SplitN(entry, "=", 2)[0]
+			if _, exists := previous[key]; !exists {
+				_ = os.Unsetenv(key)
+			}
+		}
+		for key, value := range previous {
+			_ = os.Setenv(key, value)
+		}
 	}
 }
 

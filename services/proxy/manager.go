@@ -94,11 +94,15 @@ func (m *DefaultManager) Prepare(services []string) (cleanup func(), err error) 
 		return
 	}
 
+	previousComposeFiles := m.env.Get("COMPOSE_FILE")
 	var override string
 	if override, err = m.createAliasOverride(cfg.Network, routes); err != nil {
 		return
 	}
-	cleanup = func() { _ = os.Remove(override) }
+	cleanup = func() {
+		m.env.Set("COMPOSE_FILE", previousComposeFiles)
+		_ = os.Remove(override)
+	}
 
 	if err = m.ensureCaddy(cfg.Network, cfg.Routes); err != nil {
 		cleanup()
@@ -459,6 +463,11 @@ func (m *DefaultManager) registerUnlocked(route route) error {
 			return err
 		}
 		serverMissing = bytes.Equal(bytes.TrimSpace(responseBody), []byte("null"))
+		if !serverMissing {
+			if err = validateListenerMode(responseBody, route); err != nil {
+				return err
+			}
+		}
 	}
 	if serverMissing {
 		response, err = m.request(http.MethodPost, serverURL, serverBody)
@@ -764,6 +773,26 @@ func caddyServerConfig(route route) map[string]interface{} {
 		server["automatic_https"] = map[string]interface{}{"disable": true}
 	}
 	return server
+}
+
+func validateListenerMode(server []byte, route route) error {
+	var config struct {
+		AutomaticHTTPS struct {
+			Disable bool `json:"disable"`
+		} `json:"automatic_https"`
+		TLSConnectionPolicies json.RawMessage `json:"tls_connection_policies"`
+	}
+	if err := json.Unmarshal(server, &config); err != nil {
+		return fmt.Errorf("could not inspect proxy listener %d: %w", route.Listen, err)
+	}
+	hasTLS := len(config.TLSConnectionPolicies) > 0 && string(config.TLSConnectionPolicies) != "null"
+	if route.HTTPS && config.AutomaticHTTPS.Disable {
+		return fmt.Errorf("proxy listener %d is already configured for HTTP and cannot also serve HTTPS", route.Listen)
+	}
+	if !route.HTTPS && hasTLS {
+		return fmt.Errorf("proxy listener %d is already configured for HTTPS and cannot also serve HTTP", route.Listen)
+	}
+	return nil
 }
 
 func (m *DefaultManager) disableAutomaticHTTPS(serverURL string) error {
