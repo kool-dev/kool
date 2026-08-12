@@ -38,7 +38,8 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		log.Fatal("Could not evaluate working directory - ", err)
 	}
 	envStorage.Set("PWD", workDir)
-	loadedEnvKeys[workDir] = nil
+	envDirectory := canonicalDirectory(workDir)
+	loadedEnvKeys[envDirectory] = nil
 
 	for _, envFile := range envFiles {
 		if _, err = os.Stat(envFile); os.IsNotExist(err) {
@@ -52,7 +53,7 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		}
 		for key := range envKeySet(envStorage.All()) {
 			if !before[key] {
-				loadedEnvKeys[workDir] = append(loadedEnvKeys[workDir], key)
+				loadedEnvKeys[envDirectory] = append(loadedEnvKeys[envDirectory], key)
 			}
 		}
 	}
@@ -86,7 +87,19 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 
 // LoadedEnvKeys returns variables introduced from a directory's environment files.
 func LoadedEnvKeys(directory string) []string {
-	return append([]string(nil), loadedEnvKeys[directory]...)
+	return append([]string(nil), loadedEnvKeys[canonicalDirectory(directory)]...)
+}
+
+func canonicalDirectory(directory string) string {
+	canonical, err := filepath.EvalSymlinks(directory)
+	if err == nil {
+		return canonical
+	}
+	canonical, err = filepath.Abs(directory)
+	if err == nil {
+		return canonical
+	}
+	return directory
 }
 
 func envKeySet(entries []string) map[string]bool {

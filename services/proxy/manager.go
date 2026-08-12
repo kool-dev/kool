@@ -889,12 +889,6 @@ func (m *DefaultManager) removeProjectRoutesUnlocked(services []string) error {
 	})
 }
 
-func (m *DefaultManager) filterProjectRoutes(shouldRemove func(caddyRouteMetadata) bool) error {
-	return m.withConfigLock(func() error {
-		return m.filterProjectRoutesUnlocked(shouldRemove)
-	})
-}
-
 func (m *DefaultManager) filterProjectRoutesUnlocked(shouldRemove func(caddyRouteMetadata) bool) error {
 	serversURL := m.adminURL + "/config/apps/http/servers"
 	response, err := m.request(http.MethodGet, serversURL, nil)
@@ -1423,16 +1417,6 @@ func routeBelongsToMarker(route interface{}, marker string) bool {
 		}
 	}
 	return false
-}
-
-func restoreMapField(current, snapshot interface{}, field string) {
-	currentMap, _ := current.(map[string]interface{})
-	snapshotMap, _ := snapshot.(map[string]interface{})
-	if value, present := snapshotMap[field]; present {
-		currentMap[field] = value
-	} else {
-		delete(currentMap, field)
-	}
 }
 
 func caddyPolicies(apps map[string]interface{}) ([]interface{}, map[string]interface{}) {
