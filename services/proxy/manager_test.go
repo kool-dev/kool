@@ -311,6 +311,28 @@ func TestRegisterRouteWithExistingServer(t *testing.T) {
 	}
 }
 
+func TestRegisterRouteReportsWhetherRouteWasCreated(t *testing.T) {
+	state, server := newCaddyRouteState(t)
+	manager := testRouteManager(server.URL, "example", "app.localhost")
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+
+	created, err := manager.registerWithResult(proxyRoute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !created {
+		t.Error("expected first registration to report a newly created route")
+	}
+	created, err = manager.registerWithResult(proxyRoute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created {
+		t.Error("expected repeated registration to report an existing route")
+	}
+	state.requireRoutes(t, "kool-80", []string{"kool-example-app-80-80"})
+}
+
 func TestRegisterRouteChangesListenerMode(t *testing.T) {
 	tests := []struct {
 		name   string

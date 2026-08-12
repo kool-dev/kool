@@ -116,16 +116,19 @@ func (m *DefaultManager) Prepare(services []string) (cleanup func(), err error) 
 		cleanup()
 		return func() {}, err
 	}
-	var registered []route
+	var created []route
 	for _, route := range routes {
-		if err = m.register(route); err != nil {
-			for _, registeredRoute := range registered {
-				_ = m.deleteRoute(m.routeID(registeredRoute))
+		var routeCreated bool
+		if routeCreated, err = m.registerWithResult(route); err != nil {
+			for _, createdRoute := range created {
+				_ = m.deleteRoute(m.routeID(createdRoute))
 			}
 			cleanup()
 			return func() {}, err
 		}
-		registered = append(registered, route)
+		if routeCreated {
+			created = append(created, route)
+		}
 	}
 	return
 }
@@ -430,62 +433,69 @@ func (m *DefaultManager) ensureBaseConfig() (string, error) {
 }
 
 func (m *DefaultManager) register(route route) error {
-	return m.withConfigLock(func() error {
-		return m.registerUnlocked(route)
-	})
+	_, err := m.registerWithResult(route)
+	return err
 }
 
-func (m *DefaultManager) registerUnlocked(route route) error {
+func (m *DefaultManager) registerWithResult(route route) (created bool, err error) {
+	err = m.withConfigLock(func() error {
+		created, err = m.registerUnlocked(route)
+		return err
+	})
+	return
+}
+
+func (m *DefaultManager) registerUnlocked(route route) (bool, error) {
 	serverID := "kool-" + strconv.Itoa(route.Listen)
 	server := caddyServerConfig(route)
 	serverBody, _ := json.Marshal(server)
 	serverURL := m.adminURL + "/config/apps/http/servers/" + serverID
 	response, err := m.request(http.MethodGet, serverURL, nil)
 	if err != nil {
-		return err
+		return false, err
 	}
 	status := response.StatusCode
 	serverMissing := status == http.StatusNotFound
 	if status >= 400 && !serverMissing {
 		defer func() { _ = response.Body.Close() }()
-		return responseError(response)
+		return false, responseError(response)
 	}
 	if serverMissing {
 		if err = response.Body.Close(); err != nil {
-			return err
+			return false, err
 		}
 	} else {
 		var responseBody []byte
 		if responseBody, err = io.ReadAll(response.Body); err != nil {
 			_ = response.Body.Close()
-			return err
+			return false, err
 		}
 		if err = response.Body.Close(); err != nil {
-			return err
+			return false, err
 		}
 		serverMissing = bytes.Equal(bytes.TrimSpace(responseBody), []byte("null"))
 		if !serverMissing {
 			if err = m.reconfigureListenerMode(serverURL, responseBody, route); err != nil {
-				return err
+				return false, err
 			}
 		}
 	}
 	if serverMissing {
 		response, err = m.request(http.MethodPost, serverURL, serverBody)
 		if err != nil {
-			return err
+			return false, err
 		}
 		defer func() { _ = response.Body.Close() }()
 		if response.StatusCode >= 400 {
-			return responseError(response)
+			return false, responseError(response)
 		}
 	}
 	if route.HTTPS {
 		if err = m.setTLSPolicy(serverURL); err != nil {
-			return err
+			return false, err
 		}
 	} else if err = m.disableAutomaticHTTPS(serverURL); err != nil {
-		return err
+		return false, err
 	}
 
 	routeConfig := map[string]interface{}{
@@ -501,26 +511,26 @@ func (m *DefaultManager) registerUnlocked(route route) error {
 	return m.upsertRouteUnlocked(serverURL, routeConfig)
 }
 
-func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[string]interface{}) error {
+func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[string]interface{}) (bool, error) {
 	routesURL := serverURL + "/routes"
 	response, err := m.request(http.MethodGet, routesURL, nil)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if response.StatusCode >= 400 && response.StatusCode != http.StatusNotFound {
 		defer func() { _ = response.Body.Close() }()
-		return responseError(response)
+		return false, responseError(response)
 	}
 
 	var routes []json.RawMessage
 	if response.StatusCode != http.StatusNotFound {
 		if err = json.NewDecoder(response.Body).Decode(&routes); err != nil && err != io.EOF {
 			_ = response.Body.Close()
-			return err
+			return false, err
 		}
 	}
 	if err = response.Body.Close(); err != nil {
-		return err
+		return false, err
 	}
 
 	routeBody, _ := json.Marshal(routeConfig)
@@ -541,13 +551,13 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 	body, _ := json.Marshal(routes)
 	response, err = m.request(http.MethodPatch, routesURL, body)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode >= 400 {
-		return responseError(response)
+		return false, responseError(response)
 	}
-	return nil
+	return !replaced, nil
 }
 
 type caddyRouteMetadata struct {
