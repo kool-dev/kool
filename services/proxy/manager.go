@@ -470,6 +470,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 			}
 			bindings = parsePortBindings(bindingsJSON)
 			originalBindings = copyPortBindings(bindings)
+			delete(bindings, 2019)
 			networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
 			if inspectErr != nil {
 				return inspectErr
@@ -497,6 +498,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 				}
 				bindings = parsePortBindings(bindingsJSON)
 				originalBindings = copyPortBindings(bindings)
+				delete(bindings, 2019)
 				networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
 				if inspectErr != nil {
 					return inspectErr
@@ -573,6 +575,9 @@ func (m *DefaultManager) createCaddy(bindings map[int][]string) error {
 	args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
 	var sortedPorts []int
 	for port := range bindings {
+		if port == 2019 {
+			continue
+		}
 		sortedPorts = append(sortedPorts, port)
 	}
 	sort.Ints(sortedPorts)
@@ -635,8 +640,12 @@ func parsePortBindings(raw string) map[int][]string {
 		}
 		for _, binding := range published {
 			spec := binding.HostPort + ":" + strconv.Itoa(port)
-			if binding.HostIP != "" && binding.HostIP != "0.0.0.0" {
-				spec = binding.HostIP + ":" + spec
+			if binding.HostIP != "" {
+				hostIP := binding.HostIP
+				if strings.Contains(hostIP, ":") && !strings.HasPrefix(hostIP, "[") {
+					hostIP = "[" + hostIP + "]"
+				}
+				spec = hostIP + ":" + spec
 			}
 			result[port] = append(result[port], spec)
 		}
