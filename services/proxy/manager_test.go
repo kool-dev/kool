@@ -427,6 +427,38 @@ func TestRollbackGenerationRestoresPreviousRouteAfterConcurrentUpdate(t *testing
 	}
 }
 
+func TestMergeGenerationRollbackPreservesFieldsAndRestoresProtocolAndTLS(t *testing.T) {
+	manager := testRouteManager("", "app", "app.localhost")
+	manager.generation = "failed"
+	current := []byte(`{
+  "http":{"servers":{"kool-80":{"listen":[":80"],"tls_connection_policies":[{}],"routes":[{"@id":"route","handle":[{"@id":"marker-failed"}]}]}}},
+  "tls":{"automation":{"policies":[]}},
+  "unrelated":{"keep":true}
+}`)
+	committed := append([]byte(nil), current...)
+	snapshot := []byte(`{
+  "http":{"servers":{"kool-80":{"listen":[":80"],"automatic_https":{"disable":true},"routes":[{"@id":"route","handle":[{"@id":"marker-previous"}]}]}}},
+  "tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["app.localhost"]}]}},
+  "unrelated":{"keep":true}
+}`)
+
+	merged, err := manager.mergeGenerationRollback(current, committed, snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := string(merged)
+	for _, expected := range []string{`"listen":[":80"]`, `"automatic_https":{"disable":true}`, `"marker-previous"`, `"kool-app-tls"`, `"unrelated":{"keep":true}`} {
+		if !strings.Contains(result, expected) {
+			t.Errorf("expected merged state to preserve or restore %s, got %s", expected, result)
+		}
+	}
+	for _, unexpected := range []string{`"tls_connection_policies"`, `"marker-failed"`} {
+		if strings.Contains(result, unexpected) {
+			t.Errorf("did not expect merged state to contain %s, got %s", unexpected, result)
+		}
+	}
+}
+
 func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")
@@ -833,14 +865,18 @@ func newCaddyRouteState(t *testing.T) (*caddyRouteState, *httptest.Server) {
 				}
 				_ = json.NewEncoder(response).Encode(map[string]interface{}{"http": map[string]interface{}{"servers": servers}, "tls": map[string]interface{}{"automation": map[string]interface{}{"policies": []interface{}{}}}})
 			case http.MethodPatch:
-				var apps caddyAppsConfig
+				var apps map[string]interface{}
 				if err := json.NewDecoder(request.Body).Decode(&apps); err != nil {
 					http.Error(response, err.Error(), http.StatusBadRequest)
 					return
 				}
-				state.routes = make(map[string][]json.RawMessage, len(apps.HTTP.Servers))
-				for serverID, server := range apps.HTTP.Servers {
-					state.routes[serverID] = server.Routes
+				servers := caddyServers(apps)
+				state.routes = make(map[string][]json.RawMessage, len(servers))
+				for serverID, server := range servers {
+					for _, route := range caddyRoutes(server) {
+						raw, _ := json.Marshal(route)
+						state.routes[serverID] = append(state.routes[serverID], raw)
+					}
 				}
 			}
 			return

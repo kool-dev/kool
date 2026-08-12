@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"sort"
 	"strconv"
@@ -1149,99 +1150,146 @@ func (m *DefaultManager) rollbackGeneration(committed []byte, committedExists bo
 	return m.restoreApps(merged, true)
 }
 
-type caddyAppsConfig struct {
-	HTTP struct {
-		Servers map[string]struct {
-			Routes []json.RawMessage `json:"routes"`
-		} `json:"servers"`
-	} `json:"http"`
-	TLS struct {
-		Automation struct {
-			Policies []json.RawMessage `json:"policies"`
-		} `json:"automation"`
-	} `json:"tls"`
-}
-
 func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []byte) ([]byte, error) {
-	var currentApps, committedApps, snapshotApps caddyAppsConfig
-	for raw, target := range map[string]*caddyAppsConfig{"current": &currentApps, "committed": &committedApps, "snapshot": &snapshotApps} {
-		var data []byte
-		switch raw {
-		case "current":
-			data = current
-		case "committed":
-			data = committed
-		default:
-			data = snapshot
-		}
+	states := make(map[string]map[string]interface{}, 3)
+	for name, data := range map[string][]byte{"current": current, "committed": committed, "snapshot": snapshot} {
+		state := make(map[string]interface{})
+		states[name] = state
 		if len(bytes.TrimSpace(data)) > 0 {
-			if err := json.Unmarshal(data, target); err != nil {
-				return nil, fmt.Errorf("could not merge %s proxy state: %w", raw, err)
+			if err := json.Unmarshal(data, &state); err != nil {
+				return nil, fmt.Errorf("could not merge %s proxy state: %w", name, err)
 			}
 		}
 	}
-	previousRoutes := make(map[string]json.RawMessage)
-	for _, server := range snapshotApps.HTTP.Servers {
-		for _, raw := range server.Routes {
-			previousRoutes[caddyRouteIDFromRaw(raw)] = raw
+	currentServers := caddyServers(states["current"])
+	committedServers := caddyServers(states["committed"])
+	snapshotServers := caddyServers(states["snapshot"])
+	previousRoutes := make(map[string]interface{})
+	for _, server := range snapshotServers {
+		for _, route := range caddyRoutes(server) {
+			previousRoutes[caddyObjectID(route)] = route
 		}
 	}
-	for serverID, server := range currentApps.HTTP.Servers {
-		var routes []json.RawMessage
-		for _, raw := range server.Routes {
-			var metadata caddyRouteMetadata
-			_ = json.Unmarshal(raw, &metadata)
-			owned := false
-			for _, handle := range metadata.Handle {
-				owned = owned || strings.HasSuffix(handle.ID, "-"+m.generation)
-			}
+	for serverID, server := range currentServers {
+		serverConfig, _ := server.(map[string]interface{})
+		var routes []interface{}
+		generationOwned := false
+		for _, route := range caddyRoutes(server) {
+			owned := routeHasGeneration(route, m.generation)
 			if owned {
-				if previous := previousRoutes[metadata.ID]; previous != nil {
+				generationOwned = true
+				if previous := previousRoutes[caddyObjectID(route)]; previous != nil {
 					routes = append(routes, previous)
 				}
 				continue
 			}
-			routes = append(routes, raw)
+			routes = append(routes, route)
 		}
-		server.Routes = orderCaddyRoutes(routes)
-		currentApps.HTTP.Servers[serverID] = server
-	}
-	committedPolicy := policyByID(committedApps.TLS.Automation.Policies, m.tlsID())
-	currentPolicy := policyByID(currentApps.TLS.Automation.Policies, m.tlsID())
-	if committedPolicy != nil && bytes.Equal(bytes.TrimSpace(currentPolicy), bytes.TrimSpace(committedPolicy)) {
-		currentApps.TLS.Automation.Policies = replacePolicy(currentApps.TLS.Automation.Policies, m.tlsID(), policyByID(snapshotApps.TLS.Automation.Policies, m.tlsID()))
-	}
-	return json.Marshal(currentApps)
-}
-
-func caddyRouteIDFromRaw(raw json.RawMessage) string {
-	var metadata caddyRouteMetadata
-	_ = json.Unmarshal(raw, &metadata)
-	return metadata.ID
-}
-
-func policyByID(policies []json.RawMessage, id string) json.RawMessage {
-	for _, policy := range policies {
-		var metadata struct {
-			ID string `json:"@id"`
-		}
-		if json.Unmarshal(policy, &metadata) == nil && metadata.ID == id {
-			return policy
+		serverConfig["routes"] = routes
+		if generationOwned {
+			committedServer, _ := committedServers[serverID].(map[string]interface{})
+			snapshotServer := snapshotServers[serverID]
+			for _, field := range []string{"automatic_https", "tls_connection_policies"} {
+				currentValue, currentPresent := serverConfig[field]
+				committedValue, committedPresent := committedServer[field]
+				if currentPresent == committedPresent && reflect.DeepEqual(currentValue, committedValue) {
+					restoreMapField(serverConfig, snapshotServer, field)
+				}
+			}
 		}
 	}
-	return nil
+	currentPolicies, currentAutomation := caddyPolicies(states["current"])
+	committedPolicies, _ := caddyPolicies(states["committed"])
+	snapshotPolicies, _ := caddyPolicies(states["snapshot"])
+	currentPolicy, currentPresent := objectByID(currentPolicies, m.tlsID())
+	committedPolicy, committedPresent := objectByID(committedPolicies, m.tlsID())
+	if currentPresent == committedPresent && reflect.DeepEqual(currentPolicy, committedPolicy) {
+		replacement, replacementPresent := objectByID(snapshotPolicies, m.tlsID())
+		currentAutomation["policies"] = replaceObjectByID(currentPolicies, m.tlsID(), replacement, replacementPresent)
+	}
+	return json.Marshal(states["current"])
 }
 
-func replacePolicy(policies []json.RawMessage, id string, replacement json.RawMessage) []json.RawMessage {
-	result := make([]json.RawMessage, 0, len(policies))
-	for _, policy := range policies {
-		if current := policyByID([]json.RawMessage{policy}, id); current != nil {
-			if replacement != nil {
+func nestedMap(parent map[string]interface{}, keys ...string) map[string]interface{} {
+	current := parent
+	for _, key := range keys {
+		next, _ := current[key].(map[string]interface{})
+		if next == nil {
+			next = make(map[string]interface{})
+			current[key] = next
+		}
+		current = next
+	}
+	return current
+}
+
+func caddyServers(apps map[string]interface{}) map[string]interface{} {
+	return nestedMap(apps, "http", "servers")
+}
+
+func caddyRoutes(server interface{}) []interface{} {
+	config, _ := server.(map[string]interface{})
+	routes, _ := config["routes"].([]interface{})
+	return routes
+}
+
+func caddyObjectID(object interface{}) string {
+	config, _ := object.(map[string]interface{})
+	id, _ := config["@id"].(string)
+	return id
+}
+
+func routeHasGeneration(route interface{}, generation string) bool {
+	config, _ := route.(map[string]interface{})
+	handles, _ := config["handle"].([]interface{})
+	for _, handle := range handles {
+		if strings.HasSuffix(caddyObjectID(handle), "-"+generation) {
+			return true
+		}
+	}
+	return false
+}
+
+func restoreMapField(current, snapshot interface{}, field string) {
+	currentMap, _ := current.(map[string]interface{})
+	snapshotMap, _ := snapshot.(map[string]interface{})
+	if value, present := snapshotMap[field]; present {
+		currentMap[field] = value
+	} else {
+		delete(currentMap, field)
+	}
+}
+
+func caddyPolicies(apps map[string]interface{}) ([]interface{}, map[string]interface{}) {
+	automation := nestedMap(apps, "tls", "automation")
+	policies, _ := automation["policies"].([]interface{})
+	return policies, automation
+}
+
+func objectByID(objects []interface{}, id string) (interface{}, bool) {
+	for _, object := range objects {
+		if caddyObjectID(object) == id {
+			return object, true
+		}
+	}
+	return nil, false
+}
+
+func replaceObjectByID(objects []interface{}, id string, replacement interface{}, replacementPresent bool) []interface{} {
+	result := make([]interface{}, 0, len(objects)+1)
+	replaced := false
+	for _, object := range objects {
+		if caddyObjectID(object) == id {
+			if replacementPresent {
 				result = append(result, replacement)
 			}
+			replaced = true
 			continue
 		}
-		result = append(result, policy)
+		result = append(result, object)
+	}
+	if !replaced && replacementPresent {
+		result = append(result, replacement)
 	}
 	return result
 }
