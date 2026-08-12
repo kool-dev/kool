@@ -363,6 +363,22 @@ func TestRegisterRouteReportsWhetherRouteWasCreated(t *testing.T) {
 	state.requireRoutes(t, "kool-80", []string{"kool-example-app-80-80"})
 }
 
+func TestRouteGenerationDistinguishesConcurrentPreparations(t *testing.T) {
+	state, server := newCaddyRouteState(t)
+	first := testRouteManager(server.URL, "example", "app.localhost")
+	second := testRouteManager(server.URL, "example", "app.localhost")
+	first.generation = "first"
+	second.generation = "second"
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+	mustRegister(t, first, proxyRoute)
+	mustRegister(t, second, proxyRoute)
+
+	raw := state.routes["kool-80"][0]
+	if !strings.Contains(string(raw), "-second") || strings.Contains(string(raw), "-first") {
+		t.Fatalf("expected latest preparation generation in route marker, got %s", raw)
+	}
+}
+
 func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")

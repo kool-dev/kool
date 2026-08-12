@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/compose-spec/compose-go/template"
@@ -65,7 +66,10 @@ type DefaultManager struct {
 	http            *http.Client
 	adminURL        string
 	projectOverride string
+	generation      string
 }
+
+var prepareGeneration atomic.Uint64
 
 // NewManager creates a proxy manager for the current project.
 func NewManager(sh shell.Shell, env environment.EnvStorage) Manager {
@@ -79,6 +83,7 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool), err erro
 	if cfg, err = m.loadConfig(); err != nil || cfg == nil {
 		return
 	}
+	m.generation = fmt.Sprintf("%d-%d", os.Getpid(), prepareGeneration.Add(1))
 
 	requested := make(map[string]bool, len(services))
 	for _, service := range services {
@@ -168,6 +173,17 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool), err erro
 		finished = true
 		cleanupOverride()
 		if success {
+			_ = m.withConfigLock(func() error {
+				if err := m.registerTLSUnlocked(cfg.Routes); err != nil {
+					return err
+				}
+				for _, route := range routes {
+					if _, err := m.registerUnlocked(route); err != nil {
+						return err
+					}
+				}
+				return m.reconcileRoutesUnlocked(cfg.Routes)
+			})
 			return
 		}
 		_ = m.withConfigLock(func() error {
@@ -574,7 +590,7 @@ func (m *DefaultManager) registerUnlocked(route route) (bool, error) {
 		"@id":   m.routeID(route),
 		"match": []interface{}{map[string]interface{}{"host": m.routeHosts(route)}},
 		"handle": []interface{}{map[string]interface{}{
-			"@id":       m.projectMarker() + "-" + m.routeID(route),
+			"@id":       m.projectMarker() + "-" + m.routeID(route) + "-" + m.generation,
 			"handler":   "reverse_proxy",
 			"upstreams": []interface{}{map[string]string{"dial": m.alias(route.Service) + ":" + strconv.Itoa(route.Target)}},
 		}},
