@@ -431,6 +431,10 @@ func (m *DefaultManager) createAliasOverride(network string, routes []route) (st
 func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 	inspect := builder.NewCommand("docker", "inspect", "--format", "{{.State.Running}}", caddyContainer)
 	running, err := m.shell.Exec(inspect)
+	ports := make(map[int]bool)
+	var preservedApps []byte
+	var preservedAppsExist bool
+	var preservedNetworks []string
 	if err == nil {
 		compatibility, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}|{{json .Config.Entrypoint}}|{{json .Config.Cmd}}", caddyContainer))
 		if inspectErr != nil {
@@ -442,6 +446,33 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 				return err
 			}
 			err = errors.New("legacy proxy container removed")
+		} else {
+			for _, route := range routes {
+				if _, portErr := m.shell.Exec(builder.NewCommand("docker", "port", caddyContainer), fmt.Sprintf("%d/tcp", route.Listen)); portErr == nil {
+					ports[route.Listen] = true
+					continue
+				}
+				if preservedApps, preservedAppsExist, err = m.snapshotApps(); err != nil {
+					return err
+				}
+				bindings, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
+				if inspectErr != nil {
+					return inspectErr
+				}
+				for port := range parseContainerPorts(bindings) {
+					ports[port] = true
+				}
+				networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
+				if inspectErr != nil {
+					return inspectErr
+				}
+				preservedNetworks = parseDockerObjectKeys(networks)
+				if err = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer); err != nil {
+					return err
+				}
+				err = errors.New("proxy listener expansion required")
+				break
+			}
 		}
 	}
 	if err != nil {
@@ -455,7 +486,6 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 			}
 		}
 		args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
-		ports := make(map[int]bool)
 		for _, route := range routes {
 			ports[route.Listen] = true
 		}
@@ -494,6 +524,14 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 			return err
 		}
 	}
+	for _, previousNetwork := range preservedNetworks {
+		if previousNetwork == caddyAdminNet || previousNetwork == network {
+			continue
+		}
+		if err = m.shell.Interactive(builder.NewCommand("docker", "network", "connect", previousNetwork), caddyContainer); err != nil {
+			return err
+		}
+	}
 
 	for _, route := range routes {
 		if _, err = m.shell.Exec(builder.NewCommand("docker", "port", caddyContainer), fmt.Sprintf("%d/tcp", route.Listen)); err != nil {
@@ -505,12 +543,43 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 		if requestErr == nil {
 			_ = response.Body.Close()
 			if response.StatusCode < 500 {
+				if preservedAppsExist {
+					return m.restoreApps(preservedApps, true)
+				}
 				return nil
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
 	return errors.New("kool proxy did not become ready")
+}
+
+func parseContainerPorts(raw string) map[int]bool {
+	ports := make(map[int]bool)
+	var bindings map[string]interface{}
+	if json.Unmarshal([]byte(raw), &bindings) != nil {
+		return ports
+	}
+	for key := range bindings {
+		port, err := strconv.Atoi(strings.TrimSuffix(key, "/tcp"))
+		if err == nil {
+			ports[port] = true
+		}
+	}
+	return ports
+}
+
+func parseDockerObjectKeys(raw string) []string {
+	var object map[string]interface{}
+	if json.Unmarshal([]byte(raw), &object) != nil {
+		return nil
+	}
+	keys := make([]string, 0, len(object))
+	for key := range object {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func (m *DefaultManager) ensureBaseConfig() (string, error) {

@@ -275,6 +275,30 @@ func TestRecursiveWorkingDirectoryReplacesParentEnvironment(t *testing.T) {
 	}
 }
 
+func TestRecursiveWorkingDirectoryReplacesGlobalNetwork(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := t.TempDir()
+	target := t.TempDir()
+	if err = os.WriteFile(filepath.Join(target, ".env"), []byte("KOOL_GLOBAL_NETWORK=target_network\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
+	restore := clearDirectoryEnvironment(parent)
+	defer restore()
+	if err := os.Chdir(target); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(originalDirectory) })
+	env := environment.NewEnvStorage()
+	environment.InitEnvironmentVariables(env)
+	if got := env.Get("KOOL_GLOBAL_NETWORK"); got != "target_network" {
+		t.Fatalf("expected target global network, got %q", got)
+	}
+}
+
 func TestRecursiveCall(t *testing.T) {
 	recursive := &cobra.Command{
 		Use: "recursive",

@@ -234,6 +234,7 @@ func clearDirectoryEnvironment(directory string) func() {
 		"KOOL_WORKSPACE_SOURCE", "KOOL_WORKSPACE_SOURCE_PROJECT", "KOOL_WORKSPACE_NAME",
 		"KOOL_WORKSPACE_PATH", "KOOL_WORKSPACE_PROJECT", "KOOL_WORKSPACE_SERVICES",
 		"KOOL_PROXY_DOMAIN", "KOOL_PROXY_HOST", "COMPOSE_PROJECT_NAME", "COMPOSE_FILE",
+		"KOOL_GLOBAL_NETWORK",
 	}
 	keys = append(keys, environment.LoadedEnvKeys(directory)...)
 	for _, key := range keys {

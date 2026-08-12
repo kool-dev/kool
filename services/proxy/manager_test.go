@@ -758,6 +758,18 @@ func TestProxyCompatibilityRequiresSecureStoredCommand(t *testing.T) {
 	}
 }
 
+func TestParseExistingProxyPortsAndNetworks(t *testing.T) {
+	ports := parseContainerPorts(`{"80/tcp":[{}],"3001/tcp":[{}]}`)
+	if !ports[80] || !ports[3001] || len(ports) != 2 {
+		t.Fatalf("expected existing proxy ports to be preserved, got %v", ports)
+	}
+	networks := parseDockerObjectKeys(`{"project_b":{},"kool_proxy_admin":{},"project_a":{}}`)
+	expected := []string{"kool_proxy_admin", "project_a", "project_b"}
+	if strings.Join(networks, ",") != strings.Join(expected, ",") {
+		t.Fatalf("expected sorted existing networks %v, got %v", expected, networks)
+	}
+}
+
 func TestRestoreAppsIfUnchangedPreservesConcurrentUpdate(t *testing.T) {
 	current := []byte(`{"http":{"servers":{"current":{}}}}`)
 	restored := false
