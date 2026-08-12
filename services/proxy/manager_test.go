@@ -540,7 +540,7 @@ func TestRestoreAppsDeletesConfigurationWhenPreviouslyMissing(t *testing.T) {
 	}
 }
 
-func TestBaseConfigUsesPrivateAdminSocket(t *testing.T) {
+func TestBaseConfigUsesPrivateAdminNetwork(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
@@ -552,8 +552,8 @@ func TestBaseConfigUsesPrivateAdminSocket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(content), `"listen":"unix//run/kool/admin.sock"`) || strings.Contains(string(content), "0.0.0.0:2019") {
-		t.Fatalf("expected private Unix admin socket, got %s", content)
+	if !strings.Contains(string(content), `"listen":"kool-proxy-admin:2019"`) || strings.Contains(string(content), "0.0.0.0:2019") {
+		t.Fatalf("expected private management-network listener, got %s", content)
 	}
 }
 

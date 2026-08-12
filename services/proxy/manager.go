@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -12,7 +11,6 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,7 +28,9 @@ const (
 	caddyContainer = "kool-proxy"
 	caddyImage     = "caddy:2.10-alpine"
 	caddyVolume    = "kool_proxy"
-	caddyAdminURL  = "http://localhost"
+	caddyAdminURL  = "http://127.0.0.1:2019"
+	caddyAdminHost = "kool-proxy-admin"
+	caddyAdminNet  = "kool_proxy_admin"
 	defaultNetwork = "kool_global"
 )
 
@@ -398,17 +398,29 @@ func (m *DefaultManager) createAliasOverride(network string, routes []route) (st
 func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 	inspect := builder.NewCommand("docker", "inspect", "--format", "{{.State.Running}}", caddyContainer)
 	running, err := m.shell.Exec(inspect)
+	if err == nil {
+		networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
+		if inspectErr != nil {
+			return inspectErr
+		}
+		if !strings.Contains(networks, `"`+caddyAdminNet+`"`) {
+			if err = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer); err != nil {
+				return err
+			}
+			err = errors.New("legacy proxy container removed")
+		}
+	}
 	if err != nil {
 		configPath, configErr := m.ensureBaseConfig()
 		if configErr != nil {
 			return configErr
 		}
-		socketPath, socketErr := caddyAdminSocket()
-		if socketErr != nil {
-			return socketErr
+		if _, networkErr := m.shell.Exec(builder.NewCommand("docker", "network", "inspect", caddyAdminNet)); networkErr != nil {
+			if networkErr = m.shell.Interactive(builder.NewCommand("docker", "network", "create"), caddyAdminNet); networkErr != nil {
+				return networkErr
+			}
 		}
-		_ = os.Remove(socketPath)
-		args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", network}
+		args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
 		ports := make(map[int]bool)
 		for _, route := range routes {
 			ports[route.Listen] = true
@@ -424,13 +436,12 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 		}
 		args = append(args,
 			"-v", configPath+":/etc/caddy/caddy.json:ro",
-			"-v", filepath.Dir(socketPath)+":/run/kool",
 			"-v", caddyVolume+":/var/lib/caddy",
 			"-e", "XDG_CONFIG_HOME=/var/lib/caddy/config",
 			"-e", "XDG_DATA_HOME=/var/lib/caddy/data",
 			"--entrypoint", "/bin/sh",
 			caddyImage,
-			"-c", "if [ -f /var/lib/caddy/config/caddy/autosave.json ]; then exec caddy run --resume; else exec caddy run --config /etc/caddy/caddy.json; fi",
+			"-c", "if [ -f /var/lib/caddy/config/caddy/autosave.json ] && grep -q '"+caddyAdminHost+":2019' /var/lib/caddy/config/caddy/autosave.json; then exec caddy run --resume; else exec caddy run --config /etc/caddy/caddy.json; fi",
 		)
 		if err = m.shell.Interactive(builder.NewCommand("docker"), args...); err != nil {
 			return err
@@ -478,7 +489,7 @@ func (m *DefaultManager) ensureBaseConfig() (string, error) {
 		return "", err
 	}
 	path := filepath.Join(directory, "caddy.json")
-	content := []byte(`{"admin":{"listen":"unix//run/kool/admin.sock"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
+	content := []byte(`{"admin":{"listen":"` + caddyAdminHost + `:2019"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
 	if err = os.WriteFile(path, content, 0644); err != nil {
 		return "", err
 	}
@@ -1096,31 +1107,7 @@ func (m *DefaultManager) request(method, url string, body []byte) (*http.Respons
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	client := m.http
-	if m.adminURL == caddyAdminURL {
-		socketPath, socketErr := caddyAdminSocket()
-		if socketErr != nil {
-			return nil, socketErr
-		}
-		client = &http.Client{Timeout: m.http.Timeout, Transport: &http.Transport{
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				return (&net.Dialer{}).DialContext(ctx, "unix", socketPath)
-			},
-		}}
-	}
-	return client.Do(request)
-}
-
-func caddyAdminSocket() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	directory := filepath.Join(home, ".kool", "proxy")
-	if err = os.MkdirAll(directory, 0755); err != nil {
-		return "", err
-	}
-	return filepath.Join(directory, "admin.sock"), nil
+	return m.http.Do(request)
 }
 
 func (m *DefaultManager) alias(service string) string {
