@@ -174,15 +174,25 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, er
 		cleanupOverride()
 		if success {
 			return m.withConfigLock(func() error {
-				if err := m.registerTLSUnlocked(cfg.Routes); err != nil {
-					return err
+				finalSnapshot, finalExists, snapshotErr := m.snapshotApps()
+				if snapshotErr != nil {
+					return snapshotErr
 				}
-				for _, route := range routes {
-					if _, err := m.registerUnlocked(route); err != nil {
+				apply := func() error {
+					if err := m.registerTLSUnlocked(cfg.Routes); err != nil {
 						return err
 					}
+					for _, route := range routes {
+						if _, err := m.registerUnlocked(route); err != nil {
+							return err
+						}
+					}
+					return m.reconcileRoutesUnlocked(cfg.Routes)
 				}
-				return m.reconcileRoutesUnlocked(cfg.Routes)
+				if applyErr := apply(); applyErr != nil {
+					return errors.Join(applyErr, m.restoreApps(finalSnapshot, finalExists))
+				}
+				return nil
 			})
 		}
 		return m.withConfigLock(func() error {
@@ -1132,14 +1142,108 @@ func (m *DefaultManager) rollbackGeneration(committed []byte, committedExists bo
 	if currentExists == committedExists && bytes.Equal(bytes.TrimSpace(current), bytes.TrimSpace(committed)) {
 		return m.restoreApps(snapshot, snapshotExists)
 	}
-	return m.filterProjectRoutesUnlocked(func(route caddyRouteMetadata) bool {
-		for _, handle := range route.Handle {
-			if strings.HasSuffix(handle.ID, "-"+m.generation) {
-				return true
+	merged, mergeErr := m.mergeGenerationRollback(current, committed, snapshot)
+	if mergeErr != nil {
+		return mergeErr
+	}
+	return m.restoreApps(merged, true)
+}
+
+type caddyAppsConfig struct {
+	HTTP struct {
+		Servers map[string]struct {
+			Routes []json.RawMessage `json:"routes"`
+		} `json:"servers"`
+	} `json:"http"`
+	TLS struct {
+		Automation struct {
+			Policies []json.RawMessage `json:"policies"`
+		} `json:"automation"`
+	} `json:"tls"`
+}
+
+func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []byte) ([]byte, error) {
+	var currentApps, committedApps, snapshotApps caddyAppsConfig
+	for raw, target := range map[string]*caddyAppsConfig{"current": &currentApps, "committed": &committedApps, "snapshot": &snapshotApps} {
+		var data []byte
+		switch raw {
+		case "current":
+			data = current
+		case "committed":
+			data = committed
+		default:
+			data = snapshot
+		}
+		if len(bytes.TrimSpace(data)) > 0 {
+			if err := json.Unmarshal(data, target); err != nil {
+				return nil, fmt.Errorf("could not merge %s proxy state: %w", raw, err)
 			}
 		}
-		return false
-	})
+	}
+	previousRoutes := make(map[string]json.RawMessage)
+	for _, server := range snapshotApps.HTTP.Servers {
+		for _, raw := range server.Routes {
+			previousRoutes[caddyRouteIDFromRaw(raw)] = raw
+		}
+	}
+	for serverID, server := range currentApps.HTTP.Servers {
+		var routes []json.RawMessage
+		for _, raw := range server.Routes {
+			var metadata caddyRouteMetadata
+			_ = json.Unmarshal(raw, &metadata)
+			owned := false
+			for _, handle := range metadata.Handle {
+				owned = owned || strings.HasSuffix(handle.ID, "-"+m.generation)
+			}
+			if owned {
+				if previous := previousRoutes[metadata.ID]; previous != nil {
+					routes = append(routes, previous)
+				}
+				continue
+			}
+			routes = append(routes, raw)
+		}
+		server.Routes = orderCaddyRoutes(routes)
+		currentApps.HTTP.Servers[serverID] = server
+	}
+	committedPolicy := policyByID(committedApps.TLS.Automation.Policies, m.tlsID())
+	currentPolicy := policyByID(currentApps.TLS.Automation.Policies, m.tlsID())
+	if committedPolicy != nil && bytes.Equal(bytes.TrimSpace(currentPolicy), bytes.TrimSpace(committedPolicy)) {
+		currentApps.TLS.Automation.Policies = replacePolicy(currentApps.TLS.Automation.Policies, m.tlsID(), policyByID(snapshotApps.TLS.Automation.Policies, m.tlsID()))
+	}
+	return json.Marshal(currentApps)
+}
+
+func caddyRouteIDFromRaw(raw json.RawMessage) string {
+	var metadata caddyRouteMetadata
+	_ = json.Unmarshal(raw, &metadata)
+	return metadata.ID
+}
+
+func policyByID(policies []json.RawMessage, id string) json.RawMessage {
+	for _, policy := range policies {
+		var metadata struct {
+			ID string `json:"@id"`
+		}
+		if json.Unmarshal(policy, &metadata) == nil && metadata.ID == id {
+			return policy
+		}
+	}
+	return nil
+}
+
+func replacePolicy(policies []json.RawMessage, id string, replacement json.RawMessage) []json.RawMessage {
+	result := make([]json.RawMessage, 0, len(policies))
+	for _, policy := range policies {
+		if current := policyByID([]json.RawMessage{policy}, id); current != nil {
+			if replacement != nil {
+				result = append(result, replacement)
+			}
+			continue
+		}
+		result = append(result, policy)
+	}
+	return result
 }
 
 func (m *DefaultManager) request(method, url string, body []byte) (*http.Response, error) {

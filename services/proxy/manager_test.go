@@ -397,6 +397,36 @@ func TestRollbackGenerationRemovesOnlyFailedConcurrentRoutes(t *testing.T) {
 	state.requireRoutes(t, "kool-80", []string{"kool-succeeded-app-80-80"})
 }
 
+func TestRollbackGenerationRestoresPreviousRouteAfterConcurrentUpdate(t *testing.T) {
+	state, server := newCaddyRouteState(t)
+	failed := testRouteManager(server.URL, "app", "app.localhost")
+	failed.generation = "previous"
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+	mustRegister(t, failed, proxyRoute)
+	snapshot, _, err := failed.snapshotApps()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	failed.generation = "failed"
+	mustRegister(t, failed, proxyRoute)
+	committed, _, err := failed.snapshotApps()
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := testRouteManager(server.URL, "other", "other.localhost")
+	other.generation = "other"
+	mustRegister(t, other, proxyRoute)
+
+	if err = failed.rollbackGeneration(committed, true, snapshot, true); err != nil {
+		t.Fatal(err)
+	}
+	state.requireRoutes(t, "kool-80", []string{"kool-app-app-80-80", "kool-other-app-80-80"})
+	if !strings.Contains(string(state.routes["kool-80"][0]), "-previous") {
+		t.Fatalf("expected previous route generation to be restored, got %s", state.routes["kool-80"][0])
+	}
+}
+
 func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")
@@ -794,6 +824,27 @@ func newCaddyRouteState(t *testing.T) (*caddyRouteState, *httptest.Server) {
 	state := &caddyRouteState{routes: make(map[string][]json.RawMessage)}
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		const serverPrefix = "/config/apps/http/servers/"
+		if request.URL.Path == "/config/apps" {
+			switch request.Method {
+			case http.MethodGet:
+				servers := make(map[string]map[string][]json.RawMessage, len(state.routes))
+				for serverID, routes := range state.routes {
+					servers[serverID] = map[string][]json.RawMessage{"routes": routes}
+				}
+				_ = json.NewEncoder(response).Encode(map[string]interface{}{"http": map[string]interface{}{"servers": servers}, "tls": map[string]interface{}{"automation": map[string]interface{}{"policies": []interface{}{}}}})
+			case http.MethodPatch:
+				var apps caddyAppsConfig
+				if err := json.NewDecoder(request.Body).Decode(&apps); err != nil {
+					http.Error(response, err.Error(), http.StatusBadRequest)
+					return
+				}
+				state.routes = make(map[string][]json.RawMessage, len(apps.HTTP.Servers))
+				for serverID, server := range apps.HTTP.Servers {
+					state.routes[serverID] = server.Routes
+				}
+			}
+			return
+		}
 		if request.Method == http.MethodGet && request.URL.Path == strings.TrimSuffix(serverPrefix, "/") {
 			servers := make(map[string]map[string][]json.RawMessage, len(state.routes))
 			for serverID, routes := range state.routes {
