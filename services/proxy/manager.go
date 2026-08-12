@@ -285,6 +285,9 @@ func (m *DefaultManager) loadConfig() (*config, error) {
 	if network, err = template.Substitute(network, os.LookupEnv); err != nil {
 		return nil, err
 	}
+	if network == caddyAdminNet {
+		return nil, fmt.Errorf("proxy.network %q is reserved for proxy administration", network)
+	}
 
 	cfg := &config{Domain: domain, HTTPS: parsed.Proxy.HTTPS, Network: network}
 	for service, routeConfig := range parsed.Proxy.Routes {
@@ -320,6 +323,9 @@ func (m *DefaultManager) loadConfig() (*config, error) {
 			target, targetErr := strconv.Atoi(strings.TrimSpace(parts[1]))
 			if listenErr != nil || targetErr != nil || listen < 1 || listen > 65535 || target < 1 || target > 65535 {
 				return nil, fmt.Errorf("proxy route %s has invalid ports %q", service, resolved)
+			}
+			if listen == 2019 {
+				return nil, fmt.Errorf("proxy route %s cannot listen on reserved admin port 2019", service)
 			}
 			if listenPorts[listen] {
 				return nil, fmt.Errorf("proxy route %s maps listen port %d more than once", service, listen)

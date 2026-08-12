@@ -94,6 +94,36 @@ func TestLoadConfigRejectsEquivalentResolvedHosts(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsReservedAdminNetwork(t *testing.T) {
+	workDir := t.TempDir()
+	content := "proxy:\n  domain: app.localhost\n  network: kool_proxy_admin\n  routes:\n    app:\n      ports: ['80:80']\n"
+	if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewFakeEnvStorage()
+	env.Set("PWD", workDir)
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+
+	if _, err := manager.loadConfig(); err == nil || !strings.Contains(err.Error(), "reserved for proxy administration") {
+		t.Fatalf("expected reserved network error, got %v", err)
+	}
+}
+
+func TestLoadConfigRejectsReservedAdminPort(t *testing.T) {
+	workDir := t.TempDir()
+	content := "proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['2019:8080']\n"
+	if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewFakeEnvStorage()
+	env.Set("PWD", workDir)
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+
+	if _, err := manager.loadConfig(); err == nil || !strings.Contains(err.Error(), "reserved admin port 2019") {
+		t.Fatalf("expected reserved port error, got %v", err)
+	}
+}
+
 func TestCreateAliasOverride(t *testing.T) {
 	workDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\n"), 0644); err != nil {
