@@ -197,7 +197,7 @@ func TestPrepareRestoresComposeFile(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected fake shell to fail while ensuring Caddy")
 	}
-	cleanup(false)
+	_ = cleanup(false)
 	if value := env.Get("COMPOSE_FILE"); value != "compose.yml:compose.dev.yml" {
 		t.Fatalf("expected COMPOSE_FILE to be restored, got %q", value)
 	}
@@ -222,7 +222,9 @@ func TestPrepareReconcilesWhenProxyRoutesBecomeEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cleanup(true)
+	if err = cleanup(true); err != nil {
+		t.Fatal(err)
+	}
 	state.requireRoutes(t, "kool-80", nil)
 }
 

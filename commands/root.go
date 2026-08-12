@@ -215,7 +215,7 @@ func setRecursiveCall(root *cobra.Command) {
 
 func hasWorkingDirArg(args []string) bool {
 	for _, arg := range args {
-		if arg == "-w" || arg == "--working_dir" || strings.HasPrefix(arg, "--working_dir=") {
+		if arg == "-w" || arg == "--working_dir" || strings.HasPrefix(arg, "--working_dir=") || strings.HasPrefix(arg, "-w=") || strings.HasPrefix(arg, "-w") && len(arg) > 2 {
 			return true
 		}
 	}

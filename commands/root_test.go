@@ -317,6 +317,14 @@ func TestMultipleRecursiveCall(t *testing.T) {
 	}
 }
 
+func TestHasWorkingDirArgAcceptsAttachedShorthand(t *testing.T) {
+	for _, arg := range []string{"-w=/tmp/project", "-w/tmp/project"} {
+		if !hasWorkingDirArg([]string{"status", arg}) {
+			t.Errorf("expected %q to initialize the target environment", arg)
+		}
+	}
+}
+
 func TestAddCommands(t *testing.T) {
 	root := NewRootCmd(environment.NewFakeEnvStorage())
 

@@ -38,7 +38,7 @@ const (
 
 // Manager controls Kool's local proxy routes.
 type Manager interface {
-	Prepare([]string) (func(bool), error)
+	Prepare([]string) (func(bool) error, error)
 	Remove([]string) error
 	RemoveProject(string, []string) error
 	Trust() error
@@ -77,8 +77,8 @@ func NewManager(sh shell.Shell, env environment.EnvStorage) Manager {
 }
 
 // Prepare ensures Caddy is running, applies network aliases, and registers routes.
-func (m *DefaultManager) Prepare(services []string) (finish func(bool), err error) {
-	finish = func(bool) {}
+func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, err error) {
+	finish = func(bool) error { return nil }
 	var cfg *config
 	if cfg, err = m.loadConfig(); err != nil || cfg == nil {
 		return
@@ -112,7 +112,7 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool), err erro
 	var unlock func()
 	if unlock, err = m.acquireConfigLock(); err != nil {
 		cleanupOverride()
-		return func(bool) {}, err
+		return func(bool) error { return nil }, err
 	}
 	lockHeld := true
 	defer func() {
@@ -126,54 +126,54 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool), err erro
 			unlock()
 			lockHeld = false
 			cleanupOverride()
-			return func(bool) {}, nil
+			return func(bool) error { return nil }, nil
 		}
 	} else if err = m.ensureCaddy(cfg.Network, cfg.Routes); err != nil {
 		cleanupOverride()
-		return func(bool) {}, err
+		return func(bool) error { return nil }, err
 	}
 
 	var snapshot []byte
 	var snapshotExists bool
 	if snapshot, snapshotExists, err = m.snapshotApps(); err != nil {
 		cleanupOverride()
-		return func(bool) {}, err
+		return func(bool) error { return nil }, err
 	}
 	rollback := func() { _ = m.restoreApps(snapshot, snapshotExists) }
 	if err = m.registerTLSUnlocked(cfg.Routes); err != nil {
 		rollback()
 		cleanupOverride()
-		return func(bool) {}, err
+		return func(bool) error { return nil }, err
 	}
 	for _, route := range routes {
 		if _, err = m.registerUnlocked(route); err != nil {
 			rollback()
 			cleanupOverride()
-			return func(bool) {}, err
+			return func(bool) error { return nil }, err
 		}
 	}
 	if err = m.reconcileRoutesUnlocked(cfg.Routes); err != nil {
 		rollback()
 		cleanupOverride()
-		return func(bool) {}, err
+		return func(bool) error { return nil }, err
 	}
 	committed, committedExists, snapshotErr := m.snapshotApps()
 	if snapshotErr != nil {
 		rollback()
 		cleanupOverride()
-		return func(bool) {}, snapshotErr
+		return func(bool) error { return nil }, snapshotErr
 	}
 	unlock()
 	lockHeld = false
 	finished := false
-	finish = func(success bool) {
+	finish = func(success bool) error {
 		if finished {
-			return
+			return nil
 		}
 		finished = true
 		cleanupOverride()
 		if success {
-			_ = m.withConfigLock(func() error {
+			return m.withConfigLock(func() error {
 				if err := m.registerTLSUnlocked(cfg.Routes); err != nil {
 					return err
 				}
@@ -184,9 +184,8 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool), err erro
 				}
 				return m.reconcileRoutesUnlocked(cfg.Routes)
 			})
-			return
 		}
-		_ = m.withConfigLock(func() error {
+		return m.withConfigLock(func() error {
 			return m.restoreAppsIfUnchanged(committed, committedExists, snapshot, snapshotExists)
 		})
 	}

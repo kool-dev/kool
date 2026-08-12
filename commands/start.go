@@ -123,7 +123,7 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 	proxyManager := proxy.NewManager(s.Shell(), s.envStorage)
-	finishProxy := func(bool) {}
+	finishProxy := func(bool) error { return nil }
 	if proxyEnabled(s.envStorage) {
 		var proxyErr error
 		finishProxy, proxyErr = proxyManager.Prepare(args)
@@ -131,7 +131,11 @@ func (s *KoolStart) Execute(args []string) (err error) {
 			return proxyErr
 		}
 	}
-	defer func() { finishProxy(err == nil) }()
+	defer func() {
+		if finishErr := finishProxy(err == nil); err == nil {
+			err = finishErr
+		}
+	}()
 
 	err = s.Shell().Interactive(s.start, args...)
 	return
