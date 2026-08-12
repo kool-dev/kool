@@ -428,13 +428,32 @@ func (m *DefaultManager) createAliasOverride(network string, routes []route) (st
 	return file.Name(), nil
 }
 
-func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
+func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error) {
 	inspect := builder.NewCommand("docker", "inspect", "--format", "{{.State.Running}}", caddyContainer)
 	running, err := m.shell.Exec(inspect)
 	ports := make(map[int]bool)
 	var preservedApps []byte
 	var preservedAppsExist bool
 	var preservedNetworks []string
+	var originalPorts map[int]bool
+	expanding := false
+	defer func() {
+		if err == nil || !expanding {
+			return
+		}
+		_ = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer)
+		rollbackErr := m.createCaddy(originalPorts)
+		if rollbackErr == nil {
+			rollbackErr = m.connectCaddyNetworks(preservedNetworks)
+		}
+		if rollbackErr == nil {
+			rollbackErr = m.waitForCaddy()
+		}
+		if rollbackErr == nil && preservedAppsExist {
+			rollbackErr = m.restoreApps(preservedApps, true)
+		}
+		err = errors.Join(err, rollbackErr)
+	}()
 	if err == nil {
 		compatibility, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}|{{json .Config.Entrypoint}}|{{json .Config.Cmd}}", caddyContainer))
 		if inspectErr != nil {
@@ -462,6 +481,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 				for port := range parseContainerPorts(bindings) {
 					ports[port] = true
 				}
+				originalPorts = copyPortSet(ports)
 				networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
 				if inspectErr != nil {
 					return inspectErr
@@ -470,44 +490,17 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 				if err = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer); err != nil {
 					return err
 				}
+				expanding = true
 				err = errors.New("proxy listener expansion required")
 				break
 			}
 		}
 	}
 	if err != nil {
-		configPath, configErr := m.ensureBaseConfig()
-		if configErr != nil {
-			return configErr
-		}
-		if _, networkErr := m.shell.Exec(builder.NewCommand("docker", "network", "inspect", caddyAdminNet)); networkErr != nil {
-			if networkErr = m.shell.Interactive(builder.NewCommand("docker", "network", "create"), caddyAdminNet); networkErr != nil {
-				return networkErr
-			}
-		}
-		args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
 		for _, route := range routes {
 			ports[route.Listen] = true
 		}
-		var sortedPorts []int
-		for port := range ports {
-			sortedPorts = append(sortedPorts, port)
-		}
-		sort.Ints(sortedPorts)
-		for _, port := range sortedPorts {
-			mapping := fmt.Sprintf("%d:%d", port, port)
-			args = append(args, "-p", mapping)
-		}
-		args = append(args,
-			"-v", configPath+":/etc/caddy/caddy.json:ro",
-			"-v", caddyVolume+":/var/lib/caddy",
-			"-e", "XDG_CONFIG_HOME=/var/lib/caddy/config",
-			"-e", "XDG_DATA_HOME=/var/lib/caddy/data",
-			"--entrypoint", "/bin/sh",
-			caddyImage,
-			"-c", caddyStartCmd,
-		)
-		if err = m.shell.Interactive(builder.NewCommand("docker"), args...); err != nil {
+		if err = m.createCaddy(ports); err != nil {
 			return err
 		}
 	} else if running != "true" {
@@ -538,20 +531,73 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 			return fmt.Errorf("kool proxy does not publish port %d; remove %s and retry", route.Listen, caddyContainer)
 		}
 	}
+	if err = m.waitForCaddy(); err != nil {
+		return err
+	}
+	if preservedAppsExist {
+		if err = m.restoreApps(preservedApps, true); err != nil {
+			return err
+		}
+	}
+	expanding = false
+	return nil
+}
+
+func (m *DefaultManager) createCaddy(ports map[int]bool) error {
+	configPath, err := m.ensureBaseConfig()
+	if err != nil {
+		return err
+	}
+	if _, err = m.shell.Exec(builder.NewCommand("docker", "network", "inspect", caddyAdminNet)); err != nil {
+		if err = m.shell.Interactive(builder.NewCommand("docker", "network", "create"), caddyAdminNet); err != nil {
+			return err
+		}
+	}
+	args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
+	var sortedPorts []int
+	for port := range ports {
+		sortedPorts = append(sortedPorts, port)
+	}
+	sort.Ints(sortedPorts)
+	for _, port := range sortedPorts {
+		args = append(args, "-p", fmt.Sprintf("%d:%d", port, port))
+	}
+	args = append(args, "-v", configPath+":/etc/caddy/caddy.json:ro", "-v", caddyVolume+":/var/lib/caddy", "-e", "XDG_CONFIG_HOME=/var/lib/caddy/config", "-e", "XDG_DATA_HOME=/var/lib/caddy/data", "--entrypoint", "/bin/sh", caddyImage, "-c", caddyStartCmd)
+	return m.shell.Interactive(builder.NewCommand("docker"), args...)
+}
+
+func (m *DefaultManager) connectCaddyNetworks(networks []string) error {
+	for _, network := range networks {
+		if network == caddyAdminNet {
+			continue
+		}
+		if err := m.shell.Interactive(builder.NewCommand("docker", "network", "connect", network), caddyContainer); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *DefaultManager) waitForCaddy() error {
 	for attempt := 0; attempt < 30; attempt++ {
-		response, requestErr := m.request(http.MethodGet, m.adminURL+"/config/", nil)
-		if requestErr == nil {
+		response, err := m.request(http.MethodGet, m.adminURL+"/config/", nil)
+		if err == nil {
 			_ = response.Body.Close()
 			if response.StatusCode < 500 {
-				if preservedAppsExist {
-					return m.restoreApps(preservedApps, true)
-				}
 				return nil
 			}
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
 	return errors.New("kool proxy did not become ready")
+}
+
+func copyPortSet(ports map[int]bool) map[int]bool {
+	copy := make(map[int]bool, len(ports))
+	for port := range ports {
+		copy[port] = true
+	}
+	return copy
 }
 
 func parseContainerPorts(raw string) map[int]bool {

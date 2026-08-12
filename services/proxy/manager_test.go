@@ -770,6 +770,15 @@ func TestParseExistingProxyPortsAndNetworks(t *testing.T) {
 	}
 }
 
+func TestCopyPortSetPreservesOriginalExpansionPorts(t *testing.T) {
+	original := map[int]bool{80: true}
+	expanded := copyPortSet(original)
+	expanded[3001] = true
+	if !original[80] || original[3001] || !expanded[3001] {
+		t.Fatalf("expected rollback ports to remain independent, original=%v expanded=%v", original, expanded)
+	}
+}
+
 func TestRestoreAppsIfUnchangedPreservesConcurrentUpdate(t *testing.T) {
 	current := []byte(`{"http":{"servers":{"current":{}}}}`)
 	restored := false
