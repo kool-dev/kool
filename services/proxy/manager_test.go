@@ -759,9 +759,9 @@ func TestProxyCompatibilityRequiresSecureStoredCommand(t *testing.T) {
 }
 
 func TestParseExistingProxyPortsAndNetworks(t *testing.T) {
-	ports := parseContainerPorts(`{"80/tcp":[{}],"3001/tcp":[{}]}`)
-	if !ports[80] || !ports[3001] || len(ports) != 2 {
-		t.Fatalf("expected existing proxy ports to be preserved, got %v", ports)
+	bindings := parsePortBindings(`{"80/tcp":[{"HostIp":"127.0.0.1","HostPort":"8080"}],"3001/tcp":[{"HostIp":"0.0.0.0","HostPort":"3001"}]}`)
+	if strings.Join(bindings[80], ",") != "127.0.0.1:8080:80" || strings.Join(bindings[3001], ",") != "3001:3001" {
+		t.Fatalf("expected exact existing proxy bindings to be preserved, got %v", bindings)
 	}
 	networks := parseDockerObjectKeys(`{"project_b":{},"kool_proxy_admin":{},"project_a":{}}`)
 	expected := []string{"kool_proxy_admin", "project_a", "project_b"}
@@ -771,10 +771,10 @@ func TestParseExistingProxyPortsAndNetworks(t *testing.T) {
 }
 
 func TestCopyPortSetPreservesOriginalExpansionPorts(t *testing.T) {
-	original := map[int]bool{80: true}
-	expanded := copyPortSet(original)
-	expanded[3001] = true
-	if !original[80] || original[3001] || !expanded[3001] {
+	original := map[int][]string{80: {"127.0.0.1:8080:80"}}
+	expanded := copyPortBindings(original)
+	expanded[3001] = []string{"3001:3001"}
+	if strings.Join(original[80], ",") != "127.0.0.1:8080:80" || original[3001] != nil || expanded[3001] == nil {
 		t.Fatalf("expected rollback ports to remain independent, original=%v expanded=%v", original, expanded)
 	}
 }

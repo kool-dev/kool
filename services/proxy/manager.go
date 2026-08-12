@@ -431,18 +431,18 @@ func (m *DefaultManager) createAliasOverride(network string, routes []route) (st
 func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error) {
 	inspect := builder.NewCommand("docker", "inspect", "--format", "{{.State.Running}}", caddyContainer)
 	running, err := m.shell.Exec(inspect)
-	ports := make(map[int]bool)
+	bindings := make(map[int][]string)
 	var preservedApps []byte
 	var preservedAppsExist bool
 	var preservedNetworks []string
-	var originalPorts map[int]bool
+	var originalBindings map[int][]string
 	expanding := false
 	defer func() {
 		if err == nil || !expanding {
 			return
 		}
 		_ = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer)
-		rollbackErr := m.createCaddy(originalPorts)
+		rollbackErr := m.createCaddy(originalBindings)
 		if rollbackErr == nil {
 			rollbackErr = m.connectCaddyNetworks(preservedNetworks)
 		}
@@ -464,12 +464,12 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 			if preservedApps, preservedAppsExist, err = m.snapshotApps(); err != nil {
 				return err
 			}
-			bindings, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
+			bindingsJSON, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
 			if inspectErr != nil {
 				return inspectErr
 			}
-			ports = parseContainerPorts(bindings)
-			originalPorts = copyPortSet(ports)
+			bindings = parsePortBindings(bindingsJSON)
+			originalBindings = copyPortBindings(bindings)
 			networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
 			if inspectErr != nil {
 				return inspectErr
@@ -483,20 +483,20 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 		} else {
 			for _, route := range routes {
 				if _, portErr := m.shell.Exec(builder.NewCommand("docker", "port", caddyContainer), fmt.Sprintf("%d/tcp", route.Listen)); portErr == nil {
-					ports[route.Listen] = true
+					if len(bindings[route.Listen]) == 0 {
+						bindings[route.Listen] = []string{fmt.Sprintf("%d:%d", route.Listen, route.Listen)}
+					}
 					continue
 				}
 				if preservedApps, preservedAppsExist, err = m.snapshotApps(); err != nil {
 					return err
 				}
-				bindings, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
+				bindingsJSON, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
 				if inspectErr != nil {
 					return inspectErr
 				}
-				for port := range parseContainerPorts(bindings) {
-					ports[port] = true
-				}
-				originalPorts = copyPortSet(ports)
+				bindings = parsePortBindings(bindingsJSON)
+				originalBindings = copyPortBindings(bindings)
 				networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
 				if inspectErr != nil {
 					return inspectErr
@@ -513,9 +513,11 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 	}
 	if err != nil {
 		for _, route := range routes {
-			ports[route.Listen] = true
+			if len(bindings[route.Listen]) == 0 {
+				bindings[route.Listen] = []string{fmt.Sprintf("%d:%d", route.Listen, route.Listen)}
+			}
 		}
-		if err = m.createCaddy(ports); err != nil {
+		if err = m.createCaddy(bindings); err != nil {
 			return err
 		}
 	} else if running != "true" {
@@ -558,7 +560,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 	return nil
 }
 
-func (m *DefaultManager) createCaddy(ports map[int]bool) error {
+func (m *DefaultManager) createCaddy(bindings map[int][]string) error {
 	configPath, err := m.ensureBaseConfig()
 	if err != nil {
 		return err
@@ -570,12 +572,14 @@ func (m *DefaultManager) createCaddy(ports map[int]bool) error {
 	}
 	args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
 	var sortedPorts []int
-	for port := range ports {
+	for port := range bindings {
 		sortedPorts = append(sortedPorts, port)
 	}
 	sort.Ints(sortedPorts)
 	for _, port := range sortedPorts {
-		args = append(args, "-p", fmt.Sprintf("%d:%d", port, port))
+		for _, binding := range bindings[port] {
+			args = append(args, "-p", binding)
+		}
 	}
 	args = append(args, "-v", configPath+":/etc/caddy/caddy.json:ro", "-v", caddyVolume+":/var/lib/caddy", "-e", "XDG_CONFIG_HOME=/var/lib/caddy/config", "-e", "XDG_DATA_HOME=/var/lib/caddy/data", "--entrypoint", "/bin/sh", caddyImage, "-c", caddyStartCmd)
 	return m.shell.Interactive(builder.NewCommand("docker"), args...)
@@ -607,27 +611,37 @@ func (m *DefaultManager) waitForCaddy() error {
 	return errors.New("kool proxy did not become ready")
 }
 
-func copyPortSet(ports map[int]bool) map[int]bool {
-	copy := make(map[int]bool, len(ports))
-	for port := range ports {
-		copy[port] = true
+func copyPortBindings(bindings map[int][]string) map[int][]string {
+	copy := make(map[int][]string, len(bindings))
+	for port, specs := range bindings {
+		copy[port] = append([]string(nil), specs...)
 	}
 	return copy
 }
 
-func parseContainerPorts(raw string) map[int]bool {
-	ports := make(map[int]bool)
-	var bindings map[string]interface{}
-	if json.Unmarshal([]byte(raw), &bindings) != nil {
-		return ports
+func parsePortBindings(raw string) map[int][]string {
+	result := make(map[int][]string)
+	var bindings map[string][]struct {
+		HostIP   string `json:"HostIp"`
+		HostPort string `json:"HostPort"`
 	}
-	for key := range bindings {
+	if json.Unmarshal([]byte(raw), &bindings) != nil {
+		return result
+	}
+	for key, published := range bindings {
 		port, err := strconv.Atoi(strings.TrimSuffix(key, "/tcp"))
-		if err == nil {
-			ports[port] = true
+		if err != nil {
+			continue
+		}
+		for _, binding := range published {
+			spec := binding.HostPort + ":" + strconv.Itoa(port)
+			if binding.HostIP != "" && binding.HostIP != "0.0.0.0" {
+				spec = binding.HostIP + ":" + spec
+			}
+			result[port] = append(result[port], spec)
 		}
 	}
-	return ports
+	return result
 }
 
 func parseDockerObjectKeys(raw string) []string {
@@ -1332,14 +1346,10 @@ func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []
 		}
 		serverConfig["routes"] = routes
 		if generationOwned && !nonGenerationRouteSurvives {
-			committedServer, _ := committedServers[serverID].(map[string]interface{})
-			snapshotServer := snapshotServers[serverID]
-			for _, field := range []string{"automatic_https", "tls_connection_policies"} {
-				currentValue, currentPresent := serverConfig[field]
-				committedValue, committedPresent := committedServer[field]
-				if currentPresent == committedPresent && reflect.DeepEqual(currentValue, committedValue) {
-					restoreMapField(serverConfig, snapshotServer, field)
-				}
+			if snapshotServer, existed := snapshotServers[serverID]; existed {
+				currentServers[serverID] = snapshotServer
+			} else {
+				delete(currentServers, serverID)
 			}
 		}
 	}
