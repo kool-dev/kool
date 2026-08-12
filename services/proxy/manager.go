@@ -1170,23 +1170,31 @@ func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []
 			previousRoutes[caddyObjectID(route)] = route
 		}
 	}
+	failedOwnsProjectRoute := false
+	newerProjectRouteExists := false
 	for serverID, server := range currentServers {
 		serverConfig, _ := server.(map[string]interface{})
 		var routes []interface{}
 		generationOwned := false
+		nonGenerationRouteSurvives := false
 		for _, route := range caddyRoutes(server) {
 			owned := routeHasGeneration(route, m.generation)
 			if owned {
 				generationOwned = true
+				failedOwnsProjectRoute = true
 				if previous := previousRoutes[caddyObjectID(route)]; previous != nil {
 					routes = append(routes, previous)
 				}
 				continue
 			}
+			nonGenerationRouteSurvives = true
+			if routeBelongsToMarker(route, m.projectMarker()) {
+				newerProjectRouteExists = true
+			}
 			routes = append(routes, route)
 		}
 		serverConfig["routes"] = routes
-		if generationOwned {
+		if generationOwned && !nonGenerationRouteSurvives {
 			committedServer, _ := committedServers[serverID].(map[string]interface{})
 			snapshotServer := snapshotServers[serverID]
 			for _, field := range []string{"automatic_https", "tls_connection_policies"} {
@@ -1203,7 +1211,7 @@ func (m *DefaultManager) mergeGenerationRollback(current, committed, snapshot []
 	snapshotPolicies, _ := caddyPolicies(states["snapshot"])
 	currentPolicy, currentPresent := objectByID(currentPolicies, m.tlsID())
 	committedPolicy, committedPresent := objectByID(committedPolicies, m.tlsID())
-	if currentPresent == committedPresent && reflect.DeepEqual(currentPolicy, committedPolicy) {
+	if failedOwnsProjectRoute && !newerProjectRouteExists && currentPresent == committedPresent && reflect.DeepEqual(currentPolicy, committedPolicy) {
 		replacement, replacementPresent := objectByID(snapshotPolicies, m.tlsID())
 		currentAutomation["policies"] = replaceObjectByID(currentPolicies, m.tlsID(), replacement, replacementPresent)
 	}
@@ -1244,6 +1252,17 @@ func routeHasGeneration(route interface{}, generation string) bool {
 	handles, _ := config["handle"].([]interface{})
 	for _, handle := range handles {
 		if strings.HasSuffix(caddyObjectID(handle), "-"+generation) {
+			return true
+		}
+	}
+	return false
+}
+
+func routeBelongsToMarker(route interface{}, marker string) bool {
+	config, _ := route.(map[string]interface{})
+	handles, _ := config["handle"].([]interface{})
+	for _, handle := range handles {
+		if strings.HasPrefix(caddyObjectID(handle), marker+"-") {
 			return true
 		}
 	}

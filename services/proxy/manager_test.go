@@ -459,6 +459,43 @@ func TestMergeGenerationRollbackPreservesFieldsAndRestoresProtocolAndTLS(t *test
 	}
 }
 
+func TestMergeGenerationRollbackPreservesSharedListenerAndNewerTLS(t *testing.T) {
+	manager := testRouteManager("", "app", "app.localhost")
+	manager.generation = "failed"
+	marker := manager.projectMarker()
+	current := []byte(strings.ReplaceAll(`{
+  "http":{"servers":{"kool-443":{"listen":[":443"],"tls_connection_policies":[{}],"routes":[
+    {"@id":"app-route","handle":[{"@id":"PROJECT_MARKER-app-route-newer"}]},
+    {"@id":"other-route","handle":[{"@id":"other-project-route"}]}
+  ]}}},
+  "tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["new.localhost"]}]}}
+}`, "PROJECT_MARKER", marker))
+	committed := []byte(strings.ReplaceAll(`{
+  "http":{"servers":{"kool-443":{"listen":[":443"],"tls_connection_policies":[{}],"routes":[
+    {"@id":"app-route","handle":[{"@id":"PROJECT_MARKER-app-route-failed"}]}
+  ]}}},
+  "tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["new.localhost"]}]}}
+}`, "PROJECT_MARKER", marker))
+	snapshot := []byte(`{
+  "http":{"servers":{"kool-443":{"listen":[":443"],"automatic_https":{"disable":true},"routes":[]}}},
+  "tls":{"automation":{"policies":[{"@id":"kool-app-tls","subjects":["old.localhost"]}]}}
+}`)
+
+	merged, err := manager.mergeGenerationRollback(current, committed, snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result := string(merged)
+	for _, expected := range []string{`"tls_connection_policies":[{}]`, `"new.localhost"`, marker + `-app-route-newer`, `"other-project-route"`} {
+		if !strings.Contains(result, expected) {
+			t.Errorf("expected concurrent state %s to be preserved, got %s", expected, result)
+		}
+	}
+	if strings.Contains(result, "old.localhost") || strings.Contains(result, "automatic_https") {
+		t.Errorf("did not expect stale protocol or TLS state to be restored, got %s", result)
+	}
+}
+
 func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")
