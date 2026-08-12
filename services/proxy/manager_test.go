@@ -587,6 +587,12 @@ func TestBaseConfigUsesPrivateAdminNetwork(t *testing.T) {
 	}
 }
 
+func TestProxyStartupDoesNotResumeUntrustedAutosave(t *testing.T) {
+	if strings.Contains(caddyStartCmd, "--resume") || strings.Contains(caddyStartCmd, "autosave") {
+		t.Fatalf("proxy startup must not resume an unvalidated autosave: %s", caddyStartCmd)
+	}
+}
+
 func TestRestoreAppsIfUnchangedPreservesConcurrentUpdate(t *testing.T) {
 	current := []byte(`{"http":{"servers":{"current":{}}}}`)
 	restored := false

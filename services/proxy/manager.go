@@ -31,6 +31,7 @@ const (
 	caddyAdminURL  = "http://127.0.0.1:2019"
 	caddyAdminHost = "kool-proxy-admin"
 	caddyAdminNet  = "kool_proxy_admin"
+	caddyStartCmd  = "exec caddy run --config /etc/caddy/caddy.json"
 	defaultNetwork = "kool_global"
 )
 
@@ -447,7 +448,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 			"-e", "XDG_DATA_HOME=/var/lib/caddy/data",
 			"--entrypoint", "/bin/sh",
 			caddyImage,
-			"-c", "if [ -f /var/lib/caddy/config/caddy/autosave.json ] && grep -q '"+caddyAdminHost+":2019' /var/lib/caddy/config/caddy/autosave.json; then exec caddy run --resume; else exec caddy run --config /etc/caddy/caddy.json; fi",
+			"-c", caddyStartCmd,
 		)
 		if err = m.shell.Interactive(builder.NewCommand("docker"), args...); err != nil {
 			return err
