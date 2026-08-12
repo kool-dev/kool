@@ -346,6 +346,18 @@ func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	}
 }
 
+func TestRegisterRouteRejectsPartiallyOverlappingHosts(t *testing.T) {
+	_, server := newCaddyRouteState(t)
+	first := testRouteManager(server.URL, "first", "app.localhost")
+	second := testRouteManager(server.URL, "second", "app.localhost")
+	mustRegister(t, first, route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@", "*"}})
+
+	err := second.register(route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}})
+	if err == nil || !strings.Contains(err.Error(), "host conflict") {
+		t.Fatalf("expected shared exact host pattern conflict, got %v", err)
+	}
+}
+
 func TestRegisterRouteChangesListenerMode(t *testing.T) {
 	tests := []struct {
 		name   string

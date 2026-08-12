@@ -3,6 +3,7 @@ package environment
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -17,6 +18,26 @@ func TestWorkspaceIdentityDistinguishesDuplicateBasenames(t *testing.T) {
 	}
 	if workspaceIdentity(first) == workspaceIdentity(second) {
 		t.Fatal("expected duplicate workspace basenames to have distinct identities")
+	}
+}
+
+func TestWorkspaceIdentityPreservesHashForLongBasenames(t *testing.T) {
+	root := t.TempDir()
+	name := strings.Repeat("a", 70)
+	first := filepath.Join(root, "one", name)
+	second := filepath.Join(root, "two", name)
+	for _, workspace := range []string{first, second} {
+		if err := os.MkdirAll(workspace, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	firstIdentity := workspaceIdentity(first)
+	secondIdentity := workspaceIdentity(second)
+	if len(firstIdentity) > 63 || len(secondIdentity) > 63 {
+		t.Fatalf("expected identities to fit a DNS label: %q %q", firstIdentity, secondIdentity)
+	}
+	if firstIdentity == secondIdentity {
+		t.Fatal("expected long duplicate basenames to preserve distinct hash suffixes")
 	}
 }
 

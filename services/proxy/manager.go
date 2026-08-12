@@ -164,13 +164,15 @@ func (m *DefaultManager) Remove(services []string) error {
 	if _, err = m.shell.Exec(builder.NewCommand("docker", "inspect", caddyContainer)); err != nil {
 		return nil
 	}
-	if err = m.removeProjectRoutes(services); err != nil {
-		return err
-	}
-	if len(services) == 0 {
-		return m.deleteRoute(m.tlsID())
-	}
-	return nil
+	return m.withConfigLock(func() error {
+		if err = m.removeProjectRoutesUnlocked(services); err != nil {
+			return err
+		}
+		if len(services) == 0 {
+			return m.deleteRoute(m.tlsID())
+		}
+		return nil
+	})
 }
 
 // RemoveProject removes proxy routes for an explicit Compose project.
@@ -180,13 +182,15 @@ func (m *DefaultManager) RemoveProject(project string, services []string) error 
 	if _, err := manager.shell.Exec(builder.NewCommand("docker", "inspect", caddyContainer)); err != nil {
 		return nil
 	}
-	if err := manager.removeProjectRoutes(services); err != nil {
-		return err
-	}
-	if len(services) == 0 {
-		return manager.deleteRoute(manager.tlsID())
-	}
-	return nil
+	return manager.withConfigLock(func() error {
+		if err := manager.removeProjectRoutesUnlocked(services); err != nil {
+			return err
+		}
+		if len(services) == 0 {
+			return manager.deleteRoute(manager.tlsID())
+		}
+		return nil
+	})
 }
 
 // Trust installs Caddy's local root CA in the host trust store.
@@ -574,7 +578,7 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 			if json.Unmarshal(existing, &metadata) != nil || m.routeBelongsToProject(metadata) {
 				continue
 			}
-			if hostSetsEqual(routeMetadataHosts(metadata), routeMetadataHosts(incoming)) {
+			if hostSetsOverlap(routeMetadataHosts(metadata), routeMetadataHosts(incoming)) {
 				return false, fmt.Errorf("proxy listener host conflict with route %s", metadata.ID)
 			}
 		}
@@ -593,22 +597,18 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 	return !replaced, nil
 }
 
-func hostSetsEqual(first, second []string) bool {
-	if len(first) != len(second) {
-		return false
-	}
-	normalized := make(map[string]int, len(first))
+func hostSetsOverlap(first, second []string) bool {
+	normalized := make(map[string]bool, len(first))
 	for _, host := range first {
-		normalized[strings.ToLower(strings.TrimSuffix(host, "."))]++
+		normalized[strings.ToLower(strings.TrimSuffix(host, "."))] = true
 	}
 	for _, host := range second {
 		host = strings.ToLower(strings.TrimSuffix(host, "."))
-		if normalized[host] == 0 {
-			return false
+		if normalized[host] {
+			return true
 		}
-		normalized[host]--
 	}
-	return true
+	return false
 }
 
 type caddyRouteMetadata struct {
@@ -641,11 +641,17 @@ func (m *DefaultManager) reconcileRoutesUnlocked(desiredRoutes []route) error {
 }
 
 func (m *DefaultManager) removeProjectRoutes(services []string) error {
+	return m.withConfigLock(func() error {
+		return m.removeProjectRoutesUnlocked(services)
+	})
+}
+
+func (m *DefaultManager) removeProjectRoutesUnlocked(services []string) error {
 	aliases := make(map[string]bool, len(services))
 	for _, service := range services {
 		aliases[m.alias(service)] = true
 	}
-	return m.filterProjectRoutes(func(route caddyRouteMetadata) bool {
+	return m.filterProjectRoutesUnlocked(func(route caddyRouteMetadata) bool {
 		if len(aliases) == 0 {
 			return true
 		}

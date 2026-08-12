@@ -56,7 +56,12 @@ func workspaceIdentity(workspace string) string {
 		}
 	}
 	digest := sha256.Sum256([]byte(canonical))
-	return fmt.Sprintf("%s-%x", filepath.Base(workspace), digest[:4])
+	suffix := fmt.Sprintf("-%x", digest[:4])
+	name := filepath.Base(workspace)
+	if len(name) > 63-len(suffix) {
+		name = strings.TrimRight(name[:63-len(suffix)], "-_")
+	}
+	return name + suffix
 }
 
 func workspaceHostName(name string) string {
