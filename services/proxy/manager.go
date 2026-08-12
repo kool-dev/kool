@@ -470,6 +470,15 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 		err = errors.Join(err, rollbackErr)
 	}()
 	if err == nil {
+		if running != "true" {
+			if err = m.shell.Interactive(builder.NewCommand("docker", "start"), caddyContainer); err != nil {
+				return err
+			}
+			if err = m.waitForCaddy(); err != nil {
+				return err
+			}
+			running = "true"
+		}
 		compatibility, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}|{{json .Config.Entrypoint}}|{{json .Config.Cmd}}", caddyContainer))
 		if inspectErr != nil {
 			return inspectErr
