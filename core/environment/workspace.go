@@ -37,8 +37,8 @@ func initWorkspaceContext(envStorage EnvStorage, workDir, source, workspace, pro
 		return
 	}
 
-	workspaceName := workspaceIdentity(workspace)
-	workspaceProject := sourceProject + "-workspace-" + composeProjectName(workspaceName)
+	workspaceName := filepath.Base(workspace)
+	workspaceProject := sourceProject + "-workspace-" + composeProjectName(workspaceIdentity(workspace))
 	envStorage.Set("KOOL_WORKSPACE", "true")
 	envStorage.Set("KOOL_WORKSPACE_NAME", workspaceHostName(workspaceName))
 	envStorage.Set("KOOL_WORKSPACE_PATH", workspace)

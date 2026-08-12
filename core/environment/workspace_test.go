@@ -41,6 +41,22 @@ func TestWorkspaceIdentityPreservesHashForLongBasenames(t *testing.T) {
 	}
 }
 
+func TestWorkspaceHostDoesNotExposeIdentityHash(t *testing.T) {
+	workspace := filepath.Join(t.TempDir(), "quiet-yarrow")
+	if err := os.MkdirAll(workspace, 0755); err != nil {
+		t.Fatal(err)
+	}
+	env := NewFakeEnvStorage()
+	initWorkspaceContext(env, workspace, filepath.Dir(workspace), workspace, "worktree", true)
+
+	if got := env.Get("KOOL_WORKSPACE_NAME"); got != "quiet-yarrow" {
+		t.Fatalf("expected clean workspace host name, got %q", got)
+	}
+	if project := env.Get("KOOL_WORKSPACE_PROJECT"); !strings.Contains(project, workspaceIdentity(workspace)) {
+		t.Fatalf("expected internal project identity to remain unique, got %q", project)
+	}
+}
+
 func TestIsolateWorkspacePreservesParentOverride(t *testing.T) {
 	parent, err := os.CreateTemp("", "kool-workspace-parent-*.yml")
 	if err != nil {

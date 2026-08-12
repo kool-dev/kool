@@ -684,6 +684,30 @@ func TestRegisterTLSRemovesPolicyWhenHTTPSIsDisabled(t *testing.T) {
 	}
 }
 
+func TestStopIfUnusedStopsOnlyAfterLastManagedRoute(t *testing.T) {
+	state, server := newCaddyRouteState(t)
+	manager := testRouteManager(server.URL, "example", "app.localhost")
+	fakeShell := &shell.FakeShell{}
+	manager.shell = fakeShell
+	manager.generation = "test"
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+	mustRegister(t, manager, proxyRoute)
+
+	if err := manager.stopIfUnusedUnlocked(); err != nil {
+		t.Fatal(err)
+	}
+	if fakeShell.CalledInteractive["docker"] {
+		t.Fatal("did not expect proxy to stop while a managed route remains")
+	}
+	state.routes["kool-80"] = nil
+	if err := manager.stopIfUnusedUnlocked(); err != nil {
+		t.Fatal(err)
+	}
+	if !fakeShell.CalledInteractive["docker"] || strings.Join(fakeShell.ArgsInteractive["docker"], " ") != "kool-proxy" {
+		t.Fatalf("expected final route removal to stop proxy, got %v", fakeShell.ArgsInteractive)
+	}
+}
+
 func TestRestoreAppsReplacesPreviousConfiguration(t *testing.T) {
 	var method string
 	var restored []byte

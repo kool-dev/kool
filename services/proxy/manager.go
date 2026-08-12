@@ -228,9 +228,11 @@ func (m *DefaultManager) Remove(services []string) error {
 			return err
 		}
 		if len(services) == 0 {
-			return m.deleteRoute(m.tlsID())
+			if err = m.deleteRoute(m.tlsID()); err != nil {
+				return err
+			}
 		}
-		return nil
+		return m.stopIfUnusedUnlocked()
 	})
 }
 
@@ -246,9 +248,11 @@ func (m *DefaultManager) RemoveProject(project string, services []string) error 
 			return err
 		}
 		if len(services) == 0 {
-			return manager.deleteRoute(manager.tlsID())
+			if err := manager.deleteRoute(manager.tlsID()); err != nil {
+				return err
+			}
 		}
-		return nil
+		return manager.stopIfUnusedUnlocked()
 	})
 }
 
@@ -954,6 +958,46 @@ func (m *DefaultManager) filterProjectRoutesUnlocked(shouldRemove func(caddyRout
 		}
 	}
 	return nil
+}
+
+func (m *DefaultManager) stopIfUnusedUnlocked() error {
+	serversURL := m.adminURL + "/config/apps/http/servers"
+	response, err := m.request(http.MethodGet, serversURL, nil)
+	if err != nil {
+		return err
+	}
+	if response.StatusCode == http.StatusNotFound {
+		_ = response.Body.Close()
+		return m.shell.Interactive(builder.NewCommand("docker", "stop"), caddyContainer)
+	}
+	if response.StatusCode >= 400 {
+		defer func() { _ = response.Body.Close() }()
+		return responseError(response)
+	}
+	var servers map[string]struct {
+		Routes []json.RawMessage `json:"routes"`
+	}
+	if err = json.NewDecoder(response.Body).Decode(&servers); err != nil {
+		_ = response.Body.Close()
+		return err
+	}
+	if err = response.Body.Close(); err != nil {
+		return err
+	}
+	for _, server := range servers {
+		for _, rawRoute := range server.Routes {
+			var metadata caddyRouteMetadata
+			if json.Unmarshal(rawRoute, &metadata) != nil {
+				continue
+			}
+			for _, handle := range metadata.Handle {
+				if strings.HasPrefix(handle.ID, "kool-project-") {
+					return nil
+				}
+			}
+		}
+	}
+	return m.shell.Interactive(builder.NewCommand("docker", "stop"), caddyContainer)
 }
 
 func (m *DefaultManager) withConfigLock(action func() error) error {
