@@ -593,6 +593,18 @@ func TestProxyStartupDoesNotResumeUntrustedAutosave(t *testing.T) {
 	}
 }
 
+func TestProxyCompatibilityRequiresSecureStoredCommand(t *testing.T) {
+	expectedCommand := `["/bin/sh"]|["-c","` + strings.ReplaceAll(caddyStartCmd, `"`, `\"`) + `"]`
+	secure := `{"kool_proxy_admin":{}}|` + expectedCommand
+	legacy := `{"kool_proxy_admin":{}}|["/bin/sh"]|["-c","caddy run --resume"]`
+	if !strings.HasSuffix(secure, expectedCommand) {
+		t.Fatal("expected secure stored command to be accepted")
+	}
+	if strings.HasSuffix(legacy, expectedCommand) {
+		t.Fatal("expected legacy resume command to require container recreation")
+	}
+}
+
 func TestRestoreAppsIfUnchangedPreservesConcurrentUpdate(t *testing.T) {
 	current := []byte(`{"http":{"servers":{"current":{}}}}`)
 	restored := false

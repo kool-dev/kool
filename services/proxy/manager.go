@@ -406,11 +406,12 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 	inspect := builder.NewCommand("docker", "inspect", "--format", "{{.State.Running}}", caddyContainer)
 	running, err := m.shell.Exec(inspect)
 	if err == nil {
-		networks, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}", caddyContainer))
+		compatibility, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}|{{json .Config.Entrypoint}}|{{json .Config.Cmd}}", caddyContainer))
 		if inspectErr != nil {
 			return inspectErr
 		}
-		if !strings.Contains(networks, `"`+caddyAdminNet+`"`) {
+		expectedCommand := `["/bin/sh"]|["-c","` + strings.ReplaceAll(caddyStartCmd, `"`, `\"`) + `"]`
+		if !strings.Contains(compatibility, `"`+caddyAdminNet+`"`) || !strings.HasSuffix(compatibility, expectedCommand) {
 			if err = m.shell.Interactive(builder.NewCommand("docker", "rm", "--force"), caddyContainer); err != nil {
 				return err
 			}
