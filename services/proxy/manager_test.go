@@ -124,6 +124,35 @@ func TestCreateAliasOverride(t *testing.T) {
 	}
 }
 
+func TestCreateAliasOverrideMapsCustomExternalNetwork(t *testing.T) {
+	workDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\nnetworks:\n  kool_global:\n    external: true\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewFakeEnvStorage()
+	env.Set("PWD", workDir)
+	env.Set("KOOL_NAME", "example")
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+
+	file, err := manager.createAliasOverride("my_network", []route{{Service: "app", Listen: 80, Target: 80}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Remove(file) })
+	content, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range []string{`"kool_global":`, `name: "my_network"`, "external: true"} {
+		if !strings.Contains(string(content), expected) {
+			t.Errorf("expected override to contain %q, got:\n%s", expected, content)
+		}
+	}
+	if strings.Contains(string(content), `"my_network":`) {
+		t.Errorf("custom network name must not be used as an undeclared Compose key:\n%s", content)
+	}
+}
+
 func TestPrepareRestoresComposeFile(t *testing.T) {
 	workDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte("proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['80:80']\n"), 0644); err != nil {
@@ -282,31 +311,58 @@ func TestRegisterRouteWithExistingServer(t *testing.T) {
 	}
 }
 
-func TestRegisterRouteRejectsMixedListenerModes(t *testing.T) {
+func TestRegisterRouteChangesListenerMode(t *testing.T) {
 	tests := []struct {
-		name     string
-		server   string
-		https    bool
-		expected string
+		name   string
+		server string
+		https  bool
 	}{
-		{name: "HTTPS on HTTP listener", server: `{"listen":[":80"],"automatic_https":{"disable":true},"routes":[]}`, https: true, expected: "already configured for HTTP"},
-		{name: "HTTP on HTTPS listener", server: `{"listen":[":80"],"tls_connection_policies":[{}],"routes":[]}`, expected: "already configured for HTTPS"},
+		{name: "HTTPS on HTTP listener", server: `{"listen":[":80"],"automatic_https":{"disable":true},"routes":[]}`, https: true},
+		{name: "HTTP on HTTPS listener", server: `{"listen":[":80"],"tls_connection_policies":[{}],"routes":[]}`},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			listenerPatched := false
 			server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-				_, _ = response.Write([]byte(test.server))
+				switch {
+				case request.Method == http.MethodGet && strings.HasSuffix(request.URL.Path, "/routes"):
+					_, _ = response.Write([]byte(`[]`))
+				case request.Method == http.MethodGet && strings.HasSuffix(request.URL.Path, "/kool-80"):
+					_, _ = response.Write([]byte(test.server))
+				case request.Method == http.MethodPatch && strings.HasSuffix(request.URL.Path, "/kool-80"):
+					listenerPatched = true
+				default:
+					response.WriteHeader(http.StatusOK)
+				}
 			}))
 			defer server.Close()
 
 			env := environment.NewFakeEnvStorage()
 			manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
 			manager.adminURL = server.URL
-			err := manager.register(route{Service: "app", Listen: 80, Target: 8080, HTTPS: test.https})
-			if err == nil || !strings.Contains(err.Error(), test.expected) {
-				t.Fatalf("expected %q conflict, got %v", test.expected, err)
+			if err := manager.register(route{Service: "app", Listen: 80, Target: 8080, HTTPS: test.https}); err != nil {
+				t.Fatal(err)
+			}
+			if !listenerPatched {
+				t.Error("expected existing listener protocol to be replaced")
 			}
 		})
+	}
+}
+
+func TestRegisterRouteRejectsListenerModeChangeUsedByAnotherProject(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		_, _ = response.Write([]byte(`{"listen":[":80"],"automatic_https":{"disable":true},"routes":[{"@id":"kool-other-app-80-80","handle":[{"@id":"kool-project-other-kool-other-app-80-80"}]}]}`))
+	}))
+	defer server.Close()
+
+	env := environment.NewFakeEnvStorage()
+	env.Set("KOOL_NAME", "example")
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	manager.adminURL = server.URL
+	err := manager.register(route{Service: "app", Listen: 80, Target: 8080, HTTPS: true})
+	if err == nil || !strings.Contains(err.Error(), "another project uses it") {
+		t.Fatalf("expected listener ownership conflict, got %v", err)
 	}
 }
 
@@ -373,6 +429,28 @@ func TestRegisterTLS(t *testing.T) {
 		if !strings.Contains(result, expected) {
 			t.Errorf("expected TLS policy to contain %q, got %s", expected, result)
 		}
+	}
+}
+
+func TestRegisterTLSRemovesPolicyWhenHTTPSIsDisabled(t *testing.T) {
+	deleted := ""
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodDelete {
+			deleted = request.URL.Path
+		}
+		response.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	env := environment.NewFakeEnvStorage()
+	env.Set("KOOL_NAME", "example")
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	manager.adminURL = server.URL
+	if err := manager.registerTLS([]route{{Service: "app", Listen: 80, Target: 80}}); err != nil {
+		t.Fatal(err)
+	}
+	if deleted != "/id/kool-example-tls" {
+		t.Fatalf("expected stale project TLS policy to be deleted, got %q", deleted)
 	}
 }
 

@@ -314,9 +314,10 @@ func (m *DefaultManager) createAliasOverride(network string, routes []route) (st
 		if written[route.Service] {
 			continue
 		}
-		fmt.Fprintf(&content, "  %q:\n    ports: !reset []\n    networks:\n      %q:\n        aliases:\n          - %q\n", route.Service, network, m.alias(route.Service))
+		fmt.Fprintf(&content, "  %q:\n    ports: !reset []\n    networks:\n      %q:\n        aliases:\n          - %q\n", route.Service, defaultNetwork, m.alias(route.Service))
 		written[route.Service] = true
 	}
+	fmt.Fprintf(&content, "networks:\n  %q:\n    name: %q\n    external: true\n", defaultNetwork, network)
 	if _, err = file.WriteString(content.String()); err == nil {
 		err = file.Close()
 	} else {
@@ -464,7 +465,7 @@ func (m *DefaultManager) registerUnlocked(route route) error {
 		}
 		serverMissing = bytes.Equal(bytes.TrimSpace(responseBody), []byte("null"))
 		if !serverMissing {
-			if err = validateListenerMode(responseBody, route); err != nil {
+			if err = m.reconfigureListenerMode(serverURL, responseBody, route); err != nil {
 				return err
 			}
 		}
@@ -775,22 +776,48 @@ func caddyServerConfig(route route) map[string]interface{} {
 	return server
 }
 
-func validateListenerMode(server []byte, route route) error {
+func (m *DefaultManager) reconfigureListenerMode(serverURL string, server []byte, route route) error {
 	var config struct {
 		AutomaticHTTPS struct {
 			Disable bool `json:"disable"`
 		} `json:"automatic_https"`
-		TLSConnectionPolicies json.RawMessage `json:"tls_connection_policies"`
+		TLSConnectionPolicies json.RawMessage   `json:"tls_connection_policies"`
+		Routes                []json.RawMessage `json:"routes"`
 	}
 	if err := json.Unmarshal(server, &config); err != nil {
 		return fmt.Errorf("could not inspect proxy listener %d: %w", route.Listen, err)
 	}
 	hasTLS := len(config.TLSConnectionPolicies) > 0 && string(config.TLSConnectionPolicies) != "null"
-	if route.HTTPS && config.AutomaticHTTPS.Disable {
-		return fmt.Errorf("proxy listener %d is already configured for HTTP and cannot also serve HTTPS", route.Listen)
+	modeDiffers := route.HTTPS && config.AutomaticHTTPS.Disable || !route.HTTPS && hasTLS
+	if !modeDiffers {
+		return nil
 	}
-	if !route.HTTPS && hasTLS {
-		return fmt.Errorf("proxy listener %d is already configured for HTTPS and cannot also serve HTTP", route.Listen)
+	for _, rawRoute := range config.Routes {
+		var metadata caddyRouteMetadata
+		if json.Unmarshal(rawRoute, &metadata) != nil || !m.routeBelongsToProject(metadata) {
+			return fmt.Errorf("proxy listener %d cannot change protocol while another project uses it", route.Listen)
+		}
+	}
+
+	var replacement map[string]interface{}
+	if err := json.Unmarshal(server, &replacement); err != nil {
+		return fmt.Errorf("could not inspect proxy listener %d: %w", route.Listen, err)
+	}
+	delete(replacement, "automatic_https")
+	delete(replacement, "tls_connection_policies")
+	for key, value := range caddyServerConfig(route) {
+		if key != "routes" {
+			replacement[key] = value
+		}
+	}
+	body, _ := json.Marshal(replacement)
+	response, err := m.request(http.MethodPatch, serverURL, body)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = response.Body.Close() }()
+	if response.StatusCode >= 400 {
+		return responseError(response)
 	}
 	return nil
 }
@@ -856,7 +883,7 @@ func (m *DefaultManager) registerTLSUnlocked(routes []route) error {
 		}
 	}
 	if len(subjects) == 0 {
-		return nil
+		return m.deleteRoute(m.tlsID())
 	}
 	sort.Strings(subjects)
 
