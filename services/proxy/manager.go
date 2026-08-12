@@ -87,49 +87,71 @@ func (m *DefaultManager) Prepare(services []string) (cleanup func(), err error) 
 			routes = append(routes, route)
 		}
 	}
-	if len(routes) == 0 {
-		if _, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", caddyContainer)); inspectErr == nil {
-			err = m.reconcileRoutes(cfg.Routes)
-		}
-		return
-	}
-
 	previousComposeFiles := m.env.Get("COMPOSE_FILE")
 	var override string
-	if override, err = m.createAliasOverride(cfg.Network, routes); err != nil {
-		return
+	if len(routes) > 0 {
+		if override, err = m.createAliasOverride(cfg.Network, routes); err != nil {
+			return
+		}
 	}
-	cleanup = func() {
+	cleanupOverride := func() {
 		m.env.Set("COMPOSE_FILE", previousComposeFiles)
-		_ = os.Remove(override)
+		if override != "" {
+			_ = os.Remove(override)
+		}
 	}
 
-	if err = m.ensureCaddy(cfg.Network, cfg.Routes); err != nil {
-		cleanup()
+	var unlock func()
+	if unlock, err = m.acquireConfigLock(); err != nil {
+		cleanupOverride()
 		return func() {}, err
 	}
-	if err = m.registerTLS(cfg.Routes); err != nil {
-		cleanup()
+	lockHeld := true
+	defer func() {
+		if lockHeld {
+			unlock()
+		}
+	}()
+
+	if len(routes) == 0 {
+		if _, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", caddyContainer)); inspectErr != nil {
+			unlock()
+			lockHeld = false
+			cleanupOverride()
+			return func() {}, nil
+		}
+	} else if err = m.ensureCaddy(cfg.Network, cfg.Routes); err != nil {
+		cleanupOverride()
 		return func() {}, err
 	}
-	if err = m.reconcileRoutes(cfg.Routes); err != nil {
-		cleanup()
+
+	var snapshot []byte
+	var snapshotExists bool
+	if snapshot, snapshotExists, err = m.snapshotApps(); err != nil {
+		cleanupOverride()
 		return func() {}, err
 	}
-	var created []route
+	rollback := func() { _ = m.restoreApps(snapshot, snapshotExists) }
+	if err = m.registerTLSUnlocked(cfg.Routes); err != nil {
+		rollback()
+		cleanupOverride()
+		return func() {}, err
+	}
 	for _, route := range routes {
-		var routeCreated bool
-		if routeCreated, err = m.registerWithResult(route); err != nil {
-			for _, createdRoute := range created {
-				_ = m.deleteRoute(m.routeID(createdRoute))
-			}
-			cleanup()
+		if _, err = m.registerUnlocked(route); err != nil {
+			rollback()
+			cleanupOverride()
 			return func() {}, err
 		}
-		if routeCreated {
-			created = append(created, route)
-		}
 	}
+	if err = m.reconcileRoutesUnlocked(cfg.Routes); err != nil {
+		rollback()
+		cleanupOverride()
+		return func() {}, err
+	}
+	cleanup = cleanupOverride
+	unlock()
+	lockHeld = false
 	return
 }
 
@@ -574,11 +596,17 @@ type caddyRouteMetadata struct {
 }
 
 func (m *DefaultManager) reconcileRoutes(desiredRoutes []route) error {
+	return m.withConfigLock(func() error {
+		return m.reconcileRoutesUnlocked(desiredRoutes)
+	})
+}
+
+func (m *DefaultManager) reconcileRoutesUnlocked(desiredRoutes []route) error {
 	desired := make(map[string]bool, len(desiredRoutes))
 	for _, route := range desiredRoutes {
 		desired[m.routeID(route)] = true
 	}
-	return m.filterProjectRoutes(func(route caddyRouteMetadata) bool {
+	return m.filterProjectRoutesUnlocked(func(route caddyRouteMetadata) bool {
 		return !desired[route.ID]
 	})
 }
@@ -664,24 +692,35 @@ func (m *DefaultManager) filterProjectRoutesUnlocked(shouldRemove func(caddyRout
 }
 
 func (m *DefaultManager) withConfigLock(action func() error) error {
-	home, err := os.UserHomeDir()
+	unlock, err := m.acquireConfigLock()
 	if err != nil {
 		return err
+	}
+	defer unlock()
+	return action()
+}
+
+func (m *DefaultManager) acquireConfigLock() (func(), error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
 	}
 	directory := filepath.Join(home, ".kool", "proxy")
 	if err = os.MkdirAll(directory, 0755); err != nil {
-		return err
+		return nil, err
 	}
 	lock, err := os.OpenFile(filepath.Join(directory, "config.lock"), os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer func() { _ = lock.Close() }()
 	if err = unix.Flock(int(lock.Fd()), unix.LOCK_EX); err != nil {
-		return err
+		_ = lock.Close()
+		return nil, err
 	}
-	defer func() { _ = unix.Flock(int(lock.Fd()), unix.LOCK_UN) }()
-	return action()
+	return func() {
+		_ = unix.Flock(int(lock.Fd()), unix.LOCK_UN)
+		_ = lock.Close()
+	}, nil
 }
 
 func (m *DefaultManager) routeBelongsToProject(route caddyRouteMetadata) bool {
@@ -939,6 +978,38 @@ func (m *DefaultManager) registerTLSUnlocked(routes []route) error {
 
 func (m *DefaultManager) deleteRoute(id string) error {
 	response, err := m.request(http.MethodDelete, m.adminURL+"/id/"+id, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = response.Body.Close() }()
+	if response.StatusCode >= 400 && response.StatusCode != http.StatusNotFound {
+		return responseError(response)
+	}
+	return nil
+}
+
+func (m *DefaultManager) snapshotApps() ([]byte, bool, error) {
+	response, err := m.request(http.MethodGet, m.adminURL+"/config/apps", nil)
+	if err != nil {
+		return nil, false, err
+	}
+	defer func() { _ = response.Body.Close() }()
+	if response.StatusCode == http.StatusNotFound {
+		return nil, false, nil
+	}
+	if response.StatusCode >= 400 {
+		return nil, false, responseError(response)
+	}
+	body, err := io.ReadAll(response.Body)
+	return body, true, err
+}
+
+func (m *DefaultManager) restoreApps(snapshot []byte, existed bool) error {
+	method := http.MethodPatch
+	if !existed {
+		method = http.MethodDelete
+	}
+	response, err := m.request(method, m.adminURL+"/config/apps", snapshot)
 	if err != nil {
 		return err
 	}

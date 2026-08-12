@@ -476,6 +476,45 @@ func TestRegisterTLSRemovesPolicyWhenHTTPSIsDisabled(t *testing.T) {
 	}
 }
 
+func TestRestoreAppsReplacesPreviousConfiguration(t *testing.T) {
+	var method string
+	var restored []byte
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		method = request.Method
+		restored, _ = io.ReadAll(request.Body)
+		response.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
+	manager.adminURL = server.URL
+	snapshot := []byte(`{"http":{"servers":{"kool-80":{"listen":[":80"]}}}}`)
+	if err := manager.restoreApps(snapshot, true); err != nil {
+		t.Fatal(err)
+	}
+	if method != http.MethodPatch || string(restored) != string(snapshot) {
+		t.Fatalf("expected previous apps configuration to be restored, got %s %s", method, restored)
+	}
+}
+
+func TestRestoreAppsDeletesConfigurationWhenPreviouslyMissing(t *testing.T) {
+	method := ""
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		method = request.Method
+		response.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
+	manager.adminURL = server.URL
+	if err := manager.restoreApps(nil, false); err != nil {
+		t.Fatal(err)
+	}
+	if method != http.MethodDelete {
+		t.Fatalf("expected newly created apps configuration to be deleted, got %s", method)
+	}
+}
+
 func TestWorkspaceRoutePrecedence(t *testing.T) {
 	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@", "*"}}
 	viteRoute := route{Service: "node", Listen: 3001, Target: 3001, Hosts: []string{"@", "*"}}

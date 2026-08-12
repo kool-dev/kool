@@ -134,9 +134,6 @@ func (s *KoolStart) Execute(args []string) (err error) {
 	defer cleanupProxy()
 
 	err = s.Shell().Interactive(s.start, args...)
-	if err != nil && proxyEnabled(s.envStorage) {
-		_ = proxyManager.Remove(args)
-	}
 	return
 }
 
