@@ -193,8 +193,10 @@ func setRecursiveCall(root *cobra.Command) {
 
 		initializeEnvironment := hasWorkingDirArg(args)
 		if initializeEnvironment {
-			restoreEnvironment := clearDirectoryEnvironment()
+			restoreEnvironment := clearDirectoryEnvironment(currentDirectory)
 			defer restoreEnvironment()
+			restoreWorkspace := environment.IsolateWorkspace()
+			defer restoreWorkspace()
 			originalWorkingDir = currentDirectory
 		}
 		childRoot := newRootCmd(environment.NewEnvStorage(), initializeEnvironment)
@@ -220,7 +222,7 @@ func hasWorkingDirArg(args []string) bool {
 	return false
 }
 
-func clearDirectoryEnvironment() func() {
+func clearDirectoryEnvironment(directory string) func() {
 	previous := make(map[string]string)
 	for _, entry := range os.Environ() {
 		parts := strings.SplitN(entry, "=", 2)
@@ -233,6 +235,7 @@ func clearDirectoryEnvironment() func() {
 		"KOOL_WORKSPACE_PATH", "KOOL_WORKSPACE_PROJECT", "KOOL_WORKSPACE_SERVICES",
 		"KOOL_PROXY_DOMAIN", "KOOL_PROXY_HOST", "COMPOSE_PROJECT_NAME", "COMPOSE_FILE",
 	}
+	keys = append(keys, environment.LoadedEnvKeys(directory)...)
 	for _, key := range keys {
 		_ = os.Unsetenv(key)
 	}

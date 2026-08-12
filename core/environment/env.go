@@ -9,6 +9,7 @@ import (
 )
 
 var envFiles = []string{".env.local", ".env"}
+var loadedEnvKeys = make(map[string][]string)
 
 // InitEnvironmentVariables handles the reading of .env files and
 // setting up important environment variables necessary for kool
@@ -37,15 +38,22 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		log.Fatal("Could not evaluate working directory - ", err)
 	}
 	envStorage.Set("PWD", workDir)
+	loadedEnvKeys[workDir] = nil
 
 	for _, envFile := range envFiles {
 		if _, err = os.Stat(envFile); os.IsNotExist(err) {
 			continue
 		}
 
+		before := envKeySet(envStorage.All())
 		err = envStorage.Load(envFile)
 		if err != nil {
 			log.Fatal("Failure loading environment file ", envFile, " error: '", err, "'")
+		}
+		for key := range envKeySet(envStorage.All()) {
+			if !before[key] {
+				loadedEnvKeys[workDir] = append(loadedEnvKeys[workDir], key)
+			}
 		}
 	}
 
@@ -74,6 +82,19 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 	}
 
 	initAsuser(envStorage)
+}
+
+// LoadedEnvKeys returns variables introduced from a directory's environment files.
+func LoadedEnvKeys(directory string) []string {
+	return append([]string(nil), loadedEnvKeys[directory]...)
+}
+
+func envKeySet(entries []string) map[string]bool {
+	keys := make(map[string]bool, len(entries))
+	for _, entry := range entries {
+		keys[strings.SplitN(entry, "=", 2)[0]] = true
+	}
+	return keys
 }
 
 func loadKoolConfig(workDir string) *parser.KoolYaml {

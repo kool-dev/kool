@@ -156,6 +156,16 @@ func CleanupWorkspace() {
 	}
 }
 
+// IsolateWorkspace gives a recursive command its own generated Compose override.
+func IsolateWorkspace() func() {
+	parentOverride := workspaceOverrideFile
+	workspaceOverrideFile = ""
+	return func() {
+		CleanupWorkspace()
+		workspaceOverrideFile = parentOverride
+	}
+}
+
 func composeSourceProject(envStorage EnvStorage, workDir string) string {
 	project := ""
 	for _, file := range composeFiles(envStorage, workDir) {

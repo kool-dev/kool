@@ -228,6 +228,53 @@ func TestWorkingDirectoryInitializesTargetEnvironment(t *testing.T) {
 	}
 }
 
+func TestRecursiveWorkingDirectoryReplacesParentEnvironment(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := t.TempDir()
+	target := t.TempDir()
+	if err = os.WriteFile(filepath.Join(parent, ".env"), []byte("SHARED_ENV=parent\nPARENT_ONLY=present\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(target, ".env"), []byte("SHARED_ENV=target\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Chdir(parent); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Unsetenv("SHARED_ENV"); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Unsetenv("PARENT_ONLY"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(originalDirectory)
+		_ = os.Unsetenv("SHARED_ENV")
+		_ = os.Unsetenv("PARENT_ONLY")
+		originalWorkingDir = ""
+	})
+	parentEnv := environment.NewEnvStorage()
+	environment.InitEnvironmentVariables(parentEnv)
+
+	restore := clearDirectoryEnvironment(parent)
+	defer restore()
+	if err = os.Chdir(target); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewEnvStorage()
+	environment.InitEnvironmentVariables(env)
+
+	if got := env.Get("SHARED_ENV"); got != "target" {
+		t.Errorf("expected target environment value, got %q", got)
+	}
+	if got := env.Get("PARENT_ONLY"); got != "" {
+		t.Errorf("expected parent-only environment value to be cleared, got %q", got)
+	}
+}
+
 func TestRecursiveCall(t *testing.T) {
 	recursive := &cobra.Command{
 		Use: "recursive",
