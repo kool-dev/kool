@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,13 +30,13 @@ const (
 	caddyContainer = "kool-proxy"
 	caddyImage     = "caddy:2.10-alpine"
 	caddyVolume    = "kool_proxy"
-	caddyAdminURL  = "http://127.0.0.1:2019"
+	caddyAdminURL  = "http://localhost"
 	defaultNetwork = "kool_global"
 )
 
 // Manager controls Kool's local proxy routes.
 type Manager interface {
-	Prepare([]string) (func(), error)
+	Prepare([]string) (func(bool), error)
 	Remove([]string) error
 	RemoveProject(string, []string) error
 	Trust() error
@@ -70,8 +72,8 @@ func NewManager(sh shell.Shell, env environment.EnvStorage) Manager {
 }
 
 // Prepare ensures Caddy is running, applies network aliases, and registers routes.
-func (m *DefaultManager) Prepare(services []string) (cleanup func(), err error) {
-	cleanup = func() {}
+func (m *DefaultManager) Prepare(services []string) (finish func(bool), err error) {
+	finish = func(bool) {}
 	var cfg *config
 	if cfg, err = m.loadConfig(); err != nil || cfg == nil {
 		return
@@ -104,7 +106,7 @@ func (m *DefaultManager) Prepare(services []string) (cleanup func(), err error) 
 	var unlock func()
 	if unlock, err = m.acquireConfigLock(); err != nil {
 		cleanupOverride()
-		return func() {}, err
+		return func(bool) {}, err
 	}
 	lockHeld := true
 	defer func() {
@@ -118,40 +120,59 @@ func (m *DefaultManager) Prepare(services []string) (cleanup func(), err error) 
 			unlock()
 			lockHeld = false
 			cleanupOverride()
-			return func() {}, nil
+			return func(bool) {}, nil
 		}
 	} else if err = m.ensureCaddy(cfg.Network, cfg.Routes); err != nil {
 		cleanupOverride()
-		return func() {}, err
+		return func(bool) {}, err
 	}
 
 	var snapshot []byte
 	var snapshotExists bool
 	if snapshot, snapshotExists, err = m.snapshotApps(); err != nil {
 		cleanupOverride()
-		return func() {}, err
+		return func(bool) {}, err
 	}
 	rollback := func() { _ = m.restoreApps(snapshot, snapshotExists) }
 	if err = m.registerTLSUnlocked(cfg.Routes); err != nil {
 		rollback()
 		cleanupOverride()
-		return func() {}, err
+		return func(bool) {}, err
 	}
 	for _, route := range routes {
 		if _, err = m.registerUnlocked(route); err != nil {
 			rollback()
 			cleanupOverride()
-			return func() {}, err
+			return func(bool) {}, err
 		}
 	}
 	if err = m.reconcileRoutesUnlocked(cfg.Routes); err != nil {
 		rollback()
 		cleanupOverride()
-		return func() {}, err
+		return func(bool) {}, err
 	}
-	cleanup = cleanupOverride
+	committed, committedExists, snapshotErr := m.snapshotApps()
+	if snapshotErr != nil {
+		rollback()
+		cleanupOverride()
+		return func(bool) {}, snapshotErr
+	}
 	unlock()
 	lockHeld = false
+	finished := false
+	finish = func(success bool) {
+		if finished {
+			return
+		}
+		finished = true
+		cleanupOverride()
+		if success {
+			return
+		}
+		_ = m.withConfigLock(func() error {
+			return m.restoreAppsIfUnchanged(committed, committedExists, snapshot, snapshotExists)
+		})
+	}
 	return
 }
 
@@ -382,7 +403,12 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 		if configErr != nil {
 			return configErr
 		}
-		args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", network, "-p", "127.0.0.1:2019:2019"}
+		socketPath, socketErr := caddyAdminSocket()
+		if socketErr != nil {
+			return socketErr
+		}
+		_ = os.Remove(socketPath)
+		args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", network}
 		ports := make(map[int]bool)
 		for _, route := range routes {
 			ports[route.Listen] = true
@@ -398,6 +424,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 		}
 		args = append(args,
 			"-v", configPath+":/etc/caddy/caddy.json:ro",
+			"-v", filepath.Dir(socketPath)+":/run/kool",
 			"-v", caddyVolume+":/var/lib/caddy",
 			"-e", "XDG_CONFIG_HOME=/var/lib/caddy/config",
 			"-e", "XDG_DATA_HOME=/var/lib/caddy/data",
@@ -429,7 +456,7 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) error {
 		}
 	}
 	for attempt := 0; attempt < 30; attempt++ {
-		response, requestErr := m.http.Get(m.adminURL + "/config/")
+		response, requestErr := m.request(http.MethodGet, m.adminURL+"/config/", nil)
 		if requestErr == nil {
 			_ = response.Body.Close()
 			if response.StatusCode < 500 {
@@ -451,7 +478,7 @@ func (m *DefaultManager) ensureBaseConfig() (string, error) {
 		return "", err
 	}
 	path := filepath.Join(directory, "caddy.json")
-	content := []byte(`{"admin":{"listen":"0.0.0.0:2019"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
+	content := []byte(`{"admin":{"listen":"unix//run/kool/admin.sock"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
 	if err = os.WriteFile(path, content, 0644); err != nil {
 		return "", err
 	}
@@ -1055,13 +1082,45 @@ func (m *DefaultManager) restoreApps(snapshot []byte, existed bool) error {
 	return nil
 }
 
+func (m *DefaultManager) restoreAppsIfUnchanged(committed []byte, committedExists bool, snapshot []byte, snapshotExists bool) error {
+	current, currentExists, err := m.snapshotApps()
+	if err != nil || currentExists != committedExists || !bytes.Equal(bytes.TrimSpace(current), bytes.TrimSpace(committed)) {
+		return err
+	}
+	return m.restoreApps(snapshot, snapshotExists)
+}
+
 func (m *DefaultManager) request(method, url string, body []byte) (*http.Response, error) {
 	request, err := http.NewRequest(method, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
-	return m.http.Do(request)
+	client := m.http
+	if m.adminURL == caddyAdminURL {
+		socketPath, socketErr := caddyAdminSocket()
+		if socketErr != nil {
+			return nil, socketErr
+		}
+		client = &http.Client{Timeout: m.http.Timeout, Transport: &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				return (&net.Dialer{}).DialContext(ctx, "unix", socketPath)
+			},
+		}}
+	}
+	return client.Do(request)
+}
+
+func caddyAdminSocket() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	directory := filepath.Join(home, ".kool", "proxy")
+	if err = os.MkdirAll(directory, 0755); err != nil {
+		return "", err
+	}
+	return filepath.Join(directory, "admin.sock"), nil
 }
 
 func (m *DefaultManager) alias(service string) string {

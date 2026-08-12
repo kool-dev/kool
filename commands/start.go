@@ -123,15 +123,15 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		return
 	}
 	proxyManager := proxy.NewManager(s.Shell(), s.envStorage)
-	cleanupProxy := func() {}
+	finishProxy := func(bool) {}
 	if proxyEnabled(s.envStorage) {
 		var proxyErr error
-		cleanupProxy, proxyErr = proxyManager.Prepare(args)
+		finishProxy, proxyErr = proxyManager.Prepare(args)
 		if proxyErr != nil {
 			return proxyErr
 		}
 	}
-	defer cleanupProxy()
+	defer func() { finishProxy(err == nil) }()
 
 	err = s.Shell().Interactive(s.start, args...)
 	return

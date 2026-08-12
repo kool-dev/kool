@@ -167,7 +167,7 @@ func TestPrepareRestoresComposeFile(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected fake shell to fail while ensuring Caddy")
 	}
-	cleanup()
+	cleanup(false)
 	if value := env.Get("COMPOSE_FILE"); value != "compose.yml:compose.dev.yml" {
 		t.Fatalf("expected COMPOSE_FILE to be restored, got %q", value)
 	}
@@ -192,7 +192,7 @@ func TestPrepareReconcilesWhenProxyRoutesBecomeEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cleanup()
+	cleanup(true)
 	state.requireRoutes(t, "kool-80", nil)
 }
 
@@ -537,6 +537,46 @@ func TestRestoreAppsDeletesConfigurationWhenPreviouslyMissing(t *testing.T) {
 	}
 	if method != http.MethodDelete {
 		t.Fatalf("expected newly created apps configuration to be deleted, got %s", method)
+	}
+}
+
+func TestBaseConfigUsesPrivateAdminSocket(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
+	path, err := manager.ensureBaseConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), `"listen":"unix//run/kool/admin.sock"`) || strings.Contains(string(content), "0.0.0.0:2019") {
+		t.Fatalf("expected private Unix admin socket, got %s", content)
+	}
+}
+
+func TestRestoreAppsIfUnchangedPreservesConcurrentUpdate(t *testing.T) {
+	current := []byte(`{"http":{"servers":{"current":{}}}}`)
+	restored := false
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if request.Method == http.MethodGet {
+			_, _ = response.Write(current)
+			return
+		}
+		restored = true
+	}))
+	defer server.Close()
+
+	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
+	manager.adminURL = server.URL
+	committed := []byte(`{"http":{"servers":{"committed":{}}}}`)
+	if err := manager.restoreAppsIfUnchanged(committed, true, []byte(`{}`), true); err != nil {
+		t.Fatal(err)
+	}
+	if restored {
+		t.Fatal("did not expect rollback to overwrite concurrent Caddy changes")
 	}
 }
 
