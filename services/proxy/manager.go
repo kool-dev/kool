@@ -123,11 +123,22 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, er
 	}()
 
 	if len(routes) == 0 {
-		if _, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", caddyContainer)); inspectErr != nil {
+		running, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{.State.Running}}", caddyContainer))
+		if inspectErr != nil {
 			unlock()
 			lockHeld = false
 			cleanupOverride()
 			return func(bool) error { return nil }, nil
+		}
+		if running != "true" {
+			if err = m.shell.Interactive(builder.NewCommand("docker", "start"), caddyContainer); err != nil {
+				cleanupOverride()
+				return func(bool) error { return nil }, err
+			}
+		}
+		if err = m.waitForCaddy(); err != nil {
+			cleanupOverride()
+			return func(bool) error { return nil }, err
 		}
 	} else if err = m.ensureCaddy(cfg.Network, cfg.Routes); err != nil {
 		cleanupOverride()
@@ -676,7 +687,7 @@ func (m *DefaultManager) ensureBaseConfig() (string, error) {
 		return "", err
 	}
 	path := filepath.Join(directory, "caddy.json")
-	content := []byte(`{"admin":{"listen":"` + caddyAdminHost + `:2019"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
+	content := []byte(`{"admin":{"listen":"0.0.0.0:2019"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
 	if err = os.WriteFile(path, content, 0644); err != nil {
 		return "", err
 	}
