@@ -381,6 +381,22 @@ func TestRouteGenerationDistinguishesConcurrentPreparations(t *testing.T) {
 	}
 }
 
+func TestRollbackGenerationRemovesOnlyFailedConcurrentRoutes(t *testing.T) {
+	state, server := newCaddyRouteState(t)
+	failed := testRouteManager(server.URL, "failed", "failed.localhost")
+	failed.generation = "failed-generation"
+	succeeded := testRouteManager(server.URL, "succeeded", "succeeded.localhost")
+	succeeded.generation = "succeeded-generation"
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+	mustRegister(t, failed, proxyRoute)
+	mustRegister(t, succeeded, proxyRoute)
+
+	if err := failed.rollbackGeneration([]byte(`{}`), true, []byte(`{}`), true); err != nil {
+		t.Fatal(err)
+	}
+	state.requireRoutes(t, "kool-80", []string{"kool-succeeded-app-80-80"})
+}
+
 func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")

@@ -132,7 +132,8 @@ func (s *KoolStart) Execute(args []string) (err error) {
 		}
 	}
 	defer func() {
-		if finishErr := finishProxy(err == nil); err == nil {
+		persistRoutes := err == nil && !s.Flags.Foreground
+		if finishErr := finishProxy(persistRoutes); err == nil {
 			err = finishErr
 		}
 	}()

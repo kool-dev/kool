@@ -139,27 +139,27 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, er
 		cleanupOverride()
 		return func(bool) error { return nil }, err
 	}
-	rollback := func() { _ = m.restoreApps(snapshot, snapshotExists) }
+	rollback := func() error { return m.restoreApps(snapshot, snapshotExists) }
 	if err = m.registerTLSUnlocked(cfg.Routes); err != nil {
-		rollback()
+		err = errors.Join(err, rollback())
 		cleanupOverride()
 		return func(bool) error { return nil }, err
 	}
 	for _, route := range routes {
 		if _, err = m.registerUnlocked(route); err != nil {
-			rollback()
+			err = errors.Join(err, rollback())
 			cleanupOverride()
 			return func(bool) error { return nil }, err
 		}
 	}
 	if err = m.reconcileRoutesUnlocked(cfg.Routes); err != nil {
-		rollback()
+		err = errors.Join(err, rollback())
 		cleanupOverride()
 		return func(bool) error { return nil }, err
 	}
 	committed, committedExists, snapshotErr := m.snapshotApps()
 	if snapshotErr != nil {
-		rollback()
+		snapshotErr = errors.Join(snapshotErr, rollback())
 		cleanupOverride()
 		return func(bool) error { return nil }, snapshotErr
 	}
@@ -186,7 +186,7 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, er
 			})
 		}
 		return m.withConfigLock(func() error {
-			return m.restoreAppsIfUnchanged(committed, committedExists, snapshot, snapshotExists)
+			return m.rollbackGeneration(committed, committedExists, snapshot, snapshotExists)
 		})
 	}
 	return
@@ -1122,6 +1122,24 @@ func (m *DefaultManager) restoreAppsIfUnchanged(committed []byte, committedExist
 		return err
 	}
 	return m.restoreApps(snapshot, snapshotExists)
+}
+
+func (m *DefaultManager) rollbackGeneration(committed []byte, committedExists bool, snapshot []byte, snapshotExists bool) error {
+	current, currentExists, err := m.snapshotApps()
+	if err != nil {
+		return err
+	}
+	if currentExists == committedExists && bytes.Equal(bytes.TrimSpace(current), bytes.TrimSpace(committed)) {
+		return m.restoreApps(snapshot, snapshotExists)
+	}
+	return m.filterProjectRoutesUnlocked(func(route caddyRouteMetadata) bool {
+		for _, handle := range route.Handle {
+			if strings.HasSuffix(handle.ID, "-"+m.generation) {
+				return true
+			}
+		}
+		return false
+	})
 }
 
 func (m *DefaultManager) request(method, url string, body []byte) (*http.Response, error) {

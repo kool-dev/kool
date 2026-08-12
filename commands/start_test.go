@@ -199,6 +199,18 @@ func TestStartRejectsSharedServiceInWorkspace(t *testing.T) {
 	}
 }
 
+func TestForegroundStartDoesNotPersistProxyRoutes(t *testing.T) {
+	koolStart := newFakeKoolStart()
+	koolStart.Flags.Foreground = true
+
+	if err := koolStart.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+	if containsArg(koolStart.start.(*builder.FakeCommand).ArgsAppend, "-d") {
+		t.Error("did not expect detached mode for foreground start")
+	}
+}
+
 func TestFailedDependenciesStartCommand(t *testing.T) {
 	koolStart := newFakeKoolStart()
 	koolStart.check.(*checker.FakeChecker).MockError = errors.New("dependencies")
