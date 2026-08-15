@@ -3,21 +3,13 @@ package environment
 import (
 	"kool-dev/kool/core/parser"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/compose-spec/compose-go/template"
 )
 
-func initProxy(envStorage EnvStorage, workDir string) {
-	var config *parser.KoolYaml
-	var err error
-	for _, name := range []string{"kool.yml", "kool.yaml"} {
-		if config, err = parser.ParseKoolYaml(filepath.Join(workDir, name)); err == nil {
-			break
-		}
-	}
-	if err != nil || config.Proxy == nil {
+func initProxy(envStorage EnvStorage, config *parser.KoolYaml) {
+	if config == nil || config.Proxy == nil {
 		return
 	}
 

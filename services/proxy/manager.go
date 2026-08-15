@@ -289,20 +289,10 @@ func (m *DefaultManager) Trust() error {
 }
 
 func (m *DefaultManager) loadConfig() (*config, error) {
-	workDir := m.env.Get("PWD")
-	var file string
-	for _, name := range []string{"kool.yml", "kool.yaml"} {
-		candidate := filepath.Join(workDir, name)
-		if _, err := os.Stat(candidate); err == nil {
-			file = candidate
-			break
-		}
-	}
-	if file == "" {
+	parsed, err := parser.LoadKoolYaml(m.env.Get("PWD"))
+	if errors.Is(err, parser.ErrKoolYmlNotFound) {
 		return nil, nil
 	}
-
-	parsed, err := parser.ParseKoolYaml(file)
 	if err != nil || parsed.Proxy == nil {
 		return nil, err
 	}

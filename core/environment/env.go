@@ -68,7 +68,7 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 	if config != nil && config.Proxy != nil {
 		envStorage.Set("KOOL_PROXY_ENABLED", "true")
 		initSourceProject(envStorage, workDir)
-		initProxy(envStorage, workDir)
+		initProxy(envStorage, config)
 	}
 
 	// Now that we loaded up the files, we will check for
@@ -110,14 +110,15 @@ func envKeySet(entries []string) map[string]bool {
 	return keys
 }
 
+// loadKoolConfig decodes the kool config file for the given directory, or
+// returns nil when there is none - or when it cannot be decoded, since
+// environment setup runs before we have any means of reporting the failure.
 func loadKoolConfig(workDir string) *parser.KoolYaml {
-	for _, name := range []string{"kool.yml", "kool.yaml"} {
-		config, err := parser.ParseKoolYaml(filepath.Join(workDir, name))
-		if err == nil {
-			return config
-		}
+	config, err := parser.LoadKoolYaml(workDir)
+	if err != nil {
+		return nil
 	}
-	return nil
+	return config
 }
 
 func initSourceProject(envStorage EnvStorage, workDir string) {

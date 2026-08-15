@@ -6,7 +6,6 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/parser"
 	"kool-dev/kool/core/shell"
-	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -35,15 +34,13 @@ func configuredWorkspaceServices(env environment.EnvStorage) []string {
 	if services := workspaceServices(env); len(services) > 0 {
 		return services
 	}
-	for _, name := range []string{"kool.yml", "kool.yaml"} {
-		config, err := parser.ParseKoolYaml(filepath.Join(env.Get("PWD"), name))
-		if err == nil {
-			services := append([]string(nil), config.Workspaces...)
-			sort.Strings(services)
-			return services
-		}
+	config, err := parser.LoadKoolYaml(env.Get("PWD"))
+	if err != nil {
+		return nil
 	}
-	return nil
+	services := append([]string(nil), config.Workspaces...)
+	sort.Strings(services)
+	return services
 }
 
 func sourceProject(env environment.EnvStorage) string {

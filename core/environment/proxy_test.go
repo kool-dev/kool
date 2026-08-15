@@ -13,7 +13,7 @@ func TestInitProxySourceHost(t *testing.T) {
 	}
 	env := NewFakeEnvStorage()
 
-	initProxy(env, workDir)
+	initProxy(env, loadKoolConfig(workDir))
 
 	if got := env.Get("KOOL_PROXY_DOMAIN"); got != "exlink.localhost" {
 		t.Errorf("expected proxy domain, got %q", got)
@@ -32,7 +32,7 @@ func TestInitProxyWorkspaceHost(t *testing.T) {
 	env.Set("KOOL_WORKSPACE", "true")
 	env.Set("KOOL_WORKSPACE_NAME", "vite-smoke")
 
-	initProxy(env, workDir)
+	initProxy(env, loadKoolConfig(workDir))
 
 	if got := env.Get("KOOL_PROXY_HOST"); got != "vite-smoke.workspace.exlink.localhost" {
 		t.Errorf("expected workspace proxy host, got %q", got)
@@ -49,7 +49,7 @@ func TestInitProxyGitWorktreeHost(t *testing.T) {
 	env.Set("KOOL_WORKSPACE_NAME", "vite-smoke")
 	env.Set("KOOL_WORKSPACE_PROVIDER", "worktree")
 
-	initProxy(env, workDir)
+	initProxy(env, loadKoolConfig(workDir))
 
 	if got := env.Get("KOOL_PROXY_HOST"); got != "vite-smoke.workspace.exlink.localhost" {
 		t.Errorf("expected Git worktree proxy host, got %q", got)

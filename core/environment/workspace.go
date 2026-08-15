@@ -3,7 +3,6 @@ package environment
 import (
 	"crypto/sha256"
 	"fmt"
-	"kool-dev/kool/core/parser"
 	"os"
 	"path/filepath"
 	"sort"
@@ -96,11 +95,8 @@ type workspaceComposeConfig struct {
 }
 
 func initWorkspaceCompose(envStorage EnvStorage, workDir string) []string {
-	koolConfig, err := parser.ParseKoolYaml(filepath.Join(workDir, "kool.yml"))
-	if err != nil {
-		koolConfig, err = parser.ParseKoolYaml(filepath.Join(workDir, "kool.yaml"))
-	}
-	if err != nil || len(koolConfig.Workspaces) == 0 {
+	koolConfig := loadKoolConfig(workDir)
+	if koolConfig == nil || len(koolConfig.Workspaces) == 0 {
 		return nil
 	}
 	unique := make(map[string]bool, len(koolConfig.Workspaces))
