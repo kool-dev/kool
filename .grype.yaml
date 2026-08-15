@@ -16,3 +16,17 @@ ignore:
   #   https://github.com/docker-library/docker
   # Remove this entry once `grype kooldev/kool:<tag>` no longer reports it.
   - vulnerability: CVE-2026-27143
+  # Inherited from docker:29-cli (Alpine 3.22). libcurl 8.20.0-r1 is
+  # transitively pulled in by `apk add git`; fixed in 8.21.0-r0. Will clear
+  # automatically when docker-library/docker rebuilds the 29-cli image with
+  # an updated Alpine base. Tracked upstream:
+  #   https://github.com/docker-library/docker
+  # Remove these entries once `grype kooldev/kool:<tag>` no longer reports them.
+  - vulnerability: CVE-2026-8925
+  - vulnerability: CVE-2026-11856
+  - vulnerability: CVE-2026-9079
+  - vulnerability: CVE-2026-10536
+  - vulnerability: CVE-2026-8927
+  - vulnerability: CVE-2026-8924
+  - vulnerability: CVE-2026-8926
+  - vulnerability: CVE-2026-11564

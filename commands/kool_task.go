@@ -40,7 +40,7 @@ func NewKoolTask(message string, service KoolService) *DefaultKoolTask {
 
 // Run runs task
 func (t *DefaultKoolTask) Run(args []string) (err error) {
-	if !t.Shell().IsTerminal() {
+	if !t.Shell().IsTerminal() || t.Shell().IsJSONOutput() {
 		return t.Execute(args)
 	}
 

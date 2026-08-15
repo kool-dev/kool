@@ -80,6 +80,10 @@ Complete documentation is available at https://kool.dev/docs`,
 				env.Set("KOOL_VERBOSE", verbose.Value.String())
 			}
 
+			if output := cmd.Flags().Lookup("output"); output != nil && output.Value.String() == "json" {
+				env.Set("KOOL_OUTPUT", "json")
+			}
+
 			if !hasWarnedDevelopmentVersion && version == DEV_VERSION && shell.NewTerminalChecker().IsTerminal(cmd.OutOrStdout()) {
 				shell.NewShell().Warning("Warning: you are executing a development version of kool.")
 				hasWarnedDevelopmentVersion = true
@@ -153,6 +157,7 @@ Complete documentation is available at https://kool.dev/docs`,
 	}
 
 	cmd.PersistentFlags().Bool("verbose", false, "Increases output verbosity")
+	cmd.PersistentFlags().String("output", "", "Output format: json (machine-readable). For 'kool run', place before the script name.")
 	cmd.PersistentFlags().StringP("working_dir", "w", "", "Changes the working directory for the command")
 	return
 }

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -255,5 +256,118 @@ cache | Not running |  | output`
 
 	if output != expected {
 		t.Errorf("Expected '%s', got '%s'", expected, output)
+	}
+}
+
+func newFakeKoolStatusJSON() *KoolStatus {
+	f := &KoolStatus{
+		*(newDefaultKoolService().Fake()),
+		&checker.FakeChecker{},
+		&network.FakeHandler{},
+		environment.NewFakeEnvStorage(),
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
+		&shell.FakeTableWriter{},
+	}
+
+	f.shell.(*shell.FakeShell).MockIsJSONOutput = true
+	f.shell.(*shell.FakeShell).MockErrStream = io.Discard
+	f.shell.(*shell.FakeShell).MockOutStream = io.Discard
+
+	return f
+}
+
+func TestStatusJSONOutput(t *testing.T) {
+	f := newFakeKoolStatusJSON()
+
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up About an hour|0.0.0.0:80->80/tcp, 9000/tcp"
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+	if len(fakeShell.OutLines) == 0 {
+		t.Fatal("expected JSON output")
+	}
+
+	var output statusOutputJSON
+	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &output); err != nil {
+		t.Fatalf("failed to parse JSON output: %v\nraw: %s", err, fakeShell.OutLines[0])
+	}
+
+	if output.Count != 1 {
+		t.Errorf("expected count 1, got %d", output.Count)
+	}
+
+	if len(output.Services) != 1 {
+		t.Fatalf("expected 1 service, got %d", len(output.Services))
+	}
+
+	svc := output.Services[0]
+	if svc.Service != "app" {
+		t.Errorf("expected service 'app', got '%s'", svc.Service)
+	}
+	if !svc.Running {
+		t.Error("expected running to be true")
+	}
+	if svc.State != "Up About an hour" {
+		t.Errorf("expected state 'Up About an hour', got '%s'", svc.State)
+	}
+	if svc.Ports != "0.0.0.0:80->80/tcp, 9000/tcp" {
+		t.Errorf("expected ports '0.0.0.0:80->80/tcp, 9000/tcp', got '%s'", svc.Ports)
+	}
+}
+
+func TestStatusJSONOutputNotRunning(t *testing.T) {
+	f := newFakeKoolStatusJSON()
+
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Exited an hour ago"
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+	var output statusOutputJSON
+	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &output); err != nil {
+		t.Fatalf("failed to parse JSON output: %v", err)
+	}
+
+	if output.Services[0].Running {
+		t.Error("expected running to be false for exited container")
+	}
+}
+
+func TestStatusJSONOutputMultipleServices(t *testing.T) {
+	f := newFakeKoolStatusJSON()
+
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "cache\napp"
+	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up|0.0.0.0:80->80/tcp"
+
+	cmd := NewStatusCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing status command; error: %v", err)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+	var output statusOutputJSON
+	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &output); err != nil {
+		t.Fatalf("failed to parse JSON output: %v", err)
+	}
+
+	if output.Count != 2 {
+		t.Errorf("expected count 2, got %d", output.Count)
 	}
 }

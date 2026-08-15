@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
@@ -17,6 +18,15 @@ type KoolInfo struct {
 
 	envStorage                  environment.EnvStorage
 	cmdDocker, cmdDockerCompose builder.Command
+}
+
+type infoOutputJSON struct {
+	KoolVersion          string            `json:"kool_version"`
+	KoolBinPath          string            `json:"kool_bin_path"`
+	DockerVersion        string            `json:"docker_version"`
+	DockerBinPath        string            `json:"docker_bin_path"`
+	DockerComposeVersion string            `json:"docker_compose_version"`
+	Env                  map[string]string `json:"env"`
 }
 
 // NewInfoCmd initializes new kool info command
@@ -55,6 +65,10 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 
 	if len(args) > 0 {
 		filter = args[0]
+	}
+
+	if i.Shell().IsJSONOutput() {
+		return i.executeJSON(filter)
 	}
 
 	// kool CLI info
@@ -108,5 +122,59 @@ func (i *KoolInfo) Execute(args []string) (err error) {
 	i.Shell().Println("")
 	i.Shell().Println("kool installation seems to be working as expected.")
 
+	return
+}
+
+func (i *KoolInfo) executeJSON(filter string) (err error) {
+	var (
+		output string
+		info   infoOutputJSON
+	)
+
+	info.KoolVersion = version
+
+	if output, err = os.Executable(); err != nil {
+		return
+	}
+	info.KoolBinPath = output
+
+	if output, err = i.Shell().Exec(i.cmdDocker); err != nil {
+		return
+	}
+	info.DockerVersion = output
+
+	if err = i.shell.LookPath(i.cmdDocker); err != nil {
+		return
+	}
+	info.DockerBinPath, _ = exec.LookPath(i.cmdDocker.Cmd())
+
+	if output, err = i.Shell().Exec(i.cmdDockerCompose); err != nil {
+		i.Shell().Warning("Docker Compose:", err.Error())
+		i.Shell().Error(fmt.Errorf("you need to have Docker Compose V2 available; make sure to update your Docker installation"))
+		return
+	}
+	info.DockerComposeVersion = output
+
+	info.Env = map[string]string{}
+	for _, envVar := range i.envStorage.All() {
+		if !strings.Contains(envVar, filter) {
+			continue
+		}
+		parts := strings.SplitN(envVar, "=", 2)
+		key, value := parts[0], ""
+		if len(parts) > 1 {
+			value = parts[1]
+		}
+		if key == "KOOL_API_TOKEN" {
+			value = "***************** [redacted]"
+		}
+		info.Env[key] = value
+	}
+
+	var payload []byte
+	if payload, err = json.Marshal(info); err != nil {
+		return
+	}
+	i.Shell().Println(string(payload))
 	return
 }

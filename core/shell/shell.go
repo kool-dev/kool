@@ -71,6 +71,7 @@ type Shell interface {
 	Error(error)
 
 	IsTerminal() bool
+	IsJSONOutput() bool
 }
 
 // NewShell creates a new shell
@@ -93,6 +94,11 @@ func (s *DefaultShell) InStream() io.Reader {
 // to a full input/output terminal
 func (s *DefaultShell) IsTerminal() bool {
 	return NewTerminalChecker().IsTerminal(s.inStream, s.outStream)
+}
+
+// IsJSONOutput tells whether the shell is in JSON output mode
+func (s *DefaultShell) IsJSONOutput() bool {
+	return s.env.Get("KOOL_OUTPUT") == "json"
 }
 
 // SetInStream set input stream
@@ -235,24 +241,53 @@ func (s *DefaultShell) Printf(format string, a ...interface{}) {
 	_, _ = fmt.Fprintf(s.OutStream(), format, a...)
 }
 
+// diagnosticStream returns the stream for diagnostic messages.
+// In JSON output mode, diagnostics go to stderr so stdout stays clean for data.
+func (s *DefaultShell) diagnosticStream() io.Writer {
+	if s.IsJSONOutput() {
+		return s.errStream
+	}
+	return s.outStream
+}
+
+// useColor returns whether color output should be applied.
+// Color is disabled when NO_COLOR env is set (handled by gookit/color)
+// or when the output stream is not a terminal.
+func (s *DefaultShell) useColor() bool {
+	return color.Enable && NewTerminalChecker().IsTerminal(s.outStream)
+}
+
 // Error error output
 func (s *DefaultShell) Error(err error) {
-	_, _ = fmt.Fprintf(s.OutStream(), "%v\n", color.New(color.BgRed, color.FgWhite).Sprintf("error: %v", err))
+	msg := fmt.Sprintf("error: %v", err)
+	if s.useColor() {
+		msg = color.New(color.BgRed, color.FgWhite).Sprint(msg)
+	}
+	_, _ = fmt.Fprintln(s.diagnosticStream(), msg)
 }
 
 // Warning warning message
 func (s *DefaultShell) Warning(out ...interface{}) {
-	_, _ = fmt.Fprintln(s.OutStream(), color.New(color.Yellow).Sprint(out...))
+	if s.useColor() {
+		out = []interface{}{color.New(color.Yellow).Sprint(out...)}
+	}
+	_, _ = fmt.Fprintln(s.diagnosticStream(), out...)
 }
 
 // Success success message
 func (s *DefaultShell) Success(out ...interface{}) {
-	_, _ = fmt.Fprintln(s.OutStream(), color.New(color.Green).Sprint(out...))
+	if s.useColor() {
+		out = []interface{}{color.New(color.Green).Sprint(out...)}
+	}
+	_, _ = fmt.Fprintln(s.diagnosticStream(), out...)
 }
 
 // Info info message
 func (s *DefaultShell) Info(out ...interface{}) {
-	_, _ = fmt.Fprintln(s.OutStream(), color.New(color.Cyan).Sprint(out...))
+	if s.useColor() {
+		out = []interface{}{color.New(color.Cyan).Sprint(out...)}
+	}
+	_, _ = fmt.Fprintln(s.diagnosticStream(), out...)
 }
 
 // Exec will execute the given command silently and return the combined
