@@ -1,12 +1,15 @@
 package environment
 
 import (
+	"kool-dev/kool/core/parser"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 var envFiles = []string{".env.local", ".env"}
+var loadedEnvKeys = make(map[string][]string)
 
 // InitEnvironmentVariables handles the reading of .env files and
 // setting up important environment variables necessary for kool
@@ -35,16 +38,37 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 		log.Fatal("Could not evaluate working directory - ", err)
 	}
 	envStorage.Set("PWD", workDir)
+	envDirectory := canonicalDirectory(workDir)
+	loadedEnvKeys[envDirectory] = nil
 
 	for _, envFile := range envFiles {
 		if _, err = os.Stat(envFile); os.IsNotExist(err) {
 			continue
 		}
 
+		before := envKeySet(envStorage.All())
 		err = envStorage.Load(envFile)
 		if err != nil {
 			log.Fatal("Failure loading environment file ", envFile, " error: '", err, "'")
 		}
+		for key := range envKeySet(envStorage.All()) {
+			if !before[key] {
+				loadedEnvKeys[envDirectory] = append(loadedEnvKeys[envDirectory], key)
+			}
+		}
+	}
+
+	config := loadKoolConfig(workDir)
+	if config != nil && len(config.Workspaces) > 0 {
+		envStorage.Set("KOOL_WORKSPACES_ENABLED", "true")
+		initRift(envStorage, workDir)
+		initGitWorktree(envStorage, workDir)
+		initSourceProject(envStorage, workDir)
+	}
+	if config != nil && config.Proxy != nil {
+		envStorage.Set("KOOL_PROXY_ENABLED", "true")
+		initSourceProject(envStorage, workDir)
+		initProxy(envStorage, config)
 	}
 
 	// Now that we loaded up the files, we will check for
@@ -59,4 +83,54 @@ func InitEnvironmentVariables(envStorage EnvStorage) {
 	}
 
 	initAsuser(envStorage)
+}
+
+// LoadedEnvKeys returns variables introduced from a directory's environment files.
+func LoadedEnvKeys(directory string) []string {
+	return append([]string(nil), loadedEnvKeys[canonicalDirectory(directory)]...)
+}
+
+func canonicalDirectory(directory string) string {
+	canonical, err := filepath.EvalSymlinks(directory)
+	if err == nil {
+		return canonical
+	}
+	canonical, err = filepath.Abs(directory)
+	if err == nil {
+		return canonical
+	}
+	return directory
+}
+
+func envKeySet(entries []string) map[string]bool {
+	keys := make(map[string]bool, len(entries))
+	for _, entry := range entries {
+		keys[strings.SplitN(entry, "=", 2)[0]] = true
+	}
+	return keys
+}
+
+// loadKoolConfig decodes the kool config file for the given directory, or
+// returns nil when there is none - or when it cannot be decoded, since
+// environment setup runs before we have any means of reporting the failure.
+func loadKoolConfig(workDir string) *parser.KoolYaml {
+	config, err := parser.LoadKoolYaml(workDir)
+	if err != nil {
+		return nil
+	}
+	return config
+}
+
+func initSourceProject(envStorage EnvStorage, workDir string) {
+	if envStorage.Get("KOOL_WORKSPACE_SOURCE_PROJECT") != "" {
+		return
+	}
+	project := envStorage.Get("COMPOSE_PROJECT_NAME")
+	if project == "" {
+		project = composeSourceProject(envStorage, workDir)
+	}
+	if project == "" {
+		project = composeProjectName(filepath.Base(workDir))
+	}
+	envStorage.Set("KOOL_WORKSPACE_SOURCE_PROJECT", project)
 }

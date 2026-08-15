@@ -17,6 +17,21 @@ type FakeRaceShell struct {
 	shell.FakeShell
 }
 
+type statusRecordingShell struct {
+	shell.FakeShell
+	args [][]string
+}
+
+func (f *statusRecordingShell) Exec(command builder.Command, extraArgs ...string) (string, error) {
+	if len(extraArgs) > 0 {
+		f.args = append(f.args, append([]string(nil), extraArgs...))
+	}
+	if fake, ok := command.(*builder.FakeCommand); ok {
+		return fake.MockExecOut, fake.MockExecError
+	}
+	return "", nil
+}
+
 func (f *FakeRaceShell) Exec(command builder.Command, extraArgs ...string) (string, error) {
 	output := command.(*builder.FakeCommand).MockExecOut
 	return output, nil
@@ -31,11 +46,14 @@ func newFakeKoolStatus() *KoolStatus {
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 		&shell.FakeTableWriter{},
 	}
 
 	fs.shell.(*shell.FakeShell).MockErrStream = io.Discard
 	fs.shell.(*shell.FakeShell).MockOutStream = io.Discard
+	fs.env.Set("KOOL_NAME", "example")
 
 	return fs
 }
@@ -157,6 +175,86 @@ func TestNoServicesStatusCommand(t *testing.T) {
 	}
 }
 
+func TestStatusFiltersWorkspaceServices(t *testing.T) {
+	f := newFakeKoolStatus()
+	f.shell = &FakeRaceShell{FakeShell: shell.FakeShell{MockErrStream: io.Discard, MockOutStream: io.Discard}}
+	f.env.Set("KOOL_WORKSPACE", "true")
+	f.env.Set("KOOL_WORKSPACES_ENABLED", "true")
+	f.env.Set("KOOL_WORKSPACE_SERVICES", "app,node")
+	f.env.Set("KOOL_WORKSPACE_SOURCE_PROJECT", "example")
+	f.env.Set("KOOL_WORKSPACE_PROJECT", "example-workspace-task-a")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app\ndatabase\nnode"
+	f.getProjectServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+
+	cmd := NewStatusCommand(f)
+	if err := cmd.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := f.table.(*shell.FakeTableWriter).TableOut
+	for _, expected := range []string{"example | database", "example-workspace-task-a | app", "example-workspace-task-a | node"} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected status to contain %q, got %q", expected, output)
+		}
+	}
+	if strings.Contains(output, "example-workspace-task-a | database") {
+		t.Errorf("did not expect shared database in workspace project, got %q", output)
+	}
+}
+
+func TestStatusShowsMainAndAllActiveWorkspaces(t *testing.T) {
+	f := newFakeKoolStatus()
+	f.shell = &FakeRaceShell{FakeShell: shell.FakeShell{MockErrStream: io.Discard, MockOutStream: io.Discard}}
+	f.env.Set("KOOL_NAME", "example")
+	f.env.Set("KOOL_WORKSPACES_ENABLED", "true")
+	f.env.Set("KOOL_WORKSPACE_SERVICES", "app")
+	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = "app\ndatabase"
+	f.getProjectsCmd.(*builder.FakeCommand).MockExecOut = "example-workspace-task-b\nexample-workspace-task-a\nexample-workspace-task-b"
+	f.getProjectServiceIDCmd.(*builder.FakeCommand).MockExecOut = "100"
+
+	if err := NewStatusCommand(f).Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	output := f.table.(*shell.FakeTableWriter).TableOut
+	for _, expected := range []string{
+		"example | app",
+		"example | database",
+		"example-workspace-task-a | app",
+		"example-workspace-task-b | app",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected status to contain %q, got %q", expected, output)
+		}
+	}
+	if strings.Contains(output, "example-workspace-task-a | database") || strings.Contains(output, "example-workspace-task-b | database") {
+		t.Errorf("did not expect shared database in workspace projects, got %q", output)
+	}
+}
+
+func TestWorkspaceServiceInfoExcludesOneOffContainers(t *testing.T) {
+	f := newFakeKoolStatus()
+	recorder := &statusRecordingShell{}
+	f.shell = recorder
+	f.getProjectServiceIDCmd.(*builder.FakeCommand).MockExecOut = "regular-id\noneoff-id\n"
+	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up 1 minute|80/tcp"
+
+	running, _, _, err := f.getServiceInfo("example-workspace-task", "app")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !running {
+		t.Error("expected canonical service container to be running")
+	}
+	var recorded []string
+	for _, args := range recorder.args {
+		recorded = append(recorded, args...)
+	}
+	if !strings.Contains(strings.Join(recorded, " "), "label=com.docker.compose.oneoff=False") {
+		t.Fatalf("expected one-off container filter, got %v", recorder.args)
+	}
+}
+
 func TestFailedGetServicesStatusCommand(t *testing.T) {
 	f := newFakeKoolStatus()
 
@@ -227,6 +325,8 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
+		&builder.FakeCommand{},
+		&builder.FakeCommand{},
 		&shell.FakeTableWriter{},
 	}
 
@@ -238,6 +338,7 @@ func TestServicesOrderStatusCommand(t *testing.T) {
 	}
 	f.getServicesCmd.(*builder.FakeCommand).MockExecOut = `cache
 app`
+	f.env.Set("KOOL_NAME", "example")
 	f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = "output"
 	f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "output"
 
