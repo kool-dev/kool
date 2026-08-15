@@ -1,6 +1,6 @@
 # Workspaces and local proxy
 
-Kool detects workspaces managed by [Rift](https://github.com/anomalyco/rift) and linked [Git worktrees](https://git-scm.com/docs/git-worktree). Each workspace runs selected application services in a separate Compose project while databases, caches, and other infrastructure remain in the original project.
+Kool detects workspaces managed by [Rift](https://github.com/anomalyco/rift) or linked [Git worktrees](https://git-scm.com/docs/git-worktree). Each workspace runs selected application services in a separate Compose project while databases, caches, and other infrastructure remain in the original project.
 
 ## Configuration
 
