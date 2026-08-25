@@ -6,6 +6,12 @@ actions:
     ref: 'php-version'
     default: 'PHP 8.2'
     options:
+      - name: 'PHP 8.5'
+        actions:
+          - recipe: php-8.5
+      - name: 'PHP 8.4'
+        actions:
+          - recipe: php-8.4
       - name: 'PHP 8.3'
         actions:
           - recipe: php-8.3
