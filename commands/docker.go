@@ -15,6 +15,7 @@ type KoolDockerFlags struct {
 	Volumes      []string
 	Publish      []string
 	Network      []string
+	User         string
 }
 
 // KoolDocker holds handlers and functions to implement the docker command logic
@@ -39,7 +40,7 @@ func AddKoolDocker(root *cobra.Command) {
 func NewKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*newDefaultKoolService(),
-		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
 		environment.NewEnvStorage(),
 		builder.NewCommand("docker", "run", "--init", "--rm", "-w", "/app", "-i"),
 	}
@@ -56,6 +57,12 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 	// only adds env ASUSER if we are not running on MacOS
 	if asuser := d.envStorage.Get("KOOL_ASUSER"); asuser != "" && runtime.GOOS != "darwin" {
 		d.dockerRun.AppendArgs("--env", "ASUSER="+asuser)
+	}
+
+	// run the container as the given user/UID (e.g. to keep created files
+	// owned by the host user on images that do not honor kool's ASUSER)
+	if d.Flags.User != "" {
+		d.dockerRun.AppendArgs("--user", d.Flags.User)
 	}
 
 	if len(d.Flags.EnvVariables) > 0 {
@@ -107,6 +114,7 @@ the [COMMAND] to provide optional arguments required by the COMMAND.`,
 	cmd.Flags().StringArrayVarP(&docker.Flags.Volumes, "volume", "v", []string{}, "Bind mount a volume.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Publish, "publish", "p", []string{}, "Publish a container's port(s) to the host.")
 	cmd.Flags().StringArrayVarP(&docker.Flags.Network, "network", "n", []string{}, "Connect a container to a network.")
+	cmd.Flags().StringVarP(&docker.Flags.User, "user", "u", "", "Username or UID (format: <name|uid>[:<group|gid>]) to run the container as.")
 
 	//After a non-flag arg, stop parsing flags
 	cmd.Flags().SetInterspersed(false)

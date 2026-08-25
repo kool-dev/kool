@@ -257,3 +257,17 @@ cache | Not running |  | output`
 		t.Errorf("Expected '%s', got '%s'", expected, output)
 	}
 }
+
+func TestParseComposeServicesIgnoresWarnings(t *testing.T) {
+	out := "time=\"2026-08-25T17:03:52-03:00\" level=warning msg=\"the attribute `version` is obsolete\"\napp\n"
+	services := parseComposeServices(out)
+
+	if len(services) != 1 || services[0] != "app" {
+		t.Errorf("expected only 'app', got %v", services)
+	}
+
+	idOut := "time=\"2026-08-25T17:03:52-03:00\" level=warning msg=\"the attribute `version` is obsolete\"\nabc123def456\n"
+	if got := firstComposeToken(idOut); got != "abc123def456" {
+		t.Errorf("expected container id, got %q", got)
+	}
+}

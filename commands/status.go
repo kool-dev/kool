@@ -148,14 +148,31 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 		return
 	}
 
-	parsedServices := strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n")
-	for _, s := range parsedServices {
-		if s != "" {
-			services = append(services, s)
-		}
-	}
-
+	services = parseComposeServices(output)
 	return
+}
+
+func composeTokenLines(output string) (tokens []string) {
+	for _, line := range strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.ContainsAny(line, " \t") {
+			continue
+		}
+		tokens = append(tokens, line)
+	}
+	return
+}
+
+func parseComposeServices(output string) []string {
+	return composeTokenLines(output)
+}
+
+func firstComposeToken(output string) string {
+	tokens := composeTokenLines(output)
+	if len(tokens) == 0 {
+		return ""
+	}
+	return tokens[0]
 }
 
 func (s *KoolStatus) fetchServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
@@ -173,12 +190,19 @@ func (s *KoolStatus) fetchServiceInfo(service string, chStatus chan *statusServi
 }
 
 func (s *KoolStatus) getServiceInfo(service string) (isRunning bool, status, port string, err error) {
-	var serviceID string
-	if serviceID, err = s.Shell().Exec(s.getServiceIDCmd, service); err == nil && serviceID != "" {
-		status, port = s.getStatusPort(serviceID)
-		if strings.HasPrefix(status, "Up") {
-			isRunning = true
-		}
+	var output, serviceID string
+	if output, err = s.Shell().Exec(s.getServiceIDCmd, service); err != nil {
+		return
+	}
+
+	// docker compose may mix warnings into combined output; keep only the container id
+	if serviceID = firstComposeToken(output); serviceID == "" {
+		return
+	}
+
+	status, port = s.getStatusPort(serviceID)
+	if strings.HasPrefix(status, "Up") {
+		isRunning = true
 	}
 	return
 }

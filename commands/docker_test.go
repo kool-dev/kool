@@ -14,7 +14,7 @@ import (
 func newFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*(newDefaultKoolService().Fake()),
-		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker"},
 	}
@@ -23,7 +23,7 @@ func newFakeKoolDocker() *KoolDocker {
 func newFailedFakeKoolDocker() *KoolDocker {
 	return &KoolDocker{
 		*(newDefaultKoolService().Fake()),
-		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}},
+		&KoolDockerFlags{[]string{}, []string{}, []string{}, []string{}, ""},
 		environment.NewFakeEnvStorage(),
 		&builder.FakeCommand{MockCmd: "docker", MockInteractiveError: errors.New("error docker")},
 	}
@@ -49,6 +49,10 @@ func TestNewKoolDocker(t *testing.T) {
 
 		if len(k.Flags.Publish) > 0 {
 			t.Errorf("bad default value for Publish flag on default KoolDocker instance")
+		}
+
+		if k.Flags.User != "" {
+			t.Errorf("bad default value for User flag on default KoolDocker instance")
 		}
 	}
 
@@ -166,6 +170,24 @@ func TestEnvFlagNewDockerCommand(t *testing.T) {
 
 	if len(argsAppend) != 4 || argsAppend[0] != "--env" || argsAppend[1] != "VAR_TEST=1" {
 		t.Errorf("bad arguments to KoolDocker.dockerRun Command with EnvVariables flag")
+	}
+}
+
+func TestUserFlagNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
+	cmd := NewDockerCommand(f)
+
+	cmd.SetArgs([]string{"--user=1000", "image"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing docker command; error: %v", err)
+	}
+
+	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
+
+	if len(argsAppend) != 4 || argsAppend[0] != "--user" || argsAppend[1] != "1000" {
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with User flag: %v", argsAppend)
 	}
 }
 
