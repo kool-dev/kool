@@ -1,9 +1,9 @@
-# Start a Express.js Project with Docker in 2 Easy Steps
+# Start a Bun Project with Docker in 2 Easy Steps
 
-1. Run `kool create expressjs my-project`
+1. Run `kool create bunjs my-project`
 2. Run `kool run setup`
 
-> Yes, using **kool** + Docker to create and work on new Express.js projects is that easy!
+> Yes, using **kool** + Docker to create and work on new [Bun](https://bun.sh) projects is that easy!
 
 ## Requirements
 
@@ -17,32 +17,27 @@ $ kool self-update
 
 > Please note that it helps to have a basic understanding of how Docker and Docker Compose work to use Kool with Docker.
 
-## 1. Run `kool create expressjs my-project`
+## 1. Run `kool create bunjs my-project`
 
-Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Express.js project:
-
-```bash
-$ kool create expressjs my-project
-```
-
-Under the hood, this command will create a "Hello world!" **app.js** file in the root of your new project directory.
-
-After installing Express.js, `kool create` automatically runs the `kool preset expressjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
+Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to create your new Bun project:
 
 ```bash
-$ Preset expressjs is initializing!
-
-? Which javascript package manager do you want to use [Use arrows to move, type to filter]
-> npm
-  yarn
-  bun
-
-$ Preset expressjs initialized!
+$ kool create bunjs my-project
 ```
 
-> If you pick **bun**, the `app` service in your **docker-compose.yml** is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun app.js`), so your app runs on the Bun runtime. Otherwise it uses `kooldev/node:20`.
+Under the hood, this command will create a "Hello World" **app.js** file (powered by `Bun.serve`) and a minimal **package.json** in the root of your new project directory, using the official <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> Docker image.
 
-Now, move into your new Node.js project:
+After creating the project, `kool create` automatically runs the `kool preset bunjs` command, which sets up the initial tech stack for your project.
+
+```bash
+$ Preset bunjs is initializing!
+
+...
+
+Preset bunjs created successfully!
+```
+
+Now, move into your new Bun project:
 
 ```bash
 $ cd my-project
@@ -53,39 +48,35 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 ```bash
 +docker-compose.yml
 +kool.yml
++app.js
++package.json
 ```
 
-> Now's a good time to review the services added to the **docker-compose.yml** file.
+> Now's a good time to review the services added to the **docker-compose.yml** file. The `app` service runs the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image with a `command` of `bun app.js`.
 
 ## 2. Run `kool run setup`
 
 > Say hello to **kool.yml**, say goodbye to custom shell scripts!
 
-As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run npm`). You can add your own single line commands (see `npm` below), or add a list of commands that will be executed in sequence (see `setup` below).
+As mentioned above, the [`kool preset` command](/docs/commands/kool-preset) added a **kool.yml** file to your project. Think of **kool.yml** as a super easy-to-use task _helper_. Instead of writing custom shell scripts, add your own scripts to **kool.yml** (under the `scripts` key), and run them with `kool run SCRIPT` (e.g. `kool run bun`). You can add your own single line commands (see `bun` below), or add a list of commands that will be executed in sequence.
 
-To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the **preset**), including a script called `setup`, which helps you spin up a project for the first time.
+To help get you started, **kool.yml** comes prebuilt with an initial set of scripts (based on the **preset**).
 
 ```yaml
 scripts:
-  node: kool exec app node
-  npm: kool exec app npm # or yarn / bun
-  npx: kool exec app npx
-
-  setup:
-    - kool docker kooldev/node:20 npm install # bun: kool docker oven/bun:1 bun install
-    - kool start
-	# - add more setup commands
+  bun: kool exec app bun
+  bunx: kool exec app bunx
 ```
 
-Go ahead and run `kool run setup` to start your Docker environment and finish setting up your project:
+Go ahead and run `kool start` to start running the container:
 
 ```bash
-$ kool run setup
+$ kool start
 ```
 
-> As you can see in **kool.yml**, the `setup` script will do the following in sequence: run `npm install` to build your Express packages and dependencies (by spinning up and down a temporary Node container); and then start your Docker environment using **docker-compose.yml** (which includes a `command` to automatically run `node app.js`).
+> The **docker-compose.yml** file includes a `command` to automatically run `bun app.js` when the `app` container starts.
 
-Once `kool run setup` finishes, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the "Hello world!" page. Hooray!
+Once the container is up, you should be able to access your new site at [http://localhost:3000](http://localhost:3000) and see the "Hello World" page. Hooray!
 
 Verify your Docker container is running using the [`kool status` command](/docs/commands/kool-status):
 
@@ -98,7 +89,7 @@ $ kool status
 +---------+---------+-------------------------------------------+--------------+
 ```
 
-Run `kool logs app` to see the logs from the running `app` container, and confirm the Node.js server was started.
+Run `kool logs app` to see the logs from the running `app` container, and confirm the Bun server was started.
 
 > Use `kool logs` to see the logs from all running containers. Add the `-f` option after `kool logs` to follow the logs (i.e. `kool logs -f app`).
 
@@ -110,6 +101,15 @@ app_1  | Server running at http://localhost:3000/
 
 ---
 
+### Install dependencies with Bun
+
+Use the `bun` helper script to manage your dependencies. Because Bun is both the runtime and the package manager, the same `app` container is used:
+
+```bash
+$ kool run bun add hono
+$ kool run bun install
+```
+
 ### Run Commands in Docker Containers
 
 Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a running service container:
@@ -117,10 +117,10 @@ Use [`kool exec`](/docs/commands/kool-exec) to execute a command inside a runnin
 ```bash
 # kool exec [OPTIONS] SERVICE COMMAND [--] [ARG...]
 
-$ kool exec app node -v
+$ kool exec app bun --version
 ```
 
-Try `kool run node -h` to execute the `kool exec app node -h` command in your running `app` container and print out information about Node.js.
+Try `kool run bun --help` to execute the `kool exec app bun --help` command in your running `app` container and print out information about Bun.
 
 ### Open Sessions in Docker Containers
 
@@ -128,7 +128,7 @@ Similar to SSH, if you want to open a Bash session in your `app` container, run 
 
 ```bash
 $ kool exec app bash
-bash-5.1#
+root@app:/app#
 
 $ kool exec app sh
 /app #
@@ -163,8 +163,8 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
-- **[Bun](/docs/03-Presets/Bun.md)**
 - **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
+- **[Express.js](/docs/03-Presets/ExpressJS.md)**
 - **[Hugo](/docs/03-Presets/Hugo.md)**
 - **[Laravel](/docs/03-Presets/Laravel.md)**
 - **[NestJS](/docs/03-Presets/NestJS.md)**

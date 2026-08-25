@@ -52,9 +52,13 @@ $ Preset laravel is initializing!
 ? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
+  bun
+  None
 
 $ Preset laravel initialized!
 ```
+
+> The Javascript package manager (including **bun**) is used only to build your frontend assets (e.g. Vite) — it runs in a one-off `oven/bun:1` container and configures the Vite `node` service. Your Laravel `app` service still runs on PHP.
 
 Now, move into your new Laravel project:
 
@@ -137,7 +141,7 @@ scripts:
   composer: kool exec app composer
   mysql: kool exec -e MYSQL_PWD=$DB_PASSWORD database mysql -uroot
   node: kool docker kooldev/node:20 node
-  npm: kool docker kooldev/node:20 npm # or yarn
+  npm: kool docker kooldev/node:20 npm # or yarn / bun (kool docker oven/bun:1 bun)
   npx: kool exec app npx
 
   setup:
@@ -232,6 +236,7 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[Bun](/docs/03-Presets/Bun.md)**
 - **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
 - **[Express.js](/docs/03-Presets/ExpressJS.md)**
 - **[Hugo](/docs/03-Presets/Hugo.md)**

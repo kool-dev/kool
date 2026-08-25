@@ -1,22 +1,20 @@
 services:
   app:
-    image: klakegg/hugo:ext-alpine
-    command: ["server", "-p", "80", "-D"]
+    image: oven/bun:1
+    command: ["bun", "--bun", "run", "dev"]
     working_dir: /app
+    user: "${KOOL_ASUSER:-0}"
     ports:
-      - "${KOOL_APP_PORT:-80}:80"
+      - "${KOOL_APP_PORT:-3000}:3000"
+    environment:
+      HOME: "/tmp"
+      UID: "${UID:-0}"
     volumes:
       - .:/app:delegated
     networks:
       - kool_local
       - kool_global
-  static:
-    image: kooldev/nginx:static
-    volumes:
-      - .:/app:delegated
-    networks:
-      - kool_local
-      - kool_global
+
 networks:
   kool_local:
   kool_global:

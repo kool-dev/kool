@@ -10,8 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const composeFile string = `version: "3.7"
-services:
+const composeFile string = `services:
   service:
     image: service-image
     volumes:

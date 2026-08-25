@@ -3,6 +3,7 @@ title: "Wizard: Node package manager"
 actions:
   # Defines which Javascript package manager to use
   - prompt: 'Which Javascript package manager do you want to use'
+    ref: 'javascript_package_manager'
     default: 'npm'
     options:
       - name: 'npm'
@@ -11,4 +12,7 @@ actions:
       - name: 'yarn'
         actions:
           - recipe: yarn
+      - name: 'bun'
+        actions:
+          - recipe: bun
       - name: 'None'
