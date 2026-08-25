@@ -75,9 +75,9 @@ jobs:
 
 ## Known security caveat
 
-The `kooldev/kool` image is built `FROM docker:29-cli`, which bundles `docker-compose` and `docker-buildx` CLI plugins as pre-built Go binaries that we inherit as-is. At any given time those plugins may have been compiled with a Go toolchain that has since received CVE advisories — for example a `go1.25.8` build of the bundled compose plugin triggers `CVE-2026-27143` until the upstream [`docker-library/docker`](https://github.com/docker-library/docker) image is rebuilt with a newer Go toolchain.
+The `kooldev/kool` image is built `FROM docker:29-cli`, which bundles `docker-compose` and `docker-buildx` CLI plugins as pre-built Go binaries that we inherit as-is. At any given time those plugins may have been compiled with a Go toolchain that has since received CVE advisories, and a scanner will report them against our image. Such findings clear on their own once the upstream [`docker-library/docker`](https://github.com/docker-library/docker) image is rebuilt with a newer Go toolchain — there is no action we can take on our side beyond following the base image.
 
-**The advisory is in the Go standard library of Docker's own plugin binaries, not in kool.** For security-sensitive pipelines, consider either:
+**Those advisories are in the Go standard library of Docker's own plugin binaries, not in kool.** Anything in kool's own code or dependencies we fix rather than suppress. For security-sensitive pipelines, consider either:
 
 - Installing **kool** as a native binary on the runner (`curl -fsSL https://kool.dev/install | bash`) instead of using the image, which avoids the upstream plugin surface entirely,
 - Pinning a specific `kooldev/kool:VERSION` tag and re-scanning when you adopt a new version.
