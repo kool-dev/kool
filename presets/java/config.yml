@@ -1,0 +1,20 @@
+tags: [ 'Java' ]
+
+name: 'Java with Gradle'
+
+create:
+  - name: Creating new Java Application
+    actions:
+      - recipe: create-java
+
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - replace: JAVA_VERSION $JAVA_VERSION
+
+  - name: 'Customize your setup'
+    actions:
+      - recipe: pick-java-db
+      - recipe: pick-java-cache

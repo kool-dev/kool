@@ -26,6 +26,11 @@ By leveraging Kool Presets, you not only reduce the learning curve associated wi
 - [Next.js](/docs/03-Presets/NextJS.md)
 - [NuxtJS](/docs/03-Presets/NuxtJS.md)
 
+## Java
+
+- [Java with Gradle](/docs/03-Presets/Java.md)
+- [Spring Boot](/docs/03-Presets/SpringBoot.md)
+
 ## Others
 
 - [Hugo](/docs/03-Presets/Hugo.md)

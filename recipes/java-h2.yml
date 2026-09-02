@@ -1,0 +1,5 @@
+title: "H2 file-based database"
+
+actions:
+  - scripts:
+      - mkdir -p data/h2

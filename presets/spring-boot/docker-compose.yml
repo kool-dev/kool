@@ -1,0 +1,18 @@
+services:
+  app:
+    image: gradle:8-jdkJAVA_VERSION
+    command: ./gradlew bootRun --no-daemon
+    environment:
+      GRADLE_USER_HOME: /home/gradle/.gradle
+    ports:
+      - "${KOOL_APP_PORT:-8080}:8080"
+    volumes:
+      - .:/home/gradle/project:delegated
+      - gradle_cache:/home/gradle/.gradle
+    working_dir: /home/gradle/project
+    networks:
+      - kool_local
+      - kool_global
+
+volumes:
+  gradle_cache:

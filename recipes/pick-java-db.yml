@@ -1,0 +1,25 @@
+title: "Wizard: Java database"
+
+actions:
+  - prompt: 'Which database service do you want to use?'
+    default: 'None - do not use a database'
+    options:
+      - name: 'None - do not use a database'
+      - name: 'PostgreSQL 16'
+        actions:
+          - recipe: java-postgresql-16
+      - name: 'MySQL 8.0'
+        actions:
+          - recipe: mysql-8
+      - name: 'MariaDB 10.5'
+        actions:
+          - recipe: maria-10.5
+      - name: 'MongoDB'
+        actions:
+          - recipe: mongodb
+      - name: 'H2 (file-based)'
+        actions:
+          - recipe: java-h2
+      - name: 'SQLite (file-based)'
+        actions:
+          - recipe: java-sqlite
