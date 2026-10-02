@@ -469,10 +469,10 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 			if err = m.shell.Interactive(builder.NewCommand("docker", "start"), caddyContainer); err != nil {
 				return err
 			}
-			if err = m.waitForCaddy(); err != nil {
-				return err
-			}
 			running = "true"
+		}
+		if err = m.ensureAdminNetworkPriority(); err != nil {
+			return err
 		}
 		compatibility, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .NetworkSettings.Networks}}|{{json .Config.Entrypoint}}|{{json .Config.Cmd}}", caddyContainer))
 		if inspectErr != nil {
@@ -480,8 +480,16 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 		}
 		expectedCommand := `["/bin/sh"]|["-c","` + strings.ReplaceAll(caddyStartCmd, `"`, `\"`) + `"]`
 		if !strings.Contains(compatibility, `"`+caddyAdminNet+`"`) || !strings.HasSuffix(compatibility, expectedCommand) {
+			if err = m.waitForCaddy(); err != nil {
+				return err
+			}
 			if preservedApps, preservedAppsExist, err = m.snapshotApps(); err != nil {
 				return err
+			}
+			if preservedAppsExist {
+				if err = m.persistAppsSnapshot(preservedApps); err != nil {
+					return err
+				}
 			}
 			bindingsJSON, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
 			if inspectErr != nil {
@@ -510,6 +518,11 @@ func (m *DefaultManager) ensureCaddy(network string, routes []route) (err error)
 				}
 				if preservedApps, preservedAppsExist, err = m.snapshotApps(); err != nil {
 					return err
+				}
+				if preservedAppsExist {
+					if err = m.persistAppsSnapshot(preservedApps); err != nil {
+						return err
+					}
 				}
 				bindingsJSON, inspectErr := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", "{{json .HostConfig.PortBindings}}", caddyContainer))
 				if inspectErr != nil {
@@ -591,7 +604,9 @@ func (m *DefaultManager) createCaddy(bindings map[int][]string) error {
 			return err
 		}
 	}
-	args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", caddyAdminNet, "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
+	// Docker publishes ports on the default-gateway network. Keep administration
+	// on that network even when application networks sort before it by name.
+	args := []string{"run", "-d", "--name", caddyContainer, "--restart", "unless-stopped", "--network", "name=" + caddyAdminNet + ",gw-priority=1", "--network-alias", caddyAdminHost, "-p", "127.0.0.1:2019:2019"}
 	var sortedPorts []int
 	for port := range bindings {
 		if port == 2019 {
@@ -618,6 +633,37 @@ func (m *DefaultManager) connectCaddyNetworks(networks []string) error {
 		if err := m.shell.Interactive(builder.NewCommand("docker", "network", "connect", network), caddyContainer); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// Repair previously created proxies in place, preserving the address Caddy is
+// listening on. This does not restart any application containers.
+func (m *DefaultManager) ensureAdminNetworkPriority() error {
+	raw, err := m.shell.Exec(builder.NewCommand("docker", "inspect", "--format", `{{json (index .NetworkSettings.Networks "kool_proxy_admin")}}`, caddyContainer))
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(raw) == "" || strings.TrimSpace(raw) == "null" {
+		return nil
+	}
+	var network struct {
+		IPAddress  string
+		GwPriority int
+	}
+	if err = json.Unmarshal([]byte(raw), &network); err != nil {
+		return err
+	}
+	if network.GwPriority >= 1 || network.IPAddress == "" {
+		return nil
+	}
+	if err = m.shell.Interactive(builder.NewCommand("docker", "network", "disconnect", caddyAdminNet), caddyContainer); err != nil {
+		return err
+	}
+	connect := builder.NewCommand("docker", "network", "connect", "--ip", network.IPAddress, "--alias", caddyAdminHost)
+	if err = m.shell.Interactive(connect.Copy(), "--gw-priority", "1", caddyAdminNet, caddyContainer); err != nil {
+		rollbackErr := m.shell.Interactive(connect, caddyAdminNet, caddyContainer)
+		return errors.Join(fmt.Errorf("proxy administration requires Docker 28 or newer for gateway priority: %w", err), rollbackErr)
 	}
 	return nil
 }
@@ -726,6 +772,13 @@ func (m *DefaultManager) persistApps() error {
 	}
 	if !exists {
 		apps = []byte(`{}`)
+	}
+	return m.persistAppsSnapshot(apps)
+}
+
+func (m *DefaultManager) persistAppsSnapshot(apps []byte) error {
+	if m.adminURL != caddyAdminURL {
+		return nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -27,7 +26,8 @@ func TestDockerProxyAdminIsolationAndRestart(t *testing.T) {
 		return strings.TrimSpace(string(output))
 	}
 	name := fmt.Sprintf("kool-proxy-test-%d-%d", os.Getpid(), time.Now().UnixNano())
-	adminNetwork, appNetwork := name+"-admin", name+"-app"
+	// Reproduce production ordering: kool_global sorts before kool_proxy_admin.
+	adminNetwork, appNetwork := name+"-z-admin", name+"-a-app"
 	for _, network := range []string{adminNetwork, appNetwork} {
 		docker("network", "create", network)
 		t.Cleanup(func() { docker("network", "rm", network) })
@@ -36,15 +36,33 @@ func TestDockerProxyAdminIsolationAndRestart(t *testing.T) {
 	env := environment.NewFakeEnvStorage()
 	env.Set("COMPOSE_PROJECT_NAME", "integration")
 	env.Set("KOOL_PROXY_HOST", "integration.localhost")
-	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	sh := &shell.FakeShell{}
+	manager := NewManager(sh, env).(*DefaultManager)
 	configPath, err := manager.ensureBaseConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	docker("run", "--detach", "--name", name, "--network", adminNetwork,
-		"--network-alias", caddyAdminHost, "--publish", "127.0.0.1::2019",
-		"--volume", filepath.Dir(configPath)+":/etc/kool-proxy:ro",
-		"--entrypoint", "/bin/sh", caddyImage, "-c", caddyStartCmd)
+	if err = manager.createCaddy(nil); err != nil {
+		t.Fatal(err)
+	}
+	// Use the real startup arguments, replacing only resource names and the
+	// published port. Never mount the production proxy's named volume.
+	startupArgs := sh.ArgsInteractive["docker"]
+	var args []string
+	for index := 0; index < len(startupArgs); index++ {
+		arg := startupArgs[index]
+		if arg == "-v" && startupArgs[index+1] == caddyVolume+":/var/lib/caddy" {
+			index++
+			continue
+		}
+		if arg == caddyContainer {
+			arg = name
+		}
+		arg = strings.ReplaceAll(arg, caddyAdminNet, adminNetwork)
+		arg = strings.ReplaceAll(arg, "127.0.0.1:2019:2019", "127.0.0.1::2019")
+		args = append(args, arg)
+	}
+	docker(args...)
 	t.Cleanup(func() { docker("rm", "--force", name) })
 	docker("network", "connect", appNetwork, name)
 	manager.adminURL = "http://" + docker("port", name, "2019/tcp")

@@ -181,4 +181,4 @@ From the original project, `kool status` shows the main project and all active w
 
 `kool stop` inside a workspace removes only that workspace's containers and proxy routes. The original project and other workspaces remain running. Running `kool stop` without service arguments from the original project stops every active workspace before stopping the main project.
 
-This mode requires Docker Compose support for the `!reset` merge tag.
+Workspace mode requires Docker Compose support for the `!reset` merge tag. The managed proxy also requires Docker 28 or newer to keep its published Admin API on the dedicated admin network using gateway priority.

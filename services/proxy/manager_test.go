@@ -3,6 +3,7 @@ package proxy
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
@@ -952,6 +953,61 @@ func TestCreateCaddyMountsConfigDirectory(t *testing.T) {
 	args := strings.Join(sh.ArgsInteractive["docker"], " ")
 	if !strings.Contains(args, filepath.Join(os.Getenv("HOME"), ".kool", "proxy")+":/etc/kool-proxy:ro") {
 		t.Fatalf("expected directory mount for atomic saved-config replacement, got %s", args)
+	}
+	if !strings.Contains(args, "--network name=kool_proxy_admin,gw-priority=1") {
+		t.Fatalf("published Admin API must use the admin-network gateway: %s", args)
+	}
+}
+
+type gatewayPriorityShell struct {
+	shell.FakeShell
+	priority     int
+	failPriority bool
+	commands     []string
+}
+
+func (s *gatewayPriorityShell) Exec(builder.Command, ...string) (string, error) {
+	return fmt.Sprintf(`{"IPAddress":"172.19.0.2","GwPriority":%d}`, s.priority), nil
+}
+
+func (s *gatewayPriorityShell) Interactive(command builder.Command, args ...string) error {
+	line := command.String() + " " + strings.Join(args, " ")
+	s.commands = append(s.commands, line)
+	if s.failPriority && strings.Contains(line, "--gw-priority") {
+		return errors.New("gateway priority unavailable")
+	}
+	return nil
+}
+
+func TestEnsureAdminNetworkPriorityRepairsExistingProxy(t *testing.T) {
+	sh := &gatewayPriorityShell{}
+	manager := NewManager(sh, environment.NewFakeEnvStorage()).(*DefaultManager)
+	if err := manager.ensureAdminNetworkPriority(); err != nil {
+		t.Fatal(err)
+	}
+	if len(sh.commands) != 2 || !strings.Contains(sh.commands[0], "network disconnect kool_proxy_admin kool-proxy") ||
+		!strings.Contains(sh.commands[1], "--ip 172.19.0.2 --alias kool-proxy-admin --gw-priority 1 kool_proxy_admin kool-proxy") {
+		t.Fatalf("expected in-place repair preserving the listener IP: %v", sh.commands)
+	}
+}
+
+func TestEnsureAdminNetworkPriorityLeavesConfiguredNetworkAlone(t *testing.T) {
+	sh := &gatewayPriorityShell{priority: 1}
+	manager := NewManager(sh, environment.NewFakeEnvStorage()).(*DefaultManager)
+	if err := manager.ensureAdminNetworkPriority(); err != nil || len(sh.commands) != 0 {
+		t.Fatalf("configured network must not be disconnected: err=%v commands=%v", err, sh.commands)
+	}
+}
+
+func TestEnsureAdminNetworkPriorityReconnectsAfterFailure(t *testing.T) {
+	sh := &gatewayPriorityShell{failPriority: true}
+	manager := NewManager(sh, environment.NewFakeEnvStorage()).(*DefaultManager)
+	if err := manager.ensureAdminNetworkPriority(); err == nil || !strings.Contains(err.Error(), "Docker 28") {
+		t.Fatalf("expected actionable gateway-priority error, got %v", err)
+	}
+	if len(sh.commands) != 3 || strings.Contains(sh.commands[2], "--gw-priority") ||
+		!strings.Contains(sh.commands[2], "--ip 172.19.0.2 --alias kool-proxy-admin kool_proxy_admin kool-proxy") {
+		t.Fatalf("failed priority upgrade must reconnect the original network: %v", sh.commands)
 	}
 }
 
