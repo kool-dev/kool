@@ -2,11 +2,14 @@ package proxy
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
+	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -183,7 +186,21 @@ func TestCreateAliasOverrideMapsCustomExternalNetwork(t *testing.T) {
 	}
 }
 
+type failingProxyShell struct {
+	shell.FakeShell
+}
+
+func (s *failingProxyShell) Interactive(builder.Command, ...string) error {
+	return errors.New("proxy startup failed")
+}
+
 func TestPrepareRestoresComposeFile(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		t.Error("startup failure must not reach the Admin API")
+		response.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(server.Close)
 	workDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte("proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['80:80']\n"), 0644); err != nil {
 		t.Fatal(err)
@@ -191,9 +208,11 @@ func TestPrepareRestoresComposeFile(t *testing.T) {
 	env := environment.NewFakeEnvStorage()
 	env.Set("PWD", workDir)
 	env.Set("COMPOSE_FILE", "compose.yml:compose.dev.yml")
-	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	manager := NewManager(&failingProxyShell{}, env).(*DefaultManager)
+	manager.adminURL = server.URL
 
 	cleanup, err := manager.Prepare([]string{"app"})
+	t.Cleanup(func() { _ = cleanup(false) })
 	if err == nil {
 		t.Fatal("expected fake shell to fail while ensuring Caddy")
 	}
@@ -529,6 +548,130 @@ func TestRegisterRouteRejectsHostClaimedByAnotherProject(t *testing.T) {
 	}
 }
 
+func TestRegisterRouteRejectsHostConflictOnReplacement(t *testing.T) {
+	state, server := newCaddyRouteState(t)
+	first := testRouteManager(server.URL, "first", "first.localhost")
+	second := testRouteManager(server.URL, "second", "second.localhost")
+	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@"}}
+	mustRegister(t, first, proxyRoute)
+	mustRegister(t, second, proxyRoute)
+	before := string(state.routes["kool-80"][0])
+	first.env.Set("KOOL_PROXY_HOST", "second.localhost")
+	if err := first.register(proxyRoute); err == nil || !strings.Contains(err.Error(), "host conflict") {
+		t.Fatalf("expected replacement to reject another project's host, got %v", err)
+	}
+	if string(state.routes["kool-80"][0]) != before {
+		t.Fatal("rejected replacement must preserve the existing route")
+	}
+}
+
+func TestCreateAliasOverrideIncludesDefaultComposeOverride(t *testing.T) {
+	workDir := t.TempDir()
+	for _, name := range []string{"compose.yaml", "compose.override.yaml"} {
+		if err := os.WriteFile(filepath.Join(workDir, name), []byte("services: {}\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env := environment.NewFakeEnvStorage()
+	env.Set("PWD", workDir)
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	file, err := manager.createAliasOverride("kool_global", []route{{Service: "app"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Remove(file) })
+	expected := strings.Join([]string{filepath.Join(workDir, "compose.yaml"), filepath.Join(workDir, "compose.override.yaml"), file}, string(os.PathListSeparator))
+	if got := env.Get("COMPOSE_FILE"); got != expected {
+		t.Fatalf("expected base, default override, then proxy override: %q, got %q", expected, got)
+	}
+}
+
+type proxyRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f proxyRoundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
+	return f(request)
+}
+
+func TestPersistAppsSavesAcceptedConfiguration(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
+	apps := `{"http":{"servers":{"saved":{"routes":[]}}},"tls":{"automation":{"policies":[]}}}`
+	manager.http.Transport = proxyRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if request.Method != http.MethodGet || request.URL.String() != caddyAdminURL+"/config/apps" {
+			t.Fatalf("unexpected persistence request: %s %s", request.Method, request.URL)
+		}
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(apps))}, nil
+	})
+	if err := manager.persistApps(); err != nil {
+		t.Fatal(err)
+	}
+	content, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".kool", "proxy", "caddy.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved struct {
+		Apps json.RawMessage `json:"apps"`
+	}
+	if err = json.Unmarshal(content, &saved); err != nil || string(saved.Apps) != apps {
+		t.Fatalf("expected accepted apps to be saved, got %s (error %v)", content, err)
+	}
+}
+
+func TestPreparePersistsRoutesAndRollbackRemovesThem(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	_, server := newCaddyRouteState(t)
+	workDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte("proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['80:80']\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewFakeEnvStorage()
+	env.Set("PWD", workDir)
+	env.Set("COMPOSE_PROJECT_NAME", "example")
+	env.Set("KOOL_PROXY_HOST", "app.localhost")
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	endpoint, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Exercise production persistence while routing all HTTP to the mock server.
+	manager.http.Transport = proxyRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+		request.URL.Scheme, request.URL.Host = endpoint.Scheme, endpoint.Host
+		return http.DefaultTransport.RoundTrip(request)
+	})
+	finish, err := manager.Prepare([]string{"app"})
+	t.Cleanup(func() { _ = finish(false) })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = finish(true); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(os.Getenv("HOME"), ".kool", "proxy", "caddy.json")
+	content, err := os.ReadFile(path)
+	if err != nil || !strings.Contains(string(content), "kool-example-app-80-80") {
+		t.Fatalf("successful preparation must save routes: %s (error %v)", content, err)
+	}
+	if err = manager.Remove(nil); err != nil {
+		t.Fatal(err)
+	}
+	content, err = os.ReadFile(path)
+	if err != nil || strings.Contains(string(content), "kool-example-app-80-80") {
+		t.Fatalf("removal must save configuration without stopped routes: %s (error %v)", content, err)
+	}
+	finish, err = manager.Prepare([]string{"app"})
+	t.Cleanup(func() { _ = finish(false) })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = finish(false); err != nil {
+		t.Fatal(err)
+	}
+	content, err = os.ReadFile(path)
+	if err != nil || strings.Contains(string(content), "kool-example-app-80-80") {
+		t.Fatalf("rollback must not leave saved provisional routes: %s (error %v)", content, err)
+	}
+}
+
 func TestRegisterRouteRejectsPartiallyOverlappingHosts(t *testing.T) {
 	_, server := newCaddyRouteState(t)
 	first := testRouteManager(server.URL, "first", "app.localhost")
@@ -759,8 +902,56 @@ func TestBaseConfigUsesReachableAdminListener(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(content), `"listen":"0.0.0.0:2019"`) {
-		t.Fatalf("expected Docker-published Admin listener, got %s", content)
+	if !strings.Contains(string(content), `"listen":"kool-proxy-admin:2019"`) || !strings.Contains(string(content), `"127.0.0.1:2019"`) {
+		t.Fatalf("expected admin-network listener allowing the published host endpoint, got %s", content)
+	}
+	if strings.Contains(string(content), "0.0.0.0") {
+		t.Fatalf("admin listener must not bind application-network interfaces: %s", content)
+	}
+}
+
+func TestSavedProxyConfigSurvivesStartupAndReplacesUnsafeAdmin(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	manager := NewManager(&shell.FakeShell{}, environment.NewFakeEnvStorage()).(*DefaultManager)
+	path, err := manager.ensureBaseConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	apps := json.RawMessage(`{"http":{"servers":{"kool-80":{"listen":[":80"],"routes":[{"@id":"saved-route"}]}}}}`)
+	if err = writeProxyConfig(path, apps); err != nil {
+		t.Fatal(err)
+	}
+	// Startup must preserve apps, not a legacy config's admin settings.
+	legacy := `{"admin":{"listen":"0.0.0.0:2019"},"apps":` + string(apps) + `}`
+	if err = os.WriteFile(path, []byte(legacy), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = manager.ensureBaseConfig(); err != nil {
+		t.Fatal(err)
+	}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(content), "saved-route") || strings.Contains(string(content), "0.0.0.0") {
+		t.Fatalf("expected saved routes and safe admin settings on restart, got %s", content)
+	}
+	info, err := os.Stat(path)
+	if err != nil || info.Mode().Perm() != 0600 {
+		t.Fatalf("expected private saved config, info=%v err=%v", info, err)
+	}
+}
+
+func TestCreateCaddyMountsConfigDirectory(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	sh := &shell.FakeShell{}
+	manager := NewManager(sh, environment.NewFakeEnvStorage()).(*DefaultManager)
+	if err := manager.createCaddy(map[int][]string{80: {"80:80"}}); err != nil {
+		t.Fatal(err)
+	}
+	args := strings.Join(sh.ArgsInteractive["docker"], " ")
+	if !strings.Contains(args, filepath.Join(os.Getenv("HOME"), ".kool", "proxy")+":/etc/kool-proxy:ro") {
+		t.Fatalf("expected directory mount for atomic saved-config replacement, got %s", args)
 	}
 }
 

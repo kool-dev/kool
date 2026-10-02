@@ -3,9 +3,61 @@ package environment
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestComposeFilesIncludesDefaultOverride(t *testing.T) {
+	for _, names := range [][]string{
+		{"compose.yaml", "compose.override.yaml"},
+		{"docker-compose.yml", "docker-compose.override.yml"},
+		{"compose.yml", "docker-compose.override.yaml"},
+	} {
+		t.Run(strings.Join(names, "+"), func(t *testing.T) {
+			directory := t.TempDir()
+			var expected []string
+			for _, name := range names {
+				file := filepath.Join(directory, name)
+				if err := os.WriteFile(file, []byte("services: {}\n"), 0644); err != nil {
+					t.Fatal(err)
+				}
+				expected = append(expected, file)
+			}
+			env := NewFakeEnvStorage()
+			if got := ComposeFiles(env, directory); !reflect.DeepEqual(got, expected) {
+				t.Fatalf("expected %v, got %v", expected, got)
+			}
+			env.Set("COMPOSE_FILE", names[0])
+			if got := ComposeFiles(env, directory); !reflect.DeepEqual(got, expected[:1]) {
+				t.Fatalf("explicit COMPOSE_FILE must not discover overrides: %v", got)
+			}
+		})
+	}
+}
+
+func TestWorkspaceComposePreservesDefaultOverride(t *testing.T) {
+	t.Cleanup(CleanupWorkspace)
+	directory := t.TempDir()
+	for name, content := range map[string]string{
+		"kool.yml":              "workspaces: [app]\n",
+		"compose.yaml":          "services:\n  app:\n    image: example/app\n",
+		"compose.override.yaml": "name: custom-source\nservices:\n  app:\n    environment:\n      DEVELOPMENT: 'true'\n",
+	} {
+		if err := os.WriteFile(filepath.Join(directory, name), []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	env := NewFakeEnvStorage()
+	if project := composeSourceProject(env, directory); project != "custom-source" {
+		t.Fatalf("expected source name from default override, got %q", project)
+	}
+	initWorkspaceCompose(env, directory)
+	files := strings.Split(env.Get("COMPOSE_FILE"), string(os.PathListSeparator))
+	if len(files) != 3 || files[1] != filepath.Join(directory, "compose.override.yaml") {
+		t.Fatalf("expected default override before generated override, got %v", files)
+	}
+}
 
 func TestWorkspaceIdentityDistinguishesDuplicateBasenames(t *testing.T) {
 	root := t.TempDir()

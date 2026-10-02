@@ -112,7 +112,7 @@ func initWorkspaceCompose(envStorage EnvStorage, workDir string) []string {
 		return nil
 	}
 
-	files := composeFiles(envStorage, workDir)
+	files := ComposeFiles(envStorage, workDir)
 	if len(files) == 0 {
 		return nil
 	}
@@ -186,7 +186,7 @@ func IsolateWorkspace() func() {
 
 func composeSourceProject(envStorage EnvStorage, workDir string) string {
 	project := ""
-	for _, file := range composeFiles(envStorage, workDir) {
+	for _, file := range ComposeFiles(envStorage, workDir) {
 		content, err := os.ReadFile(file)
 		if err != nil {
 			continue
@@ -203,7 +203,8 @@ func composeSourceProject(envStorage EnvStorage, workDir string) string {
 	return project
 }
 
-func composeFiles(envStorage EnvStorage, workDir string) []string {
+// ComposeFiles resolves explicit files or Compose's default base and override files.
+func ComposeFiles(envStorage EnvStorage, workDir string) []string {
 	if configured := envStorage.Get("COMPOSE_FILE"); configured != "" {
 		separator := envStorage.Get("COMPOSE_PATH_SEPARATOR")
 		if separator == "" {
@@ -222,7 +223,15 @@ func composeFiles(envStorage EnvStorage, workDir string) []string {
 	for _, name := range []string{"compose.yaml", "compose.yml", "docker-compose.yml", "docker-compose.yaml"} {
 		file := filepath.Join(workDir, name)
 		if _, err := os.Stat(file); err == nil {
-			return []string{file}
+			files := []string{file}
+			for _, overrideName := range []string{"compose.override.yml", "compose.override.yaml", "docker-compose.override.yml", "docker-compose.override.yaml"} {
+				override := filepath.Join(workDir, overrideName)
+				if _, err := os.Stat(override); err == nil {
+					files = append(files, override)
+					break
+				}
+			}
+			return files
 		}
 	}
 	return nil

@@ -101,6 +101,7 @@ Caddy:
 - Joins the shared Docker network.
 - Publishes each configured listen port.
 - Exposes its Admin API only at `127.0.0.1:2019`.
+- Binds administration only to its dedicated admin-network interface, not application networks.
 - Does not mount the Docker socket.
 - Handles HTTP streaming and WebSocket upgrades, including Vite HMR.
 
@@ -129,12 +130,7 @@ task-a.workspace.app.localhost   -> task-a app
 
 Routes using different listen ports can use the same hostname. For example, `80:80` can target the application while `3001:3001` targets Vite.
 
-If an existing `kool-proxy` container does not publish a newly configured listen port, remove it and run `kool start` again:
-
-```bash
-docker rm -f kool-proxy
-kool start
-```
+Kool recreates the proxy when new listen ports or a proxy upgrade require it, preserving other projects' routes. Successful starts and route removals save the accepted configuration privately under `~/.kool/proxy/caddy.json`; container and host restarts reload it. Caddy's volume autosave is not used for startup.
 
 ## Local HTTPS
 

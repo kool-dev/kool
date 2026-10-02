@@ -33,7 +33,7 @@ const (
 	caddyAdminURL  = "http://127.0.0.1:2019"
 	caddyAdminHost = "kool-proxy-admin"
 	caddyAdminNet  = "kool_proxy_admin"
-	caddyStartCmd  = "exec caddy run --config /etc/caddy/caddy.json"
+	caddyStartCmd  = "exec caddy run --config /etc/kool-proxy/caddy.json"
 	defaultNetwork = "kool_global"
 )
 
@@ -199,7 +199,10 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, er
 							return err
 						}
 					}
-					return m.reconcileRoutesUnlocked(cfg.Routes)
+					if err := m.reconcileRoutesUnlocked(cfg.Routes); err != nil {
+						return err
+					}
+					return m.persistApps()
 				}
 				if applyErr := apply(); applyErr != nil {
 					return errors.Join(applyErr, m.restoreApps(finalSnapshot, finalExists))
@@ -208,7 +211,10 @@ func (m *DefaultManager) Prepare(services []string) (finish func(bool) error, er
 			})
 		}
 		return m.withConfigLock(func() error {
-			return m.rollbackGeneration(committed, committedExists, snapshot, snapshotExists)
+			if err := m.rollbackGeneration(committed, committedExists, snapshot, snapshotExists); err != nil {
+				return err
+			}
+			return m.persistApps()
 		})
 	}
 	return
@@ -232,6 +238,9 @@ func (m *DefaultManager) Remove(services []string) error {
 				return err
 			}
 		}
+		if err := m.persistApps(); err != nil {
+			return err
+		}
 		return m.stopIfUnusedUnlocked()
 	})
 }
@@ -251,6 +260,9 @@ func (m *DefaultManager) RemoveProject(project string, services []string) error 
 			if err := manager.deleteRoute(manager.tlsID()); err != nil {
 				return err
 			}
+		}
+		if err := manager.persistApps(); err != nil {
+			return err
 		}
 		return manager.stopIfUnusedUnlocked()
 	})
@@ -420,16 +432,9 @@ func (m *DefaultManager) createAliasOverride(network string, routes []route) (st
 	if separator == "" {
 		separator = string(os.PathListSeparator)
 	}
-	composeFiles := m.env.Get("COMPOSE_FILE")
-	if composeFiles == "" {
-		for _, name := range []string{"compose.yaml", "compose.yml", "docker-compose.yml", "docker-compose.yaml"} {
-			if _, statErr := os.Stat(filepath.Join(m.env.Get("PWD"), name)); statErr == nil {
-				composeFiles = name
-				break
-			}
-		}
-	}
-	m.env.Set("COMPOSE_FILE", composeFiles+separator+file.Name())
+	composeFiles := environment.ComposeFiles(m.env, m.env.Get("PWD"))
+	composeFiles = append(composeFiles, file.Name())
+	m.env.Set("COMPOSE_FILE", strings.Join(composeFiles, separator))
 	return file.Name(), nil
 }
 
@@ -600,7 +605,8 @@ func (m *DefaultManager) createCaddy(bindings map[int][]string) error {
 			args = append(args, "-p", binding)
 		}
 	}
-	args = append(args, "-v", configPath+":/etc/caddy/caddy.json:ro", "-v", caddyVolume+":/var/lib/caddy", "-e", "XDG_CONFIG_HOME=/var/lib/caddy/config", "-e", "XDG_DATA_HOME=/var/lib/caddy/data", "--entrypoint", "/bin/sh", caddyImage, "-c", caddyStartCmd)
+	// Mount the directory so atomic configuration replacements are visible on restart.
+	args = append(args, "-v", filepath.Dir(configPath)+":/etc/kool-proxy:ro", "-v", caddyVolume+":/var/lib/caddy", "-e", "XDG_CONFIG_HOME=/var/lib/caddy/config", "-e", "XDG_DATA_HOME=/var/lib/caddy/data", "--entrypoint", "/bin/sh", caddyImage, "-c", caddyStartCmd)
 	return m.shell.Interactive(builder.NewCommand("docker"), args...)
 }
 
@@ -686,15 +692,87 @@ func (m *DefaultManager) ensureBaseConfig() (string, error) {
 		return "", err
 	}
 	directory := filepath.Join(home, ".kool", "proxy")
-	if err = os.MkdirAll(directory, 0755); err != nil {
+	path := filepath.Join(directory, "caddy.json")
+	apps := json.RawMessage(`{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}`)
+	content, err := os.ReadFile(path)
+	if err == nil {
+		var saved struct {
+			Apps json.RawMessage `json:"apps"`
+		}
+		if err = json.Unmarshal(content, &saved); err != nil {
+			return "", fmt.Errorf("could not read saved proxy configuration: %w", err)
+		}
+		if len(saved.Apps) > 0 && string(saved.Apps) != "null" {
+			apps = saved.Apps
+		}
+	} else if !os.IsNotExist(err) {
 		return "", err
 	}
-	path := filepath.Join(directory, "caddy.json")
-	content := []byte(`{"admin":{"listen":"0.0.0.0:2019"},"apps":{"http":{"servers":{}},"tls":{"automation":{"policies":[]}}}}`)
-	if err = os.WriteFile(path, content, 0644); err != nil {
+	if err = writeProxyConfig(path, apps); err != nil {
 		return "", err
 	}
 	return path, nil
+}
+
+// persistApps saves only the apps accepted by Caddy, never its volume's autosave
+// or admin settings. Tests using an isolated Admin API do not write host state.
+func (m *DefaultManager) persistApps() error {
+	if m.adminURL != caddyAdminURL {
+		return nil
+	}
+	apps, exists, err := m.snapshotApps()
+	if err != nil {
+		return err
+	}
+	if !exists {
+		apps = []byte(`{}`)
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	return writeProxyConfig(filepath.Join(home, ".kool", "proxy", "caddy.json"), apps)
+}
+
+func writeProxyConfig(path string, apps json.RawMessage) error {
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(apps, &parsed); err != nil || parsed == nil {
+		return errors.New("proxy apps configuration must be a JSON object")
+	}
+	content, err := json.Marshal(map[string]interface{}{
+		"admin": map[string]interface{}{
+			"listen":  caddyAdminHost + ":2019",
+			"origins": []string{"127.0.0.1:2019", "localhost:2019", caddyAdminHost + ":2019"},
+		},
+		"apps": apps,
+	})
+	if err != nil {
+		return err
+	}
+	directory := filepath.Dir(path)
+	if err = os.MkdirAll(directory, 0700); err != nil {
+		return err
+	}
+	if err = os.Chmod(directory, 0700); err != nil {
+		return err
+	}
+	file, err := os.CreateTemp(directory, "caddy-*.json")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(file.Name()) }()
+	if _, err = file.Write(content); err != nil {
+		_ = file.Close()
+		return err
+	}
+	if err = file.Sync(); err != nil {
+		_ = file.Close()
+		return err
+	}
+	if err = file.Close(); err != nil {
+		return err
+	}
+	return os.Rename(file.Name(), path)
 }
 
 func (m *DefaultManager) register(route route) error {
@@ -800,6 +878,17 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 
 	routeBody, _ := json.Marshal(routeConfig)
 	routeID, _ := routeConfig["@id"].(string)
+	var incoming caddyRouteMetadata
+	_ = json.Unmarshal(routeBody, &incoming)
+	for _, existing := range routes {
+		var metadata caddyRouteMetadata
+		if json.Unmarshal(existing, &metadata) != nil || m.routeBelongsToProject(metadata) {
+			continue
+		}
+		if metadata.ID == routeID || hostSetsOverlap(routeMetadataHosts(metadata), routeMetadataHosts(incoming)) {
+			return false, fmt.Errorf("proxy listener host conflict with route %s", metadata.ID)
+		}
+	}
 	replaced := false
 	for index, existing := range routes {
 		var metadata caddyRouteMetadata
@@ -810,17 +899,6 @@ func (m *DefaultManager) upsertRouteUnlocked(serverURL string, routeConfig map[s
 		}
 	}
 	if !replaced {
-		var incoming caddyRouteMetadata
-		_ = json.Unmarshal(routeBody, &incoming)
-		for _, existing := range routes {
-			var metadata caddyRouteMetadata
-			if json.Unmarshal(existing, &metadata) != nil || m.routeBelongsToProject(metadata) {
-				continue
-			}
-			if hostSetsOverlap(routeMetadataHosts(metadata), routeMetadataHosts(incoming)) {
-				return false, fmt.Errorf("proxy listener host conflict with route %s", metadata.ID)
-			}
-		}
 		routes = append(routes, routeBody)
 	}
 	routes = orderCaddyRoutes(routes)
