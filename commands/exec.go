@@ -98,6 +98,10 @@ func (e *KoolExec) Execute(args []string) (err error) {
 
 	e.checkUser(args[0])
 
+	for _, envVar := range environment.AgentEnvVars(e.env) {
+		e.composeExec.AppendArgs("--env", envVar)
+	}
+
 	if len(e.Flags.EnvVariables) > 0 {
 		for _, envVar := range e.Flags.EnvVariables {
 			e.composeExec.AppendArgs("--env", envVar)

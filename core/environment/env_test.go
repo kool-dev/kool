@@ -79,3 +79,47 @@ func TestInitEnvironmentVariablesOverridesStalePWD(t *testing.T) {
 		t.Errorf("expecting $PWD to be overridden to '%s', got '%s'", workDir, envWorkDir)
 	}
 }
+
+func TestInitSourceProjectUsesComposeName(t *testing.T) {
+	workDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("name: ${PROJECT_NAME:-custom-project}\nservices: {}\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	env := NewFakeEnvStorage()
+
+	initSourceProject(env, workDir)
+
+	if got := env.Get("KOOL_WORKSPACE_SOURCE_PROJECT"); got != "custom-project" {
+		t.Errorf("expected Compose name custom-project, got %q", got)
+	}
+}
+
+func TestInitEnvironmentSkipsWorkspaceDetectionWithoutConfiguration(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	workDir := t.TempDir()
+	if err = os.Chdir(workDir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(originalDirectory) })
+
+	originalGitWorktreeOutput := gitWorktreeOutput
+	gitCalled := false
+	gitWorktreeOutput = func(string, ...string) ([]byte, error) {
+		gitCalled = true
+		return nil, nil
+	}
+	t.Cleanup(func() { gitWorktreeOutput = originalGitWorktreeOutput })
+
+	env := NewFakeEnvStorage()
+	InitEnvironmentVariables(env)
+
+	if gitCalled {
+		t.Error("expected Git workspace detection to be skipped")
+	}
+	if env.IsTrue("KOOL_WORKSPACES_ENABLED") || env.IsTrue("KOOL_PROXY_ENABLED") {
+		t.Error("expected workspace and proxy features to remain disabled")
+	}
+}
