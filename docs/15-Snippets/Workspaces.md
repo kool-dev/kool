@@ -1,6 +1,56 @@
 # Workspaces and local proxy
 
-Kool detects workspaces managed by [Rift](https://github.com/anomalyco/rift) or linked [Git worktrees](https://git-scm.com/docs/git-worktree). Each workspace runs selected application services in a separate Compose project while databases, caches, and other infrastructure remain in the original project.
+Kool detects workspaces managed by [Rift](https://github.com/anomalyco/rift) or linked [Git worktrees](https://git-scm.com/docs/git-worktree). Each workspace runs selected services in a separate Compose project. You choose which services get their own runtime and which infrastructure stays shared in the original project.
+
+For example, a full-stack project can run its app and Vite server separately in each workspace while reusing PostgreSQL and Redis. Files and application containers are isolated; shared data is not. Features that need independent data can run a workspace-local database with the appropriate connection, network, and storage configuration.
+
+## Runnable Node + Vite example
+
+The [kool-worktree-example repository](https://github.com/kool-dev/kool-worktree-example) includes a Node app, Vite with workspace-aware HMR, shared PostgreSQL/Redis, Rift hooks, tests, and an optional private-database configuration.
+
+Use a Kool build containing workspace/proxy support, Docker Engine 28+, and Docker Compose 2.24.4+ for the example's `!reset` / `!override` tags. While the feature is unreleased, the example README explains how to build the feature branch.
+
+```bash
+git clone https://github.com/kool-dev/kool-worktree-example.git
+cd kool-worktree-example
+kool start
+# Wait for the app and Vite to be ready, then open http://demo.localhost.
+
+git worktree add ../task-a -b task-a
+cd ../task-a
+kool start
+# Open http://task-a.workspace.demo.localhost once services are ready.
+kool run test
+kool status
+```
+
+Edit `src/main.js` inside `task-a` to see HMR update only that workspace. The demo counter deliberately uses a shared database, so both apps see the same count. Tests run in the current workspace's app; integration tests still use the database you configured. Use separate test data for destructive tests.
+
+Stop before removing a plain Git worktree:
+
+```bash
+kool stop
+cd ../kool-worktree-example
+git worktree remove ../task-a
+```
+
+Save or commit changes before removing a worktree. A Git branch name does not determine its URL: the workspace directory name does. Duplicate Git worktree basenames receive a suffix to distinguish their hosts. `kool status` shows the active context and project names.
+
+## Rift lifecycle hooks
+
+Start the original project's infrastructure first, then create a Rift workspace using your Rift CLI or integration. Add this `.rift.toml` to automate its lifecycle:
+
+```toml
+version = 1
+
+[[hooks.postcreate]]
+run = "kool start"
+
+[[hooks.preremove]]
+run = "kool stop"
+```
+
+The hooks start selected services after creation and stop them before removal. Inside the Rift workspace, use the same `kool run`, `kool exec`, `kool logs`, and `kool status` commands. Plain Git worktrees do not execute Rift hooks.
 
 ## Configuration
 
@@ -58,6 +108,35 @@ environment:
 
 No Kool or proxy labels are required in `docker-compose.yml`.
 
+### Vite assets and HMR
+
+Passing an origin into Compose is not enough by itself: Vite and the application's generated asset URLs must use it. A minimal `vite.config.js` is:
+
+```js
+import { defineConfig } from 'vite';
+
+const origin = new URL(process.env.VITE_PUBLIC_ORIGIN);
+
+export default defineConfig({
+  server: {
+    host: '0.0.0.0',
+    port: 3001,
+    strictPort: true,
+    origin: origin.origin,
+    allowedHosts: [origin.hostname],
+    // App HTML is served on the default HTTP/HTTPS port in this setup.
+    cors: { origin: `${origin.protocol}//${origin.hostname}` },
+    hmr: {
+      host: origin.hostname,
+      protocol: origin.protocol === 'https:' ? 'wss' : 'ws',
+      clientPort: Number(origin.port || (origin.protocol === 'https:' ? 443 : 80)),
+    },
+  },
+});
+```
+
+Pass `VITE_PUBLIC_ORIGIN` to the app service as well if it generates HTML loading Vite assets. Load both `/@vite/client` and application modules from that origin, not the original project's hostname or `localhost`. For framework plugins, configure their development-server/asset URL equivalent. Adjust the CORS origin if the app uses a non-default port. Caddy forwards WebSocket upgrades; HTTPS origins need `wss` and a trusted local CA.
+
 ## Compose services
 
 Workspace services should mount the current project normally and join the external shared network:
@@ -92,6 +171,14 @@ networks:
 
 Kool removes published ports from proxied services because Caddy owns the listen ports. It also removes fixed `container_name` values from workspace services. Shared infrastructure must already be running from the original workspace.
 
+Workspace starts use `--no-deps`: `depends_on` does not start unselected services or wait for their readiness. Prepare dependencies/environment files for each workspace, and give applications connection retries or wait until infrastructure is ready.
+
+Use unique shared-network aliases for infrastructure (for example, `demo-database`) and configure the app to connect to them. Generic aliases such as `database` can be ambiguous when unrelated projects share the same global network. Code-dependent queue workers usually belong in `workspaces` too; a shared Redis queue backend does not isolate worker code or jobs.
+
+### Choosing separate data
+
+The `workspaces` list can include a database when a feature needs its own data. Also point the workspace app at that database, keep its connection on a project-local network (or use a unique workspace alias), and use project-scoped storage. Do not reuse a fixed external volume or the original database's connection string. Selecting a service does not automatically rewrite application connections or clone data. The example repository includes a Compose override showing this configuration.
+
 ## Managed proxy
 
 When proxy routes are configured, Kool manages a global `kool-proxy` container using the pinned `caddy:2.10-alpine` image.
@@ -110,11 +197,11 @@ Kool gives proxied services deterministic network aliases such as:
 ```text
 example-app
 example-node
-example-workspace-task-a-app
-example-workspace-task-a-node
+example-workspace-task-a-<path-hash>-app
+example-workspace-task-a-<path-hash>-node
 ```
 
-`kool start` registers routes through Caddy's Admin API. `kool stop` removes only the current source or workspace project's routes.
+`kool start` registers routes through Caddy's Admin API. A workspace's `kool stop` removes its own routes. An unqualified stop in the original project first stops its owned workspaces, then the original project; unrelated projects keep their routes.
 
 For `domain: app.localhost`, routes are generated as follows:
 
@@ -163,7 +250,7 @@ HTTPS does not currently add an automatic HTTP-to-HTTPS redirect. Configure only
 
 ## Commands
 
-From the original workspace, `kool start` starts the project normally. From a Rift or linked Git worktree it starts only services listed under `workspaces`, using an internal project name such as `example-workspace-task-a`.
+From the original workspace, `kool start` starts the project normally. From a Rift or linked Git worktree it starts only services listed under `workspaces`, using an internal project name such as `example-workspace-task-a-<path-hash>`. The hash comes from the canonical workspace path; do not hardcode container names.
 
 Existing commands remain transparent:
 

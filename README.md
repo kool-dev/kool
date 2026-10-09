@@ -72,6 +72,10 @@ Check out our pre-shaped [mono-repo structures](https://monorepo.tools/#what-is-
 
 Read the documentation at [**https://kool.dev/docs**](https://kool.dev/docs) or [docs/](docs/).
 
+### Git worktrees and Rift workspaces
+
+Run selected app services separately in each workspace while sharing infrastructure you choose, with hostname-based routing and Vite HMR through Kool's managed proxy. See the [workspace guide](docs/15-Snippets/Workspaces.md) and the runnable [Node + Vite example](https://github.com/kool-dev/kool-worktree-example). This feature requires a Kool build containing workspace support; see the example's prerequisites while it is unreleased.
+
 ## Community, Contributing and Support
 
 We invite you to contribute and help in our mission of making software development *kool* for everyone.
