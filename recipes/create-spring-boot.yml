@@ -1,0 +1,28 @@
+title: "Creating Spring Boot Application"
+
+actions:
+  - input: 'Group'
+    ref: 'SPRING_GROUP'
+    default: 'com.example'
+  - input: 'Artifact'
+    ref: 'SPRING_ARTIFACT'
+    default: 'application'
+  - input: 'Application name'
+    ref: 'SPRING_NAME'
+    default: 'Application'
+  - api: 'https://start.spring.io/metadata/client'
+    prompts:
+      - path: 'language'
+        prompt: 'Which language do you want to use?'
+        ref: 'SPRING_LANGUAGE'
+      - path: 'javaVersion'
+        prompt: 'Which Java version do you want to use?'
+        ref: 'JAVA_VERSION'
+      - path: 'dependencies'
+        prompt: 'Which Spring dependencies do you want to use?'
+        ref: 'SPRING_DEPENDENCIES'
+        multiple: true
+  - scripts:
+      - mkdir -p $CREATE_DIRECTORY
+      - docker pull -q gradle:8-jdk$JAVA_VERSION
+      - kool docker gradle:8-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && curl -fsSLG https://start.spring.io/starter.zip --data-urlencode type=gradle-project --data-urlencode language=$SPRING_LANGUAGE --data-urlencode groupId=$SPRING_GROUP --data-urlencode artifactId=$SPRING_ARTIFACT --data-urlencode name=$SPRING_NAME --data-urlencode javaVersion=$JAVA_VERSION --data-urlencode dependencies=$SPRING_DEPENDENCIES -o /tmp/starter.zip && unzip -q /tmp/starter.zip -d ."

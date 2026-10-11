@@ -56,6 +56,7 @@ To help you start building real-world applications, we've created Kool Presets a
 - **Node**: [NestJS](docs/03-Presets/NestJS.md), [AdonisJs](docs/03-Presets/AdonisJs.md), [Express.js](/docs/03-Presets/ExpressJS.md)
 - **PHP**: [Laravel](docs/03-Presets/Laravel.md), [Laravel Octane](docs/03-Presets/Laravel+Octane.md), [Symfony](docs/03-Presets/Symfony.md), [CodeIgniter](docs/03-Presets/CodeIgniter.md)
 - **Javascript**: [Next.js](docs/03-Presets/NextJS.md), [NuxtJS](docs/03-Presets/NuxtJS.md)
+- **Java**: [Java with Gradle](docs/03-Presets/Java.md), [Spring Boot](docs/03-Presets/SpringBoot.md)
 - **Others**: [Hugo](docs/03-Presets/Hugo.md), [WordPress](docs/03-Presets/WordPress.md)
 
 #### Monorepo structures

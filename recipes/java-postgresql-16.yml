@@ -1,0 +1,7 @@
+title: "PostgreSQL 16"
+
+actions:
+  - merge: database/postgresql16.yml
+    dst: docker-compose.yml
+  - merge: scripts/postgresql.yml
+    dst: kool.yml

@@ -1,0 +1,13 @@
+title: "Wizard: Java cache service"
+
+actions:
+  - prompt: 'Which cache service do you want to use?'
+    default: 'None - do not use a cache'
+    options:
+      - name: 'None - do not use a cache'
+      - name: 'Redis 7.0'
+        actions:
+          - recipe: redis-7
+      - name: 'Memcached 1.6'
+        actions:
+          - recipe: memcached-1.6

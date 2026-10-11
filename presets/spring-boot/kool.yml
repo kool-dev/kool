@@ -1,0 +1,5 @@
+scripts:
+  gradle: kool docker gradle:8-jdkJAVA_VERSION gradle
+  build: kool run gradle build --no-daemon
+  test: kool run gradle test --no-daemon
+  run: kool run gradle bootRun --no-daemon

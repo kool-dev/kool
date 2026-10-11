@@ -1,0 +1,20 @@
+tags: [ 'Java', 'Spring' ]
+
+name: 'Spring Boot'
+
+create:
+  - name: Creating new Spring Boot Application
+    actions:
+      - recipe: create-spring-boot
+
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - replace: JAVA_VERSION $JAVA_VERSION
+
+  - name: 'Customize your setup'
+    actions:
+      - recipe: pick-java-db
+      - recipe: pick-java-cache
