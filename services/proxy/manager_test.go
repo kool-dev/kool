@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -125,6 +126,98 @@ func TestLoadConfigRejectsReservedAdminPort(t *testing.T) {
 
 	if _, err := manager.loadConfig(); err == nil || !strings.Contains(err.Error(), "reserved admin port 2019") {
 		t.Fatalf("expected reserved port error, got %v", err)
+	}
+}
+
+func TestAlias(t *testing.T) {
+	longPrefix := strings.Repeat("a", 80)
+	tests := []struct {
+		name, project, service string
+		unchanged              bool
+	}{
+		{"ordinary", "example", "app", true},
+		{"63 characters", strings.Repeat("p", 59), "app", true},
+		{"64 characters", strings.Repeat("p", 60), "app", false},
+		{"reported workspace", "exlink-workspace-lattice-special-education-category-e6bb1c8c", "app", false},
+		{"long project a", longPrefix + "a", "app", false},
+		{"long project b", longPrefix + "b", "app", false},
+		{"long service a", "example", longPrefix + "a", false},
+		{"long service b", "example", longPrefix + "b", false},
+		{"both long", longPrefix, longPrefix, false},
+		{"underscore", "example_project", "web_app", false},
+		{"normalization collision", "example-project", "web_app", false},
+		{"dot", "example.project", "app", false},
+		{"leading hyphen", "-example", "app", false},
+		{"trailing hyphen", "example", "app-", false},
+		{"unicode", "例子", "应用", false},
+		{"empty", "", "", false},
+		{"uppercase", "Example", "App", true},
+		{"numeric", "123", "456", true},
+		{"truncated pair a", longPrefix + "-web", "app", false},
+		{"truncated pair b", longPrefix, "web-app", false},
+	}
+	label := regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]$`)
+	seen := make(map[string]string)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			manager := testRouteManager("", test.project, "app.localhost")
+			alias := manager.alias(test.service)
+			if len(alias) > 63 || !label.MatchString(alias) {
+				t.Fatalf("invalid DNS label %q (%d bytes)", alias, len(alias))
+			}
+			original := test.project + "-" + test.service
+			if (alias == original) != test.unchanged {
+				t.Errorf("alias %q, original %q, want unchanged=%v", alias, original, test.unchanged)
+			}
+			if again := manager.alias(test.service); again != alias {
+				t.Errorf("alias is not deterministic: %q != %q", again, alias)
+			}
+			if previous, exists := seen[alias]; exists {
+				t.Errorf("alias collision with %s: %q", previous, alias)
+			}
+			seen[alias] = test.name
+		})
+	}
+}
+
+func TestLongAliasMatchesDockerAndCaddy(t *testing.T) {
+	for _, test := range []struct {
+		name, project, service string
+	}{
+		{"workspace", "exlink-workspace-lattice-special-education-category-e6bb1c8c", "app"},
+		{"long service", "example", strings.Repeat("service", 20)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			state, server := newCaddyRouteState(t)
+			manager := testRouteManager(server.URL, "source", "workspace.app.localhost")
+			manager.env.Set("KOOL_WORKSPACE", "true")
+			manager.env.Set("KOOL_WORKSPACE_PROJECT", test.project)
+			workDir := t.TempDir()
+			manager.env.Set("PWD", workDir)
+			if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\n"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			proxyRoute := route{Service: test.service, Listen: 80, Target: 8080, Hosts: []string{"@"}}
+			file, err := manager.createAliasOverride(defaultNetwork, []route{proxyRoute})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Remove(file) })
+			content, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			alias := manager.alias(test.service)
+			if len(alias) > 63 || !strings.Contains(string(content), fmt.Sprintf("          - %q\n", alias)) {
+				t.Fatalf("expected DNS-safe alias %q in Compose override:\n%s", alias, content)
+			}
+			mustRegister(t, manager, proxyRoute)
+			state.requireUpstream(t, "kool-80", manager.routeID(proxyRoute), alias+":8080")
+			if routes := state.routes["kool-80"]; len(routes) != 1 || !strings.Contains(string(routes[0]), `"workspace.app.localhost"`) {
+				t.Fatalf("browser hostname changed: %s", routes)
+			}
+		})
 	}
 }
 

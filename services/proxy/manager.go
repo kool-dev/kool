@@ -1648,7 +1648,43 @@ func (m *DefaultManager) request(method, url string, body []byte) (*http.Respons
 }
 
 func (m *DefaultManager) alias(service string) string {
-	return m.project() + "-" + service
+	project := m.project()
+	name := project + "-" + service
+	const maxLabelLength = 63
+	valid := len(name) <= maxLabelLength && name[0] != '-' && name[len(name)-1] != '-'
+	for _, character := range name {
+		if !dnsLabelCharacter(character) {
+			valid = false
+			break
+		}
+	}
+	if valid {
+		return name
+	}
+
+	// Hash the complete project/service pair, not the truncated or normalized
+	// label. Reserve space for the hash after including the service suffix.
+	digest := sha256.Sum256([]byte(project + "\x00" + service))
+	suffix := fmt.Sprintf("-%x", digest[:8])
+	prefix := strings.Map(func(character rune) rune {
+		if dnsLabelCharacter(character) {
+			return character
+		}
+		return '-'
+	}, name)
+	prefix = strings.Trim(prefix, "-")
+	if len(prefix) > maxLabelLength-len(suffix) {
+		prefix = strings.TrimRight(prefix[:maxLabelLength-len(suffix)], "-")
+	}
+	if prefix == "" {
+		prefix = "kool"
+	}
+	return prefix + suffix
+}
+
+func dnsLabelCharacter(character rune) bool {
+	return character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z' ||
+		character >= '0' && character <= '9' || character == '-'
 }
 
 func (m *DefaultManager) routeID(route route) string {
