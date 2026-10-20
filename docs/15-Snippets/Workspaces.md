@@ -108,6 +108,21 @@ environment:
 
 No Kool or proxy labels are required in `docker-compose.yml`.
 
+### Debugging internal proxy aliases
+
+Kool gives every proxied service a stable, 21-character Docker network alias:
+`kool-` followed by a hash of the full Compose project and service names. This
+keeps upstream DNS names short even for long workspace or service names. Browser
+hostnames and Compose service names are unchanged.
+
+Run `kool proxy aliases` in the source project or workspace to see its configured
+project, service, network, and alias mappings. The command does not require Docker
+or Caddy and shows intended configuration, not live container state.
+
+When upgrading from project/service-based aliases, recreate all proxied services
+with `kool start` in each project/workspace so Docker and Caddy use the new names
+together.
+
 ### Vite assets and HMR
 
 Configure Vite to use the public origin passed by Compose:

@@ -12,7 +12,7 @@ If your CI runner already has Docker available on the host (e.g. GitHub Actions'
 
 ## What's in the image
 
-- `kool` CLI — built with Go 1.25, statically linked
+- `kool` CLI — built with Go 1.26.9, statically linked
 - `docker` CLI
 - `docker compose` plugin (Compose V2)
 - `git` and `bash`

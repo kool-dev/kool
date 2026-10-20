@@ -43,6 +43,15 @@ type Manager interface {
 	Remove([]string) error
 	RemoveProject(string, []string) error
 	Trust() error
+	Aliases() ([]Alias, error)
+}
+
+// Alias describes a configured proxy service's internal Docker DNS name.
+type Alias struct {
+	Project string
+	Service string
+	Network string
+	Name    string
 }
 
 type route struct {
@@ -298,6 +307,23 @@ func (m *DefaultManager) Trust() error {
 	default:
 		return fmt.Errorf("automatic proxy trust is not supported on %s", runtime.GOOS)
 	}
+}
+
+// Aliases lists the current project's configured aliases without contacting Docker or Caddy.
+func (m *DefaultManager) Aliases() ([]Alias, error) {
+	cfg, err := m.loadConfig()
+	if err != nil || cfg == nil {
+		return nil, err
+	}
+	var aliases []Alias
+	seen := make(map[string]bool)
+	for _, route := range cfg.Routes {
+		if !seen[route.Service] {
+			aliases = append(aliases, Alias{Project: m.project(), Service: route.Service, Network: cfg.Network, Name: m.alias(route.Service)})
+			seen[route.Service] = true
+		}
+	}
+	return aliases, nil
 }
 
 func (m *DefaultManager) loadConfig() (*config, error) {
@@ -1020,6 +1046,8 @@ func (m *DefaultManager) removeProjectRoutesUnlocked(services []string) error {
 	aliases := make(map[string]bool, len(services))
 	for _, service := range services {
 		aliases[m.alias(service)] = true
+		// Also allow stopping routes created before aliases were hashed.
+		aliases[m.project()+"-"+service] = true
 	}
 	return m.filterProjectRoutesUnlocked(func(route caddyRouteMetadata) bool {
 		if len(aliases) == 0 {
@@ -1648,7 +1676,10 @@ func (m *DefaultManager) request(method, url string, body []byte) (*http.Respons
 }
 
 func (m *DefaultManager) alias(service string) string {
-	return m.project() + "-" + service
+	// Separate the complete project/service pair so ambiguous concatenations
+	// cannot share an alias. A 64-bit digest keeps every label short and DNS-safe.
+	digest := sha256.Sum256([]byte(m.project() + "\x00" + service))
+	return fmt.Sprintf("kool-%x", digest[:8])
 }
 
 func (m *DefaultManager) routeID(route route) string {
