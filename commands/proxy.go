@@ -26,5 +26,33 @@ func AddKoolProxy(root *cobra.Command) {
 			return proxy.NewManager(sh, environment.NewEnvStorage()).Trust()
 		},
 	})
+	proxyCommand.AddCommand(newProxyAliasesCommand(environment.NewEnvStorage()))
 	root.AddCommand(proxyCommand)
+}
+
+func newProxyAliasesCommand(env environment.EnvStorage) *cobra.Command {
+	return &cobra.Command{
+		Use:   "aliases",
+		Short: "List configured internal proxy aliases for the current project",
+		Long:  "List configured internal Docker DNS aliases for the current project. This does not inspect running containers or contact Caddy.",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			aliases, err := proxy.NewManager(shell.NewShell(), env).Aliases()
+			if err != nil {
+				return err
+			}
+			if len(aliases) == 0 {
+				cmd.Println("No proxy aliases configured.")
+				return nil
+			}
+			table := shell.NewTableWriter()
+			table.SetWriter(cmd.OutOrStdout())
+			table.AppendHeader("Project", "Service", "Network", "Alias")
+			for _, alias := range aliases {
+				table.AppendRow(alias.Project, alias.Service, alias.Network, alias.Name)
+			}
+			table.Render()
+			return nil
+		},
+	}
 }
