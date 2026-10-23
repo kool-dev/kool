@@ -14,7 +14,6 @@ create:
 preset:
   - name: 'Copy basic config files'
     actions:
-      - copy: docker-compose.yml
       - copy: kool.yml
       - copy: app.js
       - copy: package.json
@@ -23,13 +22,22 @@ preset:
     actions:
       # define package manager
       - prompt: Which javascript package manager do you want to use?
+        ref: 'javascript_package_manager'
         default: 'npm'
         options:
           - name: 'npm'
             actions:
+              - copy: docker-compose.yml
               - merge: scripts/npm-expressjs.yml
                 dst: kool.yml
           - name: 'yarn'
             actions:
+              - copy: docker-compose.yml
               - merge: scripts/yarn-expressjs.yml
+                dst: kool.yml
+          - name: 'bun'
+            actions:
+              - copy: docker-compose.bun.yml
+                dst: docker-compose.yml
+              - merge: scripts/bun-expressjs.yml
                 dst: kool.yml

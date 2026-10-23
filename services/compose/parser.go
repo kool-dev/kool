@@ -7,7 +7,7 @@ type yamlMarshalFnType func(interface{}) ([]byte, error)
 
 // Compose represents a docker-compose file
 type Compose struct {
-	Version  string        `yaml:"version"`
+	Version  string        `yaml:"version,omitempty"`
 	Services yaml.MapSlice `yaml:"services"`
 	Volumes  yaml.MapSlice `yaml:"volumes,omitempty"`
 	Networks yaml.MapSlice `yaml:"networks,omitempty"`
@@ -34,7 +34,6 @@ var (
 // NewParser creates new docker-compose parser
 func NewParser() Parser {
 	compose := &Compose{
-		Version: "3.7",
 		Networks: yaml.MapSlice{
 			yaml.MapItem{Key: "kool_local"},
 			yaml.MapItem{

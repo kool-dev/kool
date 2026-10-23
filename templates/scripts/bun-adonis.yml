@@ -1,0 +1,8 @@
+scripts:
+  adonis: kool exec app adonis
+  bun: kool exec app bun
+  bunx: kool exec app bunx
+
+  setup:
+    - kool docker --user $KOOL_ASUSER --env HOME=/tmp oven/bun:1 bun install
+    - kool start

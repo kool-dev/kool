@@ -1,0 +1,8 @@
+scripts:
+  # bun - helpers for JS handling
+  bun: kool docker --user $KOOL_ASUSER --env HOME=/tmp oven/bun:1 bun
+  bunx: kool docker --user $KOOL_ASUSER --env HOME=/tmp oven/bun:1 bunx
+  setup:
+    - kool run bun install
+  reset:
+    - kool run bun install

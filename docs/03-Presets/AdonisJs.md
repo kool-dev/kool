@@ -47,9 +47,12 @@ $ Preset adonis is initializing!
 ? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
+  bun
 
 $ Preset adonis initialized!
 ```
+
+> **Experimental:** if you pick **bun**, the `app` service is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun --bun run dev`). AdonisJs officially targets Node, so running it on the Bun runtime is experimental and may require adjustments. To use Bun only as the package manager, keep `kooldev/node:20` as the `app` image in your **docker-compose.yml**.
 
 Now, move into your new AdonisJs project:
 
@@ -143,11 +146,11 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 ```yaml
 scripts:
   adonis: kool exec app adonis
-  npm: kool exec app npm # or yarn
+  npm: kool exec app npm # or yarn / bun
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:20 npm install # or yarn install
+    - kool docker kooldev/node:20 npm install # or yarn install / bun install (kool docker oven/bun:1 bun install)
     - kool start
 ```
 
@@ -246,6 +249,7 @@ $ kool start
 
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
+- **[Bun](/docs/03-Presets/Bun.md)**
 - **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
 - **[Express.js](/docs/03-Presets/ExpressJS.md)**
 - **[Hugo](/docs/03-Presets/Hugo.md)**

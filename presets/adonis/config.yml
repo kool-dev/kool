@@ -7,9 +7,25 @@ name: 'AdonisJS'
 create:
   - name: Creating new Adonis Application
     actions:
-      - scripts:
-          - docker pull -q kooldev/node:20
-          - kool docker kooldev/node:20 npm init -y adonis-ts-app@latest $CREATE_DIRECTORY
+      - prompt: 'Which Javascript package manager do you want to use for starter kit creation?'
+        ref: 'javascript_package_manager'
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - scripts:
+                - docker pull -q kooldev/node:20
+                - kool docker kooldev/node:20 npm init -y adonis-ts-app@latest $CREATE_DIRECTORY
+          - name: 'yarn'
+            actions:
+              - scripts:
+                - docker pull -q kooldev/node:20
+                - kool docker kooldev/node:20 yarn create adonis-ts-app $CREATE_DIRECTORY
+          - name: 'bun'
+            actions:
+              - scripts:
+                - docker pull -q oven/bun:1
+                - kool docker --user $KOOL_ASUSER --env HOME=/tmp oven/bun:1 bun create adonis-ts-app $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
@@ -17,8 +33,6 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - merge: app/node-adonis.yml
-        dst: docker-compose.yml
 
   - name: 'Customize your setup'
     actions:
@@ -26,13 +40,24 @@ preset:
       - recipe: pick-cache
       # define package manager
       - prompt: Which javascript package manager do you want to use?
+        ref: 'javascript_package_manager'
         default: 'npm'
         options:
           - name: 'npm'
             actions:
+              - merge: app/node-adonis.yml
+                dst: docker-compose.yml
               - merge: scripts/npm-adonis.yml
                 dst: kool.yml
           - name: 'yarn'
             actions:
+              - merge: app/node-adonis.yml
+                dst: docker-compose.yml
               - merge: scripts/yarn-adonis.yml
+                dst: kool.yml
+          - name: 'bun'
+            actions:
+              - merge: app/bun-adonis.yml
+                dst: docker-compose.yml
+              - merge: scripts/bun-adonis.yml
                 dst: kool.yml

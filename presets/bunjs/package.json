@@ -1,0 +1,7 @@
+{
+  "name": "my-kool-bun-app",
+  "module": "app.js",
+  "scripts": {
+    "start": "bun app.js"
+  }
+}

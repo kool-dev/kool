@@ -1,0 +1,5 @@
+title: "PHP 8.5"
+
+actions:
+  - merge: app/php85.yml
+    dst: docker-compose.yml

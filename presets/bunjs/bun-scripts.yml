@@ -1,0 +1,3 @@
+scripts:
+  bun: kool exec app bun
+  bunx: kool exec app bunx

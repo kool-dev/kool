@@ -34,7 +34,6 @@ By default, MailHog uses in-memory message storage and starts the HTTP server on
 ### Full Example
 
 ```diff
-version: "3.7"
 services:
   app:
     image: kooldev/php:8.0-nginx

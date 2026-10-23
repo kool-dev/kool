@@ -7,17 +7,54 @@ name: 'NextJS'
 create:
   - name: Creating new NextJS Application
     actions:
-      - scripts:
-          - docker pull -q kooldev/node:20
-          - kool docker kooldev/node:20 yarn create next-app $CREATE_DIRECTORY
+      - prompt: 'Which Javascript package manager do you want to use for starter kit creation?'
+        ref: 'javascript_package_manager'
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - scripts:
+                - docker pull -q kooldev/node:20
+                - kool docker kooldev/node:20 npm create next-app@latest $CREATE_DIRECTORY
+          - name: 'yarn'
+            actions:
+              - scripts:
+                - docker pull -q kooldev/node:20
+                - kool docker kooldev/node:20 yarn create next-app $CREATE_DIRECTORY
+          - name: 'bun'
+            actions:
+              - scripts:
+                - docker pull -q oven/bun:1
+                - kool docker --user $KOOL_ASUSER --env HOME=/tmp oven/bun:1 bun create next-app $CREATE_DIRECTORY
 
 # Preset defines the workflow for installing this preset in the current working directory
 preset:
   - name: 'Copy basic config files'
     actions:
-      - copy: docker-compose.yml
       - copy: kool.yml
 
   - name: 'Customize your setup'
     actions:
-      - recipe: pick-node-pkg-mgr
+      - prompt: 'Which Javascript package manager do you want to use'
+        ref: 'javascript_package_manager'
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - copy: docker-compose.yml
+              - merge: scripts/npm-nextjs.yml
+                dst: kool.yml
+          - name: 'yarn'
+            actions:
+              - copy: docker-compose.yml
+              - merge: scripts/yarn-nextjs.yml
+                dst: kool.yml
+          - name: 'bun'
+            actions:
+              - copy: docker-compose.bun.yml
+                dst: docker-compose.yml
+              - merge: scripts/bun-nextjs.yml
+                dst: kool.yml
+          - name: 'None'
+            actions:
+              - copy: docker-compose.yml

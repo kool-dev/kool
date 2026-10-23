@@ -6,7 +6,6 @@ import (
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -83,11 +82,13 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		}
 	}
 
-	// sets env variable CREATE_DIRECTORY so preset can use it
-	c.env.Set("CREATE_DIRECTORY", createDirectory)
-
 	if !c.parser.Exists(preset) {
 		err = fmt.Errorf("unknown preset %s", preset)
+		return
+	}
+
+	var projectDir string
+	if projectDir, err = c.prepareCreateTarget(createDirectory); err != nil {
 		return
 	}
 
@@ -101,17 +102,16 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 
 	c.Shell().Println("Initializing", preset, "preset...")
 
-	if !path.IsAbs(createDirectory) {
-		if createDirectory, err = filepath.Abs(createDirectory); err != nil {
-			return
-		}
-	}
-
-	if err = os.Chdir(createDirectory); err != nil {
+	if _, err = os.Stat(projectDir); os.IsNotExist(err) {
+		err = fmt.Errorf("preset did not create folder %s", projectDir)
 		return
 	}
 
-	c.env.Set("PWD", createDirectory)
+	if err = os.Chdir(projectDir); err != nil {
+		return
+	}
+
+	c.env.Set("PWD", projectDir)
 
 	if err = c.parser.Install(preset); err != nil {
 		return
@@ -119,6 +119,31 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 
 	c.Shell().Success("Preset ", preset, " created successfully!")
 
+	return
+}
+
+// prepareCreateTarget makes CREATE_DIRECTORY a folder name relative to the
+// current working directory so `kool docker` (which mounts cwd at /app) writes
+// the new project onto the host. Absolute paths like /tmp/my-app otherwise
+// land in the container's own /tmp and vanish when the container exits.
+func (c *KoolCreate) prepareCreateTarget(createDirectory string) (projectDir string, err error) {
+	if projectDir, err = filepath.Abs(createDirectory); err != nil {
+		return
+	}
+	projectDir = filepath.Clean(projectDir)
+
+	parent := filepath.Dir(projectDir)
+	base := filepath.Base(projectDir)
+
+	if err = os.MkdirAll(parent, 0755); err != nil {
+		return
+	}
+	if err = os.Chdir(parent); err != nil {
+		return
+	}
+
+	c.env.Set("CREATE_DIRECTORY", base)
+	c.env.Set("PWD", parent)
 	return
 }
 

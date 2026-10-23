@@ -25,19 +25,23 @@ Use the [`kool create PRESET FOLDER` command](/docs/commands/kool-create) to cre
 $ kool create nextjs my-project
 ```
 
-Under the hood, this command will run `yarn create next-app my-project` to install Next.js using a customized **kool** Docker image: <a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:20</a>.
+Under the hood, this command will run `npm create next-app my-project` (or the `yarn`/`bun` equivalent, based on your choice) to install Next.js. The `npm` and `yarn` options use a customized **kool** Docker image (<a href="https://github.com/kool-dev/docker-node" target="_blank">kooldev/node:20</a>), while the `bun` option uses the official <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image.
 
 After installing Next.js, `kool create` automatically runs the `kool preset nextjs` command, which helps you easily set up the initial tech stack for your project using an interactive wizard.
 
 ```bash
 $ Preset nextjs is initializing!
 
-? Which javascript package manager do you want to use [Use arrows to move, type to filter]
+? Which Javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
+  bun
+  None
 
 $ Preset nextjs initialized!
 ```
+
+> If you pick **bun**, the `app` service in your **docker-compose.yml** is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun --bun run dev`), so your app runs on the Bun runtime. Otherwise it uses `kooldev/node:20`.
 
 Now, move into your new Next.js project:
 
@@ -64,11 +68,11 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 
 ```yaml
 scripts:
-  npm: kool exec app npm # or yarn
+  npm: kool exec app npm # or yarn / bun
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:20 npm install # or yarn install
+    - kool docker kooldev/node:20 npm install # or yarn install / bun install (kool docker oven/bun:1 bun install)
     - kool start
 ```
 
@@ -164,11 +168,13 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[Bun](/docs/03-Presets/Bun.md)**
 - **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
 - **[Express.js](/docs/03-Presets/ExpressJS.md)**
 - **[Hugo](/docs/03-Presets/Hugo.md)**
 - **[Laravel](/docs/03-Presets/Laravel.md)**
 - **[NestJS](/docs/03-Presets/NestJS.md)**
+- **[Node.js](/docs/03-Presets/NodeJS.md)**
 - **[Nuxt.js](/docs/03-Presets/NuxtJS.md)**
 - **[PHP](/docs/03-Presets/PHP.md)**
 - **[Symfony](/docs/03-Presets/Symfony.md)**
