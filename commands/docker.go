@@ -65,6 +65,10 @@ func (d *KoolDocker) Execute(args []string) (err error) {
 		d.dockerRun.AppendArgs("--user", d.Flags.User)
 	}
 
+	for _, envVar := range environment.AgentEnvVars(d.envStorage) {
+		d.dockerRun.AppendArgs("--env", envVar)
+	}
+
 	if len(d.Flags.EnvVariables) > 0 {
 		for _, envVar := range d.Flags.EnvVariables {
 			d.dockerRun.AppendArgs("--env", envVar)

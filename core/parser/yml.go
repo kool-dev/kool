@@ -21,6 +21,22 @@ type yamlMarshalFnType func(interface{}) ([]byte, error)
 type KoolYaml struct {
 	Scripts       map[string]interface{}  `yaml:"scripts"`
 	ScriptDetails map[string]ScriptDetail `yaml:"-"`
+	Proxy         *ProxyConfig            `yaml:"proxy,omitempty"`
+	Workspaces    []string                `yaml:"workspaces,omitempty"`
+}
+
+// ProxyConfig describes routes managed by Kool's local proxy.
+type ProxyConfig struct {
+	Domain  string                      `yaml:"domain"`
+	HTTPS   bool                        `yaml:"https,omitempty"`
+	Network string                      `yaml:"network,omitempty"`
+	Routes  map[string]ProxyRouteConfig `yaml:"routes"`
+}
+
+// ProxyRouteConfig describes host and port mappings for a Compose service.
+type ProxyRouteConfig struct {
+	Ports []string `yaml:"ports"`
+	Hosts []string `yaml:"hosts"`
 }
 
 // ScriptDetail describes a kool.yml script with context
@@ -107,6 +123,8 @@ func (y *KoolYaml) Parse(filePath string) (err error) {
 
 	y.Scripts = parsed.Scripts
 	y.ScriptDetails = parsed.ScriptDetails
+	y.Proxy = parsed.Proxy
+	y.Workspaces = parsed.Workspaces
 	return
 }
 

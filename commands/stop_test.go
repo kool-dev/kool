@@ -4,16 +4,40 @@ import (
 	"errors"
 	"io"
 	"kool-dev/kool/core/builder"
+	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/services/checker"
+	"strings"
 	"testing"
 )
+
+type workspaceStopShell struct {
+	shell.FakeShell
+	commands []string
+}
+
+func (s *workspaceStopShell) Exec(command builder.Command, extraArgs ...string) (string, error) {
+	if strings.HasPrefix(command.String(), "docker ps --all") {
+		return "example-workspace-task-b\nexample-workspace-task-a\n", nil
+	}
+	if strings.HasPrefix(command.String(), "docker inspect kool-proxy") {
+		return "", errors.New("proxy is not running")
+	}
+	return "", nil
+}
+
+func (s *workspaceStopShell) Interactive(command builder.Command, extraArgs ...string) error {
+	s.commands = append(s.commands, strings.TrimSpace(command.String()+" "+strings.Join(extraArgs, " ")))
+	return nil
+}
 
 func newFakeKoolStop() *KoolStop {
 	fs := &KoolStop{
 		*(newDefaultKoolService().Fake()),
 		&KoolStopFlags{false},
 		&checker.FakeChecker{},
+		environment.NewFakeEnvStorage(),
+		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 		&builder.FakeCommand{},
 	}
@@ -123,6 +147,28 @@ func TestNewStopPurgeCommandWithServices(t *testing.T) {
 	appended := f.rm.(*builder.FakeCommand).ArgsAppend
 	if len(appended) != 5 || appended[0] != "-s" || appended[1] != "-f" || appended[2] != "-v" {
 		t.Errorf("bad arguments to KoolStop.rm Command when passing --purge flag")
+	}
+}
+
+func TestStopMainStopsWorkspacesFirst(t *testing.T) {
+	f := newFakeKoolStop()
+	recorder := &workspaceStopShell{}
+	f.shell = recorder
+	f.env.Set("KOOL_NAME", "example")
+	f.env.Set("KOOL_WORKSPACES_ENABLED", "true")
+	f.getProjects = builder.NewCommand("docker", "ps", "--all")
+	f.down = builder.NewCommand("docker", "compose", "down")
+
+	if err := f.Execute(nil); err != nil {
+		t.Fatal(err)
+	}
+	expected := []string{
+		"docker compose --project-name example-workspace-task-a down --remove-orphans",
+		"docker compose --project-name example-workspace-task-b down --remove-orphans",
+		"docker compose down --remove-orphans",
+	}
+	if strings.Join(recorder.commands, "\n") != strings.Join(expected, "\n") {
+		t.Errorf("expected workspace projects to stop before main:\n%v\ngot:\n%v", expected, recorder.commands)
 	}
 }
 
