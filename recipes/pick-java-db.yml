@@ -2,6 +2,7 @@ title: "Wizard: Java database"
 
 actions:
   - prompt: 'Which database service do you want to use?'
+    ref: 'JAVA_DB'
     default: 'None - do not use a database'
     options:
       - name: 'None - do not use a database'

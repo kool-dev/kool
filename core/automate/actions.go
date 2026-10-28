@@ -57,6 +57,9 @@ type APIField struct {
 	Prompt   string `yaml:"prompt"`
 	Ref      string `yaml:"ref"`
 	Multiple bool   `yaml:"multiple"`
+	// Compatible is the path of an API field whose default version must
+	// satisfy each option's versionRange; incompatible options are hidden
+	Compatible string `yaml:"compatible"`
 }
 
 // Type tells the actual implementation of this action

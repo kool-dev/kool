@@ -1,6 +1,9 @@
 package presets
 
-import "kool-dev/kool/core/shell"
+import (
+	"kool-dev/kool/core/automate"
+	"kool-dev/kool/core/shell"
+)
 
 // FakeParser implements all fake behaviors for using parser in tests.
 type FakeParser struct {
@@ -10,6 +13,11 @@ type FakeParser struct {
 	CalledInstall    bool
 	CalledCreate     bool
 	CalledAdd        bool
+
+	CalledPrepareExecutor []struct {
+		Answers       automate.Answers
+		NoInteraction bool
+	}
 
 	MockExists     bool
 	MockGetTags    []string
@@ -26,8 +34,11 @@ func (f *FakeParser) Exists(preset string) (exists bool) {
 	return
 }
 
-func (f *FakeParser) PrepareExecutor(sh shell.Shell) {
-	// noop
+func (f *FakeParser) PrepareExecutor(sh shell.Shell, answers automate.Answers, noInteraction bool) {
+	f.CalledPrepareExecutor = append(f.CalledPrepareExecutor, struct {
+		Answers       automate.Answers
+		NoInteraction bool
+	}{answers, noInteraction})
 }
 
 // GetTags get all presets tags

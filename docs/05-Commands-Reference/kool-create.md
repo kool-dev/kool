@@ -6,6 +6,11 @@ Create a new project using a preset
 
 Create a new project using the specified PRESET in a directory named FOLDER.
 
+Questions asked by the preset can be answered beforehand with --answer REF=value,
+where REF is the question ref (or the question text when it has no ref). Options
+can be given by value or label, and multiple choices are comma separated. Without
+a terminal, or with --no-interaction, a question without an answer fails.
+
 ```
 kool create PRESET FOLDER
 ```
@@ -13,7 +18,9 @@ kool create PRESET FOLDER
 ### Options
 
 ```
-  -h, --help   help for create
+  -a, --answer stringArray   Answer to a preset question as REF=value (repeatable; comma separate multiple choices)
+  -h, --help                 help for create
+  -n, --no-interaction       Fail on any preset question without an answer instead of prompting
 ```
 
 ### Options inherited from parent commands

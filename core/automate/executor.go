@@ -30,6 +30,10 @@ type Executor struct {
 
 	// promptState is a map of prompt answers
 	promptState map[string]string
+	// answers holds values provided beforehand for the questions
+	answers Answers
+	// noInteraction fails questions without an answer instead of prompting
+	noInteraction bool
 	// copiedFiles contains files available to a following replace action
 	copiedFiles []string
 }
@@ -45,6 +49,27 @@ func NewExecutor(sh shell.Shell, fn RetrieveSource) *Executor {
 		promptState:   make(map[string]string),
 		copiedFiles:   make([]string, 0),
 	}
+}
+
+// SetAnswers provides values for the questions so their prompts are skipped.
+// When noInteraction is true, a question without an answer fails instead of
+// prompting; the same happens when not running on an interactive terminal.
+func (e *Executor) SetAnswers(answers Answers, noInteraction bool) {
+	e.answers = answers
+	e.noInteraction = noInteraction
+}
+
+func (e *Executor) canPrompt() bool {
+	return !e.noInteraction && e.sh.IsTerminal()
+}
+
+func (e *Executor) missingAnswer(ref, question string, options []apiOption) error {
+	key := questionKey(ref, question)
+	err := fmt.Errorf("no answer provided for %q (non-interactive mode); use --answer '%s=<value>'", key, key)
+	if len(options) > 0 {
+		err = fmt.Errorf("%w; valid options are: %s", err, describeOptions(options))
+	}
+	return err
 }
 
 func (e *Executor) Do(steps []*ActionSet) (err error) {
@@ -253,6 +278,15 @@ func (e *Executor) prompt(action *Action) (err error) {
 		e.sh.Printf("→ Already selected '%s': %s\n", action.Prompt, e.promptState[action.Ref])
 
 		pick = e.promptState[action.Ref]
+	} else if answer, found := e.answers.lookup(action.Ref, action.Prompt); found {
+		var option apiOption
+		if option, err = matchOption(answer, labelOptions(optionsList)); err != nil {
+			return fmt.Errorf("%s: %w", questionKey(action.Ref, action.Prompt), err)
+		}
+		pick = option.Value
+		e.sh.Printf("→ %s %s\n", action.Prompt, pick)
+	} else if !e.canPrompt() {
+		return e.missingAnswer(action.Ref, action.Prompt, labelOptions(optionsList))
 	} else if pick, err = e.prompter.Ask(action.Prompt, optionsList); err != nil {
 		return
 	}
@@ -267,8 +301,12 @@ func (e *Executor) prompt(action *Action) (err error) {
 }
 
 func (e *Executor) inputValue(action *Action) (err error) {
-	value, err := e.input.Input(action.Input, action.Default)
-	if err != nil {
+	value, found := e.answers.lookup(action.Ref, action.Input)
+	if found {
+		e.sh.Printf("→ %s %s\n", action.Input, value)
+	} else if !e.canPrompt() {
+		return e.missingAnswer(action.Ref, action.Input, nil)
+	} else if value, err = e.input.Input(action.Input, action.Default); err != nil {
 		return
 	}
 	if action.Ref != "" {
@@ -312,6 +350,10 @@ func (e *Executor) api(action *Action) (err error) {
 		if values, defaultValue, err = apiOptions(data, field); err != nil {
 			return fmt.Errorf("could not read API field %q: %w", field.Path, err)
 		}
+		var incompatible []apiOption
+		if values, incompatible, err = compatibleOptions(data, field, values); err != nil {
+			return
+		}
 		if len(values) == 0 {
 			return fmt.Errorf("API field %q did not contain any options", field.Path)
 		}
@@ -338,6 +380,16 @@ func (e *Executor) api(action *Action) (err error) {
 					}
 				}
 			}
+		}
+
+		if answer, found := e.answers.lookup(field.Ref, field.Prompt); found {
+			if err = e.answerAPIField(field, answer, values, incompatible); err != nil {
+				return
+			}
+			continue
+		}
+		if !e.canPrompt() {
+			return e.missingAnswer(field.Ref, field.Prompt, values)
 		}
 
 		if field.Multiple {
@@ -367,6 +419,49 @@ func (e *Executor) api(action *Action) (err error) {
 type apiOption struct {
 	Label string
 	Value string
+	Range string
+}
+
+// compatibleOptions splits the options between the ones compatible with the
+// default version of the field.Compatible API field and the incompatible ones
+func compatibleOptions(data map[string]any, field *APIField, options []apiOption) (compatible, incompatible []apiOption, err error) {
+	if field.Compatible == "" {
+		return options, nil, nil
+	}
+
+	var current any
+	if current, err = apiPath(data, field.Compatible); err != nil {
+		return nil, nil, fmt.Errorf("could not read API field %q: %w", field.Compatible, err)
+	}
+	object, _ := current.(map[string]any)
+	version, _ := object["default"].(string)
+	if version == "" {
+		return nil, nil, fmt.Errorf("API field %q has no default version", field.Compatible)
+	}
+
+	for _, option := range options {
+		var ok bool
+		if ok, err = versionInRange(version, option.Range); err != nil {
+			return nil, nil, fmt.Errorf("option %q: %w", option.Value, err)
+		}
+		if ok {
+			compatible = append(compatible, option)
+		} else {
+			option.Range = fmt.Sprintf("%s, not compatible with %s %s", option.Range, field.Compatible, version)
+			incompatible = append(incompatible, option)
+		}
+	}
+	return
+}
+
+func incompatibleOptionError(answer string, incompatible []apiOption) error {
+	var reasons []string
+	for _, item := range strings.Split(answer, ",") {
+		if option, err := matchOption(item, incompatible); err == nil {
+			reasons = append(reasons, fmt.Sprintf("%q requires %s", option.Value, option.Range))
+		}
+	}
+	return fmt.Errorf("incompatible option: %s", strings.Join(reasons, "; "))
 }
 
 func apiOptions(data map[string]any, field *APIField) (options []apiOption, defaultValue string, err error) {
@@ -446,9 +541,50 @@ func flattenAPIOptions(values []any, group, valueKey, labelKey string) ([]apiOpt
 		if group != "" {
 			label = group + ": " + name
 		}
-		options = append(options, apiOption{Label: label, Value: id})
+		versionRange, _ := object["versionRange"].(string)
+		options = append(options, apiOption{Label: label, Value: id, Range: versionRange})
 	}
 	return options, nil
+}
+
+func (e *Executor) answerAPIField(field *APIField, answer string, options, incompatible []apiOption) (err error) {
+	key := questionKey(field.Ref, field.Prompt)
+
+	if field.Multiple {
+		var selected []apiOption
+		if selected, err = matchOptions(answer, options); err != nil {
+			if _, incompatibleErr := matchOptions(answer, append(options, incompatible...)); incompatibleErr == nil {
+				err = incompatibleOptionError(answer, incompatible)
+			}
+			return fmt.Errorf("%s: %w", key, err)
+		}
+		ids := make([]string, 0, len(selected))
+		labels := make([]string, 0, len(selected))
+		for _, option := range selected {
+			ids = append(ids, option.Value)
+			labels = append(labels, option.Label)
+		}
+		e.sh.Printf("→ %s %s\n", field.Prompt, strings.Join(labels, ", "))
+		return e.setAPIValue(field.Ref, strings.Join(ids, ","))
+	}
+
+	var option apiOption
+	if option, err = matchOption(answer, options); err != nil {
+		if _, incompatibleErr := matchOption(answer, append(options, incompatible...)); incompatibleErr == nil {
+			err = incompatibleOptionError(answer, incompatible)
+		}
+		return fmt.Errorf("%s: %w", key, err)
+	}
+	e.sh.Printf("→ %s %s\n", field.Prompt, option.Label)
+	return e.setAPIValue(field.Ref, option.Value)
+}
+
+func labelOptions(labels []string) []apiOption {
+	options := make([]apiOption, 0, len(labels))
+	for _, label := range labels {
+		options = append(options, apiOption{Label: label, Value: label})
+	}
+	return options
 }
 
 func (e *Executor) setAPIValue(ref, value string) error {

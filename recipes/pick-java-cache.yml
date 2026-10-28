@@ -2,6 +2,7 @@ title: "Wizard: Java cache service"
 
 actions:
   - prompt: 'Which cache service do you want to use?'
+    ref: 'JAVA_CACHE'
     default: 'None - do not use a cache'
     options:
       - name: 'None - do not use a cache'
