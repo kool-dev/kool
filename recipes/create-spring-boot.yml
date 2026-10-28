@@ -24,5 +24,5 @@ actions:
         multiple: true
   - scripts:
       - mkdir -p $CREATE_DIRECTORY
-      - docker pull -q gradle:8-jdk$JAVA_VERSION
-      - kool docker gradle:8-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && curl -fsSLG https://start.spring.io/starter.zip --data-urlencode type=gradle-project --data-urlencode language=$SPRING_LANGUAGE --data-urlencode groupId=$SPRING_GROUP --data-urlencode artifactId=$SPRING_ARTIFACT --data-urlencode name=$SPRING_NAME --data-urlencode javaVersion=$JAVA_VERSION --data-urlencode dependencies=$SPRING_DEPENDENCIES -o /tmp/starter.zip && unzip -q /tmp/starter.zip -d ."
+      - docker pull -q gradle:9-jdk$JAVA_VERSION
+      - kool docker gradle:9-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && curl -fsSLG https://start.spring.io/starter.zip --data-urlencode type=gradle-project --data-urlencode language=$SPRING_LANGUAGE --data-urlencode groupId=$SPRING_GROUP --data-urlencode artifactId=$SPRING_ARTIFACT --data-urlencode name=$SPRING_NAME --data-urlencode javaVersion=$JAVA_VERSION --data-urlencode dependencies=$SPRING_DEPENDENCIES -o /tmp/starter.zip && unzip -q /tmp/starter.zip -d ."

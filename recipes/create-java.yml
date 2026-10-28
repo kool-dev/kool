@@ -6,5 +6,5 @@ actions:
     default: '21'
   - scripts:
       - mkdir -p $CREATE_DIRECTORY
-      - docker pull -q gradle:8-jdk$JAVA_VERSION
-      - kool docker gradle:8-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && gradle init --no-daemon --type java-application --project-name $CREATE_DIRECTORY --dsl kotlin --test-framework junit-jupiter"
+      - docker pull -q gradle:9-jdk$JAVA_VERSION
+      - kool docker gradle:9-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && gradle init --no-daemon --type java-application --project-name $CREATE_DIRECTORY --dsl kotlin --test-framework junit-jupiter"

@@ -1,6 +1,6 @@
 services:
   app:
-    image: gradle:8-jdkJAVA_VERSION
+    image: gradle:9-jdkJAVA_VERSION
     command: ./gradlew bootRun --no-daemon
     environment:
       GRADLE_USER_HOME: /home/gradle/.gradle
