@@ -2,8 +2,6 @@ package parser
 
 import (
 	"errors"
-	"os"
-	"path"
 	"sort"
 	"strings"
 
@@ -37,24 +35,15 @@ func (p *DefaultParser) AddLookupPath(rootPath string) (err error) {
 		p.lookedUp = make(map[string]bool)
 	}
 
-	ymlPath := path.Join(rootPath, "kool.yml")
-	yamlPath := path.Join(rootPath, "kool.yaml")
-
-	if _, err = os.Stat(ymlPath); err == nil {
-		koolFile = ymlPath
-	} else if _, err = os.Stat(yamlPath); err == nil {
-		koolFile = yamlPath
+	if koolFile, err = FindKoolYaml(rootPath); err != nil {
+		return
 	}
 
-	if koolFile == "" {
-		err = ErrKoolYmlNotFound
-	} else {
-		if !p.lookedUp[koolFile] {
-			p.targetFiles = append(p.targetFiles, koolFile)
-		}
-
-		p.lookedUp[koolFile] = true
+	if !p.lookedUp[koolFile] {
+		p.targetFiles = append(p.targetFiles, koolFile)
 	}
+
+	p.lookedUp[koolFile] = true
 
 	return
 }

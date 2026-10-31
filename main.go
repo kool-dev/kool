@@ -11,7 +11,6 @@ import (
 
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	environment.InitEnvironmentVariables(environment.NewEnvStorage())
 
 	if err := commands.Execute(); err != nil {
 		shell.NewShell().Println(err)
@@ -19,8 +18,10 @@ func main() {
 		if ex, ok := err.(shell.ErrExitable); ok {
 			code = ex.Code
 		}
+		environment.CleanupWorkspace()
 		os.Exit(code)
 	}
 
+	environment.CleanupWorkspace()
 	os.Exit(0)
 }

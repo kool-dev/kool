@@ -2,7 +2,9 @@ package commands
 
 import (
 	"kool-dev/kool/core/builder"
+	"kool-dev/kool/core/environment"
 	"kool-dev/kool/services/checker"
+	"kool-dev/kool/services/proxy"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -18,9 +20,11 @@ type KoolStop struct {
 	DefaultKoolService
 	Flags *KoolStopFlags
 
-	check checker.Checker
-	down  builder.Command
-	rm    builder.Command
+	check       checker.Checker
+	env         environment.EnvStorage
+	getProjects builder.Command
+	down        builder.Command
+	rm          builder.Command
 }
 
 func AddKoolStop(root *cobra.Command) {
@@ -39,6 +43,8 @@ func NewKoolStop() *KoolStop {
 		*defaultKoolService,
 		&KoolStopFlags{false},
 		checker.NewChecker(defaultKoolService.shell),
+		environment.NewEnvStorage(),
+		builder.NewCommand("docker", "ps", "--all"),
 		builder.NewCommand("docker", "compose", "down"),
 		builder.NewCommand("docker", "compose", "rm"),
 	}
@@ -50,6 +56,26 @@ func (s *KoolStop) Execute(args []string) (err error) {
 
 	if err = s.check.Check(); err != nil {
 		return
+	}
+	if len(args) == 0 && workspacesEnabled(s.env) && !isWorkspace(s.env) {
+		var projects []string
+		if projects, err = activeWorkspaceProjects(s.Shell(), s.getProjects, s.env); err != nil {
+			return
+		}
+		for _, project := range projects {
+			workspaceDown := builder.NewCommand("docker", "compose", "--project-name", project, "down", "--remove-orphans")
+			if s.Flags.Purge {
+				workspaceDown.AppendArgs("--volumes")
+			}
+			if err = s.Shell().Interactive(workspaceDown); err != nil {
+				return
+			}
+			if proxyEnabled(s.env) {
+				if proxyErr := proxy.NewManager(s.Shell(), s.env).RemoveProject(project, nil); proxyErr != nil {
+					s.Shell().Warning("Could not remove proxy routes:", proxyErr)
+				}
+			}
+		}
 	}
 
 	if len(args) == 0 {
@@ -76,6 +102,14 @@ func (s *KoolStop) Execute(args []string) (err error) {
 	}
 
 	err = s.Shell().Interactive(stopCommand)
+	if err != nil {
+		return
+	}
+	if proxyEnabled(s.env) {
+		if proxyErr := proxy.NewManager(s.Shell(), s.env).Remove(args); proxyErr != nil {
+			s.Shell().Warning("Could not remove proxy routes:", proxyErr)
+		}
+	}
 	time.Sleep(time.Second * 2)
 	return
 }

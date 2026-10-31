@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -191,6 +192,113 @@ func TestVerboseFlagRootCommand(t *testing.T) {
 	}
 }
 
+func TestWorkingDirectoryInitializesTargetEnvironment(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(originalDirectory)
+		originalWorkingDir = ""
+		environment.CleanupWorkspace()
+	})
+	originalWorkingDir = ""
+	target := t.TempDir()
+	if err = os.WriteFile(filepath.Join(target, ".env"), []byte("TARGET_ENV=loaded\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	env := environment.NewFakeEnvStorage()
+	root := newRootCmd(env, true)
+	root.AddCommand(&cobra.Command{Use: "target", Run: func(*cobra.Command, []string) {}})
+	root.SetArgs([]string{"-w", target, "target"})
+	if err = root.Execute(); err != nil {
+		t.Fatal(err)
+	}
+
+	expectedTarget, err := filepath.EvalSymlinks(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := env.Get("PWD"); got != expectedTarget {
+		t.Errorf("expected target PWD %q, got %q", expectedTarget, got)
+	}
+	if got := env.Get("TARGET_ENV"); got != "loaded" {
+		t.Errorf("expected target .env to be loaded, got %q", got)
+	}
+}
+
+func TestRecursiveWorkingDirectoryReplacesParentEnvironment(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := t.TempDir()
+	target := t.TempDir()
+	if err = os.WriteFile(filepath.Join(parent, ".env"), []byte("SHARED_ENV=parent\nPARENT_ONLY=present\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.WriteFile(filepath.Join(target, ".env"), []byte("SHARED_ENV=target\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Chdir(parent); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Unsetenv("SHARED_ENV"); err != nil {
+		t.Fatal(err)
+	}
+	if err = os.Unsetenv("PARENT_ONLY"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Chdir(originalDirectory)
+		_ = os.Unsetenv("SHARED_ENV")
+		_ = os.Unsetenv("PARENT_ONLY")
+		originalWorkingDir = ""
+	})
+	parentEnv := environment.NewEnvStorage()
+	environment.InitEnvironmentVariables(parentEnv)
+
+	restore := clearDirectoryEnvironment(parent)
+	defer restore()
+	if err = os.Chdir(target); err != nil {
+		t.Fatal(err)
+	}
+	env := environment.NewEnvStorage()
+	environment.InitEnvironmentVariables(env)
+
+	if got := env.Get("SHARED_ENV"); got != "target" {
+		t.Errorf("expected target environment value, got %q", got)
+	}
+	if got := env.Get("PARENT_ONLY"); got != "" {
+		t.Errorf("expected parent-only environment value to be cleared, got %q", got)
+	}
+}
+
+func TestRecursiveWorkingDirectoryReplacesGlobalNetwork(t *testing.T) {
+	originalDirectory, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	parent := t.TempDir()
+	target := t.TempDir()
+	if err = os.WriteFile(filepath.Join(target, ".env"), []byte("KOOL_GLOBAL_NETWORK=target_network\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("KOOL_GLOBAL_NETWORK", "kool_global")
+	restore := clearDirectoryEnvironment(parent)
+	defer restore()
+	if err := os.Chdir(target); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(originalDirectory) })
+	env := environment.NewEnvStorage()
+	environment.InitEnvironmentVariables(env)
+	if got := env.Get("KOOL_GLOBAL_NETWORK"); got != "target_network" {
+		t.Fatalf("expected target global network, got %q", got)
+	}
+}
+
 func TestRecursiveCall(t *testing.T) {
 	recursive := &cobra.Command{
 		Use: "recursive",
@@ -233,6 +341,14 @@ func TestMultipleRecursiveCall(t *testing.T) {
 	}
 }
 
+func TestHasWorkingDirArgAcceptsAttachedShorthand(t *testing.T) {
+	for _, arg := range []string{"-w=/tmp/project", "-w/tmp/project"} {
+		if !hasWorkingDirArg([]string{"status", arg}) {
+			t.Errorf("expected %q to initialize the target environment", arg)
+		}
+	}
+}
+
 func TestAddCommands(t *testing.T) {
 	root := NewRootCmd(environment.NewFakeEnvStorage())
 
@@ -247,6 +363,7 @@ func TestAddCommands(t *testing.T) {
 		"info":        false,
 		"logs":        false,
 		"preset":      false,
+		"proxy":       false,
 		"restart":     false,
 		"run":         false,
 		"self-update": false,

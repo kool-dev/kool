@@ -169,6 +169,23 @@ func TestEnvFlagNewDockerCommand(t *testing.T) {
 	}
 }
 
+func TestAgentEnvNewDockerCommand(t *testing.T) {
+	f := newFakeKoolDocker()
+	f.shell.(*shell.FakeShell).MockIsTerminal = false
+	f.envStorage.(*environment.FakeEnvStorage).Envs["CLAUDECODE"] = "1"
+	cmd := NewDockerCommand(f)
+	cmd.SetArgs([]string{"image"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing docker command; error: %v", err)
+	}
+
+	argsAppend := f.dockerRun.(*builder.FakeCommand).ArgsAppend
+	if len(argsAppend) != 4 || argsAppend[0] != "--env" || argsAppend[1] != "CLAUDECODE=1" {
+		t.Errorf("bad arguments to KoolDocker.dockerRun Command with detected agent: %v", argsAppend)
+	}
+}
+
 func TestVolumesFlagNewDockerCommand(t *testing.T) {
 	f := newFakeKoolDocker()
 	f.shell.(*shell.FakeShell).MockIsTerminal = false
