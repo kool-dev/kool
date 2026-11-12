@@ -45,7 +45,7 @@ type Parser interface {
 	Create(string) error
 	Add(string, shell.Shell) error
 
-	PrepareExecutor(shell.Shell)
+	PrepareExecutor(shell.Shell, automate.Answers, bool)
 }
 
 // NewParser creates a new preset default parser
@@ -183,8 +183,11 @@ func (p *DefaultParser) Create(preset string) (err error) {
 	return
 }
 
-func (p *DefaultParser) PrepareExecutor(sh shell.Shell) {
+// PrepareExecutor sets up the executor for the preset actions, using the
+// given answers for the questions instead of prompting for them
+func (p *DefaultParser) PrepareExecutor(sh shell.Shell, answers automate.Answers, noInteraction bool) {
 	p.execRunner = automate.NewExecutor(sh, p.getSourceFile)
+	p.execRunner.SetAnswers(answers, noInteraction)
 }
 
 func (p *DefaultParser) Add(recipe string, sh shell.Shell) (err error) {

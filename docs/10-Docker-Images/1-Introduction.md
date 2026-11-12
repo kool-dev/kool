@@ -12,7 +12,6 @@ A few of the optimizations included in Kool's Docker images:
 - PHP images: https://github.com/kool-dev/docker-php
 - Nginx images: https://github.com/kool-dev/docker-nginx
 - Node images: https://github.com/kool-dev/docker-node
-- Java images: https://github.com/kool-dev/docker-java
 - DevOps images: https://github.com/kool-dev/docker-toolkit
 
 > Disclaimer: Kool Docker images follow our recommended best practices, which are aimed at making your life easier. However, you can use the **Kool CLI** with any Docker images you like - assuming you know what you're doing.

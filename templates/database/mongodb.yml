@@ -8,10 +8,13 @@ services:
       MONGODB_INITDB_ROOT_PASSWORD: "${DB_PASSWORD-root}"
       MONGO_INITDB_DATABASE: "${DB_DATABASE-database}"
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
 
     volumes:
       - database:/data/db:delegated
     networks:
       - kool_local
       - kool_global
+
+volumes:
+  database:

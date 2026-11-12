@@ -70,6 +70,60 @@ func TestParseActionPrompt(t *testing.T) {
 	})
 }
 
+func TestParseActionInput(t *testing.T) {
+	a := parseAction("input: 'Project name'\nref: 'PROJECT_NAME'\ndefault: 'application'", t)
+
+	if a.Input != "Project name" || a.Ref != "PROJECT_NAME" || a.Default != "application" {
+		t.Errorf("failed parsing ActionInput: %v", a)
+	}
+	if a.Type() != TypeInput {
+		t.Errorf("failed parsing ActionInput type; got: %v", a.Type())
+	}
+}
+
+func TestParseActionAPI(t *testing.T) {
+	a := parseAction("api: 'https://example.test/options'\nprompts:\n  - path: 'data'\n    options: 'items'\n    value: 'key'\n    label: 'title'\n    multiple: true", t)
+
+	if a.API == "" || len(a.Prompts) != 1 || a.Prompts[0].Options != "items" || !a.Prompts[0].Multiple {
+		t.Errorf("failed parsing ActionAPI: %v", a)
+	}
+	if a.Type() != TypeAPI {
+		t.Errorf("failed parsing ActionAPI type; got: %v", a.Type())
+	}
+}
+
+func TestParseActionReplace(t *testing.T) {
+	a := parseAction("replace: 'JAVA_VERSION $JAVA_VERSION'", t)
+
+	if a.Replace != "JAVA_VERSION $JAVA_VERSION" {
+		t.Errorf("failed parsing ActionReplace: %v", a)
+	}
+	if a.Type() != TypeReplace {
+		t.Errorf("failed parsing ActionReplace type; got: %v", a.Type())
+	}
+}
+
+func TestAPIOptions(t *testing.T) {
+	data := map[string]any{
+		"data": map[string]any{
+			"default": "two",
+			"items": []any{
+				map[string]any{"key": "one", "title": "One"},
+				map[string]any{"key": "two", "title": "Two"},
+			},
+		},
+	}
+	options, defaultValue, err := apiOptions(data, &APIField{
+		Path:    "data",
+		Options: "items",
+		Value:   "key",
+		Label:   "title",
+	})
+	if err != nil || len(options) != 2 || options[1].Value != "two" || defaultValue != "two" {
+		t.Errorf("unexpected API options: options=%v default=%q err=%v", options, defaultValue, err)
+	}
+}
+
 func TestParseActionMerge(t *testing.T) {
 	t.Run("Parse merge basic", func(t *testing.T) {
 		a := parseAction("merge: 'foo'", t)

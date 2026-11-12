@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"kool-dev/kool/core/automate"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
@@ -18,6 +19,8 @@ type KoolCreate struct {
 	DefaultKoolService
 	parser presets.Parser
 	env    environment.EnvStorage
+
+	Flags *KoolAnswersFlags
 }
 
 func AddKoolCreate(root *cobra.Command) {
@@ -34,6 +37,7 @@ func NewKoolCreate() *KoolCreate {
 		*newDefaultKoolService(),
 		presets.NewParser(),
 		environment.NewEnvStorage(),
+		&KoolAnswersFlags{},
 	}
 }
 
@@ -41,7 +45,13 @@ func NewKoolCreate() *KoolCreate {
 func (c *KoolCreate) Execute(args []string) (err error) {
 	var (
 		createDirectory, preset string
+		answers                 automate.Answers
+		noInteraction           bool
 	)
+
+	if answers, noInteraction, err = c.Flags.parse(); err != nil {
+		return
+	}
 
 	if len(args) == 2 {
 		preset = args[0]
@@ -50,6 +60,9 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 		err = fmt.Errorf("bad number of arguments - either specify both preset and directory or none")
 		return
 	} else {
+		if noInteraction {
+			return fmt.Errorf("please specify both preset and directory in non-interactive mode")
+		}
 		if preset, err = NewKoolPreset().getPreset(args); err != nil {
 			return
 		}
@@ -94,7 +107,7 @@ func (c *KoolCreate) Execute(args []string) (err error) {
 
 	c.Shell().Println("Creating new", preset, "project...")
 
-	c.parser.PrepareExecutor(c.Shell())
+	c.parser.PrepareExecutor(c.Shell(), answers, noInteraction)
 
 	if err = c.parser.Create(preset); err != nil {
 		return
@@ -152,12 +165,19 @@ func NewCreateCommand(create *KoolCreate) (createCmd *cobra.Command) {
 	createCmd = &cobra.Command{
 		Use:   "create PRESET FOLDER",
 		Short: "Create a new project using a preset",
-		Long:  "Create a new project using the specified PRESET in a directory named FOLDER.",
-		Args:  cobra.MaximumNArgs(2),
-		RunE:  DefaultCommandRunFunction(create),
+		Long: `Create a new project using the specified PRESET in a directory named FOLDER.
+
+Questions asked by the preset can be answered beforehand with --answer REF=value,
+where REF is the question ref (or the question text when it has no ref). Options
+can be given by value or label, and multiple choices are comma separated. Without
+a terminal, or with --no-interaction, a question without an answer fails.`,
+		Args: cobra.MaximumNArgs(2),
+		RunE: DefaultCommandRunFunction(create),
 
 		DisableFlagsInUseLine: true,
 	}
+
+	AddAnswersFlags(createCmd, create.Flags)
 
 	return
 }

@@ -63,7 +63,7 @@ func TestBunPresetInstall(t *testing.T) {
 		t.Fatal(err)
 	}
 	p := NewParser()
-	p.PrepareExecutor(&shell.FakeShell{})
+	p.PrepareExecutor(&shell.FakeShell{}, nil, false)
 	if err := p.Install("bunjs"); err != nil {
 		t.Fatal(err)
 	}

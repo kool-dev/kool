@@ -1,0 +1,28 @@
+tags: [ 'Java', 'Spring' ]
+
+name: 'Spring Boot'
+
+create:
+  - name: Creating new Spring Boot Application
+    actions:
+      - recipe: create-spring-boot
+
+preset:
+  - name: 'Select supported Java version'
+    actions:
+      - recipe: pick-java-version
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - replace: JAVA_VERSION $JAVA_VERSION
+
+  - name: 'Match the image JDK with the Gradle toolchain'
+    actions:
+      - scripts:
+          - kool docker gradle:9-jdk$JAVA_VERSION bash -c "grep -sqE 'JavaLanguageVersion[.]of[(][0-9]+[)]' build.gradle* && sed -i -E \"s/gradle:9-jdk[0-9]+/gradle:9-jdk$(grep -shoE 'JavaLanguageVersion[.]of[(][0-9]+[)]' build.gradle* | head -n1 | tr -dc 0-9)/\" kool.yml docker-compose.yml || true"
+
+  - name: 'Customize your setup'
+    actions:
+      - recipe: pick-java-db
+      - recipe: pick-java-cache

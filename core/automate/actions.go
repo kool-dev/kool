@@ -9,6 +9,9 @@ const (
 	TypePrompt
 	TypeRecipe
 	TypeMerge
+	TypeInput
+	TypeAPI
+	TypeReplace
 )
 
 // ActionSet represents a set of single actions or a question
@@ -34,8 +37,29 @@ type Action struct {
 	Scripts []string `yaml:"scripts"`
 	// prompt
 	Prompt  string       `yaml:"prompt"`
+	Input   string       `yaml:"input"`
 	Default string       `yaml:"default"`
 	Options []*ActionSet `yaml:"options"`
+	// api
+	API     string      `yaml:"api"`
+	Prompts []*APIField `yaml:"prompts"`
+	// replace
+	Replace string `yaml:"replace"`
+}
+
+// APIField describes a prompt backed by a field in an API response.
+type APIField struct {
+	Path     string `yaml:"path"`
+	Options  string `yaml:"options"`
+	Value    string `yaml:"value"`
+	Label    string `yaml:"label"`
+	Default  string `yaml:"default"`
+	Prompt   string `yaml:"prompt"`
+	Ref      string `yaml:"ref"`
+	Multiple bool   `yaml:"multiple"`
+	// Compatible is the path of an API field whose default version must
+	// satisfy each option's versionRange; incompatible options are hidden
+	Compatible string `yaml:"compatible"`
 }
 
 // Type tells the actual implementation of this action
@@ -56,8 +80,20 @@ func (a *Action) Type() ActionType {
 		return TypePrompt
 	}
 
+	if a.Input != "" {
+		return TypeInput
+	}
+
 	if a.Merge != "" {
 		return TypeMerge
+	}
+
+	if a.API != "" {
+		return TypeAPI
+	}
+
+	if a.Replace != "" {
+		return TypeReplace
 	}
 
 	return TypeUnknown

@@ -1,0 +1,8 @@
+title: "Creating Java Application"
+
+actions:
+  - recipe: pick-java-version
+  - scripts:
+      - mkdir -p "$CREATE_DIRECTORY"
+      - docker pull -q gradle:9-jdk$JAVA_VERSION
+      - kool docker --env CREATE_DIRECTORY --env JAVA_VERSION gradle:9-jdk$JAVA_VERSION bash -c "cd \"$(printenv CREATE_DIRECTORY)\" && gradle init --no-daemon --use-defaults --java-version \"$(printenv JAVA_VERSION)\" --type java-application --dsl kotlin --test-framework junit-jupiter"

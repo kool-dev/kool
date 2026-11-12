@@ -14,9 +14,14 @@ type RecipeMetadata struct {
 	Slug  string
 }
 
-var recipesSource embed.FS
+type RecipeSource interface {
+	fs.ReadFileFS
+	fs.ReadDirFS
+}
 
-func SetRecipesSource(src embed.FS) {
+var recipesSource RecipeSource = embed.FS{}
+
+func SetRecipesSource(src RecipeSource) {
 	recipesSource = src
 }
 

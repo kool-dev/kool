@@ -22,6 +22,16 @@ func (f *FakePromptSelect) Ask(question string, options []string) (answer string
 	return
 }
 
+// AskMany mocked behavior for testing multiple option prompts.
+func (f *FakePromptSelect) AskMany(question string, options []string) (answers []string, err error) {
+	f.CalledAsk = true
+	if answer := f.MockAnswer[question]; answer != "" {
+		answers = []string{answer}
+	}
+	err = f.MockError[question]
+	return
+}
+
 // Confirm mocked behavior for testing prompting a confirm question
 func (f *FakePromptSelect) Confirm(question string, args ...any) (confirmed bool, err error) {
 	f.CalledConfirm = append(f.CalledConfirm, &struct {

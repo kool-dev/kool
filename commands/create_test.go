@@ -17,6 +17,7 @@ func newFakeKoolCreate() *KoolCreate {
 		*(newDefaultKoolService().Fake()),
 		&presets.FakeParser{},
 		environment.NewFakeEnvStorage(),
+		&KoolAnswersFlags{},
 	}
 }
 
@@ -119,6 +120,45 @@ func TestErrInstallCreateCommand(t *testing.T) {
 	_ = os.Chdir(cwd)
 }
 
+func TestCreateCommandAnswersFlags(t *testing.T) {
+	f := newFakeKoolCreate()
+	f.parser.(*presets.FakeParser).MockExists = true
+
+	cmd := NewCreateCommand(f)
+	cwd, _ := os.Getwd()
+	cmd.SetArgs([]string{"spring-boot", t.TempDir(), "--answer", "JAVA_VERSION=25", "-a", "SPRING_DEPENDENCIES=web,actuator", "-n"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("unexpected error executing create command; error: %v", err)
+	}
+	_ = os.Chdir(cwd)
+
+	calls := f.parser.(*presets.FakeParser).CalledPrepareExecutor
+	if len(calls) != 1 {
+		t.Fatalf("expected PrepareExecutor to be called once, got %d", len(calls))
+	}
+	if !calls[0].NoInteraction || calls[0].Answers["JAVA_VERSION"] != "25" || calls[0].Answers["SPRING_DEPENDENCIES"] != "web,actuator" {
+		t.Errorf("unexpected answers passed to the executor: %+v", calls[0])
+	}
+}
+
+func TestCreateCommandInvalidAnswer(t *testing.T) {
+	f := newFakeKoolCreate()
+	f.parser.(*presets.FakeParser).MockExists = true
+
+	cmd := NewCreateCommand(f)
+	cmd.SetArgs([]string{"spring-boot", "my-app", "--answer", "JAVA_VERSION"})
+
+	assertExecGotError(t, cmd, "invalid answer")
+}
+
+func TestCreateNoInteractionRequiresArguments(t *testing.T) {
+	f := newFakeKoolCreate()
+	f.shell.(*shell.FakeShell).MockIsTerminal = true
+	cmd := NewCreateCommand(f)
+	cmd.SetArgs([]string{"--no-interaction"})
+	assertExecGotError(t, cmd, "please specify both preset and directory")
+}
 func TestCreateCommandUsesRelativeCreateDirectory(t *testing.T) {
 	f := newFakeKoolCreate()
 	f.parser.(*presets.FakeParser).MockExists = true

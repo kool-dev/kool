@@ -10,8 +10,12 @@ import (
 // PromptSelect contract that holds logic for prompt a select question
 type PromptSelect interface {
 	Ask(string, []string) (string, error)
-
 	Confirm(string, ...any) (bool, error)
+}
+
+// PromptMultiSelect prompts the user to select multiple options.
+type PromptMultiSelect interface {
+	AskMany(string, []string) ([]string, error)
 }
 
 // DefaultPromptSelect holds data for prompting a select question
@@ -22,6 +26,11 @@ func NewPromptSelect() PromptSelect {
 	return &DefaultPromptSelect{}
 }
 
+// NewPromptMultiSelect creates a multiple option prompt.
+func NewPromptMultiSelect() PromptMultiSelect {
+	return &DefaultPromptSelect{}
+}
+
 // Ask prompt to the user a select question
 func (p *DefaultPromptSelect) Ask(question string, options []string) (answer string, err error) {
 	prompt := &survey.Select{
@@ -29,6 +38,18 @@ func (p *DefaultPromptSelect) Ask(question string, options []string) (answer str
 		Options: options,
 	}
 	if err = survey.AskOne(prompt, &answer); err != nil && err == terminal.InterruptErr {
+		err = ErrUserCancelled
+	}
+	return
+}
+
+// AskMany prompts the user to select one or more options.
+func (p *DefaultPromptSelect) AskMany(question string, options []string) (answers []string, err error) {
+	prompt := &survey.MultiSelect{
+		Message: question,
+		Options: options,
+	}
+	if err = survey.AskOne(prompt, &answers); err != nil && err == terminal.InterruptErr {
 		err = ErrUserCancelled
 	}
 	return
