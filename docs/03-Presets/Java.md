@@ -6,7 +6,7 @@ Create a Java application using Gradle and Docker:
 kool create java my-java-app
 ```
 
-The preset uses `gradle init` with Java 21, Kotlin build scripts, and JUnit Jupiter. It provides Docker-backed scripts for building, testing, and running the application.
+The preset uses `gradle init` with Java 17, 21 (default), or 25, Kotlin build scripts, and JUnit Jupiter. Gradle 9 requires at least Java 17. It provides Docker-backed scripts for building, testing, and running the application.
 
 During setup, database and cache services are optional. Database choices include PostgreSQL, MySQL, MariaDB, MongoDB, H2, and SQLite. H2 and SQLite create local file-backed data directories under `data/` instead of starting a database container. Redis and Memcached are available as cache services.
 

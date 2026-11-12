@@ -270,3 +270,24 @@ func TestVersionInRange(t *testing.T) {
 		t.Error("expected error for invalid version")
 	}
 }
+
+func TestPromptExportsAndValidatesCachedVersion(t *testing.T) {
+	t.Setenv("JAVA_VERSION", "")
+	e, _, _ := newAnswersExecutor(t, false)
+	e.SetAnswers(Answers{"JAVA_VERSION": "21"}, true)
+	action := &Action{Prompt: "Java version", Ref: "JAVA_VERSION", Options: []*ActionSet{{Name: "17"}, {Name: "21"}, {Name: "25"}}}
+	if err := e.prompt(action); err != nil {
+		t.Fatal(err)
+	}
+	if os.Getenv("JAVA_VERSION") != "21" {
+		t.Fatal("selection not exported")
+	}
+	e.SetAnswers(nil, true)
+	if err := e.prompt(action); err != nil {
+		t.Fatalf("cached answer not reused: %v", err)
+	}
+	e.promptState["JAVA_VERSION"] = "7"
+	if err := e.prompt(action); err == nil {
+		t.Fatal("unsupported cached JDK accepted")
+	}
+}

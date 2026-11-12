@@ -1,0 +1,10 @@
+title: "Java version"
+
+actions:
+  - prompt: 'Which Java version do you want to use?'
+    ref: 'JAVA_VERSION'
+    default: '21'
+    options:
+      - name: '21'
+      - name: '25'
+      - name: '17'

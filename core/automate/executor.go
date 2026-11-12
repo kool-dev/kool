@@ -292,8 +292,14 @@ func (e *Executor) prompt(action *Action) (err error) {
 	}
 
 	// store selection for later use if needed
+	if _, ok := optionsMap[pick]; !ok {
+		return fmt.Errorf("invalid cached option %q for %s; valid options are: %s", pick, questionKey(action.Ref, action.Prompt), describeOptions(labelOptions(optionsList)))
+	}
 	if action.Ref != "" {
 		e.promptState[action.Ref] = pick
+		if err = os.Setenv(action.Ref, pick); err != nil {
+			return
+		}
 	}
 
 	err = e.Do([]*ActionSet{optionsMap[pick]})

@@ -23,6 +23,7 @@ actions:
         ref: 'SPRING_DEPENDENCIES'
         multiple: true
         compatible: 'bootVersion'
+  - recipe: pick-java-version
   - scripts:
       - mkdir -p $CREATE_DIRECTORY
       - docker pull -q gradle:9-jdk$JAVA_VERSION

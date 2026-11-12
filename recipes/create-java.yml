@@ -1,10 +1,8 @@
 title: "Creating Java Application"
 
 actions:
-  - input: 'Enter target Java version (min: 7, default: 21)'
-    ref: 'JAVA_VERSION'
-    default: '21'
+  - recipe: pick-java-version
   - scripts:
       - mkdir -p $CREATE_DIRECTORY
       - docker pull -q gradle:9-jdk$JAVA_VERSION
-      - kool docker gradle:9-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && gradle init --no-daemon --type java-application --project-name $CREATE_DIRECTORY --dsl kotlin --test-framework junit-jupiter"
+      - kool docker gradle:9-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && gradle init --no-daemon --use-defaults --java-version $JAVA_VERSION --type java-application --dsl kotlin --test-framework junit-jupiter"

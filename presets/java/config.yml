@@ -8,6 +8,9 @@ create:
       - recipe: create-java
 
 preset:
+  - name: 'Select supported Java version'
+    actions:
+      - recipe: pick-java-version
   - name: 'Copy basic config files'
     actions:
       - copy: docker-compose.yml
