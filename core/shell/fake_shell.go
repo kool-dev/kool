@@ -10,18 +10,18 @@ import (
 
 // FakeShell fake shell data
 type FakeShell struct {
-	CalledInStream      bool
-	CalledSetInStream   bool
-	CalledOutStream     bool
-	CalledSetOutStream  bool
-	CalledErrStream     bool
-	CalledSetErrStream  bool
-	CalledIsTerminal    bool
-	CalledIsJSONOutput  bool
-	CalledExec          map[string]bool
-	CalledInteractive   map[string]bool
-	CalledLookPath      map[string]bool
-	ArgsInteractive     map[string][]string
+	CalledInStream     bool
+	CalledSetInStream  bool
+	CalledOutStream    bool
+	CalledSetOutStream bool
+	CalledErrStream    bool
+	CalledSetErrStream bool
+	CalledIsTerminal   bool
+	CalledIsJSONOutput bool
+	CalledExec         map[string]bool
+	CalledInteractive  map[string]bool
+	CalledLookPath     map[string]bool
+	ArgsInteractive    map[string][]string
 
 	mu sync.Mutex
 

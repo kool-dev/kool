@@ -16,12 +16,12 @@ kool run SCRIPT [--] [ARG...]
 ```
   -e, --env stringArray   Environment variables.
   -h, --help              help for run
-      --json              Output available scripts as JSON (use without script argument)
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --output string        Output format: json (machine-readable). For 'kool run', place before the script name.
       --verbose              Increases output verbosity
   -w, --working_dir string   Changes the working directory for the command
 ```

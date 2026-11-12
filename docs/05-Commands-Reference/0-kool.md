@@ -18,6 +18,7 @@ kool
 
 ```
   -h, --help                 help for kool
+      --output string        Output format: json (machine-readable). For 'kool run', place before the script name.
       --verbose              Increases output verbosity
   -w, --working_dir string   Changes the working directory for the command
 ```

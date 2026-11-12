@@ -20,12 +20,14 @@ kool docker [OPTIONS] IMAGE [COMMAND] [--] [ARG...]
   -h, --help                  help for docker
   -n, --network stringArray   Connect a container to a network.
   -p, --publish stringArray   Publish a container's port(s) to the host.
+  -u, --user string           Username or UID (format: <name|uid>[:<group|gid>]) to run the container as.
   -v, --volume stringArray    Bind mount a volume.
 ```
 
 ### Options inherited from parent commands
 
 ```
+      --output string        Output format: json (machine-readable). For 'kool run', place before the script name.
       --verbose              Increases output verbosity
   -w, --working_dir string   Changes the working directory for the command
 ```

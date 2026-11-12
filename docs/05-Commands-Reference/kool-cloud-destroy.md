@@ -16,6 +16,7 @@ kool cloud destroy
 
 ```
       --domain string        Environment domain name to deploy to
+      --output string        Output format: json (machine-readable). For 'kool run', place before the script name.
       --token string         Token to authenticate with Kool.dev Cloud API
       --verbose              Increases output verbosity
   -w, --working_dir string   Changes the working directory for the command
