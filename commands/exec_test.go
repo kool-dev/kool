@@ -149,6 +149,22 @@ func TestEnvFlagNewExecCommand(t *testing.T) {
 	}
 }
 
+func TestAgentEnvNewExecCommand(t *testing.T) {
+	f := newFakeKoolExec()
+	f.env.(*environment.FakeEnvStorage).Envs["OPENCODE"] = "1"
+	cmd := NewExecCommand(f)
+	cmd.SetArgs([]string{"service", "command"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing exec command; error: %v", err)
+	}
+
+	argsAppend := f.composeExec.(*builder.FakeCommand).ArgsAppend
+	if len(argsAppend) != 2 || argsAppend[0] != "--env" || argsAppend[1] != "OPENCODE=1" {
+		t.Errorf("bad arguments to KoolExec.composeExec Command with detected agent: %v", argsAppend)
+	}
+}
+
 func TestDetachFlagNewExecCommand(t *testing.T) {
 	f := newFakeKoolExec()
 	cmd := NewExecCommand(f)

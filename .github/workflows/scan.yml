@@ -10,6 +10,9 @@ jobs:
   grype:
     runs-on: ubuntu-latest
 
+    env:
+      SEVERITY_CUTOFF: critical
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -18,8 +21,42 @@ jobs:
       run: docker build --pull -t kooldev/kool:4scan .
 
     - name: Scan image
+      id: scan
       uses: anchore/scan-action@v6
       with:
         image: "kooldev/kool:4scan"
         fail-build: true
-        severity-cutoff: critical
+        severity-cutoff: ${{ env.SEVERITY_CUTOFF }}
+        # report CVE-2026-46595 rather than GHSA-x527-x647-q7gg
+        by-cve: true
+
+    # The scan step writes its SARIF report to a temp file that is discarded
+    # when the job ends, and on failure logs only "Failed minimum severity
+    # level" with no CVE, package or version. Print the findings so a red
+    # build is diagnosable from the log alone. `always()` is required: the
+    # scan step fails the job, so anything without it never runs -- precisely
+    # when the output is needed.
+    - name: Report findings
+      if: always()
+      env:
+        SARIF: ${{ steps.scan.outputs.sarif }}
+      run: |
+        if [ ! -f "$SARIF" ]; then
+          echo "No SARIF report produced - the scan did not run to completion."
+          exit 0
+        fi
+
+        echo "Findings by severity:"
+        jq -r '[.runs[].results[].message.text
+                | capture("^A (?<s>[a-z]+) vulnerability").s]
+               | group_by(.) | map("  \(.[0]): \(length)")[]' "$SARIF"
+
+        echo
+        echo "Findings at or above the '$SEVERITY_CUTOFF' cutoff (these fail the build):"
+        jq -r --arg cutoff "$SEVERITY_CUTOFF" '
+          ["negligible", "low", "medium", "high", "critical"] as $order
+          | ($order | index($cutoff)) as $min
+          | .runs[].results[]
+          | (.message.text | capture("^A (?<s>[a-z]+) vulnerability").s) as $sev
+          | select(($order | index($sev)) >= $min)
+          | "  \(.ruleId)\n    \(.message.text)"' "$SARIF"

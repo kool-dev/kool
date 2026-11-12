@@ -1,12 +1,15 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
+	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -193,9 +196,9 @@ func TestFailingNoContainersNewLogsCommand(t *testing.T) {
 
 func TestParseLogLine(t *testing.T) {
 	tests := []struct {
-		line       string
-		service    string
-		message    string
+		line    string
+		service string
+		message string
 	}{
 		{"web | GET / 200", "web", "GET / 200"},
 		{"web  |  GET / 200", "web", "GET / 200"},
@@ -230,7 +233,13 @@ func newFakeKoolLogsJSON() *KoolLogs {
 
 func TestLogsJSONOutput(t *testing.T) {
 	f := newFakeKoolLogsJSON()
-	f.logs.(*builder.FakeCommand).MockExecOut = "web | GET / 200\ndb | connected to redis"
+	original := execLogsCmd
+	t.Cleanup(func() { execLogsCmd = original })
+	execLogsCmd = func(string, ...string) *exec.Cmd {
+		return exec.Command("sh", "-c", "printf 'web | GET / 200\\ndb | connected to redis'")
+	}
+	var output bytes.Buffer
+	f.shell.(*shell.FakeShell).MockOutStream = &output
 
 	cmd := NewLogsCommand(f)
 
@@ -238,13 +247,13 @@ func TestLogsJSONOutput(t *testing.T) {
 		t.Errorf("unexpected error executing logs command; error: %v", err)
 	}
 
-	fakeShell := f.shell.(*shell.FakeShell)
-	if len(fakeShell.OutLines) != 2 {
-		t.Fatalf("expected 2 JSON lines, got %d: %v", len(fakeShell.OutLines), fakeShell.OutLines)
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 JSON lines, got %d: %v", len(lines), lines)
 	}
 
 	var entry logEntryJSON
-	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &entry); err != nil {
+	if err := json.Unmarshal([]byte(lines[0]), &entry); err != nil {
 		t.Fatalf("failed to parse first JSON line: %v", err)
 	}
 	if entry.Service != "web" {
@@ -254,7 +263,7 @@ func TestLogsJSONOutput(t *testing.T) {
 		t.Errorf("expected message 'GET / 200', got '%s'", entry.Message)
 	}
 
-	if err := json.Unmarshal([]byte(fakeShell.OutLines[1]), &entry); err != nil {
+	if err := json.Unmarshal([]byte(lines[1]), &entry); err != nil {
 		t.Fatalf("failed to parse second JSON line: %v", err)
 	}
 	if entry.Service != "db" {

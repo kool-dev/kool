@@ -1,0 +1,68 @@
+name: govulncheck
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  govulncheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1.25.x tracks the same Go minor the Dockerfile builds with
+    # (golang:1.25, pulled fresh), so CI and a local `kool run govulncheck`
+    # do not disagree about which stdlib advisories still apply.
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.25.x
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Installed rather than `go run`, which collapses every non-zero exit to 1
+    # and would hide the difference between "vulnerabilities found" and
+    # "the scan itself broke".
+    - name: Install govulncheck
+      run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+    # Report-only on purpose. govulncheck has no suppression file (unlike
+    # grype's .grype.yaml), and GO-2026-5932 -- x/crypto/openpgp is
+    # unmaintained, reached through rhysd/go-github-selfupdate -- has no fix
+    # available, so gating on it would pin the build red until that dependency
+    # is replaced. Stdlib findings also churn with every Go patch release.
+    # A genuine tool failure still fails the job.
+    - name: Run govulncheck
+      run: |
+        set +e
+        govulncheck ./... > govulncheck.out 2>&1
+        status=$?
+        set -e
+
+        cat govulncheck.out
+
+        {
+          echo "## govulncheck"
+          echo
+          case "$status" in
+            0) echo "No reachable vulnerabilities found." ;;
+            3) echo "Reachable vulnerabilities found. Report-only: this does not fail the build." ;;
+            *) echo "govulncheck failed to run (exit $status)." ;;
+          esac
+          echo
+          echo "<details><summary>Full output</summary>"
+          echo
+          echo '```'
+          cat govulncheck.out
+          echo '```'
+          echo
+          echo "</details>"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        # 3 means vulnerabilities were found, which we report without failing.
+        # Anything else non-zero is the scan breaking, and should fail.
+        if [ "$status" -ne 0 ] && [ "$status" -ne 3 ]; then
+          exit "$status"
+        fi

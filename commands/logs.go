@@ -3,6 +3,7 @@ package commands
 import (
 	"bufio"
 	"encoding/json"
+	"io"
 	"kool-dev/kool/core/builder"
 	"os"
 	"os/exec"
@@ -103,31 +104,12 @@ the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').`,
 }
 
 func (l *KoolLogs) printLogsJSON(args ...string) (err error) {
-	if l.Flags.Follow {
-		return l.streamLogsJSON(args...)
-	}
-
-	var output string
-	if output, err = l.Shell().Exec(l.logs, args...); err != nil {
-		return
-	}
-
-	for _, line := range strings.Split(output, "\n") {
-		if line = strings.TrimSpace(line); line == "" {
-			continue
-		}
-		entry := parseLogLine(line)
-		var payload []byte
-		if payload, err = json.Marshal(entry); err != nil {
-			return
-		}
-		l.Shell().Println(string(payload))
-	}
-	return
+	return l.streamLogsJSON(args...)
 }
 
 func (l *KoolLogs) streamLogsJSON(args ...string) (err error) {
-	cmdArgs := l.logs.Args()
+	cmdArgs := append([]string{}, l.logs.Args()...)
+	cmdArgs = append(cmdArgs, "--no-color")
 	if len(args) > 0 {
 		cmdArgs = append(cmdArgs, args...)
 	}
@@ -145,20 +127,30 @@ func (l *KoolLogs) streamLogsJSON(args ...string) (err error) {
 		return
 	}
 
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
+	reader := bufio.NewReader(stdout)
+	encoder := json.NewEncoder(l.Shell().OutStream())
+	for {
+		line, readErr := reader.ReadString('\n')
+		if line = strings.TrimRight(line, "\r\n"); line != "" {
+			if err = encoder.Encode(parseLogLine(line)); err != nil {
+				break
+			}
 		}
-		entry := parseLogLine(line)
-		if payload, e := json.Marshal(entry); e == nil {
-			l.Shell().Println(string(payload))
+		if readErr != nil {
+			if readErr != io.EOF {
+				err = readErr
+			}
+			break
 		}
 	}
-
-	err = cmd.Wait()
-	return
+	if err != nil {
+		_ = cmd.Process.Kill()
+	}
+	waitErr := cmd.Wait()
+	if err != nil {
+		return err
+	}
+	return waitErr
 }
 
 // parseLogLine parses a docker-compose log line into a logEntryJSON.

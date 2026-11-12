@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,11 +30,13 @@ var RecursiveCall func([]string, io.Reader, io.Writer, io.Writer) error
 
 // DefaultShell holds data for handling a shell
 type DefaultShell struct {
-	inStream  io.Reader
-	outStream io.Writer
-	errStream io.Writer
-	lookedUp  *lookupCache
-	env       environment.EnvStorage
+	inStream       io.Reader
+	outStream      io.Writer
+	errStream      io.Writer
+	outputTerminal io.Writer
+	errorTerminal  io.Writer
+	lookedUp       *lookupCache
+	env            environment.EnvStorage
 }
 
 // OutputWritter implements basic output for CLIss
@@ -77,11 +80,13 @@ type Shell interface {
 // NewShell creates a new shell
 func NewShell() Shell {
 	return &DefaultShell{
-		inStream:  os.Stdin,
-		outStream: os.Stdout,
-		errStream: os.Stderr,
-		env:       environment.NewEnvStorage(),
-		lookedUp:  newLookupCache(),
+		inStream:       os.Stdin,
+		outStream:      os.Stdout,
+		errStream:      os.Stderr,
+		outputTerminal: os.Stdout,
+		errorTerminal:  os.Stderr,
+		env:            environment.NewEnvStorage(),
+		lookedUp:       newLookupCache(),
 	}
 }
 
@@ -113,6 +118,9 @@ func (s *DefaultShell) OutStream() io.Writer {
 
 // SetOutStream set output stream
 func (s *DefaultShell) SetOutStream(outStream io.Writer) {
+	if _, pipe := outStream.(*io.PipeWriter); !pipe {
+		s.outputTerminal = outStream
+	}
 	s.outStream = outStream
 }
 
@@ -123,6 +131,9 @@ func (s *DefaultShell) ErrStream() io.Writer {
 
 // SetErrStream set error stream
 func (s *DefaultShell) SetErrStream(errStream io.Writer) {
+	if _, pipe := errStream.(*io.PipeWriter); !pipe {
+		s.errorTerminal = errStream
+	}
 	s.errStream = errStream
 }
 
@@ -254,11 +265,36 @@ func (s *DefaultShell) diagnosticStream() io.Writer {
 // Color is disabled when NO_COLOR env is set (handled by gookit/color)
 // or when the output stream is not a terminal.
 func (s *DefaultShell) useColor() bool {
-	return color.Enable && NewTerminalChecker().IsTerminal(s.outStream)
+	stream := s.outputTerminal
+	if stream == nil {
+		stream = s.outStream
+	}
+	if s.IsJSONOutput() {
+		stream = s.errorTerminal
+		if stream == nil {
+			stream = s.errStream
+		}
+	}
+	_, noColor := os.LookupEnv("NO_COLOR")
+	return !noColor && color.Enable && NewTerminalChecker().IsTerminal(stream)
 }
+
+// ReportedError marks an error whose structured diagnostic was already emitted.
+type ReportedError struct{ Err error }
+
+func (e ReportedError) Error() string { return e.Err.Error() }
+func (e ReportedError) Unwrap() error { return e.Err }
 
 // Error error output
 func (s *DefaultShell) Error(err error) {
+	var reported ReportedError
+	if errors.As(err, &reported) {
+		return
+	}
+	if s.IsJSONOutput() {
+		_ = json.NewEncoder(s.ErrStream()).Encode(map[string]interface{}{"error": err.Error(), "suggestions": []string{}})
+		return
+	}
 	msg := fmt.Sprintf("error: %v", err)
 	if s.useColor() {
 		msg = color.New(color.BgRed, color.FgWhite).Sprint(msg)
@@ -268,6 +304,7 @@ func (s *DefaultShell) Error(err error) {
 
 // Warning warning message
 func (s *DefaultShell) Warning(out ...interface{}) {
+	out = []interface{}{fmt.Sprint(out...)}
 	if s.useColor() {
 		out = []interface{}{color.New(color.Yellow).Sprint(out...)}
 	}
@@ -276,6 +313,7 @@ func (s *DefaultShell) Warning(out ...interface{}) {
 
 // Success success message
 func (s *DefaultShell) Success(out ...interface{}) {
+	out = []interface{}{fmt.Sprint(out...)}
 	if s.useColor() {
 		out = []interface{}{color.New(color.Green).Sprint(out...)}
 	}
@@ -284,6 +322,7 @@ func (s *DefaultShell) Success(out ...interface{}) {
 
 // Info info message
 func (s *DefaultShell) Info(out ...interface{}) {
+	out = []interface{}{fmt.Sprint(out...)}
 	if s.useColor() {
 		out = []interface{}{color.New(color.Cyan).Sprint(out...)}
 	}

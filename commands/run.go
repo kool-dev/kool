@@ -79,6 +79,15 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 		err = errors.New("you must specify a script to run")
 		return
 	}
+	defer func() {
+		if err != nil && r.Shell().IsJSONOutput() {
+			var reported shell.ReportedError
+			if !errors.As(err, &reported) {
+				r.emitJSONError(err.Error(), []string{})
+				err = shell.ReportedError{Err: err}
+			}
+		}
+	}()
 
 	var (
 		script = originalArgs[0]
@@ -92,6 +101,9 @@ func (r *KoolRun) Execute(originalArgs []string) (err error) {
 	if len(r.commands) == 0 {
 		r.emitJSONError("script not found", []string{})
 		err = ErrKoolScriptNotFound
+		if r.Shell().IsJSONOutput() {
+			err = shell.ReportedError{Err: err}
+		}
 		return
 	}
 
@@ -182,6 +194,7 @@ func (r *KoolRun) parseScript(script string) (err error) {
 		if parser.IsPossibleTypoError(err) && r.Shell().IsJSONOutput() {
 			r.emitJSONError("script not found", err.(*parser.ErrPossibleTypo).Similars())
 			err = ErrKoolScriptNotFound
+			err = shell.ReportedError{Err: err}
 			return
 		}
 
@@ -218,10 +231,6 @@ func (r *KoolRun) parseScript(script string) (err error) {
 		if parser.IsMultipleDefinedScriptError(err) {
 			r.Shell().Warning("Attention: the script was found in more than one kool.yml file")
 			err = nil
-		} else if r.Shell().IsJSONOutput() {
-			r.emitJSONError("script not found", []string{})
-			err = ErrKoolScriptNotFound
-			return
 		}
 	}
 
