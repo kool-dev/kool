@@ -149,8 +149,7 @@ func (i *KoolInfo) executeJSON(filter string) (err error) {
 	info.DockerBinPath, _ = exec.LookPath(i.cmdDocker.Cmd())
 
 	if output, err = i.Shell().Exec(i.cmdDockerCompose); err != nil {
-		i.Shell().Warning("Docker Compose:", err.Error())
-		i.Shell().Error(fmt.Errorf("you need to have Docker Compose V2 available; make sure to update your Docker installation"))
+		err = fmt.Errorf("Docker Compose V2 is required; update your Docker installation: %w", err)
 		return
 	}
 	info.DockerComposeVersion = output

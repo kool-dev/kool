@@ -1,0 +1,5 @@
+title: "Bun"
+
+actions:
+  - merge: scripts/bun.yml
+    dst: kool.yml

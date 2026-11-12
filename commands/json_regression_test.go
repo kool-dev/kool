@@ -32,6 +32,46 @@ func TestStatusJSONEmptyAndSorted(t *testing.T) {
 	}
 }
 
+func TestStatusJSONWithComposeWarningsAndWorkspaces(t *testing.T) {
+	for _, workspace := range []bool{false, true} {
+		f := newFakeKoolStatusJSON()
+		if workspace {
+			f.env.Set("KOOL_WORKSPACES_ENABLED", "true")
+		}
+		warning := "time=now level=warning msg=obsolete\n"
+		f.getServicesCmd.(*builder.FakeCommand).MockExecOut = warning + "zebra\napp"
+		f.getServiceIDCmd.(*builder.FakeCommand).MockExecOut = warning + "abc123"
+		f.getProjectServiceIDCmd.(*builder.FakeCommand).MockExecOut = warning + "abc123"
+		f.getServiceStatusPortCmd.(*builder.FakeCommand).MockExecOut = "Up|80/tcp"
+		if err := NewStatusCommand(f).Execute(); err != nil {
+			t.Fatal(err)
+		}
+		var output statusOutputJSON
+		if err := json.Unmarshal([]byte(f.shell.(*shell.FakeShell).OutLines[0]), &output); err != nil {
+			t.Fatal(err)
+		}
+		if output.Count != 2 || output.Services[0].Service != "app" || !output.Services[0].Running {
+			t.Fatalf("unexpected status: %+v", output)
+		}
+		if workspace && output.Services[0].Project != "example" {
+			t.Fatalf("lost project identity: %+v", output)
+		}
+	}
+}
+
+func TestInfoJSONComposeFailureReturnsOneDiagnostic(t *testing.T) {
+	f := fakeKoolInfo()
+	f.shell.(*shell.FakeShell).MockIsJSONOutput = true
+	f.cmdDockerCompose.(*builder.FakeCommand).MockExecError = errors.New("compose unavailable")
+	err := NewInfoCmd(f).Execute()
+	if err == nil || !strings.Contains(err.Error(), "compose unavailable") {
+		t.Fatalf("lost Compose error: %v", err)
+	}
+	if f.shell.(*shell.FakeShell).CalledWarning {
+		t.Fatal("JSON info emitted an extra plain-text warning")
+	}
+}
+
 func TestOutputFormatValidation(t *testing.T) {
 	for _, format := range []string{"JSON", "text", "jsno"} {
 		env := environment.NewFakeEnvStorage()

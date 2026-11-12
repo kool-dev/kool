@@ -35,9 +35,12 @@ $ Preset expressjs is initializing!
 ? Which javascript package manager do you want to use [Use arrows to move, type to filter]
 > npm
   yarn
+  bun
 
 $ Preset expressjs initialized!
 ```
+
+> If you pick **bun**, the `app` service in your **docker-compose.yml** is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun app.js`), so your app runs on the Bun runtime. Otherwise it uses `kooldev/node:20`.
 
 Now, move into your new Node.js project:
 
@@ -65,11 +68,11 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 ```yaml
 scripts:
   node: kool exec app node
-  npm: kool exec app npm # or yarn
+  npm: kool exec app npm # or yarn / bun
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:20 npm install
+    - kool docker kooldev/node:20 npm install # bun: kool docker oven/bun:1 bun install
     - kool start
 	# - add more setup commands
 ```
@@ -160,6 +163,7 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[Bun](/docs/03-Presets/Bun.md)**
 - **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
 - **[Hugo](/docs/03-Presets/Hugo.md)**
 - **[Laravel](/docs/03-Presets/Laravel.md)**

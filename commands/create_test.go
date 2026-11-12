@@ -7,6 +7,7 @@ import (
 	"kool-dev/kool/core/presets"
 	"kool-dev/kool/core/shell"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -116,4 +117,29 @@ func TestErrInstallCreateCommand(t *testing.T) {
 
 	// return to original folder
 	_ = os.Chdir(cwd)
+}
+
+func TestCreateCommandUsesRelativeCreateDirectory(t *testing.T) {
+	f := newFakeKoolCreate()
+	f.parser.(*presets.FakeParser).MockExists = true
+
+	cwd, _ := os.Getwd()
+	defer func() { _ = os.Chdir(cwd) }()
+
+	parent := t.TempDir()
+	dest := filepath.Join(parent, "my-app")
+	if err := os.Mkdir(dest, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := NewCreateCommand(f)
+	cmd.SetArgs([]string{"laravel", dest})
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing create command; error: %v", err)
+	}
+
+	if got := f.env.Get("CREATE_DIRECTORY"); got != "my-app" {
+		t.Errorf("CREATE_DIRECTORY should be the folder name for docker mounts, got %q", got)
+	}
 }

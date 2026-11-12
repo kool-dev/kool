@@ -159,6 +159,12 @@ func (l *KoolLogs) streamLogsJSON(args ...string) (err error) {
 func parseLogLine(line string) logEntryJSON {
 	if idx := strings.Index(line, "|"); idx >= 0 {
 		service := strings.TrimSpace(line[:idx])
+		// Compose V2 prefixes log lines with service-replica (e.g. app-1).
+		if separator := strings.LastIndex(service, "-"); separator > 0 {
+			if replica, err := strconv.Atoi(service[separator+1:]); err == nil && replica > 0 {
+				service = service[:separator]
+			}
+		}
 		message := strings.TrimSpace(line[idx+1:])
 		return logEntryJSON{Service: service, Message: message}
 	}

@@ -5,6 +5,16 @@ actions:
     ref: 'php-version'
     default: 'PHP 8.2'
     options:
+      - name: 'PHP 8.5'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.5
+            - kool docker kooldev/php:8.5 composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter $CREATE_DIRECTORY
+      - name: 'PHP 8.4'
+        actions:
+          - scripts:
+            - docker pull -q kooldev/php:8.4
+            - kool docker kooldev/php:8.4 composer create-project --no-install --no-scripts --prefer-dist codeigniter4/appstarter $CREATE_DIRECTORY
       - name: 'PHP 8.3'
         actions:
           - scripts:

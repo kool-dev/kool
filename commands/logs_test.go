@@ -201,6 +201,8 @@ func TestParseLogLine(t *testing.T) {
 		message string
 	}{
 		{"web | GET / 200", "web", "GET / 200"},
+		{"app-1 | ready", "app", "ready"},
+		{"my-app-2 | ready", "my-app", "ready"},
 		{"web  |  GET / 200", "web", "GET / 200"},
 		{"app | starting worker process", "app", "starting worker process"},
 		{"plain text without delimiter", "", "plain text without delimiter"},

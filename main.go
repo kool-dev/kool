@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 
@@ -20,7 +21,8 @@ func main() {
 			s.Println(err)
 		}
 		code := 1
-		if ex, ok := err.(shell.ErrExitable); ok {
+		var ex shell.ErrExitable
+		if errors.As(err, &ex) {
 			code = ex.Code
 		}
 		environment.CleanupWorkspace()
