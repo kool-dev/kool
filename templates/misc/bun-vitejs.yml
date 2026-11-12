@@ -1,0 +1,15 @@
+services:
+  node:
+    image: oven/bun:1
+    command: ["bun", "--bun", "run", "dev"]
+    working_dir: /app
+    user: "${KOOL_ASUSER:-0}"
+    environment:
+      HOME: "/tmp"
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app:delegated
+    networks:
+      - kool_local
+      - kool_global

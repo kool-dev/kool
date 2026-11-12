@@ -236,13 +236,31 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 		return
 	}
 
-	parsedServices := strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n")
-	for _, s := range parsedServices {
-		if s != "" {
-			services = append(services, s)
+	services = parseComposeServices(output)
+	return
+}
+
+func composeTokenLines(output string) (tokens []string) {
+	for _, line := range strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.ContainsAny(line, " \t") {
+			continue
 		}
+		tokens = append(tokens, line)
 	}
 	return
+}
+
+func parseComposeServices(output string) []string {
+	return composeTokenLines(output)
+}
+
+func firstComposeToken(output string) string {
+	tokens := composeTokenLines(output)
+	if len(tokens) == 0 {
+		return ""
+	}
+	return tokens[0]
 }
 
 func (s *KoolStatus) fetchServiceInfo(project, service string, chStatus chan *statusService, wg *sync.WaitGroup) {
@@ -262,24 +280,34 @@ func (s *KoolStatus) fetchServiceInfo(project, service string, chStatus chan *st
 func (s *KoolStatus) fetchLegacyServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
 	defer wg.Done()
 	status := &statusService{service: service, running: "Not running"}
-	var serviceID string
-	if serviceID, status.err = s.Shell().Exec(s.getServiceIDCmd, service); status.err == nil && serviceID != "" {
-		status.state, status.ports = s.getStatusPort(serviceID)
-		if strings.HasPrefix(status.state, "Up") {
-			status.running = "Running"
+	var output string
+	if output, status.err = s.Shell().Exec(s.getServiceIDCmd, service); status.err == nil {
+		serviceID := firstComposeToken(output)
+		if serviceID != "" {
+			status.state, status.ports = s.getStatusPort(serviceID)
+			if strings.HasPrefix(status.state, "Up") {
+				status.running = "Running"
+			}
 		}
 	}
 	chStatus <- status
 }
 
 func (s *KoolStatus) getServiceInfo(project, service string) (isRunning bool, status, port string, err error) {
-	var serviceID string
-	if serviceID, err = s.Shell().Exec(s.getProjectServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service, "--filter", "label=com.docker.compose.oneoff=False"); err == nil && serviceID != "" {
-		serviceID = strings.Fields(serviceID)[0]
-		status, port = s.getStatusPort(serviceID)
-		if strings.HasPrefix(status, "Up") {
-			isRunning = true
-		}
+	var output string
+	if output, err = s.Shell().Exec(s.getProjectServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service, "--filter", "label=com.docker.compose.oneoff=False"); err != nil {
+		return
+	}
+
+	// docker compose may mix warnings into combined output; keep only the container id
+	serviceID := firstComposeToken(output)
+	if serviceID == "" {
+		return
+	}
+
+	status, port = s.getStatusPort(serviceID)
+	if strings.HasPrefix(status, "Up") {
+		isRunning = true
 	}
 	return
 }
@@ -288,9 +316,13 @@ func (s *KoolStatus) getCurrentServiceInfo(service string) (bool, string, string
 	if workspacesEnabled(s.env) {
 		return s.getServiceInfo(currentProject(s.env), service)
 	}
-	serviceID, err := s.Shell().Exec(s.getServiceIDCmd, service)
-	if err != nil || serviceID == "" {
+	output, err := s.Shell().Exec(s.getServiceIDCmd, service)
+	if err != nil {
 		return false, "", "", err
+	}
+	serviceID := firstComposeToken(output)
+	if serviceID == "" {
+		return false, "", "", nil
 	}
 	status, port := s.getStatusPort(serviceID)
 	return strings.HasPrefix(status, "Up"), status, port, nil

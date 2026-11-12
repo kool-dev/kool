@@ -1,0 +1,7 @@
+title: "Bun (Laravel)"
+
+actions:
+  - merge: scripts/bun-laravel.yml
+    dst: kool.yml
+  - merge: misc/bun-vitejs.yml
+    dst: docker-compose.yml

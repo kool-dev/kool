@@ -25,6 +25,7 @@ By leveraging Kool Presets, you not only reduce the learning curve associated wi
 
 - [Next.js](/docs/03-Presets/NextJS.md)
 - [NuxtJS](/docs/03-Presets/NuxtJS.md)
+- [Bun](/docs/03-Presets/Bun.md)
 
 ## Others
 

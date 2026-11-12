@@ -2,9 +2,14 @@ package presets
 
 import (
 	"embed"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"kool-dev/kool/core/shell"
+
 	"github.com/leaanthony/debme"
+	"gopkg.in/yaml.v2"
 )
 
 //go:embed fixtures/*
@@ -38,5 +43,42 @@ func TestPresetParser(t *testing.T) {
 
 	if len(p.GetPresets("bar")) != 0 {
 		t.Error("should NOT have found any preset with tag bar")
+	}
+}
+
+func TestBunPresetInstall(t *testing.T) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	previousSource := source
+	t.Cleanup(func() {
+		SetSource(previousSource)
+		if err := os.Chdir(cwd); err != nil {
+			t.Error(err)
+		}
+	})
+	SetSource(os.DirFS(filepath.Join(cwd, "../..")).(SourceFS))
+	if err := os.Chdir(t.TempDir()); err != nil {
+		t.Fatal(err)
+	}
+	p := NewParser()
+	p.PrepareExecutor(&shell.FakeShell{})
+	if err := p.Install("bunjs"); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile("kool.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config struct {
+		Scripts map[string]interface{} `yaml:"scripts"`
+	}
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		t.Fatal(err)
+	}
+	setup, ok := config.Scripts["setup"].([]interface{})
+	if !ok || len(setup) != 2 || setup[1] != "kool start" {
+		t.Fatalf("expected install/start setup script, got %#v", config.Scripts["setup"])
 	}
 }
