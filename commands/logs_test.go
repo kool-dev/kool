@@ -1,10 +1,15 @@
 package commands
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/shell"
+	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -187,4 +192,101 @@ func TestFailingNoContainersNewLogsCommand(t *testing.T) {
 	cmd := NewLogsCommand(f)
 
 	assertExecGotError(t, cmd, "error list")
+}
+
+func TestParseLogLine(t *testing.T) {
+	tests := []struct {
+		line    string
+		service string
+		message string
+	}{
+		{"web | GET / 200", "web", "GET / 200"},
+		{"app-1 | ready", "app", "ready"},
+		{"my-app-2 | ready", "my-app", "ready"},
+		{"web  |  GET / 200", "web", "GET / 200"},
+		{"app | starting worker process", "app", "starting worker process"},
+		{"plain text without delimiter", "", "plain text without delimiter"},
+		{"", "", ""},
+	}
+
+	for _, tt := range tests {
+		entry := parseLogLine(tt.line)
+		if entry.Service != tt.service {
+			t.Errorf("parseLogLine(%q): service = %q, want %q", tt.line, entry.Service, tt.service)
+		}
+		if entry.Message != tt.message {
+			t.Errorf("parseLogLine(%q): message = %q, want %q", tt.line, entry.Message, tt.message)
+		}
+	}
+}
+
+func newFakeKoolLogsJSON() *KoolLogs {
+	f := &KoolLogs{
+		*(newDefaultKoolService().Fake()),
+		&KoolLogsFlags{25, false},
+		&builder.FakeCommand{MockCmd: "list", MockExecOut: "app"},
+		&builder.FakeCommand{MockCmd: "logs"},
+	}
+	f.shell.(*shell.FakeShell).MockIsJSONOutput = true
+	f.shell.(*shell.FakeShell).MockErrStream = io.Discard
+	f.shell.(*shell.FakeShell).MockOutStream = io.Discard
+	return f
+}
+
+func TestLogsJSONOutput(t *testing.T) {
+	f := newFakeKoolLogsJSON()
+	original := execLogsCmd
+	t.Cleanup(func() { execLogsCmd = original })
+	execLogsCmd = func(string, ...string) *exec.Cmd {
+		return exec.Command("sh", "-c", "printf 'web | GET / 200\\ndb | connected to redis'")
+	}
+	var output bytes.Buffer
+	f.shell.(*shell.FakeShell).MockOutStream = &output
+
+	cmd := NewLogsCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing logs command; error: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 JSON lines, got %d: %v", len(lines), lines)
+	}
+
+	var entry logEntryJSON
+	if err := json.Unmarshal([]byte(lines[0]), &entry); err != nil {
+		t.Fatalf("failed to parse first JSON line: %v", err)
+	}
+	if entry.Service != "web" {
+		t.Errorf("expected service 'web', got '%s'", entry.Service)
+	}
+	if entry.Message != "GET / 200" {
+		t.Errorf("expected message 'GET / 200', got '%s'", entry.Message)
+	}
+
+	if err := json.Unmarshal([]byte(lines[1]), &entry); err != nil {
+		t.Fatalf("failed to parse second JSON line: %v", err)
+	}
+	if entry.Service != "db" {
+		t.Errorf("expected service 'db', got '%s'", entry.Service)
+	}
+	if entry.Message != "connected to redis" {
+		t.Errorf("expected message 'connected to redis', got '%s'", entry.Message)
+	}
+}
+
+func TestLogsJSONNoContainers(t *testing.T) {
+	f := newFakeKoolLogsJSON()
+	f.list.(*builder.FakeCommand).MockExecOut = ""
+
+	cmd := NewLogsCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing logs command; error: %v", err)
+	}
+
+	if !f.shell.(*shell.FakeShell).CalledWarning {
+		t.Error("expected Warning to be called when no containers")
+	}
 }

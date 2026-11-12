@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
@@ -34,6 +35,19 @@ type statusService struct {
 	project, service, state, ports string
 	running                        string
 	err                            error
+}
+
+type statusServiceJSON struct {
+	Project string `json:"project,omitempty"`
+	Service string `json:"service"`
+	Running bool   `json:"running"`
+	Ports   string `json:"ports"`
+	State   string `json:"state"`
+}
+
+type statusOutputJSON struct {
+	Services []statusServiceJSON `json:"services"`
+	Count    int                 `json:"count"`
 }
 
 func AddKoolStatus(root *cobra.Command) {
@@ -76,6 +90,9 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 	if projects, err = s.getProjects(); err != nil {
 		return
 	} else if len(projects) == 0 {
+		if s.Shell().IsJSONOutput() {
+			return s.printStatusJSON(nil)
+		}
 		s.Shell().Warning("No services found.")
 		return
 	}
@@ -84,14 +101,19 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		serviceCount += len(project.services)
 	}
 	if serviceCount == 0 {
+		if s.Shell().IsJSONOutput() {
+			return s.printStatusJSON(nil)
+		}
 		s.Shell().Warning("No services found.")
 		return
 	}
 
 	chStatus := make(chan *statusService, serviceCount)
 
-	s.table.SetWriter(s.Shell().OutStream())
-	s.table.AppendHeader("Project", "Service", "Running", "Ports", "State")
+	if !s.Shell().IsJSONOutput() {
+		s.table.SetWriter(s.Shell().OutStream())
+		s.table.AppendHeader("Project", "Service", "Running", "Ports", "State")
+	}
 
 	go func() {
 		var wg sync.WaitGroup
@@ -122,6 +144,9 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		}
 		return statuses[i].project < statuses[j].project
 	})
+	if s.Shell().IsJSONOutput() {
+		return s.printStatusJSON(statuses)
+	}
 	for _, ss := range statuses {
 		s.table.AppendRow(ss.project, ss.service, ss.running, ss.ports, ss.state)
 	}
@@ -138,13 +163,18 @@ func (s *KoolStatus) executeLegacy() (err error) {
 		return err
 	}
 	if len(services) == 0 {
+		if s.Shell().IsJSONOutput() {
+			return s.printStatusJSON(nil)
+		}
 		s.Shell().Warning("No services found.")
 		return nil
 	}
 
 	chStatus := make(chan *statusService, len(services))
-	s.table.SetWriter(s.Shell().OutStream())
-	s.table.AppendHeader("Service", "Running", "Ports", "State")
+	if !s.Shell().IsJSONOutput() {
+		s.table.SetWriter(s.Shell().OutStream())
+		s.table.AppendHeader("Service", "Running", "Ports", "State")
+	}
 	go func() {
 		var wg sync.WaitGroup
 		defer close(chStatus)
@@ -154,10 +184,17 @@ func (s *KoolStatus) executeLegacy() (err error) {
 		}
 		wg.Wait()
 	}()
+	var statuses []*statusService
 	for status := range chStatus {
 		if status.err != nil {
 			return status.err
 		}
+		statuses = append(statuses, status)
+	}
+	if s.Shell().IsJSONOutput() {
+		return s.printStatusJSON(statuses)
+	}
+	for _, status := range statuses {
 		s.table.AppendRow(status.service, status.running, status.ports, status.state)
 	}
 	s.table.SortBy(1)
@@ -168,6 +205,28 @@ func (s *KoolStatus) executeLegacy() (err error) {
 type statusProject struct {
 	name     string
 	services []string
+}
+
+func (s *KoolStatus) printStatusJSON(statuses []*statusService) error {
+	sort.Slice(statuses, func(i, j int) bool {
+		if statuses[i].project == statuses[j].project {
+			return statuses[i].service < statuses[j].service
+		}
+		return statuses[i].project < statuses[j].project
+	})
+	output := statusOutputJSON{Services: make([]statusServiceJSON, 0, len(statuses)), Count: len(statuses)}
+	for _, status := range statuses {
+		output.Services = append(output.Services, statusServiceJSON{
+			Project: status.project, Service: status.service, Running: status.running == "Running",
+			Ports: status.ports, State: status.state,
+		})
+	}
+	payload, err := json.Marshal(output)
+	if err != nil {
+		return err
+	}
+	s.Shell().Println(string(payload))
+	return nil
 }
 
 func (s *KoolStatus) getProjects() ([]statusProject, error) {
