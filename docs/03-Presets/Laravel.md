@@ -60,6 +60,10 @@ $ Preset laravel initialized!
 
 > The Javascript package manager (including **bun**) is used only to build your frontend assets (e.g. Vite) — it runs in a one-off `oven/bun:1` container and configures the Vite `node` service. Your Laravel `app` service still runs on PHP.
 
+Kool preserves your project's Vite configuration and plugins. The Vite container passes `--host 0.0.0.0 --port 3001 --strictPort` to the `dev` script so the server is reachable through Docker's published port.
+
+If an older preset replaced your Vite configuration, restore the original from version control or the `vite.config.js.bak.*` backup before reapplying the preset.
+
 Now, move into your new Laravel project:
 
 ```bash

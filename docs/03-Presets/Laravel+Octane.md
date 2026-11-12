@@ -45,6 +45,10 @@ The [`kool preset` command](/docs/commands/kool-preset) auto-generated the follo
 
 > Now's a good time to review the **docker-compose.yml** file and verify the services match the choices you made earlier using the wizard.
 
+Kool preserves your project's Vite configuration and plugins, including Tailwind CSS. The Vite container passes `--host 0.0.0.0 --port 3001 --strictPort` to the `dev` script so the server is reachable through Docker's published port.
+
+If an older preset replaced your Vite configuration, restore the original from version control or the `vite.config.js.bak.*` backup before reapplying the preset.
+
 ## 2. Update .env.example
 
 You need to update some default values in Laravel's **.env.example** file to match the services in your **docker-compose.yml** file.

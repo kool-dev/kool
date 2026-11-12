@@ -29,7 +29,6 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - copy: vite.config.js
 
   - name: 'Set up Laravel Octane'
     actions:

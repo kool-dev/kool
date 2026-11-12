@@ -15,7 +15,6 @@ preset:
     actions:
       - copy: docker-compose.yml
       - copy: kool.yml
-      - copy: vite.config.js
       - merge: scripts/laravel.yml
         dst: kool.yml
 
