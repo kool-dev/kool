@@ -66,12 +66,15 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 scripts:
   bun: kool exec app bun
   bunx: kool exec app bunx
+  setup:
+    - kool docker --user $KOOL_ASUSER --env HOME=/tmp oven/bun:1 bun install
+    - kool start
 ```
 
-Go ahead and run `kool start` to start running the container:
+Run the setup script to install dependencies and start the container:
 
 ```bash
-$ kool start
+$ kool run setup
 ```
 
 > The **docker-compose.yml** file includes a `command` to automatically run `bun app.js` when the `app` container starts.
