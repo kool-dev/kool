@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/network"
@@ -34,6 +35,19 @@ type statusService struct {
 	project, service, state, ports string
 	running                        string
 	err                            error
+}
+
+type statusServiceJSON struct {
+	Project string `json:"project,omitempty"`
+	Service string `json:"service"`
+	Running bool   `json:"running"`
+	Ports   string `json:"ports"`
+	State   string `json:"state"`
+}
+
+type statusOutputJSON struct {
+	Services []statusServiceJSON `json:"services"`
+	Count    int                 `json:"count"`
 }
 
 func AddKoolStatus(root *cobra.Command) {
@@ -76,6 +90,9 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 	if projects, err = s.getProjects(); err != nil {
 		return
 	} else if len(projects) == 0 {
+		if s.Shell().IsJSONOutput() {
+			return s.printStatusJSON(nil)
+		}
 		s.Shell().Warning("No services found.")
 		return
 	}
@@ -84,14 +101,19 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		serviceCount += len(project.services)
 	}
 	if serviceCount == 0 {
+		if s.Shell().IsJSONOutput() {
+			return s.printStatusJSON(nil)
+		}
 		s.Shell().Warning("No services found.")
 		return
 	}
 
 	chStatus := make(chan *statusService, serviceCount)
 
-	s.table.SetWriter(s.Shell().OutStream())
-	s.table.AppendHeader("Project", "Service", "Running", "Ports", "State")
+	if !s.Shell().IsJSONOutput() {
+		s.table.SetWriter(s.Shell().OutStream())
+		s.table.AppendHeader("Project", "Service", "Running", "Ports", "State")
+	}
 
 	go func() {
 		var wg sync.WaitGroup
@@ -122,6 +144,9 @@ func (s *KoolStatus) Execute(args []string) (err error) {
 		}
 		return statuses[i].project < statuses[j].project
 	})
+	if s.Shell().IsJSONOutput() {
+		return s.printStatusJSON(statuses)
+	}
 	for _, ss := range statuses {
 		s.table.AppendRow(ss.project, ss.service, ss.running, ss.ports, ss.state)
 	}
@@ -138,13 +163,18 @@ func (s *KoolStatus) executeLegacy() (err error) {
 		return err
 	}
 	if len(services) == 0 {
+		if s.Shell().IsJSONOutput() {
+			return s.printStatusJSON(nil)
+		}
 		s.Shell().Warning("No services found.")
 		return nil
 	}
 
 	chStatus := make(chan *statusService, len(services))
-	s.table.SetWriter(s.Shell().OutStream())
-	s.table.AppendHeader("Service", "Running", "Ports", "State")
+	if !s.Shell().IsJSONOutput() {
+		s.table.SetWriter(s.Shell().OutStream())
+		s.table.AppendHeader("Service", "Running", "Ports", "State")
+	}
 	go func() {
 		var wg sync.WaitGroup
 		defer close(chStatus)
@@ -154,10 +184,17 @@ func (s *KoolStatus) executeLegacy() (err error) {
 		}
 		wg.Wait()
 	}()
+	var statuses []*statusService
 	for status := range chStatus {
 		if status.err != nil {
 			return status.err
 		}
+		statuses = append(statuses, status)
+	}
+	if s.Shell().IsJSONOutput() {
+		return s.printStatusJSON(statuses)
+	}
+	for _, status := range statuses {
 		s.table.AppendRow(status.service, status.running, status.ports, status.state)
 	}
 	s.table.SortBy(1)
@@ -168,6 +205,28 @@ func (s *KoolStatus) executeLegacy() (err error) {
 type statusProject struct {
 	name     string
 	services []string
+}
+
+func (s *KoolStatus) printStatusJSON(statuses []*statusService) error {
+	sort.Slice(statuses, func(i, j int) bool {
+		if statuses[i].project == statuses[j].project {
+			return statuses[i].service < statuses[j].service
+		}
+		return statuses[i].project < statuses[j].project
+	})
+	output := statusOutputJSON{Services: make([]statusServiceJSON, 0, len(statuses)), Count: len(statuses)}
+	for _, status := range statuses {
+		output.Services = append(output.Services, statusServiceJSON{
+			Project: status.project, Service: status.service, Running: status.running == "Running",
+			Ports: status.ports, State: status.state,
+		})
+	}
+	payload, err := json.Marshal(output)
+	if err != nil {
+		return err
+	}
+	s.Shell().Println(string(payload))
+	return nil
 }
 
 func (s *KoolStatus) getProjects() ([]statusProject, error) {
@@ -236,13 +295,31 @@ func (s *KoolStatus) getServices() (services []string, err error) {
 		return
 	}
 
-	parsedServices := strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n")
-	for _, s := range parsedServices {
-		if s != "" {
-			services = append(services, s)
+	services = parseComposeServices(output)
+	return
+}
+
+func composeTokenLines(output string) (tokens []string) {
+	for _, line := range strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.ContainsAny(line, " \t") {
+			continue
 		}
+		tokens = append(tokens, line)
 	}
 	return
+}
+
+func parseComposeServices(output string) []string {
+	return composeTokenLines(output)
+}
+
+func firstComposeToken(output string) string {
+	tokens := composeTokenLines(output)
+	if len(tokens) == 0 {
+		return ""
+	}
+	return tokens[0]
 }
 
 func (s *KoolStatus) fetchServiceInfo(project, service string, chStatus chan *statusService, wg *sync.WaitGroup) {
@@ -262,24 +339,34 @@ func (s *KoolStatus) fetchServiceInfo(project, service string, chStatus chan *st
 func (s *KoolStatus) fetchLegacyServiceInfo(service string, chStatus chan *statusService, wg *sync.WaitGroup) {
 	defer wg.Done()
 	status := &statusService{service: service, running: "Not running"}
-	var serviceID string
-	if serviceID, status.err = s.Shell().Exec(s.getServiceIDCmd, service); status.err == nil && serviceID != "" {
-		status.state, status.ports = s.getStatusPort(serviceID)
-		if strings.HasPrefix(status.state, "Up") {
-			status.running = "Running"
+	var output string
+	if output, status.err = s.Shell().Exec(s.getServiceIDCmd, service); status.err == nil {
+		serviceID := firstComposeToken(output)
+		if serviceID != "" {
+			status.state, status.ports = s.getStatusPort(serviceID)
+			if strings.HasPrefix(status.state, "Up") {
+				status.running = "Running"
+			}
 		}
 	}
 	chStatus <- status
 }
 
 func (s *KoolStatus) getServiceInfo(project, service string) (isRunning bool, status, port string, err error) {
-	var serviceID string
-	if serviceID, err = s.Shell().Exec(s.getProjectServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service, "--filter", "label=com.docker.compose.oneoff=False"); err == nil && serviceID != "" {
-		serviceID = strings.Fields(serviceID)[0]
-		status, port = s.getStatusPort(serviceID)
-		if strings.HasPrefix(status, "Up") {
-			isRunning = true
-		}
+	var output string
+	if output, err = s.Shell().Exec(s.getProjectServiceIDCmd, "--filter", "label=com.docker.compose.project="+project, "--filter", "label=com.docker.compose.service="+service, "--filter", "label=com.docker.compose.oneoff=False"); err != nil {
+		return
+	}
+
+	// docker compose may mix warnings into combined output; keep only the container id
+	serviceID := firstComposeToken(output)
+	if serviceID == "" {
+		return
+	}
+
+	status, port = s.getStatusPort(serviceID)
+	if strings.HasPrefix(status, "Up") {
+		isRunning = true
 	}
 	return
 }
@@ -288,9 +375,13 @@ func (s *KoolStatus) getCurrentServiceInfo(service string) (bool, string, string
 	if workspacesEnabled(s.env) {
 		return s.getServiceInfo(currentProject(s.env), service)
 	}
-	serviceID, err := s.Shell().Exec(s.getServiceIDCmd, service)
-	if err != nil || serviceID == "" {
+	output, err := s.Shell().Exec(s.getServiceIDCmd, service)
+	if err != nil {
 		return false, "", "", err
+	}
+	serviceID := firstComposeToken(output)
+	if serviceID == "" {
+		return false, "", "", nil
 	}
 	status, port := s.getStatusPort(serviceID)
 	return strings.HasPrefix(status, "Up"), status, port, nil

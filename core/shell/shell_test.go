@@ -11,8 +11,6 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/gookit/color"
 )
 
 func readOutput(r io.Reader) (output string, err error) {
@@ -350,7 +348,7 @@ func TestErrorShell(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := color.New(color.BgRed, color.FgWhite).Sprint("error: testing error")
+	expected := "error: testing error"
 
 	if output != expected {
 		t.Errorf("expecting output '%s', got '%s'", expected, output)
@@ -368,7 +366,7 @@ func TestWarningShell(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := color.New(color.Yellow).Sprint("testing warning")
+	expected := "testing warning"
 
 	if output != expected {
 		t.Errorf("expecting output '%s', got '%s'", expected, output)
@@ -386,10 +384,60 @@ func TestSuccessShell(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := color.New(color.Green).Sprint("testing success")
+	expected := "testing success"
 
 	if output != expected {
 		t.Errorf("expecting output '%s', got '%s'", expected, output)
+	}
+}
+
+func TestIsJSONOutput(t *testing.T) {
+	s := NewShell()
+	s.(*DefaultShell).env = environment.NewFakeEnvStorage()
+
+	if s.IsJSONOutput() {
+		t.Error("expected IsJSONOutput to be false by default")
+	}
+
+	s.(*DefaultShell).env.Set("KOOL_OUTPUT", "json")
+	if !s.IsJSONOutput() {
+		t.Error("expected IsJSONOutput to be true when KOOL_OUTPUT=json")
+	}
+}
+
+func TestDiagnosticsRoutedToStderrInJSONMode(t *testing.T) {
+	s := NewShell()
+	s.(*DefaultShell).env = environment.NewFakeEnvStorage()
+	s.(*DefaultShell).env.Set("KOOL_OUTPUT", "json")
+
+	outBuf := bytes.NewBufferString("")
+	errBuf := bytes.NewBufferString("")
+	s.SetOutStream(outBuf)
+	s.SetErrStream(errBuf)
+
+	s.Warning("test warning")
+
+	if outBuf.Len() > 0 {
+		t.Errorf("stdout should be empty in JSON mode, got: %s", outBuf.String())
+	}
+
+	if errBuf.Len() == 0 {
+		t.Error("stderr should have diagnostic output in JSON mode")
+	}
+}
+
+func TestColorDisabledOnNonTTY(t *testing.T) {
+	s := NewShell()
+	s.(*DefaultShell).env = environment.NewFakeEnvStorage()
+
+	outBuf := bytes.NewBufferString("")
+	s.SetOutStream(outBuf)
+
+	s.Error(errors.New("test"))
+
+	output := outBuf.String()
+	if strings.Contains(output, "\x1b[") {
+		t.Errorf("expected no ANSI codes on non-TTY output, got: %s", output)
 	}
 }
 

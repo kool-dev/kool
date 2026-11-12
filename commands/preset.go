@@ -65,6 +65,13 @@ func NewKoolPreset() *KoolPreset {
 // Execute runs the preset logic with incoming arguments.
 func (p *KoolPreset) Execute(args []string) (err error) {
 	var preset string
+	answers, noInteraction, err := p.Flags.parse()
+	if err != nil {
+		return
+	}
+	if len(args) == 0 && noInteraction {
+		return fmt.Errorf("please specify a preset in non-interactive mode")
+	}
 
 	if preset, err = p.getPreset(args); err != nil {
 		return
@@ -72,11 +79,6 @@ func (p *KoolPreset) Execute(args []string) (err error) {
 
 	if !p.presetsParser.Exists(preset) {
 		err = fmt.Errorf("unknown preset %s", preset)
-		return
-	}
-
-	answers, noInteraction, err := p.Flags.parse()
-	if err != nil {
 		return
 	}
 

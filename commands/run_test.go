@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -848,5 +849,126 @@ func TestNewRunCommandJsonOutputNullSafety(t *testing.T) {
 	}
 	if output[0].Commands == nil {
 		t.Error("Commands should not be nil in JSON output")
+	}
+}
+
+func TestNewRunCommandOutputJSONFlag(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	f.shell.(*shell.FakeShell).MockIsJSONOutput = true
+	f.parser.(*parser.FakeParser).MockScriptDetails = []parser.ScriptDetail{
+		{Name: "test", Comments: []string{}, Commands: []string{"echo hello"}},
+	}
+
+	cmd := NewRunCommand(f)
+
+	if err := cmd.Execute(); err != nil {
+		t.Errorf("unexpected error executing run command with --output json; error: %v", err)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+
+	if len(fakeShell.OutLines) == 0 {
+		t.Error("expected JSON output from --output json")
+		return
+	}
+
+	var output []parser.ScriptDetail
+	if err := json.Unmarshal([]byte(fakeShell.OutLines[0]), &output); err != nil {
+		t.Fatalf("failed to parse json output: %v", err)
+	}
+
+	if len(output) != 1 || output[0].Name != "test" {
+		t.Errorf("expected script 'test', got %v", output)
+	}
+}
+
+func TestNewRunCommandJSONModeTypoNoPrompt(t *testing.T) {
+	typoErr := &parser.ErrPossibleTypo{}
+	typoErr.SetSimilars([]string{"script"})
+
+	f := newFakeKoolRun(nil, map[string]error{"scrip": typoErr})
+	f.shell.(*shell.FakeShell).MockIsJSONOutput = true
+	f.shell.(*shell.FakeShell).MockIsTerminal = true
+	f.env.(*environment.FakeEnvStorage).Envs["KOOL_OUTPUT"] = "json"
+
+	errBuf := &bytes.Buffer{}
+	f.shell.(*shell.FakeShell).MockErrStream = errBuf
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"scrip"})
+
+	err := cmd.Execute()
+
+	if err == nil {
+		t.Fatal("expected error for typo in JSON mode")
+	}
+	if err.Error() != ErrKoolScriptNotFound.Error() {
+		t.Errorf("expected ErrKoolScriptNotFound, got: %v", err)
+	}
+
+	if f.promptSelect.(*shell.FakePromptSelect).CalledAsk {
+		t.Error("should not call prompt in JSON mode")
+	}
+
+	if errBuf.Len() == 0 {
+		t.Error("expected structured error JSON on stderr")
+	}
+
+	var typoPayload struct {
+		Error       string   `json:"error"`
+		Suggestions []string `json:"suggestions"`
+	}
+	if err := json.Unmarshal(errBuf.Bytes(), &typoPayload); err != nil {
+		t.Fatalf("failed to parse JSON error payload: %v", err)
+	}
+	if typoPayload.Error != "script not found" {
+		t.Errorf("expected error 'script not found', got '%s'", typoPayload.Error)
+	}
+	if len(typoPayload.Suggestions) != 1 || typoPayload.Suggestions[0] != "script" {
+		t.Errorf("expected suggestions ['script'], got %v", typoPayload.Suggestions)
+	}
+}
+
+func TestNewRunCommandJSONModeNotFoundNoSuggestions(t *testing.T) {
+	f := newFakeKoolRun(nil, nil)
+	f.shell.(*shell.FakeShell).MockIsJSONOutput = true
+	f.env.(*environment.FakeEnvStorage).Envs["KOOL_OUTPUT"] = "json"
+
+	errBuf := &bytes.Buffer{}
+	f.shell.(*shell.FakeShell).MockErrStream = errBuf
+
+	cmd := NewRunCommand(f)
+	cmd.SetArgs([]string{"totally-fake-script"})
+
+	err := cmd.Execute()
+
+	if err == nil {
+		t.Fatal("expected error for nonexistent script in JSON mode")
+	}
+	if err.Error() != ErrKoolScriptNotFound.Error() {
+		t.Errorf("expected ErrKoolScriptNotFound, got: %v", err)
+	}
+
+	if errBuf.Len() == 0 {
+		t.Error("expected structured error JSON on stderr")
+	}
+
+	var payload struct {
+		Error       string   `json:"error"`
+		Suggestions []string `json:"suggestions"`
+	}
+	if err := json.Unmarshal(errBuf.Bytes(), &payload); err != nil {
+		t.Fatalf("failed to parse JSON error payload: %v", err)
+	}
+	if payload.Error != "script not found" {
+		t.Errorf("expected error 'script not found', got '%s'", payload.Error)
+	}
+	if len(payload.Suggestions) != 0 {
+		t.Errorf("expected empty suggestions, got %v", payload.Suggestions)
+	}
+
+	fakeShell := f.shell.(*shell.FakeShell)
+	if len(fakeShell.OutLines) > 0 {
+		t.Errorf("expected no stdout output in JSON error mode, got %v", fakeShell.OutLines)
 	}
 }

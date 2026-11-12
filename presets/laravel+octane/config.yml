@@ -48,11 +48,27 @@ preset:
                 dst: kool.yml
               - recipe: php-8.2-roadrunner
 
-  - name: 'Use NPM and install dependencies'
+  - name: 'Set up Javascript package manager and install dependencies'
     actions:
-      - recipe: npm-laravel
-      - scripts:
-        - kool run npm install --save-dev chokidar
+      - prompt: 'Which Javascript package manager do you want to use'
+        ref: 'javascript_package_manager'
+        default: 'npm'
+        options:
+          - name: 'npm'
+            actions:
+              - recipe: npm-laravel
+              - scripts:
+                - kool run npm install --save-dev chokidar
+          - name: 'yarn'
+            actions:
+              - recipe: yarn-laravel
+              - scripts:
+                - kool run yarn add --dev chokidar
+          - name: 'bun'
+            actions:
+              - recipe: bun-laravel
+              - scripts:
+                - kool run bun add --dev chokidar
 
   - name: 'Customize Database and Cache'
     actions:

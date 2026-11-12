@@ -1,0 +1,22 @@
+# Which tags are related to this preset; used for branching the choices on preset wizard
+tags: [ 'Javascript' ]
+
+name: 'Vanilla Bun'
+
+# Create defines the workflow for creating a new Project where this preset can then be installed
+create:
+  - name: Creating new Bun application
+    actions:
+      - scripts:
+          - mkdir $CREATE_DIRECTORY
+
+# Preset defines the workflow for installing this preset in the current working directory
+preset:
+  - name: 'Copy basic config files'
+    actions:
+      - copy: docker-compose.yml
+      - copy: kool.yml
+      - copy: app.js
+      - copy: package.json
+      - merge: bun-scripts.yml
+        dst: kool.yml

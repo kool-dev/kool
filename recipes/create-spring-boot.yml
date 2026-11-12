@@ -25,6 +25,6 @@ actions:
         compatible: 'bootVersion'
   - recipe: pick-java-version
   - scripts:
-      - mkdir -p $CREATE_DIRECTORY
+      - mkdir -p "$CREATE_DIRECTORY"
       - docker pull -q gradle:9-jdk$JAVA_VERSION
-      - kool docker gradle:9-jdk$JAVA_VERSION bash -c "cd $CREATE_DIRECTORY && curl -sSLG --fail-with-body https://start.spring.io/starter.zip --data-urlencode type=gradle-project --data-urlencode language=$SPRING_LANGUAGE --data-urlencode groupId=$SPRING_GROUP --data-urlencode artifactId=$SPRING_ARTIFACT --data-urlencode name=$SPRING_NAME --data-urlencode javaVersion=$JAVA_VERSION --data-urlencode dependencies=$SPRING_DEPENDENCIES -o /tmp/starter.zip || { cat /tmp/starter.zip >&2; echo >&2; exit 1; }; unzip -q /tmp/starter.zip -d ."
+      - kool docker --env CREATE_DIRECTORY --env SPRING_LANGUAGE --env SPRING_GROUP --env SPRING_ARTIFACT --env SPRING_NAME --env JAVA_VERSION --env SPRING_DEPENDENCIES gradle:9-jdk$JAVA_VERSION bash -c "cd \"$(printenv CREATE_DIRECTORY)\" && curl -sSLG --fail-with-body https://start.spring.io/starter.zip --data-urlencode type=gradle-project --data-urlencode \"language=$(printenv SPRING_LANGUAGE)\" --data-urlencode \"groupId=$(printenv SPRING_GROUP)\" --data-urlencode \"artifactId=$(printenv SPRING_ARTIFACT)\" --data-urlencode \"name=$(printenv SPRING_NAME)\" --data-urlencode \"javaVersion=$(printenv JAVA_VERSION)\" --data-urlencode \"dependencies=$(printenv SPRING_DEPENDENCIES)\" -o /tmp/starter.zip || { cat /tmp/starter.zip >&2; echo >&2; exit 1; }; unzip -q /tmp/starter.zip -d ."

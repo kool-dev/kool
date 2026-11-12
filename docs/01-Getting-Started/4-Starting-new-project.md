@@ -34,7 +34,6 @@ $ touch docker-compose.yml
 Copy/paste into this **docker-compose.yml** file a simple, generic Docker Compose configuration for an `app` service container:
 
 ```yaml
-version: "3.8"  # optional since v1.27.0
 services:
   app:
     image: kooldev/php:8.0-nginx
@@ -174,7 +173,6 @@ scripts:
 Here's a more extensible, **Kool-optimized** setup for **docker-compose.yml** into which you can easily add additional services (i.e. database, cache, etc):
 
 ```yaml
-version: "3.8"  # optional since v1.27.0
 services:
   app:
     image: kooldev/php:8.0-nginx

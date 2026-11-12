@@ -1,7 +1,12 @@
 package commands
 
 import (
+	"bufio"
+	"encoding/json"
+	"io"
 	"kool-dev/kool/core/builder"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -13,6 +18,13 @@ type KoolLogsFlags struct {
 	Tail   int
 	Follow bool
 }
+
+type logEntryJSON struct {
+	Service string `json:"service"`
+	Message string `json:"message"`
+}
+
+var execLogsCmd = exec.Command
 
 // KoolLogs holds handlers and functions to implement the logs command logic
 type KoolLogs struct {
@@ -65,6 +77,10 @@ func (l *KoolLogs) Execute(args []string) (err error) {
 		l.logs.AppendArgs("--follow")
 	}
 
+	if l.Shell().IsJSONOutput() {
+		return l.printLogsJSON(args...)
+	}
+
 	err = l.Shell().Interactive(l.logs, args...)
 	return
 }
@@ -85,4 +101,72 @@ the command to follow the log output (i.e. 'kool logs -f [SERVICE...]').`,
 	logsCmd.Flags().IntVarP(&logs.Flags.Tail, "tail", "t", 25, "Number of lines to show from the end of the logs for each container. A value equal to 0 will show all lines.")
 	logsCmd.Flags().BoolVarP(&logs.Flags.Follow, "follow", "f", false, "Follow log output.")
 	return
+}
+
+func (l *KoolLogs) printLogsJSON(args ...string) (err error) {
+	return l.streamLogsJSON(args...)
+}
+
+func (l *KoolLogs) streamLogsJSON(args ...string) (err error) {
+	cmdArgs := append([]string{}, l.logs.Args()...)
+	cmdArgs = append(cmdArgs, "--no-color")
+	if len(args) > 0 {
+		cmdArgs = append(cmdArgs, args...)
+	}
+	cmd := execLogsCmd(l.logs.Cmd(), cmdArgs...)
+	cmd.Env = os.Environ()
+	cmd.Stderr = l.Shell().ErrStream()
+
+	stdout, e := cmd.StdoutPipe()
+	if e != nil {
+		err = e
+		return
+	}
+
+	if err = cmd.Start(); err != nil {
+		return
+	}
+
+	reader := bufio.NewReader(stdout)
+	encoder := json.NewEncoder(l.Shell().OutStream())
+	for {
+		line, readErr := reader.ReadString('\n')
+		if line = strings.TrimRight(line, "\r\n"); line != "" {
+			if err = encoder.Encode(parseLogLine(line)); err != nil {
+				break
+			}
+		}
+		if readErr != nil {
+			if readErr != io.EOF {
+				err = readErr
+			}
+			break
+		}
+	}
+	if err != nil {
+		_ = cmd.Process.Kill()
+	}
+	waitErr := cmd.Wait()
+	if err != nil {
+		return err
+	}
+	return waitErr
+}
+
+// parseLogLine parses a docker-compose log line into a logEntryJSON.
+// Docker compose log format: "service_name | message" (with optional padding).
+// If the line doesn't match, service is empty and message is the full line.
+func parseLogLine(line string) logEntryJSON {
+	if idx := strings.Index(line, "|"); idx >= 0 {
+		service := strings.TrimSpace(line[:idx])
+		// Compose V2 prefixes log lines with service-replica (e.g. app-1).
+		if separator := strings.LastIndex(service, "-"); separator > 0 {
+			if replica, err := strconv.Atoi(service[separator+1:]); err == nil && replica > 0 {
+				service = service[:separator]
+			}
+		}
+		message := strings.TrimSpace(line[idx+1:])
+		return logEntryJSON{Service: service, Message: message}
+	}
+	return logEntryJSON{Service: "", Message: line}
 }

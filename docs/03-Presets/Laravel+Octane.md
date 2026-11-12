@@ -24,7 +24,9 @@ $ kool create laravel+octane my-project
 
 This command will guide you through setting up a new Laravel project, installing Laravel Octane with your preferred server engine (either Swoole or RoadRunner), and setting up all the Docker Compose configuration files to manage your dockerized development environment.
 
-After that, you will have the option to include a database or cache service, all of which helps you easily set up the initial tech stack for your project using an interactive wizard.
+After that, you will have the option to include a database or cache service, and to choose a Javascript package manager (`npm`, `yarn`, or `bun`) for building your frontend assets — all of which helps you easily set up the initial tech stack for your project using an interactive wizard.
+
+> The Javascript package manager (including **bun**) is used only to build your frontend assets (e.g. Vite) — it runs in a one-off `oven/bun:1` container and configures the Vite `node` service. Your Laravel Octane `app` service still runs on PHP with your chosen engine (Swoole or RoadRunner).
 
 ---
 
@@ -188,6 +190,7 @@ $ kool start
 We have more presets to help you start projects with **kool** in a standardized way across different frameworks.
 
 - **[AdonisJs](/docs/03-Presets/AdonisJs.md)**
+- **[Bun](/docs/03-Presets/Bun.md)**
 - **[CodeIgniter](/docs/03-Presets/CodeIgniter.md)**
 - **[Express.js](/docs/03-Presets/ExpressJS.md)**
 - **[Hugo](/docs/03-Presets/Hugo.md)**

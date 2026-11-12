@@ -21,3 +21,16 @@ func TestNewKoolPreset(t *testing.T) {
 		t.Errorf("unexpected shell.PromptSelect on default KoolPreset instance")
 	}
 }
+
+func TestPresetNoInteractionRequiresArgument(t *testing.T) {
+	f := NewKoolPreset()
+	f.shell = &shell.FakeShell{MockIsTerminal: true}
+	prompt := &shell.FakePromptSelect{}
+	f.promptSelect = prompt
+	cmd := NewPresetCommand(f)
+	cmd.SetArgs([]string{"--no-interaction"})
+	assertExecGotError(t, cmd, "please specify a preset")
+	if prompt.CalledAsk {
+		t.Fatal("non-interactive preset prompted for selection")
+	}
+}
