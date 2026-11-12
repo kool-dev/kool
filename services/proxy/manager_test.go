@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -128,6 +129,100 @@ func TestLoadConfigRejectsReservedAdminPort(t *testing.T) {
 	}
 }
 
+func TestAlias(t *testing.T) {
+	longPrefix := strings.Repeat("a", 80)
+	tests := []struct {
+		name, project, service string
+	}{
+		{"ordinary", "example", "app"},
+		{"different service", "example", "node"},
+		{"different project", "other", "app"},
+		{"63 characters", strings.Repeat("p", 59), "app"},
+		{"64 characters", strings.Repeat("p", 60), "app"},
+		{"reported workspace", "exlink-workspace-lattice-special-education-category-e6bb1c8c", "app"},
+		{"generated worktree", "studio-manager-workspace-feature-stack-per-workt-cfc96ee3039502a6-12345678", "app"},
+		{"long project a", longPrefix + "a", "app"},
+		{"long project b", longPrefix + "b", "app"},
+		{"long service a", "example", longPrefix + "a"},
+		{"long service b", "example", longPrefix + "b"},
+		{"both long", longPrefix, longPrefix},
+		{"underscore", "example_project", "web_app"},
+		{"normalization collision", "example-project", "web_app"},
+		{"dot", "example.project", "app"},
+		{"leading hyphen", "-example", "app"},
+		{"trailing hyphen", "example", "app-"},
+		{"unicode", "例子", "应用"},
+		{"empty", "", ""},
+		{"uppercase", "Example", "App"},
+		{"numeric", "123", "456"},
+		{"ambiguous pair a", "example-web", "app"},
+		{"ambiguous pair b", "example", "web-app"},
+		{"truncated pair a", longPrefix + "-web", "app"},
+		{"truncated pair b", longPrefix, "web-app"},
+	}
+	label := regexp.MustCompile(`^kool-[0-9a-f]{16}$`)
+	seen := make(map[string]string)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			manager := testRouteManager("", test.project, "app.localhost")
+			alias := manager.alias(test.service)
+			if !label.MatchString(alias) {
+				t.Fatalf("invalid DNS label %q (%d bytes)", alias, len(alias))
+			}
+			if again := testRouteManager("", test.project, "other.localhost").alias(test.service); again != alias {
+				t.Errorf("alias is not deterministic: %q != %q", again, alias)
+			}
+			if previous, exists := seen[alias]; exists {
+				t.Errorf("alias collision with %s: %q", previous, alias)
+			}
+			seen[alias] = test.name
+		})
+	}
+}
+
+func TestAliasMatchesDockerAndCaddy(t *testing.T) {
+	for _, test := range []struct {
+		name, project, service string
+	}{
+		{"ordinary", "example", "app"},
+		{"workspace", "exlink-workspace-lattice-special-education-category-e6bb1c8c", "app"},
+		{"generated worktree", "studio-manager-workspace-feature-stack-per-workt-cfc96ee3039502a6-12345678", "app"},
+		{"long service", "example", strings.Repeat("service", 20)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			state, server := newCaddyRouteState(t)
+			manager := testRouteManager(server.URL, "source", "workspace.app.localhost")
+			manager.env.Set("KOOL_WORKSPACE", "true")
+			manager.env.Set("KOOL_WORKSPACE_PROJECT", test.project)
+			workDir := t.TempDir()
+			manager.env.Set("PWD", workDir)
+			if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\n"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			proxyRoute := route{Service: test.service, Listen: 80, Target: 8080, Hosts: []string{"@"}}
+			file, err := manager.createAliasOverride(defaultNetwork, []route{proxyRoute})
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = os.Remove(file) })
+			content, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			alias := manager.alias(test.service)
+			if len(alias) > 63 || !strings.Contains(string(content), fmt.Sprintf("          - %q\n", alias)) {
+				t.Fatalf("expected DNS-safe alias %q in Compose override:\n%s", alias, content)
+			}
+			mustRegister(t, manager, proxyRoute)
+			state.requireUpstream(t, "kool-80", manager.routeID(proxyRoute), alias+":8080")
+			if routes := state.routes["kool-80"]; len(routes) != 1 || !strings.Contains(string(routes[0]), `"workspace.app.localhost"`) {
+				t.Fatalf("browser hostname changed: %s", routes)
+			}
+		})
+	}
+}
+
 func TestCreateAliasOverride(t *testing.T) {
 	workDir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\n"), 0644); err != nil {
@@ -147,7 +242,7 @@ func TestCreateAliasOverride(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(content), "example-app") || !strings.Contains(string(content), "kool_global") {
+	if !strings.Contains(string(content), "kool-2c16ea1198025827") || !strings.Contains(string(content), "kool_global") {
 		t.Errorf("unexpected alias override:\n%s", content)
 	}
 	if strings.Count(string(content), `"app":`) != 1 {
@@ -301,7 +396,7 @@ func TestRegisterWorkspaceRoute(t *testing.T) {
 	}
 	encoded, _ := json.Marshal(registered)
 	result := string(encoded)
-	for _, expected := range []string{"task-a.workspace.app.localhost", "*.task-a.workspace.app.localhost", "example-workspace-task-a-app:8080"} {
+	for _, expected := range []string{"task-a.workspace.app.localhost", "*.task-a.workspace.app.localhost", "kool-1c11a4b25a7f4f2e:8080"} {
 		if !strings.Contains(result, expected) {
 			t.Errorf("expected registered route to contain %q, got %s", expected, result)
 		}
@@ -615,6 +710,78 @@ func TestPersistAppsSavesAcceptedConfiguration(t *testing.T) {
 	}
 	if err = json.Unmarshal(content, &saved); err != nil || string(saved.Apps) != apps {
 		t.Fatalf("expected accepted apps to be saved, got %s (error %v)", content, err)
+	}
+}
+
+func TestPrepareMigratesOnlyRequestedServiceAliases(t *testing.T) {
+	for _, success := range []bool{true, false} {
+		t.Run(fmt.Sprintf("success=%v", success), func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			state, server := newCaddyRouteState(t)
+			project := "studio-manager-workspace-feature-stack-per-workt-cfc96ee3039502a6-12345678"
+			manager := testRouteManager(server.URL, project, "app.localhost")
+			other := testRouteManager(server.URL, "other", "other.localhost")
+			appRoute := route{Service: "app", Listen: 80, Target: 8080, Hosts: []string{"@"}}
+			nodeRoute := route{Service: "node", Listen: 3001, Target: 3001, Hosts: []string{"@"}}
+			mustRegister(t, manager, appRoute)
+			mustRegister(t, manager, nodeRoute)
+			mustRegister(t, other, appRoute)
+			for serverID, routes := range state.routes {
+				for index, raw := range routes {
+					legacy := strings.ReplaceAll(string(raw), manager.alias("app")+":8080", project+"-app:8080")
+					legacy = strings.ReplaceAll(legacy, manager.alias("node")+":3001", project+"-node:3001")
+					legacy = strings.ReplaceAll(legacy, other.alias("app")+":8080", "other-app:8080")
+					state.routes[serverID][index] = json.RawMessage(legacy)
+				}
+			}
+
+			workDir := t.TempDir()
+			manager.env.Set("PWD", workDir)
+			config := "proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['80:8080']\n      hosts: ['@']\n    node:\n      ports: ['3001:3001']\n      hosts: ['@']\n"
+			if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte(config), 0644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\n"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			aliases, err := manager.Aliases()
+			if err != nil || len(aliases) != 2 {
+				t.Fatalf("expected two configured aliases, got %v (error %v)", aliases, err)
+			}
+			endpoint, err := url.Parse(server.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manager.http.Transport = proxyRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+				request.URL.Scheme, request.URL.Host = endpoint.Scheme, endpoint.Host
+				return http.DefaultTransport.RoundTrip(request)
+			})
+			finish, err := manager.Prepare([]string{"app"})
+			t.Cleanup(func() { _ = finish(false) })
+			if err != nil {
+				t.Fatal(err)
+			}
+			override := manager.env.Get("COMPOSE_FILE")
+			files := strings.Split(override, string(os.PathListSeparator))
+			content, err := os.ReadFile(files[len(files)-1])
+			if err != nil || !strings.Contains(string(content), fmt.Sprintf("- %q", aliases[0].Name)) {
+				t.Fatalf("Compose must use the displayed alias: %s (error %v)", content, err)
+			}
+			state.requireUpstream(t, "kool-80", manager.routeID(appRoute), aliases[0].Name+":8080")
+			if err = finish(success); err != nil {
+				t.Fatal(err)
+			}
+			appAlias := aliases[0].Name
+			if !success {
+				appAlias = project + "-app"
+			}
+			state.requireUpstream(t, "kool-80", manager.routeID(appRoute), appAlias+":8080")
+			state.requireUpstream(t, "kool-3001", manager.routeID(nodeRoute), project+"-node:3001")
+			state.requireUpstream(t, "kool-80", other.routeID(appRoute), "other-app:8080")
+			if manager.env.Get("COMPOSE_FILE") != "" {
+				t.Fatal("preparation must restore COMPOSE_FILE")
+			}
+		})
 	}
 }
 
@@ -1082,6 +1249,31 @@ func TestRestoreAppsIfUnchangedPreservesConcurrentUpdate(t *testing.T) {
 	}
 }
 
+func TestRemoveServiceRoutesSupportsLegacyAliases(t *testing.T) {
+	for _, legacy := range []bool{false, true} {
+		t.Run(fmt.Sprintf("legacy=%v", legacy), func(t *testing.T) {
+			state, server := newCaddyRouteState(t)
+			manager := testRouteManager(server.URL, "example", "app.localhost")
+			app := route{Service: "app", Listen: 80, Target: 8080, Hosts: []string{"@"}}
+			node := route{Service: "node", Listen: 3001, Target: 3001, Hosts: []string{"@"}}
+			mustRegister(t, manager, app)
+			mustRegister(t, manager, node)
+			other := testRouteManager(server.URL, "other", "other.localhost")
+			mustRegister(t, other, app)
+			if legacy {
+				for index, raw := range state.routes["kool-80"] {
+					state.routes["kool-80"][index] = json.RawMessage(strings.ReplaceAll(string(raw), manager.alias("app")+":8080", "example-app:8080"))
+				}
+			}
+			if err := manager.removeProjectRoutes([]string{"app"}); err != nil {
+				t.Fatal(err)
+			}
+			state.requireRoutes(t, "kool-80", []string{other.routeID(app)})
+			state.requireRoutes(t, "kool-3001", []string{manager.routeID(node)})
+		})
+	}
+}
+
 func TestWorkspaceRoutePrecedence(t *testing.T) {
 	proxyRoute := route{Service: "app", Listen: 80, Target: 80, Hosts: []string{"@", "*"}}
 	viteRoute := route{Service: "node", Listen: 3001, Target: 3001, Hosts: []string{"@", "*"}}
@@ -1098,7 +1290,7 @@ func TestWorkspaceRoutePrecedence(t *testing.T) {
 			"kool-exlink-workspace-task-a-app-80-80",
 			"kool-exlink-app-80-80",
 		})
-		state.requireUpstream(t, "kool-80", "kool-exlink-workspace-task-a-app-80-80", "exlink-workspace-task-a-app:80")
+		state.requireUpstream(t, "kool-80", "kool-exlink-workspace-task-a-app-80-80", "kool-dc6777eafc0a9c53:80")
 	})
 
 	t.Run("workspace started before and routes re-registered", func(t *testing.T) {
