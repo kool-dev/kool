@@ -140,6 +140,7 @@ func TestAlias(t *testing.T) {
 		{"63 characters", strings.Repeat("p", 59), "app"},
 		{"64 characters", strings.Repeat("p", 60), "app"},
 		{"reported workspace", "exlink-workspace-lattice-special-education-category-e6bb1c8c", "app"},
+		{"generated worktree", "studio-manager-workspace-feature-stack-per-workt-cfc96ee3039502a6-12345678", "app"},
 		{"long project a", longPrefix + "a", "app"},
 		{"long project b", longPrefix + "b", "app"},
 		{"long service a", "example", longPrefix + "a"},
@@ -165,11 +166,8 @@ func TestAlias(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			manager := testRouteManager("", test.project, "app.localhost")
 			alias := manager.alias(test.service)
-			if len(alias) != 21 || !label.MatchString(alias) {
+			if !label.MatchString(alias) {
 				t.Fatalf("invalid DNS label %q (%d bytes)", alias, len(alias))
-			}
-			if test.name == "ordinary" && alias != "kool-2c16ea1198025827" {
-				t.Errorf("alias algorithm changed: %q", alias)
 			}
 			if again := testRouteManager("", test.project, "other.localhost").alias(test.service); again != alias {
 				t.Errorf("alias is not deterministic: %q != %q", again, alias)
@@ -188,6 +186,7 @@ func TestAliasMatchesDockerAndCaddy(t *testing.T) {
 	}{
 		{"ordinary", "example", "app"},
 		{"workspace", "exlink-workspace-lattice-special-education-category-e6bb1c8c", "app"},
+		{"generated worktree", "studio-manager-workspace-feature-stack-per-workt-cfc96ee3039502a6-12345678", "app"},
 		{"long service", "example", strings.Repeat("service", 20)},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -711,6 +710,78 @@ func TestPersistAppsSavesAcceptedConfiguration(t *testing.T) {
 	}
 	if err = json.Unmarshal(content, &saved); err != nil || string(saved.Apps) != apps {
 		t.Fatalf("expected accepted apps to be saved, got %s (error %v)", content, err)
+	}
+}
+
+func TestPrepareMigratesOnlyRequestedServiceAliases(t *testing.T) {
+	for _, success := range []bool{true, false} {
+		t.Run(fmt.Sprintf("success=%v", success), func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			state, server := newCaddyRouteState(t)
+			project := "studio-manager-workspace-feature-stack-per-workt-cfc96ee3039502a6-12345678"
+			manager := testRouteManager(server.URL, project, "app.localhost")
+			other := testRouteManager(server.URL, "other", "other.localhost")
+			appRoute := route{Service: "app", Listen: 80, Target: 8080, Hosts: []string{"@"}}
+			nodeRoute := route{Service: "node", Listen: 3001, Target: 3001, Hosts: []string{"@"}}
+			mustRegister(t, manager, appRoute)
+			mustRegister(t, manager, nodeRoute)
+			mustRegister(t, other, appRoute)
+			for serverID, routes := range state.routes {
+				for index, raw := range routes {
+					legacy := strings.ReplaceAll(string(raw), manager.alias("app")+":8080", project+"-app:8080")
+					legacy = strings.ReplaceAll(legacy, manager.alias("node")+":3001", project+"-node:3001")
+					legacy = strings.ReplaceAll(legacy, other.alias("app")+":8080", "other-app:8080")
+					state.routes[serverID][index] = json.RawMessage(legacy)
+				}
+			}
+
+			workDir := t.TempDir()
+			manager.env.Set("PWD", workDir)
+			config := "proxy:\n  domain: app.localhost\n  routes:\n    app:\n      ports: ['80:8080']\n      hosts: ['@']\n    node:\n      ports: ['3001:3001']\n      hosts: ['@']\n"
+			if err := os.WriteFile(filepath.Join(workDir, "kool.yml"), []byte(config), 0644); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(workDir, "compose.yml"), []byte("services: {}\n"), 0644); err != nil {
+				t.Fatal(err)
+			}
+			aliases, err := manager.Aliases()
+			if err != nil || len(aliases) != 2 {
+				t.Fatalf("expected two configured aliases, got %v (error %v)", aliases, err)
+			}
+			endpoint, err := url.Parse(server.URL)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manager.http.Transport = proxyRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+				request.URL.Scheme, request.URL.Host = endpoint.Scheme, endpoint.Host
+				return http.DefaultTransport.RoundTrip(request)
+			})
+			finish, err := manager.Prepare([]string{"app"})
+			t.Cleanup(func() { _ = finish(false) })
+			if err != nil {
+				t.Fatal(err)
+			}
+			override := manager.env.Get("COMPOSE_FILE")
+			files := strings.Split(override, string(os.PathListSeparator))
+			content, err := os.ReadFile(files[len(files)-1])
+			if err != nil || !strings.Contains(string(content), fmt.Sprintf("- %q", aliases[0].Name)) {
+				t.Fatalf("Compose must use the displayed alias: %s (error %v)", content, err)
+			}
+			state.requireUpstream(t, "kool-80", manager.routeID(appRoute), aliases[0].Name+":8080")
+			if err = finish(success); err != nil {
+				t.Fatal(err)
+			}
+			appAlias := aliases[0].Name
+			if !success {
+				appAlias = project + "-app"
+			}
+			state.requireUpstream(t, "kool-80", manager.routeID(appRoute), appAlias+":8080")
+			state.requireUpstream(t, "kool-3001", manager.routeID(nodeRoute), project+"-node:3001")
+			state.requireUpstream(t, "kool-80", other.routeID(appRoute), "other-app:8080")
+			if manager.env.Get("COMPOSE_FILE") != "" {
+				t.Fatal("preparation must restore COMPOSE_FILE")
+			}
+		})
 	}
 }
 

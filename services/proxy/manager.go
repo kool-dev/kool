@@ -317,11 +317,13 @@ func (m *DefaultManager) Aliases() ([]Alias, error) {
 	}
 	var aliases []Alias
 	seen := make(map[string]bool)
+	project := m.project()
 	for _, route := range cfg.Routes {
-		if !seen[route.Service] {
-			aliases = append(aliases, Alias{Project: m.project(), Service: route.Service, Network: cfg.Network, Name: m.alias(route.Service)})
-			seen[route.Service] = true
+		if seen[route.Service] {
+			continue
 		}
+		aliases = append(aliases, Alias{Project: project, Service: route.Service, Network: cfg.Network, Name: m.alias(route.Service)})
+		seen[route.Service] = true
 	}
 	return aliases, nil
 }
@@ -1676,8 +1678,7 @@ func (m *DefaultManager) request(method, url string, body []byte) (*http.Respons
 }
 
 func (m *DefaultManager) alias(service string) string {
-	// Separate the complete project/service pair so ambiguous concatenations
-	// cannot share an alias. A 64-bit digest keeps every label short and DNS-safe.
+	// A separator distinguishes pairs such as (app-web, api) and (app, web-api).
 	digest := sha256.Sum256([]byte(m.project() + "\x00" + service))
 	return fmt.Sprintf("kool-%x", digest[:8])
 }
