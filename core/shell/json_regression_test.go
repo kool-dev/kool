@@ -30,8 +30,8 @@ func TestTaskPipeKeepsTerminalColorAndSpacing(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer master.Close()
-	defer terminal.Close()
+	defer func() { _ = master.Close() }()
+	defer func() { _ = terminal.Close() }()
 	previous := color.Enable
 	color.Enable = true
 	t.Cleanup(func() { color.Enable = previous })
@@ -39,8 +39,8 @@ func TestTaskPipeKeepsTerminalColorAndSpacing(t *testing.T) {
 	s := NewShell().(*DefaultShell)
 	s.SetOutStream(terminal)
 	reader, writer := io.Pipe()
-	defer reader.Close()
-	defer writer.Close()
+	defer func() { _ = reader.Close() }()
+	defer func() { _ = writer.Close() }()
 	s.SetOutStream(writer)
 	if !s.useColor() {
 		t.Fatal("task pipe lost terminal color")
