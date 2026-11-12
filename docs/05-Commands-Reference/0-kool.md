@@ -31,6 +31,7 @@ kool
 * [kool info](kool-info)	 - Print out information about the local environment
 * [kool logs](kool-logs)	 - Display log output from running service containers
 * [kool preset](kool-preset)	 - Install configuration files customized for Kool in the current directory
+* [kool proxy](kool-proxy)	 - Manage Kool's local proxy
 * [kool recipe](kool-recipe)	 - Adds configuration for some recipe in the current work directory.
 * [kool restart](kool-restart)	 - Restart running service containers (the same as 'kool stop' followed by 'kool start')
 * [kool run](kool-run)	 - Execute a script defined in kool.yml
