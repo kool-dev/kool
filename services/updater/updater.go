@@ -14,6 +14,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 
 	"kool-dev/kool/services/user"
 
@@ -32,6 +33,7 @@ const (
 // DefaultUpdater holds data for updating kool
 type DefaultUpdater struct {
 	RootCommand *cobra.Command
+	client      *http.Client
 }
 
 // Updater holds logic for updating kool
@@ -49,11 +51,21 @@ func (u *DefaultUpdater) GetCurrentVersion() semver.Version {
 
 // Update updates kool version
 func (u *DefaultUpdater) Update(currentVersion semver.Version) (updatedVersion semver.Version, err error) {
-	ctx := context.Background()
+	return u.update(context.Background(), currentVersion, selfupdate.Options{})
+}
 
-	release, err := latestRelease(ctx)
+func (u *DefaultUpdater) update(ctx context.Context, currentVersion semver.Version, options selfupdate.Options) (updatedVersion semver.Version, err error) {
+	client := u.httpClient()
+	release, err := latestRelease(ctx, client)
 	if err != nil {
 		return
+	}
+	updatedVersion, err = parseVersion(release.GetTagName())
+	if err != nil {
+		return currentVersion, fmt.Errorf("invalid release version: %w", err)
+	}
+	if !updatedVersion.GT(currentVersion) {
+		return currentVersion, nil
 	}
 
 	var (
@@ -71,22 +83,25 @@ func (u *DefaultUpdater) Update(currentVersion semver.Version) (updatedVersion s
 		return
 	}
 
-	sum, err := checksum(ctx, release, assetName)
+	sum, err := checksum(ctx, client, release, assetName)
 	if err != nil {
 		return
 	}
 
-	binary, err := download(ctx, asset.GetBrowserDownloadURL())
+	binary, err := download(ctx, client, asset.GetBrowserDownloadURL())
 	if err != nil {
 		return
 	}
 
-	if err = selfupdate.Apply(bytes.NewReader(binary), selfupdate.Options{Checksum: sum}); err != nil {
+	options.Checksum = sum
+	if err = selfupdate.Apply(bytes.NewReader(binary), options); err != nil {
+		if rollbackErr := selfupdate.RollbackError(err); rollbackErr != nil {
+			return currentVersion, fmt.Errorf("applying update: %w; rollback failed: %v; restore the binary manually", err, rollbackErr)
+		}
 		err = fmt.Errorf("applying update: %w", err)
 		return
 	}
 
-	updatedVersion, err = parseVersion(release.GetTagName())
 	return
 }
 
@@ -94,7 +109,7 @@ func (u *DefaultUpdater) Update(currentVersion semver.Version) (updatedVersion s
 func (u *DefaultUpdater) CheckForUpdates(current semver.Version, chHasNewVersion chan bool) {
 	defer close(chHasNewVersion)
 
-	release, err := latestRelease(context.Background())
+	release, err := latestRelease(context.Background(), u.httpClient())
 	if err != nil {
 		chHasNewVersion <- false
 		return
@@ -140,8 +155,17 @@ func (u *DefaultUpdater) CheckPermission() (err error) {
 	return
 }
 
-func latestRelease(ctx context.Context) (*github.RepositoryRelease, error) {
-	client, err := github.NewClient()
+func (u *DefaultUpdater) httpClient() *http.Client {
+	if u.client != nil {
+		return u.client
+	}
+	return &http.Client{Timeout: 2 * time.Minute}
+}
+
+func latestRelease(ctx context.Context, httpClient *http.Client) (*github.RepositoryRelease, error) {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	client, err := github.NewClient(github.WithHTTPClient(httpClient))
 	if err != nil {
 		return nil, fmt.Errorf("creating GitHub client: %w", err)
 	}
@@ -170,7 +194,7 @@ func findAsset(release *github.RepositoryRelease, name string) *github.ReleaseAs
 	return nil
 }
 
-func checksum(ctx context.Context, release *github.RepositoryRelease, assetName string) ([]byte, error) {
+func checksum(ctx context.Context, client *http.Client, release *github.RepositoryRelease, assetName string) ([]byte, error) {
 	name := assetName + ".sha256"
 
 	asset := findAsset(release, name)
@@ -178,7 +202,7 @@ func checksum(ctx context.Context, release *github.RepositoryRelease, assetName 
 		return nil, fmt.Errorf("missing checksum asset %s", name)
 	}
 
-	data, err := download(ctx, asset.GetBrowserDownloadURL())
+	data, err := download(ctx, client, asset.GetBrowserDownloadURL())
 	if err != nil {
 		return nil, err
 	}
@@ -203,13 +227,13 @@ func parseChecksum(data []byte) ([]byte, error) {
 	return sum, nil
 }
 
-func download(ctx context.Context, url string) (data []byte, err error) {
+func download(ctx context.Context, client *http.Client, url string) (data []byte, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
@@ -237,25 +261,28 @@ func archCandidatesFor(goarch string, armVersion int) []string {
 	}
 
 	if armVersion == 6 {
-		return []string{"arm6", "arm7"}
+		return []string{"arm6"}
 	}
-	return []string{"arm7", "arm6"}
+	if armVersion == 7 {
+		return []string{"arm7", "arm6"}
+	}
+	return nil
 }
 
 func goarm() int {
-	if v, err := strconv.Atoi(os.Getenv("GOARM")); err == nil && (v == 6 || v == 7) {
-		return v
-	}
-
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, setting := range info.Settings {
 			if setting.Key == "GOARM" {
-				if v, err := strconv.Atoi(setting.Value); err == nil {
-					return v
-				}
+				return parseGOARM(setting.Value)
 			}
 		}
 	}
 
-	return 7
+	return 0
+}
+
+func parseGOARM(value string) int {
+	version, _, _ := strings.Cut(value, ",")
+	v, _ := strconv.Atoi(version)
+	return v
 }
