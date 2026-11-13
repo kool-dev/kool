@@ -40,7 +40,7 @@ $ Preset expressjs is initializing!
 $ Preset expressjs initialized!
 ```
 
-> If you pick **bun**, the `app` service in your **docker-compose.yml** is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun app.js`), so your app runs on the Bun runtime. Otherwise it uses `kooldev/node:20`.
+> If you pick **bun**, the `app` service in your **docker-compose.yml** is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun app.js`), so your app runs on the Bun runtime. Otherwise it uses `kooldev/node:24`.
 
 Now, move into your new Node.js project:
 
@@ -72,7 +72,7 @@ scripts:
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:20 npm install # bun: kool docker oven/bun:1 bun install
+    - kool docker kooldev/node:24 npm install # bun: kool docker oven/bun:1 bun install
     - kool start
 	# - add more setup commands
 ```

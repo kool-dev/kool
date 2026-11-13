@@ -52,7 +52,7 @@ $ Preset adonis is initializing!
 $ Preset adonis initialized!
 ```
 
-> **Experimental:** if you pick **bun**, the `app` service is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun --bun run dev`). AdonisJs officially targets Node, so running it on the Bun runtime is experimental and may require adjustments. To use Bun only as the package manager, keep `kooldev/node:20` as the `app` image in your **docker-compose.yml**.
+> **Experimental:** if you pick **bun**, the `app` service is configured to run the <a href="https://hub.docker.com/r/oven/bun" target="_blank">oven/bun:1</a> image (`command: bun --bun run dev`). AdonisJs officially targets Node, so running it on the Bun runtime is experimental and may require adjustments. To use Bun only as the package manager, keep `kooldev/node:24` as the `app` image in your **docker-compose.yml**.
 
 Now, move into your new AdonisJs project:
 
@@ -150,7 +150,7 @@ scripts:
   npx: kool exec app npx
 
   setup:
-    - kool docker kooldev/node:20 npm install # or yarn install / bun install (kool docker oven/bun:1 bun install)
+    - kool docker kooldev/node:24 npm install # or yarn install / bun install (kool docker oven/bun:1 bun install)
     - kool start
 ```
 

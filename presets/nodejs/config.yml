@@ -23,5 +23,5 @@ preset:
   - name: 'Customize your setup'
     actions:
       - scripts:
-        - kool docker kooldev/node:20 npm init -f
+        - kool docker kooldev/node:24 npm init -f
       - recipe: pick-node-pkg-mgr

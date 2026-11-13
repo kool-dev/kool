@@ -9,10 +9,10 @@ create:
   - name: Creating new NestJS Application
     actions:
       - scripts:
-          - docker pull -q kooldev/node:20
+          - docker pull -q kooldev/node:24
           - mkdir $CREATE_DIRECTORY
-          - kool docker kooldev/node:20 npx -y @nestjs/cli new -l Typescript -p npm --skip-git $CREATE_DIRECTORY/backend
-          - kool docker kooldev/node:20 npx -y create-next-app@latest --ts --use-npm $CREATE_DIRECTORY/frontend
+          - kool docker kooldev/node:24 npx -y @nestjs/cli new -l Typescript -p npm --skip-git $CREATE_DIRECTORY/backend
+          - kool docker kooldev/node:24 npx -y create-next-app@latest --ts --use-npm $CREATE_DIRECTORY/frontend
 
 preset:
   - name: 'Copy basic config files'
@@ -30,4 +30,4 @@ preset:
       - copy: gitignore
         dst: .gitignore
       - scripts:
-        - kool docker kooldev/node:20 sed -i 's/app.listen(3000)/app.listen(process.env.KOOL_BACKEND_PORT)/' backend/src/main.ts
+        - kool docker kooldev/node:24 sed -i 's/app.listen(3000)/app.listen(process.env.KOOL_BACKEND_PORT)/' backend/src/main.ts

@@ -1,7 +1,7 @@
 scripts:
   # npm - helpers for JS handling
-  npm: kool docker kooldev/node:20 npm
-  npx: kool docker kooldev/node:20 npx
+  npm: kool docker kooldev/node:24 npm
+  npx: kool docker kooldev/node:24 npx
   before-start:
     - kool run npm install
   reset:
