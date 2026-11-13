@@ -5,7 +5,7 @@ scripts:
     - kool run install
 
   # Runs go CLI with proper version for kool development
-  go: kool docker --volume=cli_gopath:/go --env='GOOS=$GOOS' golang:1.25 go
+  go: kool docker --volume=cli_gopath:/go --env='GOOS=$GOOS' golang:1.26 go
 
   # Compiling cli itself. In case you are on MacOS make sure to have your .env
   # file properly setting GOOS=darwin so you will be able to use the binary.

@@ -1,4 +1,4 @@
-FROM golang:1.26.9 AS build
+FROM golang:1.26.11 AS build
 
 ARG BUILD_VERSION=0.0.0-auto
 
@@ -18,6 +18,7 @@ ENV DOCKER_HOST=tcp://docker:2375
 COPY --from=build /app/kool /usr/local/bin/kool
 
 RUN apk add --no-cache git bash \
+	&& apk upgrade --no-cache zlib \
 	&& rm -rf /var/cache/apk/* /tmp/*
 
 CMD [ "kool" ]
