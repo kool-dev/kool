@@ -349,12 +349,12 @@ func Interactive(exe string, args ...string) (err error) {
 
 // Println execs Println on writer
 func Println(out ...interface{}) {
-	NewShell().Println(out)
+	NewShell().Println(out...)
 }
 
 // Printf execs Printf on writer
 func Printf(format string, a ...interface{}) {
-	NewShell().Printf(format, a)
+	NewShell().Printf(format, a...)
 }
 
 // Error error output

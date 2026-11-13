@@ -30,7 +30,7 @@ func (u *UpdateAwareService) Execute(args []string) (err error) {
 		return
 	}
 
-	ch := make(chan bool)
+	ch := make(chan bool, 1)
 
 	go u.updater.CheckForUpdates(u.updater.GetCurrentVersion(), ch)
 

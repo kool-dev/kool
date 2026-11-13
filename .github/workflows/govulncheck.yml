@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1.25.x tracks the same Go minor the Dockerfile builds with
-    # (golang:1.25, pulled fresh), so CI and a local `kool run govulncheck`
+    # 1.26.x tracks the same Go minor the Dockerfile builds with
+    # (golang:1.26, pulled fresh), so CI and a local `kool run govulncheck`
     # do not disagree about which stdlib advisories still apply.
     - name: Install Go
       uses: actions/setup-go@v5
       with:
-        go-version: 1.25.x
+        go-version: 1.26.x
 
     - name: Checkout code
       uses: actions/checkout@v4
@@ -29,11 +29,9 @@ jobs:
       run: go install golang.org/x/vuln/cmd/govulncheck@latest
 
     # Report-only on purpose. govulncheck has no suppression file (unlike
-    # grype's .grype.yaml), and GO-2026-5932 -- x/crypto/openpgp is
-    # unmaintained, reached through rhysd/go-github-selfupdate -- has no fix
-    # available, so gating on it would pin the build red until that dependency
-    # is replaced. Stdlib findings also churn with every Go patch release.
-    # A genuine tool failure still fails the job.
+    # grype's .grype.yaml), and stdlib findings churn with every Go patch
+    # release, so gating on them would pin the build red until the next
+    # toolchain bump. A genuine tool failure still fails the job.
     - name: Run govulncheck
       run: |
         set +e

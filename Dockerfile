@@ -1,4 +1,4 @@
-FROM golang:1.26.9 AS build
+FROM golang:1.26.11 AS build
 
 ARG BUILD_VERSION=0.0.0-auto
 

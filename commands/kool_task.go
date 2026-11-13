@@ -73,7 +73,7 @@ func (t *DefaultKoolTask) Run(args []string) (err error) {
 		statusMessage = color.New(color.Green).Sprint("done")
 	}
 
-	t.actualOut.Printf("\r" + strings.Repeat(" ", t.termWidth-1) + "\r")
+	t.actualOut.Printf("%s", "\r"+strings.Repeat(" ", t.termWidth-1)+"\r")
 	t.actualOut.Println(fmt.Sprintf("[%s] %s", statusMessage, t.message))
 
 	return
@@ -131,7 +131,7 @@ func (t *DefaultKoolTask) printServiceOutput(lines chan string) <-chan bool {
 
 		for line := range lines {
 			loading.Lock()
-			t.actualOut.Printf("\r" + strings.Repeat(" ", t.termWidth-1) + "\r")
+			t.actualOut.Printf("%s", "\r"+strings.Repeat(" ", t.termWidth-1)+"\r")
 			if t.frameOutput {
 				t.actualOut.Println(">", line)
 			} else {
