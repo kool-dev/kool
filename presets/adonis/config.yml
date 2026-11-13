@@ -14,13 +14,13 @@ create:
           - name: 'npm'
             actions:
               - scripts:
-                - docker pull -q kooldev/node:20
-                - kool docker kooldev/node:20 npm init -y adonis-ts-app@latest $CREATE_DIRECTORY
+                - docker pull -q kooldev/node:24
+                - kool docker kooldev/node:24 npm init -y adonis-ts-app@latest $CREATE_DIRECTORY
           - name: 'yarn'
             actions:
               - scripts:
-                - docker pull -q kooldev/node:20
-                - kool docker kooldev/node:20 yarn create adonis-ts-app $CREATE_DIRECTORY
+                - docker pull -q kooldev/node:24
+                - kool docker kooldev/node:24 yarn create adonis-ts-app $CREATE_DIRECTORY
           - name: 'bun'
             actions:
               - scripts:

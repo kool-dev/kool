@@ -1,6 +1,6 @@
 services:
   app:
-    image: kooldev/node:20
+    image: kooldev/node:24
     command: ["npm", "run", "dev"]
     ports:
       - "${KOOL_APP_PORT:-3000}:3000"

@@ -7,6 +7,14 @@
 
 ## Requirements
 
+Node-based presets and npm/Yarn helpers default to `kooldev/node:24` (Node.js 24 LTS), replacing the end-of-life Node.js 20 default. Node.js 24 is the conservative supported choice rather than the newer Node.js 26.
+
+### Existing projects
+
+Upgrading the kool CLI does not rewrite your project's files. To migrate, change the Node image in **docker-compose.yml** and every `kool docker` helper in **kool.yml** to `kooldev/node:24`, then reinstall dependencies and test your application. Native dependencies may need rebuilding. Review generated-file changes if you reapply a preset.
+
+Projects that cannot migrate yet can keep an explicit `kooldev/node:20` pin temporarily, but Node.js 20 no longer receives upstream security fixes. This change does not remove existing image tags or change the image publication policy.
+
 If you haven't done so already, you first need to [install Docker and the kool CLI](/docs/getting-started/installation).
 
 Also, make sure you're running the latest version of **kool**. Run the following command to compare your local version of **kool** with the latest release, and, if a newer version is available, automatically download and install it.
@@ -70,8 +78,8 @@ To help get you started, **kool.yml** comes prebuilt with an initial set of scri
 scripts:
   node: kool exec app node
   # npm - helpers for JS handling
-  npm: kool docker kooldev/node:20 npm
-  npx: kool docker kooldev/node:20 npx
+  npm: kool docker kooldev/node:24 npm
+  npx: kool docker kooldev/node:24 npx
   setup:
     - kool run npm install
   reset:

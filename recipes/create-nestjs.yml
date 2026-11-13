@@ -8,9 +8,8 @@ actions:
       - name: 'Typescript'
         actions:
           - scripts:
-            - kool docker kooldev/node:20 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY
+            - kool docker kooldev/node:24 npx -y @nestjs/cli new -l Typescript -p npm $CREATE_DIRECTORY
       - name: 'Javascript'
         actions:
           - scripts:
-            - kool docker kooldev/node:20 npx -y @nestjs/cli new -l Javascript -p npm $CREATE_DIRECTORY
-
+            - kool docker kooldev/node:24 npx -y @nestjs/cli new -l Javascript -p npm $CREATE_DIRECTORY

@@ -8,7 +8,7 @@ create:
   - name: Creating new NestJS Application
     actions:
       - scripts:
-          - docker pull -q kooldev/node:20
+          - docker pull -q kooldev/node:24
       - recipe: create-nestjs
 
 # Preset defines the workflow for installing this preset in the current working directory
