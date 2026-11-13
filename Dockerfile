@@ -18,6 +18,7 @@ ENV DOCKER_HOST=tcp://docker:2375
 COPY --from=build /app/kool /usr/local/bin/kool
 
 RUN apk add --no-cache git bash \
+	&& apk upgrade --no-cache zlib \
 	&& rm -rf /var/cache/apk/* /tmp/*
 
 CMD [ "kool" ]
