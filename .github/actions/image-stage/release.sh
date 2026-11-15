@@ -96,18 +96,17 @@ publish() {
   local records tag arch digest suffix aliases=${RELEASE_ARCH_ALIASES:-false}
   records=$(validate) # Entire set checked before the FIRST stable-tag write.
   [[ $aliases == false || $aliases == true ]] || die "Invalid architecture alias setting"
-  local -a sources=() options=()
-  [[ $(jq 'length' <<< "$RELEASE_ARCHES") != 1 ]] || options+=(--prefer-index=false)
+  local -a sources=()
   while IFS= read -r tag; do
     mapfile -t sources < <(jq -r --arg tag "$tag" --arg repo "$RELEASE_REPOSITORY" \
       '.[] | select(.tag == $tag) | $repo + "@" + .digest' <<< "$records")
-    docker buildx imagetools create "${options[@]}" --tag "$RELEASE_REPOSITORY:$tag" "${sources[@]}"
+    docker buildx imagetools create --tag "$RELEASE_REPOSITORY:$tag" "${sources[@]}"
     # Node's existing architecture tags remain compatibility aliases, but are
     # updated only after the complete release set passes validation.
     if [[ $aliases == true ]]; then
       while IFS=$'\t' read -r arch digest; do
         case $arch in amd64) suffix=x86_64 ;; arm64) suffix=aarch64 ;; esac
-        docker buildx imagetools create --prefer-index=false --tag "$RELEASE_REPOSITORY:$tag-$suffix" \
+        docker buildx imagetools create --tag "$RELEASE_REPOSITORY:$tag-$suffix" \
           "$RELEASE_REPOSITORY@$digest"
       done < <(jq -r --arg tag "$tag" '.[] | select(.tag == $tag) | [.arch,.digest] | @tsv' <<< "$records")
     fi

@@ -17,8 +17,8 @@ scanners, supported tags and dispatch recipients in each image repository.
    inspections. It uploads one run/attempt/group/architecture artifact.
 5. A single `image-publish.yml` job needs the entire native matrix and checks.
    It validates every expected tag/platform record before login or stable writes,
-   then assembles manifests from those exact immutable digests. Single-arch
-   releases keep a single image manifest. Node can retain its historical
+   then assembles indexes from those exact immutable digests. Single-arch
+   releases get a one-platform index (not ARM support). Node can retain its historical
    `-x86_64`/`-aarch64` aliases through `architecture-aliases`.
 6. Repository-specific downstream dispatch jobs need successful publication.
 
@@ -59,5 +59,5 @@ bash .github/actions/image-stage/tests/registry.sh
 The first test mocks Docker and checks guards, immutable IDs, negative metadata,
 absence of extra registry inspections and fresh-parent assertions. The second
 uses only an ephemeral loopback registry and synthetic scratch images to verify
-actual push digest capture, two-platform membership and single-platform output.
+actual push digest capture, original config IDs, two/single-platform membership and aliases.
 Scratch fixtures do not execute ARM application code; consumers' native CI does.

@@ -48,17 +48,28 @@ for tag in v1 v2; do
     [[ $config == "$(cat "$temporary/config-$tag-$arch")" ]]
   done
 done
-# Single-architecture repositories keep single-manifest stable tags.
+# Single-architecture repositories use the same index path, with one descriptor.
 export RELEASE_TAGS='["v1"]' RELEASE_ARCHES='["amd64"]' RELEASE_METADATA="$temporary/single"
 mkdir "$RELEASE_METADATA"
 cp "$temporary/metadata/v1-amd64.json" "$RELEASE_METADATA/"
 bash "$script" publish
 manifest=$(docker buildx imagetools inspect --raw "$RELEASE_REPOSITORY:v1")
-if ! jq -e 'has("config") and (has("manifests") | not)' <<< "$manifest" > /dev/null; then
-  echo "Expected a single image manifest, got: $manifest" >&2
-  curl --fail --silent --show-error --include \
-    -H 'Accept: application/vnd.docker.distribution.manifest.v2+json, application/vnd.docker.distribution.manifest.list.v2+json, application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json' \
-    "http://$address/v2/test/php/manifests/v1" >&2
-  exit 1
-fi
-echo "PASS: real staging pushes, exact multiarch digest membership and single-arch promotion"
+digest=$(jq -r .digest "$RELEASE_METADATA/v1-amd64.json")
+jq -e --arg digest "$digest" '
+  .manifests | length == 1 and .[0].digest == $digest and .[0].platform.architecture == "amd64"
+' <<< "$manifest" > /dev/null
+
+# Historical Node architecture aliases also contain exactly their tested image.
+export RELEASE_TAGS='["v1","v2"]' RELEASE_ARCHES='["amd64","arm64"]'
+export RELEASE_METADATA="$temporary/metadata" RELEASE_ARCH_ALIASES=true
+bash "$script" publish
+for suffix in x86_64 aarch64; do
+  arch=amd64
+  [[ $suffix != aarch64 ]] || arch=arm64
+  manifest=$(docker buildx imagetools inspect --raw "$RELEASE_REPOSITORY:v1-$suffix")
+  digest=$(jq -r .digest "$RELEASE_METADATA/v1-$arch.json")
+  jq -e --arg digest "$digest" --arg arch "$arch" '
+    .manifests | length == 1 and .[0].digest == $digest and .[0].platform.architecture == $arch
+  ' <<< "$manifest" > /dev/null
+done
+echo "PASS: real staging, tested config IDs, multi/single-arch indexes and compatibility aliases"
