@@ -44,7 +44,10 @@ for arch in amd64 arm64; do
   bash "$script" stage > /dev/null
 done
 [[ $(find "$RELEASE_METADATA" -type f | wc -l) == 4 ]]
-! grep -Eq 'imagetools|pull|build ' "$FAKE_LOG"
+if grep -Eq 'imagetools|pull|build ' "$FAKE_LOG"; then
+  echo "Staging performed an unexpected registry read or rebuild" >&2
+  exit 1
+fi
 cp -r "$RELEASE_METADATA" "$temporary/good"
 mkdir -p "$temporary/nested/artifact-one" "$temporary/nested/artifact-two"
 cp "$RELEASE_METADATA/"*-amd64.json "$temporary/nested/artifact-one/"
@@ -64,7 +67,10 @@ bash "$script" validate > /dev/null
 bash "$script" publish
 [[ $(wc -l < "$FAKE_LOG") == 2 ]]
 grep -q 'kooldev/php:v1 kooldev/php@sha256:' "$FAKE_LOG"
-! grep -q 'inspect' "$FAKE_LOG"
+if grep -q 'inspect' "$FAKE_LOG"; then
+  echo "Publication performed redundant inspections" >&2
+  exit 1
+fi
 
 for filter in '.repository="foreign/php"' '.run_attempt="1"' '.arch="s390x"' \
   '.os="windows"' '.image_id="bad"' '.digest="sha256:bad"' '.extra=true' \
