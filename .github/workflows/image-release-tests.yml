@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+      - uses: ./.github/actions/image-build
+        with:
+          arch: amd64
       - name: Bash release contracts
         run: bash .github/actions/image-stage/tests/release.sh
       - name: Real loopback registry

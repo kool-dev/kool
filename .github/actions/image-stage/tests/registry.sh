@@ -45,5 +45,8 @@ mkdir "$RELEASE_METADATA"
 cp "$temporary/metadata/v1-amd64.json" "$RELEASE_METADATA/"
 bash "$script" publish
 manifest=$(docker buildx imagetools inspect --raw "$RELEASE_REPOSITORY:v1")
-jq -e 'has("config") and (has("manifests") | not)' <<< "$manifest" > /dev/null
+if ! jq -e 'has("config") and (has("manifests") | not)' <<< "$manifest" > /dev/null; then
+  echo "Expected a single image manifest, got: $manifest" >&2
+  exit 1
+fi
 echo "PASS: real staging pushes, exact multiarch digest membership and single-arch promotion"
