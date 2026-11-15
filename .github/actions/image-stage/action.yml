@@ -1,0 +1,56 @@
+name: Stage tested native images
+description: Push immutable tested IDs and upload current-attempt digest metadata.
+inputs:
+  canonical-repository:
+    description: Exact GitHub repository allowed to publish
+    required: true
+  default-branch:
+    description: Release branch
+    required: true
+  repository:
+    description: Docker Hub repository
+    required: true
+  arch:
+    description: Native architecture
+    required: true
+  images:
+    description: JSON array of tested tag/id pairs
+    required: true
+  group:
+    description: Unique matrix group name
+    required: true
+  username:
+    description: Docker Hub username
+    required: true
+  password:
+    description: Docker Hub token
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Check publication boundary before login
+      shell: bash
+      env:
+        RELEASE_CANONICAL_REPOSITORY: ${{ inputs.canonical-repository }}
+        RELEASE_BRANCH: ${{ inputs.default-branch }}
+        RELEASE_REPOSITORY: ${{ inputs.repository }}
+      run: bash "$GITHUB_ACTION_PATH/release.sh" guard
+    - uses: docker/login-action@v4
+      with:
+        username: ${{ inputs.username }}
+        password: ${{ inputs.password }}
+    - name: Push tested IDs and record digests
+      shell: bash
+      env:
+        RELEASE_CANONICAL_REPOSITORY: ${{ inputs.canonical-repository }}
+        RELEASE_BRANCH: ${{ inputs.default-branch }}
+        RELEASE_REPOSITORY: ${{ inputs.repository }}
+        RELEASE_ARCH: ${{ inputs.arch }}
+        RELEASE_IMAGES: ${{ inputs.images }}
+      run: bash "$GITHUB_ACTION_PATH/release.sh" stage
+    - uses: actions/upload-artifact@v7.0.2
+      with:
+        name: images-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.group }}-${{ inputs.arch }}
+        path: release-metadata/*.json
+        if-no-files-found: error
+        retention-days: 7

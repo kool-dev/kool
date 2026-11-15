@@ -1,0 +1,21 @@
+name: Verify tested parent
+description: Assert that a derived image retains the same-job tested parent ID/layers.
+inputs:
+  base-ref:
+    description: Local base tag
+    required: true
+  base-id:
+    description: Tested base image ID
+    required: true
+  image-id:
+    description: Derived image ID
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref }}
+        BASE_ID: ${{ inputs.base-id }}
+        IMAGE_ID: ${{ inputs.image-id }}
+      run: bash "$GITHUB_ACTION_PATH/../image-stage/release.sh" parent "$BASE_REF" "$BASE_ID" "$IMAGE_ID"

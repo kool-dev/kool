@@ -1,0 +1,25 @@
+name: Shared image CI
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/actions/image-*/**
+      - .github/workflows/image-*.yml
+  pull_request:
+    paths:
+      - .github/actions/image-*/**
+      - .github/workflows/image-*.yml
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Bash release contracts
+        run: bash .github/actions/image-stage/tests/release.sh
+      - name: Real loopback registry
+        run: bash .github/actions/image-stage/tests/registry.sh
+      - name: Lint shared workflows and actions
+        run: |
+          go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12 .github/workflows/image-publish.yml .github/workflows/image-release-tests.yml

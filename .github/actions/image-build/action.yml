@@ -1,0 +1,21 @@
+name: Native Docker builder
+description: Check native architecture and use Docker's same-job local image store.
+inputs:
+  arch:
+    description: Native architecture (amd64 or arm64)
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Verify native runner
+      shell: bash
+      env:
+        ARCH: ${{ inputs.arch }}
+      run: |
+        case "$ARCH:$(uname -m)" in
+          amd64:x86_64|arm64:aarch64) ;;
+          *) echo "::error::Runner is not native $ARCH"; exit 1 ;;
+        esac
+    - uses: docker/setup-buildx-action@v4
+      with:
+        driver: docker
