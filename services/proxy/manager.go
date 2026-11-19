@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/compose-spec/compose-go/template"
@@ -1669,12 +1670,21 @@ func replaceObjectByID(objects []interface{}, id string, replacement interface{}
 }
 
 func (m *DefaultManager) request(method, url string, body []byte) (*http.Response, error) {
-	request, err := http.NewRequest(method, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, err
+	for attempt := 1; ; attempt++ {
+		request, err := http.NewRequest(method, url, bytes.NewReader(body))
+		if err != nil {
+			return nil, err
+		}
+		request.Header.Set("Content-Type", "application/json")
+		response, err := m.http.Do(request)
+		// Each configuration change replaces Caddy's admin server, and the old
+		// server can close a connection before it reads the request on it.
+		dropped := errors.Is(err, io.EOF) || errors.Is(err, syscall.ECONNRESET)
+		if !dropped || attempt == 2 {
+			return response, err
+		}
+		time.Sleep(100 * time.Millisecond)
 	}
-	request.Header.Set("Content-Type", "application/json")
-	return m.http.Do(request)
 }
 
 func (m *DefaultManager) alias(service string) string {
