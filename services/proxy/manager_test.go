@@ -935,6 +935,44 @@ func TestRegisterRouteCreatesServerAfterNotFound(t *testing.T) {
 	}
 }
 
+func TestRegisterRouteSucceedsWhenAdminClosesConnectionAfterChange(t *testing.T) {
+	serverCreated := false
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		switch {
+		case request.Method == http.MethodPost && strings.HasSuffix(request.URL.Path, "/kool-80"):
+			serverCreated = true
+			// Caddy can answer a configuration change without "Connection: close"
+			// and then close the connection without answering the next request.
+			connection, buffered, err := response.(http.Hijacker).Hijack()
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			defer func() { _ = connection.Close() }()
+			_, _ = buffered.WriteString("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
+			_ = buffered.Flush()
+			if next, err := http.ReadRequest(buffered.Reader); err == nil {
+				_, _ = io.Copy(io.Discard, next.Body)
+			}
+		case request.Method == http.MethodGet && strings.HasSuffix(request.URL.Path, "/routes") && serverCreated:
+			_, _ = response.Write([]byte(`[]`))
+		case request.Method == http.MethodGet:
+			response.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	env := environment.NewFakeEnvStorage()
+	env.Set("KOOL_NAME", "example")
+	env.Set("KOOL_PROXY_HOST", "app.localhost")
+	manager := NewManager(&shell.FakeShell{}, env).(*DefaultManager)
+	manager.adminURL = server.URL
+
+	if err := manager.register(route{Service: "app", Listen: 80, Target: 8080, Hosts: []string{"@"}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestRegisterTLS(t *testing.T) {
 	var policy map[string]interface{}
 	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
