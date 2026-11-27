@@ -86,3 +86,35 @@ func TestKoolDeployExec(t *testing.T) {
 		t.Error("bad kubectl command args")
 	}
 }
+
+func TestKoolDeployExecStripsLeadingDashes(t *testing.T) {
+	tests := []struct {
+		args     []string
+		expected string
+	}{
+		{[]string{"app", "--", "php", "artisan", "migrate"}, "-c default -- php artisan migrate"},
+		{[]string{"app", "--", "ls", "--", "-la"}, "-c default -- ls -- -la"},
+		{[]string{"app", "--"}, "-c default -- bash"},
+		{[]string{"app", "env"}, "-c default -- env"},
+	}
+
+	for _, tt := range tests {
+		e := newFakeKoolDeployExec()
+		e.Flags.Container = "default"
+		e.env.Set("KOOL_DEPLOY_DOMAIN", "example.com")
+
+		fakeKubectl := &builder.FakeCommand{}
+		mock := e.cloud.(*fakeK8S)
+		mock.MockAuthenticateCloudService = "cloud-service"
+		mock.MockKubectlKube = fakeKubectl
+
+		if err := e.Execute(tt.args); err != nil {
+			t.Errorf("unexpected error running %v: %v", tt.args, err)
+			continue
+		}
+
+		if str := strings.Join(fakeKubectl.ArgsAppend, " "); !strings.HasSuffix(str, tt.expected) {
+			t.Errorf("running %v: expected kubectl args ending with %q; got %q", tt.args, tt.expected, str)
+		}
+	}
+}

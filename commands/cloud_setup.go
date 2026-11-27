@@ -278,7 +278,7 @@ func (s *KoolCloudSetup) Execute(args []string) (err error) {
 	s.Shell().Println("")
 	s.Shell().Println("Configuration file: " + s.setupParser.ConfigFilePath())
 	s.Shell().Println("")
-	s.Shell().Println("Reference: https://kool.dev/docs/deploy-to-kool-cloud/kool-cloud-yml-reference")
+	s.Shell().Println("Reference: https://kool.dev/docs/kool-cloud/kool-cloud-yml-reference")
 	s.Shell().Println("")
 
 	return

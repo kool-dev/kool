@@ -7,10 +7,27 @@ type DeployStatus struct {
 	Endpoint
 }
 
-// DeployCreateResponse holds data returned from the deploy endpoint
+// DeployStatusService holds a service listed in the deploy status
+type DeployStatusService struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Size string `json:"size"`
+}
+
+// DeployStatusResponse holds data returned from the deploy status endpoint.
+// Error is only set once a deploy has failed or timed out; Hint and Detail
+// are optional extras explaining the failure, printed when present.
 type DeployStatusResponse struct {
-	ID     int    `json:"id"`
-	Status string `json:"status"`
+	ID          int                   `json:"id"`
+	Status      string                `json:"status"`
+	Type        string                `json:"type"`
+	Url         string                `json:"url"`
+	Error       string                `json:"error"`
+	Hint        string                `json:"hint"`
+	Detail      string                `json:"detail"`
+	StartedAt   string                `json:"started_at"`
+	CompletedAt string                `json:"completed_at"`
+	Services    []DeployStatusService `json:"services"`
 }
 
 // NewDeployCreate creates a new DeployCreate instance

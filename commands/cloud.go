@@ -47,9 +47,12 @@ func AddKoolCloud(root *cobra.Command) {
 // NewCloudCommand initializes new kool cloud command
 func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 	cloudCmd = &cobra.Command{
-		Use:     "cloud COMMAND [flags]",
-		Short:   "Interact with Kool.dev Cloud and manage your deployments.",
-		Long:    "The cloud subcommand encapsulates a set of APIs to interact with Kool.dev Cloud and deploy, access and tail logs from your deployments.",
+		Use:   "cloud COMMAND [flags]",
+		Short: "Interact with Kool.dev Cloud and manage your deployments.",
+		Long: `The cloud subcommand encapsulates a set of APIs to interact with Kool.dev Cloud and deploy, access and tail logs from your deployments.
+
+Authentication: the API token is read from the KOOL_API_TOKEN environment variable.
+Prefer it over the --token flag, whose value shows up in the process list (ps) and in your shell history.`,
 		Example: `kool cloud deploy`,
 		//	add cobra usage help content
 		DisableFlagsInUseLine: true,
@@ -85,7 +88,7 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 			// if no token is set, we try to get it from the environment
 			if cloud.flags.Token == "" && cloud.env.Get("KOOL_API_TOKEN") == "" {
 				if requiredFlags {
-					err = fmt.Errorf("missing Kool.dev Cloud API token - please set it via --token or KOOL_API_TOKEN environment variable")
+					err = fmt.Errorf("missing Kool.dev Cloud API token - please set the KOOL_API_TOKEN environment variable (preferred over --token, whose value shows up in the process list)")
 					return
 				}
 			} else if cloud.flags.Token != "" {
@@ -96,7 +99,7 @@ func NewCloudCommand(cloud *Cloud) (cloudCmd *cobra.Command) {
 		},
 	}
 
-	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.Token, "token", "", "", "Token to authenticate with Kool.dev Cloud API")
+	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.Token, "token", "", "", "Token to authenticate with Kool.dev Cloud API. Prefer the KOOL_API_TOKEN environment variable, read when --token is not given: a --token value shows up in the process list")
 	cloudCmd.PersistentFlags().StringVarP(&cloud.flags.DeployDomain, "domain", "", "", "Environment domain name to deploy to")
 
 	return

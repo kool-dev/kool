@@ -1,17 +1,21 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/shell"
 	"kool-dev/kool/core/utils"
 	"kool-dev/kool/services/cloud"
 	"kool-dev/kool/services/cloud/api"
 	"kool-dev/kool/services/cloud/setup"
 	"kool-dev/kool/services/tgz"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -99,6 +103,12 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	}
 	s.Stop()
 
+	if deployCreated.LogsUrl != "" {
+		d.Shell().Info(strings.Repeat("-", 40))
+		d.Shell().Info("Logs available at: ", deployCreated.LogsUrl)
+		d.Shell().Info(strings.Repeat("-", 40))
+	}
+
 	var chPingDone = make(chan bool)
 	go func() {
 		for {
@@ -139,17 +149,17 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	// ends ping
 	chPingDone <- true
 
-	if deployCreated.LogsUrl != "" {
-		d.Shell().Info(strings.Repeat("-", 40))
-		d.Shell().Info("Logs available at: ", deployCreated.LogsUrl)
-		d.Shell().Info(strings.Repeat("-", 40))
-	}
-
 	s = utils.MakeFastLoading("Start deploying...", "Deploy started.", d.Shell().OutStream())
 	if _, err = deployer.StartDeploy(deployCreated); err != nil {
 		return
 	}
 	s.Stop()
+
+	// from here on the deploy rolls out on Kool.dev Cloud whether this process
+	// stays or not, so an interrupt must not end it as if the deploy failed
+	interrupted := make(chan os.Signal, 1)
+	signal.Notify(interrupted, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(interrupted)
 
 	timeout := 15 * time.Minute
 	if d.flags.Timeout > 0 {
@@ -158,68 +168,182 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		timeout = time.Duration(min) * time.Minute
 	}
 
-	var finishes = make(chan bool)
+	var finishes = make(chan deployWaitResult, 1)
 
-	go func(deployCreated *api.DeployCreateResponse, finishes chan bool) {
-		var (
-			status     *api.DeployStatusResponse
-			lastStatus string
-			err        error
-		)
+	go func(deployCreated *api.DeployCreateResponse, finishes chan deployWaitResult) {
+		var result deployWaitResult
 
-		s = utils.MakeSlowLoading("Waiting deploy to finish...", "Deploy finished.", d.Shell().OutStream())
+		result.status, result.err = d.pollDeployStatus(func() (*api.DeployStatusResponse, error) {
+			return api.NewDeployStatus(deployCreated).Run()
+		}, time.Sleep)
 
-		for {
-			if status, err = api.NewDeployStatus(deployCreated).Run(); err != nil {
-				return
-			}
-
-			if lastStatus != status.Status {
-				lastStatus = status.Status
-				d.Shell().Println("  > deploy:", lastStatus)
-			}
-
-			if err != nil {
-				s.Stop()
-				finishes <- false
-				d.Shell().Error(err)
-				break
-			}
-
-			if status.Status == "success" || status.Status == "failed" {
-				s.Stop()
-				finishes <- status.Status == "success"
-				break
-			}
-
-			time.Sleep(time.Second * 2)
-		}
+		finishes <- result
 	}(deployCreated, finishes)
 
-	var success bool
+	s = utils.MakeSlowLoading("Waiting deploy to finish...", "Deploy finished.", d.Shell().OutStream())
+
+	err = d.waitDeploy(deployCreated, finishes, time.After(timeout), interrupted, func(finished bool) {
+		if !finished {
+			// the deploy did not finish as far as we know
+			s.FinalMSG = ""
+		}
+		s.Stop()
+	})
+
+	return
+}
+
+// waitDeploy waits for whichever comes first: the deploy to finish, the
+// timeout or the CLI being interrupted, stopping the loading indicator
+// before printing the outcome
+func (d *KoolDeploy) waitDeploy(deployCreated *api.DeployCreateResponse, finishes <-chan deployWaitResult, timeout <-chan time.Time, interrupted <-chan os.Signal, stopLoading func(finished bool)) (err error) {
 	select {
-	case success = <-finishes:
-		{
-			if success {
-				d.Shell().Success("Deploy finished: ", deployCreated.Deploy.Environment.Name)
-				d.Shell().Success("")
-				d.Shell().Success("Access your environment at: ", deployCreated.Deploy.Url)
-				d.Shell().Success("")
-			} else {
-				err = fmt.Errorf("deploy failed")
-				return
-			}
-			break
+	case result := <-finishes:
+		stopLoading(result.err == nil)
+
+		if result.err != nil {
+			err = withDeployLogs(result.err, deployCreated.LogsUrl)
+			return
 		}
 
-	case <-time.After(timeout):
-		{
-			err = fmt.Errorf("timeout waiting deploy to finish")
-			break
+		if result.status.Status != "success" {
+			err = deployFailedError(result.status, deployCreated.LogsUrl)
+			return
 		}
+
+		d.Shell().Success("Deploy finished: ", deployCreated.Deploy.Environment.Name)
+		d.Shell().Success("")
+		d.Shell().Success("Access your environment at: ", deployCreated.Deploy.Url)
+		d.Shell().Success("")
+
+	case <-timeout:
+		stopLoading(false)
+		err = withDeployLogs(fmt.Errorf("timeout waiting deploy to finish"), deployCreated.LogsUrl)
+
+	case sig := <-interrupted:
+		stopLoading(false)
+		err = deployInterruptedError(deployCreated, sig)
 	}
 
 	return
+}
+
+// deployInterruptedError tells that the CLI stopped waiting for a deploy that
+// was already started: the deploy is neither cancelled nor reported as failed,
+// it keeps rolling out on Kool.dev Cloud. The exit code follows the shell
+// convention for a process ended by a signal (130 for SIGINT).
+func deployInterruptedError(deployCreated *api.DeployCreateResponse, sig os.Signal) error {
+	var msg strings.Builder
+
+	fmt.Fprintf(&msg, "interrupted (%s) while waiting for deploy %d to finish.\n", sig, deployCreated.Deploy.ID)
+	msg.WriteString("The deploy was already started: it keeps rolling out on Kool.dev Cloud and was neither cancelled nor reported as failed.\n")
+
+	if deployCreated.LogsUrl != "" {
+		fmt.Fprintf(&msg, "Check how it goes at: %s\n", deployCreated.LogsUrl)
+	}
+
+	msg.WriteString("Once it is live, see your services logs with: kool cloud logs SERVICE")
+
+	code := 130
+	if s, isSyscall := sig.(syscall.Signal); isSyscall {
+		code = 128 + int(s)
+	}
+
+	return shell.ErrExitable{Err: errors.New(msg.String()), Code: code}
+}
+
+const (
+	// deployStatusPollInterval is the wait between deploy status checks
+	deployStatusPollInterval = 2 * time.Second
+	// deployStatusMaxAttempts is how many failed status checks in a row we take before giving up
+	deployStatusMaxAttempts = 5
+	// deployStatusMaxBackoff caps the wait before retrying a failed status check
+	deployStatusMaxBackoff = 10 * time.Second
+)
+
+// deployWaitResult holds the outcome of waiting for a deploy to finish
+type deployWaitResult struct {
+	status *api.DeployStatusResponse
+	err    error
+}
+
+// isFinalDeployStatus tells whether the deploy is done, either successfully or not
+func isFinalDeployStatus(status string) bool {
+	return status == "success" || status == "failed" || status == "timedout"
+}
+
+// pollDeployStatus checks the deploy status until it reaches a final state,
+// printing every status change. A failed check is retried with a short
+// backoff, giving up after deployStatusMaxAttempts failures in a row.
+func (d *KoolDeploy) pollDeployStatus(fetch func() (*api.DeployStatusResponse, error), wait func(time.Duration)) (status *api.DeployStatusResponse, err error) {
+	var (
+		current    *api.DeployStatusResponse
+		lastStatus string
+		failures   int
+		backoff    = deployStatusPollInterval
+	)
+
+	for {
+		if current, err = fetch(); err != nil {
+			if failures++; failures >= deployStatusMaxAttempts {
+				err = fmt.Errorf("failed checking deploy status %d times in a row: %s", failures, strings.TrimSpace(err.Error()))
+				return
+			}
+
+			d.Shell().Warning(fmt.Sprintf("  > could not check deploy status (attempt %d of %d), retrying in %s: %s", failures, deployStatusMaxAttempts, backoff, strings.TrimSpace(err.Error())))
+			wait(backoff)
+
+			if backoff *= 2; backoff > deployStatusMaxBackoff {
+				backoff = deployStatusMaxBackoff
+			}
+			continue
+		}
+
+		failures, backoff, status = 0, deployStatusPollInterval, current
+
+		if lastStatus != status.Status {
+			lastStatus = status.Status
+			d.Shell().Println("  > deploy:", lastStatus)
+		}
+
+		if isFinalDeployStatus(status.Status) {
+			return
+		}
+
+		wait(deployStatusPollInterval)
+	}
+}
+
+// deployFailedError explains why a deploy did not succeed, with the reason
+// reported by Kool.dev Cloud and where to find the full logs.
+func deployFailedError(status *api.DeployStatusResponse, logsURL string) error {
+	msg := "deploy failed"
+	if status.Status == "timedout" {
+		msg = "deploy timed out"
+	}
+
+	if reason := strings.TrimSpace(status.Error); reason != "" {
+		msg += ": " + reason
+	}
+
+	if hint := strings.TrimSpace(status.Hint); hint != "" {
+		msg += "\nHint: " + hint
+	}
+
+	if detail := strings.TrimSpace(status.Detail); detail != "" {
+		msg += "\nDetail: " + detail
+	}
+
+	return withDeployLogs(errors.New(msg), logsURL)
+}
+
+// withDeployLogs appends where to find the deploy logs to the given error
+func withDeployLogs(err error, logsURL string) error {
+	if logsURL == "" {
+		return err
+	}
+
+	return fmt.Errorf("%w\nLogs available at: %s", err, logsURL)
 }
 
 func (d *KoolDeploy) createReleaseFile() (filename string, err error) {
