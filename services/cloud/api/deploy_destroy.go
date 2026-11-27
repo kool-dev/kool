@@ -18,7 +18,8 @@ func NewDeployDestroy() (d *DeployDestroy) {
 		Endpoint: NewDefaultEndpoint("DELETE"),
 	}
 
-	d.SetPath("deploy/destroy")
+	// the API serves environment destroys at DELETE /deploy
+	d.SetPath("deploy")
 
 	return
 }
