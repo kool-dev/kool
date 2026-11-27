@@ -315,6 +315,12 @@ func TestDeployFailedError(t *testing.T) {
 			"https://kool.dev/deploys/1",
 			"deploy failed: migrate hook failed\nHint: check your migrations\nDetail: SQLSTATE[42S01]\nLogs available at: https://kool.dev/deploys/1",
 		},
+		{
+			// credentials quoted by the diagnostics never reach the output
+			api.DeployStatusResponse{Status: "failed", Error: "connect mysql://app:hunter2@db/app failed", Hint: "check DB_PASSWORD='hunter2'", Detail: "DB_PASSWORD=hunter2 DB_HOST=db"},
+			"https://kool.dev/deploys/1",
+			"deploy failed: connect mysql://app:[REDACTED]@db/app failed\nHint: check DB_PASSWORD='[REDACTED]'\nDetail: DB_PASSWORD=[REDACTED] DB_HOST=db\nLogs available at: https://kool.dev/deploys/1",
+		},
 	}
 
 	for _, tt := range tests {

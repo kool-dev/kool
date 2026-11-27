@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/redact"
 	"kool-dev/kool/core/shell"
 	"kool-dev/kool/core/utils"
 	"kool-dev/kool/services/cloud"
@@ -315,7 +316,8 @@ func (d *KoolDeploy) pollDeployStatus(fetch func() (*api.DeployStatusResponse, e
 }
 
 // deployFailedError explains why a deploy did not succeed, with the reason
-// reported by Kool.dev Cloud and where to find the full logs.
+// reported by Kool.dev Cloud and where to find the full logs. The reason,
+// hint and detail are redacted, as they may quote the app's own output.
 func deployFailedError(status *api.DeployStatusResponse, logsURL string) error {
 	msg := "deploy failed"
 	if status.Status == "timedout" {
@@ -323,15 +325,15 @@ func deployFailedError(status *api.DeployStatusResponse, logsURL string) error {
 	}
 
 	if reason := strings.TrimSpace(status.Error); reason != "" {
-		msg += ": " + reason
+		msg += ": " + redact.Text(reason)
 	}
 
 	if hint := strings.TrimSpace(status.Hint); hint != "" {
-		msg += "\nHint: " + hint
+		msg += "\nHint: " + redact.Text(hint)
 	}
 
 	if detail := strings.TrimSpace(status.Detail); detail != "" {
-		msg += "\nDetail: " + detail
+		msg += "\nDetail: " + redact.Text(detail)
 	}
 
 	return withDeployLogs(errors.New(msg), logsURL)
