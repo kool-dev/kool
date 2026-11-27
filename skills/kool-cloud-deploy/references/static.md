@@ -16,9 +16,10 @@ services:
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY . /usr/share/nginx/html
+RUN rm /usr/share/nginx/html/nginx.conf
 EXPOSE 80
 ```
-`nginx:alpine` is multi-arch, so the image builds for amd64 without emulating any build step. Keep the image's own `CMD`: it runs nginx in the foreground.
+`nginx:alpine` is multi-arch, so the image builds for amd64 without emulating any build step. Keep the image's own `CMD`: it runs nginx in the foreground. The first `COPY` needs `nginx.conf` in the build context, so don't list it in `.dockerignore`; the `RUN rm` keeps it off the site.
 
 ```nginx
 # nginx.conf
@@ -38,7 +39,6 @@ server {
 .git
 .env*
 Dockerfile
-nginx.conf
 .dockerignore
 kool.cloud.yml
 docker-compose.yml
