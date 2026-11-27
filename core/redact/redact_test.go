@@ -102,6 +102,8 @@ func TestJSONFallsBackToText(t *testing.T) {
 		`<html>password=hunter2</html>`,
 		`{"password":"hunter2"} trailing`,
 		`{"password":"hunter2"`,
+		`{"password":"hunter 2 hunter2"`,
+		`<html>password='hunter2'</html>`,
 	} {
 		if redacted := JSON([]byte(raw)); strings.Contains(redacted, "hunter2") {
 			t.Errorf("expected password to be redacted from %q; got %q", raw, redacted)
@@ -122,6 +124,17 @@ func TestText(t *testing.T) {
 		{"login with " + fakeRegistryToken + " now", "login with [REDACTED] now"},
 		{"key 1|Zx9kQ2LmP4rT7vWb1NcY8sHd3FgJ6aKe0uIoPq", "key 1|[REDACTED]"},
 		{"hex 0123456789abcdef0123456789abcdef0123", "hex [REDACTED]"},
+		// quoted values are redacted through their closing quote
+		{"password='hunter2'", "password='[REDACTED]'"},
+		{`password="hunter 2" DB_HOST=db`, `password="[REDACTED]" DB_HOST=db`},
+		{"token: 'hunter 2' id=1", "token: '[REDACTED]' id=1"},
+		{`password='it\'s secret' id=1`, `password='[REDACTED]' id=1`},
+		{`{"secret":"ab\"cd ef","id":1}`, `{"secret":"[REDACTED]","id":1}`},
+		{`"secret": "a token=b c", "id": 1`, `"secret": "[REDACTED]", "id": 1`},
+		{`password="hunter2`, `password="[REDACTED]`},
+		// blank credentials stay as they are
+		{`password='' token=""`, `password='' token=""`},
+		{`{"secret": "", "id": 1}`, `{"secret": "", "id": 1}`},
 		// not credentials
 		{"Going to call: https://kool.dev/api/deploy/create?", "Going to call: https://kool.dev/api/deploy/create?"},
 		{"/Users/someone/Projects/Kool2026/apps/node-20/src", "/Users/someone/Projects/Kool2026/apps/node-20/src"},
@@ -166,6 +179,11 @@ func TestArgs(t *testing.T) {
 			// -p and -u are only credentials in a login command
 			[]string{"run", "-p", "8080:80", "-u", "1000", "-e", "SECRET=" + fakeRegistryToken, "image", fakeRegistryToken},
 			[]string{"run", "-p", "8080:80", "-u", "1000", "-e", "SECRET=[REDACTED]", "image", "[REDACTED]"},
+		},
+		{
+			// a shell script passed as a single argument
+			[]string{"sh", "-c", "echo token: 'hunter 2' && echo secret: \"hunter 2\""},
+			[]string{"sh", "-c", "echo token: '[REDACTED]' && echo secret: \"[REDACTED]\""},
 		},
 	}
 

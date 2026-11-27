@@ -133,19 +133,59 @@ func redactKeyValues(s string) string {
 			continue
 		}
 
-		value := valueRe.FindString(s[m[1]:])
-		if value == "" {
+		start, end := valueBounds(s, m[1], s[m[4]:m[5]])
+		if start == end {
+			// blank value; keeping it shows the credential is missing
 			continue
 		}
 
-		redacted.WriteString(s[last:m[1]])
+		redacted.WriteString(s[last:start])
 		redacted.WriteString(Placeholder)
-		last = m[1] + len(value)
+		last = end
 	}
 
 	redacted.WriteString(s[last:])
 
 	return redacted.String()
+}
+
+// valueBounds finds the value of a credential-like pair that starts at
+// from, right after the given separator. A quoted value runs through its
+// closing quote, skipping escaped characters, and keeps its quotes; any
+// other value runs up to the next space or delimiter.
+func valueBounds(s string, from int, sep string) (start, end int) {
+	var quote byte
+
+	start = from
+	if strings.HasSuffix(sep, `"`) {
+		// the separator took the opening quote, as in "secret":"..."
+		quote = '"'
+	} else if from < len(s) && (s[from] == '"' || s[from] == '\'') {
+		quote = s[from]
+		start++
+	}
+
+	if quote != 0 {
+		if n := closingQuote(s[start:], quote); n >= 0 {
+			return start, start + n
+		}
+	}
+
+	return start, start + len(valueRe.FindString(s[start:]))
+}
+
+// closingQuote returns the index of the first unescaped quote in s, or -1
+func closingQuote(s string, quote byte) int {
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\\':
+			i++
+		case quote:
+			return i
+		}
+	}
+
+	return -1
 }
 
 // Args redacts the arguments of a command line: values of credential flags
