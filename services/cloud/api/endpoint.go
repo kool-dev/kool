@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -35,6 +36,7 @@ type Endpoint interface {
 	Query() url.Values
 	SetRawBody(io.Reader)
 	SetContentType(string)
+	SetContext(context.Context)
 	StatusCode() int
 
 	PostFile(string, string, string) error
@@ -50,6 +52,7 @@ type DefaultEndpoint struct {
 	rawBody      io.Reader
 	env          environment.EnvStorage
 	statusCode   int
+	ctx          context.Context
 
 	postBodyBuff bytes.Buffer
 	postBodyFmtr *multipart.Writer
@@ -125,6 +128,12 @@ func (e *DefaultEndpoint) SetContentType(contentType string) {
 	e.contentType = contentType
 }
 
+// SetContext sets the context of the request: once it is done, the
+// request is cancelled
+func (e *DefaultEndpoint) SetContext(ctx context.Context) {
+	e.ctx = ctx
+}
+
 // Body sets the URL path to be called
 func (e *DefaultEndpoint) Body() url.Values {
 	if e.body == nil {
@@ -190,7 +199,12 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 		_, _ = fmt.Fprintf(verboseOutput, "[Kool.dev Cloud] Going to call: %s\n", redact.Text(reqURL))
 	}
 
-	if request, err = http.NewRequest(e.method, reqURL, body); err != nil {
+	ctx := e.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	if request, err = http.NewRequestWithContext(ctx, e.method, reqURL, body); err != nil {
 		return
 	}
 

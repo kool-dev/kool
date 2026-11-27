@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"kool-dev/kool/core/environment"
@@ -169,14 +170,22 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 		timeout = time.Duration(min) * time.Minute
 	}
 
+	// polling stops, with its sleep and status request, as soon as waiting
+	// ends: this command may run inside another kool command, which must not
+	// get status lines after it
+	polling, stopPolling := context.WithCancel(context.Background())
+	defer stopPolling()
+
 	var finishes = make(chan deployWaitResult, 1)
 
 	go func(deployCreated *api.DeployCreateResponse, finishes chan deployWaitResult) {
 		var result deployWaitResult
 
-		result.status, result.err = d.pollDeployStatus(func() (*api.DeployStatusResponse, error) {
-			return api.NewDeployStatus(deployCreated).Run()
-		}, time.Sleep)
+		result.status, result.err = d.pollDeployStatus(polling, func() (*api.DeployStatusResponse, error) {
+			return checkDeployStatus(polling, deployCreated)
+		}, func(wait time.Duration) {
+			sleepContext(polling, wait)
+		})
 
 		finishes <- result
 	}(deployCreated, finishes)
@@ -184,6 +193,8 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 	s = utils.MakeSlowLoading("Waiting deploy to finish...", "Deploy finished.", d.Shell().OutStream())
 
 	err = d.waitDeploy(deployCreated, finishes, time.After(timeout), interrupted, func(succeeded bool) {
+		stopPolling()
+
 		if !succeeded {
 			// only a successful deploy ends with "Deploy finished."
 			s.FinalMSG = ""
@@ -260,6 +271,8 @@ const (
 	deployStatusMaxAttempts = 5
 	// deployStatusMaxBackoff caps the wait before retrying a failed status check
 	deployStatusMaxBackoff = 10 * time.Second
+	// deployStatusRequestTimeout is how long a single status check may take
+	deployStatusRequestTimeout = 30 * time.Second
 )
 
 // deployWaitResult holds the outcome of waiting for a deploy to finish
@@ -275,8 +288,9 @@ func isFinalDeployStatus(status string) bool {
 
 // pollDeployStatus checks the deploy status until it reaches a final state,
 // printing every status change. A failed check is retried with a short
-// backoff, giving up after deployStatusMaxAttempts failures in a row.
-func (d *KoolDeploy) pollDeployStatus(fetch func() (*api.DeployStatusResponse, error), wait func(time.Duration)) (status *api.DeployStatusResponse, err error) {
+// backoff, giving up after deployStatusMaxAttempts failures in a row. Once
+// ctx is done it stops and prints nothing else, returning ctx's error.
+func (d *KoolDeploy) pollDeployStatus(ctx context.Context, fetch func() (*api.DeployStatusResponse, error), wait func(time.Duration)) (status *api.DeployStatusResponse, err error) {
 	var (
 		current    *api.DeployStatusResponse
 		lastStatus string
@@ -284,8 +298,13 @@ func (d *KoolDeploy) pollDeployStatus(fetch func() (*api.DeployStatusResponse, e
 		backoff    = deployStatusPollInterval
 	)
 
-	for {
-		if current, err = fetch(); err != nil {
+	for ctx.Err() == nil {
+		if current, err = fetch(); ctx.Err() != nil {
+			// waiting ended during the check
+			break
+		}
+
+		if err != nil {
 			if failures++; failures >= deployStatusMaxAttempts {
 				err = fmt.Errorf("failed checking deploy status %d times in a row: %s", failures, strings.TrimSpace(err.Error()))
 				return
@@ -312,6 +331,32 @@ func (d *KoolDeploy) pollDeployStatus(fetch func() (*api.DeployStatusResponse, e
 		}
 
 		wait(deployStatusPollInterval)
+	}
+
+	err = ctx.Err()
+	return
+}
+
+// checkDeployStatus fetches the deploy status once, giving up after
+// deployStatusRequestTimeout or as soon as ctx is done
+func checkDeployStatus(ctx context.Context, deployCreated *api.DeployCreateResponse) (*api.DeployStatusResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, deployStatusRequestTimeout)
+	defer cancel()
+
+	check := api.NewDeployStatus(deployCreated)
+	check.SetContext(ctx)
+
+	return check.Run()
+}
+
+// sleepContext waits for the given duration, or less if ctx is done first
+func sleepContext(ctx context.Context, wait time.Duration) {
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+	case <-timer.C:
 	}
 }
 

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"errors"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
@@ -224,7 +225,7 @@ func TestPollDeployStatusFinalStates(t *testing.T) {
 		fetch, calls := fakeDeployStatuses("building", "deploying", "deploying", final)
 		var waits []time.Duration
 
-		status, err := fake.pollDeployStatus(fetch, func(d time.Duration) { waits = append(waits, d) })
+		status, err := fake.pollDeployStatus(context.Background(), fetch, func(d time.Duration) { waits = append(waits, d) })
 
 		if err != nil {
 			t.Errorf("unexpected error polling until %s: %v", final, err)
@@ -251,7 +252,7 @@ func TestPollDeployStatusRetriesFailedChecks(t *testing.T) {
 	fetch, calls := fakeDeployStatuses("deploying", "", "", "", "deploying", "", "failed")
 	var waits []time.Duration
 
-	status, err := fake.pollDeployStatus(fetch, func(d time.Duration) { waits = append(waits, d) })
+	status, err := fake.pollDeployStatus(context.Background(), fetch, func(d time.Duration) { waits = append(waits, d) })
 
 	if err != nil {
 		t.Errorf("unexpected error when status checks recover: %v", err)
@@ -282,7 +283,7 @@ func TestPollDeployStatusGivesUp(t *testing.T) {
 	fetch, calls := fakeDeployStatuses("deploying", "", "", "", "", "", "success")
 	var waits []time.Duration
 
-	status, err := fake.pollDeployStatus(fetch, func(d time.Duration) { waits = append(waits, d) })
+	status, err := fake.pollDeployStatus(context.Background(), fetch, func(d time.Duration) { waits = append(waits, d) })
 
 	if err == nil || err.Error() != "failed checking deploy status 5 times in a row: 503 - unavailable" {
 		t.Errorf("unexpected error after failed status checks: %v", err)
@@ -297,6 +298,74 @@ func TestPollDeployStatusGivesUp(t *testing.T) {
 	expected := []time.Duration{2 * time.Second, 2 * time.Second, 4 * time.Second, 8 * time.Second, 10 * time.Second}
 	if !reflect.DeepEqual(waits, expected) {
 		t.Errorf("expected waits %v; got %v", expected, waits)
+	}
+}
+
+func TestPollDeployStatusStopsOnceWaitingEnds(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	fetch, calls := fakeDeployStatuses("building", "deploying", "deploying", "success")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// waiting ends (timeout or interrupt) during the second wait
+	var waits int
+	status, err := fake.pollDeployStatus(ctx, fetch, func(time.Duration) {
+		if waits++; waits == 2 {
+			cancel()
+		}
+	})
+
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected polling to stop with the context error; got %v", err)
+	}
+	if status == nil || status.Status != "deploying" {
+		t.Errorf("expected last known status; got %+v", status)
+	}
+	if *calls != 2 {
+		t.Errorf("expected no status check once waiting ended; got %d checks", *calls)
+	}
+
+	lines := fake.shell.(*shell.FakeShell).OutLines
+	if expected := []string{"> deploy: building", "> deploy: deploying"}; !reflect.DeepEqual(lines, expected) {
+		t.Errorf("expected nothing printed once waiting ended; got %v", lines)
+	}
+}
+
+func TestPollDeployStatusStopsDuringCheck(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// waiting ends while a status check is in flight, which then fails
+	status, err := fake.pollDeployStatus(ctx, func() (*api.DeployStatusResponse, error) {
+		cancel()
+		return nil, context.Canceled
+	}, func(time.Duration) {
+		t.Error("expected no wait once waiting ended")
+	})
+
+	if !errors.Is(err, context.Canceled) || status != nil {
+		t.Errorf("expected polling to stop with the context error; got %+v, %v", status, err)
+	}
+
+	fakeShell := fake.shell.(*shell.FakeShell)
+	if fakeShell.CalledWarning || len(fakeShell.OutLines) > 0 {
+		t.Errorf("expected nothing printed once waiting ended; got %v %v", fakeShell.WarningOutput, fakeShell.OutLines)
+	}
+}
+
+func TestSleepContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	start := time.Now()
+	sleepContext(ctx, time.Minute)
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("expected the sleep to end once the context is done; took %s", elapsed)
+	}
+
+	start = time.Now()
+	sleepContext(context.Background(), 10*time.Millisecond)
+	if elapsed := time.Since(start); elapsed < 10*time.Millisecond {
+		t.Errorf("expected to sleep for the given duration; took %s", elapsed)
 	}
 }
 

@@ -2,13 +2,16 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"kool-dev/kool/core/environment"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func newFakeDefaultEndpoint(method string) *DefaultEndpoint {
@@ -381,5 +384,67 @@ func TestDoCallVerboseRedactsCredentials(t *testing.T) {
 		if !strings.Contains(output, expected) {
 			t.Errorf("expected --verbose to print %q; got %s", expected, output)
 		}
+	}
+}
+
+func TestDoCallStopsOnceContextIsDone(t *testing.T) {
+	e := newFakeDefaultEndpoint("GET")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+
+	oldHTTPRequester, oldAPIBaseURL := httpRequester, apiBaseURL
+	defer func() {
+		httpRequester, apiBaseURL = oldHTTPRequester, oldAPIBaseURL
+	}()
+
+	received, release := make(chan struct{}), make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(received)
+		// the API never answers
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	defer server.Close()
+	defer close(release)
+
+	httpRequester, apiBaseURL = server.Client(), server.URL
+
+	ctx, cancel := context.WithCancel(context.Background())
+	e.SetContext(ctx)
+	e.SetPath("deploy/1/status")
+	e.SetResponseReceiver(&struct{}{})
+
+	done := make(chan error, 1)
+	go func() { done <- e.DoCall() }()
+
+	<-received
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("expected the call to be cancelled; got %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("expected the call to stop once its context is done")
+	}
+}
+
+func TestDoCallWithoutContext(t *testing.T) {
+	e := newFakeDefaultEndpoint("GET")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+
+	oldHTTPRequester := httpRequester
+	defer func() {
+		httpRequester = oldHTTPRequester
+	}()
+
+	httpRequester = &fakeHTTP{err: errors.New("fake http error")}
+
+	_ = e.DoCall()
+
+	if ctx := httpRequester.(*fakeHTTP).calledRequest.Context(); ctx != context.Background() {
+		t.Errorf("expected a request without context to use the background one; got %v", ctx)
 	}
 }
