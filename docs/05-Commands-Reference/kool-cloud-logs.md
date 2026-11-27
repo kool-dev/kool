@@ -26,7 +26,7 @@ kool cloud logs [OPTIONS] SERVICE
 ```
       --domain string        Environment domain name to deploy to
       --output string        Output format: json (machine-readable). For 'kool run', place before the script name.
-      --token string         Token to authenticate with Kool.dev Cloud API
+      --token string         Token to authenticate with Kool.dev Cloud API. Prefer the KOOL_API_TOKEN environment variable, read when --token is not given: a --token value shows up in the process list
       --verbose              Increases output verbosity
   -w, --working_dir string   Changes the working directory for the command
 ```

@@ -22,11 +22,10 @@ func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy
 	}
 
 	var (
-		env       = environment.NewEnvStorage()
-		isVerbose = env.IsTrue("KOOL_VERBOSE")
-		sh        = shell.NewShell()
-		image     = fmt.Sprintf("%s/%s:%s-%s", deploy.Config.ImagePrefix, deploy.Config.ImageRepository, service, deploy.Config.ImageTag)
-		output    string
+		env    = environment.NewEnvStorage()
+		sh     = shell.NewShell()
+		image  = fmt.Sprintf("%s/%s:%s-%s", deploy.Config.ImagePrefix, deploy.Config.ImageRepository, service, deploy.Config.ImageTag)
+		output string
 	)
 
 	// create a default io.Reader for stdin
@@ -72,26 +71,42 @@ func BuildPushImageForDeploy(service string, config *DeployConfigService, deploy
 	// login & push...
 	dockerLogin := builder.NewCommand("docker", "login", "-u", deploy.Docker.Login, "--password-stdin", deploy.Config.ImagePrefix)
 	if output, err = sh.Exec(dockerLogin); err != nil {
-		if isVerbose {
-			fmt.Println(output)
-		}
+		err = dockerLoginError(deploy.Config.ImagePrefix, output, err)
 		return
+	}
+
+	if deploy.Config.ImagePrefix != "" {
+		defer dockerLogout(sh, dockerLogoutCommand(deploy.Config.ImagePrefix))
 	}
 
 	dockerPush := builder.NewCommand("docker", "push", image)
-	if err = sh.Interactive(dockerPush); err != nil {
-		return
-	}
-
-	dockerLogout := builder.NewCommand("docker", "logout")
-	if output, err = sh.Exec(dockerLogout); err != nil {
-		if isVerbose {
-			fmt.Println(output)
-		}
-		return
-	}
+	err = sh.Interactive(dockerPush)
 
 	return
+}
+
+// dockerLogoutCommand logs out of the given registry only - a bare
+// docker logout would log the user out of Docker Hub instead
+func dockerLogoutCommand(registry string) builder.Command {
+	return builder.NewCommand("docker", "logout", registry)
+}
+
+// dockerLogout runs the logout after the push; by then the image is pushed
+// (or the push failed already), so a failed logout is only a warning
+func dockerLogout(sh shell.Shell, logout builder.Command) {
+	if _, err := sh.Exec(logout); err != nil {
+		sh.Warning("failed to log out of the Kool.dev Cloud registry: ", err)
+	}
+}
+
+// dockerLoginError tells which registry docker login failed for, along
+// with what docker printed - not only its exit status.
+func dockerLoginError(registry, output string, err error) error {
+	if output = strings.TrimSpace(output); output != "" && !strings.Contains(err.Error(), output) {
+		return fmt.Errorf("docker login to %s failed: %s (%w)", registry, output, err)
+	}
+
+	return fmt.Errorf("docker login to %s failed: %w", registry, err)
 }
 
 // parseContext parses the build context from the build configuration

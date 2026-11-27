@@ -7,6 +7,7 @@ import (
 	"io"
 	"kool-dev/kool/core/builder"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/redact"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -155,7 +156,7 @@ func (s *DefaultShell) Exec(command builder.Command, extraArgs ...string) (outSt
 	if verbose {
 		_, _ = fmt.Fprintf(s.ErrStream(), "$ (exec) %s %s\n",
 			exe,
-			strings.Join(args, " "),
+			strings.Join(redact.Args(args), " "),
 		)
 	}
 
@@ -195,7 +196,7 @@ func (s *DefaultShell) Interactive(originalCmd builder.Command, extraArgs ...str
 			checker.IsTerminal(cmdptr.in),
 			checker.IsTerminal(cmdptr.out),
 			cmdptr.Command.Cmd(),
-			strings.Join(cmdptr.Args(), " "),
+			strings.Join(redact.Args(cmdptr.Args()), " "),
 		)
 	}
 

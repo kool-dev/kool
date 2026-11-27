@@ -2,10 +2,12 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"kool-dev/kool/core/environment"
+	"kool-dev/kool/core/redact"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -20,6 +22,10 @@ type HTTPRequester interface {
 
 var httpRequester HTTPRequester = http.DefaultClient
 
+// verboseOutput is where --verbose prints the API calls and responses,
+// always with credentials redacted
+var verboseOutput io.Writer = os.Stderr
+
 // Endpoint interface encapsulates the behaviour necessary for consuming
 // an API endpoint
 type Endpoint interface {
@@ -30,6 +36,7 @@ type Endpoint interface {
 	Query() url.Values
 	SetRawBody(io.Reader)
 	SetContentType(string)
+	SetContext(context.Context)
 	StatusCode() int
 
 	PostFile(string, string, string) error
@@ -45,6 +52,7 @@ type DefaultEndpoint struct {
 	rawBody      io.Reader
 	env          environment.EnvStorage
 	statusCode   int
+	ctx          context.Context
 
 	postBodyBuff bytes.Buffer
 	postBodyFmtr *multipart.Writer
@@ -120,6 +128,12 @@ func (e *DefaultEndpoint) SetContentType(contentType string) {
 	e.contentType = contentType
 }
 
+// SetContext sets the context of the request: once it is done, the
+// request is cancelled
+func (e *DefaultEndpoint) SetContext(ctx context.Context) {
+	e.ctx = ctx
+}
+
 // Body sets the URL path to be called
 func (e *DefaultEndpoint) Body() url.Values {
 	if e.body == nil {
@@ -182,14 +196,20 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 	reqURL := fmt.Sprintf("%s/%s?%s", apiBaseURL, e.path, e.query.Encode())
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "[Kool.dev Cloud] Going to call: %s\n", reqURL)
+		_, _ = fmt.Fprintf(verboseOutput, "[Kool.dev Cloud] Going to call: %s\n", redact.Text(reqURL))
 	}
 
-	if request, err = http.NewRequest(e.method, reqURL, body); err != nil {
+	ctx := e.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	if request, err = http.NewRequestWithContext(ctx, e.method, reqURL, body); err != nil {
 		return
 	}
 
 	request.Header.Add("x-kool-cli-version", cliVersion)
+	request.Header.Add("x-kool-client", detectClient(e.env))
 
 	if e.contentType != "" {
 		request.Header.Add("Content-type", e.contentType)
@@ -209,7 +229,7 @@ func (e *DefaultEndpoint) DoCall() (err error) {
 	}
 
 	if verbose {
-		fmt.Fprintf(os.Stderr, "[Kool.dev Cloud] Got: %s\n", string(raw))
+		_, _ = fmt.Fprintf(verboseOutput, "[Kool.dev Cloud] Got: %s\n", redact.JSON(raw))
 	}
 
 	if e.statusCode >= 400 {

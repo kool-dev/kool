@@ -1,13 +1,17 @@
 package api
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"io"
 	"kool-dev/kool/core/environment"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func newFakeDefaultEndpoint(method string) *DefaultEndpoint {
@@ -89,9 +93,12 @@ func TestNewDefaultEndpoint(t *testing.T) {
 type fakeHTTP struct {
 	err  error
 	resp *http.Response
+
+	calledRequest *http.Request
 }
 
 func (f *fakeHTTP) Do(r *http.Request) (*http.Response, error) {
+	f.calledRequest = r
 	return f.resp, f.err
 }
 
@@ -286,5 +293,158 @@ func TestDoCallPost(t *testing.T) {
 
 	if e.contentType != "application/x-www-form-urlencoded" {
 		t.Errorf("bad contentType: %s", e.contentType)
+	}
+}
+
+func TestDoCallSetsClientHeaders(t *testing.T) {
+	e := newFakeDefaultEndpoint("GET")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+	e.env.Set("CLAUDECODE", "1")
+
+	oldHTTPRequester := httpRequester
+	oldCliVersion := cliVersion
+	defer func() {
+		httpRequester = oldHTTPRequester
+		cliVersion = oldCliVersion
+	}()
+
+	SetCliVersion("1.2.3")
+	fake := &fakeHTTP{resp: &http.Response{StatusCode: 200, Body: &fakeIOReaderCloser{
+		fakeIOReader: fakeIOReader{data: []byte(`{}`)},
+	}}}
+	httpRequester = fake
+
+	var resp map[string]interface{}
+	e.SetResponseReceiver(&resp)
+
+	if err := e.DoCall(); err != nil {
+		t.Fatalf("unexpected error from DoCall: %v", err)
+	}
+
+	if v := fake.calledRequest.Header.Get("x-kool-cli-version"); v != "1.2.3" {
+		t.Errorf("bad x-kool-cli-version header: %q", v)
+	}
+
+	if v := fake.calledRequest.Header.Get("x-kool-client"); v != "claude-code" {
+		t.Errorf("bad x-kool-client header: %q", v)
+	}
+}
+
+func TestDoCallVerboseRedactsCredentials(t *testing.T) {
+	var (
+		registryToken = strings.Repeat("eyJwYXlsb2FkIjoiQUFBQUJCQkJDQ0NDIn0+/Zm9vYmFy", 40) + "=="
+		apiToken      = "123|Zx9kQ2LmP4rT7vWb1NcY8sHd3FgJ6aKe0uIoPq"
+		verbose       = new(bytes.Buffer)
+	)
+
+	e := newFakeDefaultEndpoint("POST")
+	e.env.Set("KOOL_API_TOKEN", apiToken)
+	e.env.Set("KOOL_VERBOSE", "1")
+	e.SetPath("deploy/create")
+	e.Query().Set("token", apiToken)
+
+	oldHTTPRequester, oldVerboseOutput := httpRequester, verboseOutput
+	defer func() {
+		httpRequester, verboseOutput = oldHTTPRequester, oldVerboseOutput
+	}()
+
+	verboseOutput = verbose
+	httpRequester = &fakeHTTP{resp: &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(
+		`{"deploy":{"id":44417,"status":"building"},` +
+			`"stuff":{"image_prefix":"123456789012.dkr.ecr.us-east-1.amazonaws.com"},` +
+			`"docker":{"login":"AWS","password":"` + registryToken + `"}}`,
+	))}}
+
+	var resp DeployCreateResponse
+	e.SetResponseReceiver(&resp)
+
+	if err := e.DoCall(); err != nil {
+		t.Fatalf("unexpected error from DoCall: %v", err)
+	}
+
+	// the CLI itself still gets the credentials it needs
+	if resp.Docker.Login != "AWS" || resp.Docker.Password != registryToken {
+		t.Error("the response must not be redacted, only what --verbose prints")
+	}
+
+	output := verbose.String()
+
+	for _, secret := range []string{registryToken[:40], `"AWS"`, apiToken, "Zx9kQ2LmP4rT7vWb1NcY8sHd3FgJ6aKe0uIoPq"} {
+		if strings.Contains(output, secret) {
+			t.Errorf("--verbose printed a credential (%q): %s", secret, output)
+		}
+	}
+
+	for _, expected := range []string{
+		"Going to call: " + apiBaseURL + "/deploy/create?token=[REDACTED]",
+		`"docker":{"login":"[REDACTED]","password":"[REDACTED]"}`,
+		`"deploy":{"id":44417,"status":"building"}`,
+		"123456789012.dkr.ecr.us-east-1.amazonaws.com",
+	} {
+		if !strings.Contains(output, expected) {
+			t.Errorf("expected --verbose to print %q; got %s", expected, output)
+		}
+	}
+}
+
+func TestDoCallStopsOnceContextIsDone(t *testing.T) {
+	e := newFakeDefaultEndpoint("GET")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+
+	oldHTTPRequester, oldAPIBaseURL := httpRequester, apiBaseURL
+	defer func() {
+		httpRequester, apiBaseURL = oldHTTPRequester, oldAPIBaseURL
+	}()
+
+	received, release := make(chan struct{}), make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(received)
+		// the API never answers
+		select {
+		case <-r.Context().Done():
+		case <-release:
+		}
+	}))
+	defer server.Close()
+	defer close(release)
+
+	httpRequester, apiBaseURL = server.Client(), server.URL
+
+	ctx, cancel := context.WithCancel(context.Background())
+	e.SetContext(ctx)
+	e.SetPath("deploy/1/status")
+	e.SetResponseReceiver(&struct{}{})
+
+	done := make(chan error, 1)
+	go func() { done <- e.DoCall() }()
+
+	<-received
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Errorf("expected the call to be cancelled; got %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("expected the call to stop once its context is done")
+	}
+}
+
+func TestDoCallWithoutContext(t *testing.T) {
+	e := newFakeDefaultEndpoint("GET")
+	e.env.Set("KOOL_API_TOKEN", "fake token")
+
+	oldHTTPRequester := httpRequester
+	defer func() {
+		httpRequester = oldHTTPRequester
+	}()
+
+	httpRequester = &fakeHTTP{err: errors.New("fake http error")}
+
+	_ = e.DoCall()
+
+	if ctx := httpRequester.(*fakeHTTP).calledRequest.Context(); ctx != context.Background() {
+		t.Errorf("expected a request without context to use the background one; got %v", ctx)
 	}
 }

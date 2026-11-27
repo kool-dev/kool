@@ -1,13 +1,19 @@
 package commands
 
 import (
+	"context"
+	"errors"
 	"kool-dev/kool/core/environment"
 	"kool-dev/kool/core/shell"
+	"kool-dev/kool/services/cloud/api"
 	"kool-dev/kool/services/cloud/setup"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"syscall"
 	"testing"
+	"time"
 )
 
 func TestNewKoolDeploy(t *testing.T) {
@@ -195,5 +201,302 @@ func mockConfig(tmpDir string, t *testing.T, mock []byte) {
 
 	if err := os.WriteFile(filepath.Join(tmpDir, "kool.cloud.yml"), mock, os.ModePerm); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// fakeDeployStatuses returns a fetch function that replies with the given
+// statuses in order; an empty status means a failed status check
+func fakeDeployStatuses(statuses ...string) (fetch func() (*api.DeployStatusResponse, error), calls *int) {
+	calls = new(int)
+	fetch = func() (*api.DeployStatusResponse, error) {
+		status := statuses[*calls]
+		*calls++
+		if status == "" {
+			return nil, errors.New("\n503 - unavailable\n")
+		}
+		return &api.DeployStatusResponse{Status: status, Error: "error for " + status}, nil
+	}
+	return
+}
+
+func TestPollDeployStatusFinalStates(t *testing.T) {
+	for _, final := range []string{"success", "failed", "timedout"} {
+		fake := fakeKoolDeploy("")
+		fetch, calls := fakeDeployStatuses("building", "deploying", "deploying", final)
+		var waits []time.Duration
+
+		status, err := fake.pollDeployStatus(context.Background(), fetch, func(d time.Duration) { waits = append(waits, d) })
+
+		if err != nil {
+			t.Errorf("unexpected error polling until %s: %v", final, err)
+		}
+		if status == nil || status.Status != final {
+			t.Errorf("expected final status %s; got %+v", final, status)
+		}
+		if *calls != 4 {
+			t.Errorf("expected 4 status checks until %s; got %d", final, *calls)
+		}
+		if expected := []time.Duration{2 * time.Second, 2 * time.Second, 2 * time.Second}; !reflect.DeepEqual(waits, expected) {
+			t.Errorf("expected waits %v; got %v", expected, waits)
+		}
+
+		lines := fake.shell.(*shell.FakeShell).OutLines
+		if expected := []string{"> deploy: building", "> deploy: deploying", "> deploy: " + final}; !reflect.DeepEqual(lines, expected) {
+			t.Errorf("expected status changes %v; got %v", expected, lines)
+		}
+	}
+}
+
+func TestPollDeployStatusRetriesFailedChecks(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	fetch, calls := fakeDeployStatuses("deploying", "", "", "", "deploying", "", "failed")
+	var waits []time.Duration
+
+	status, err := fake.pollDeployStatus(context.Background(), fetch, func(d time.Duration) { waits = append(waits, d) })
+
+	if err != nil {
+		t.Errorf("unexpected error when status checks recover: %v", err)
+	}
+	if status == nil || status.Status != "failed" {
+		t.Errorf("expected failed status; got %+v", status)
+	}
+	if *calls != 7 {
+		t.Errorf("expected 7 status checks; got %d", *calls)
+	}
+
+	// backoff doubles while checks fail and resets after one succeeds
+	expected := []time.Duration{2 * time.Second, 2 * time.Second, 4 * time.Second, 8 * time.Second, 2 * time.Second, 2 * time.Second}
+	if !reflect.DeepEqual(waits, expected) {
+		t.Errorf("expected waits %v; got %v", expected, waits)
+	}
+
+	fakeShell := fake.shell.(*shell.FakeShell)
+	if !fakeShell.CalledWarning {
+		t.Error("expected a warning for failed status checks")
+	} else if warning := fakeShell.WarningOutput[0].(string); !strings.Contains(warning, "attempt 1 of 5") || !strings.Contains(warning, "503 - unavailable") {
+		t.Errorf("unexpected warning for failed status check: %q", warning)
+	}
+}
+
+func TestPollDeployStatusGivesUp(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	fetch, calls := fakeDeployStatuses("deploying", "", "", "", "", "", "success")
+	var waits []time.Duration
+
+	status, err := fake.pollDeployStatus(context.Background(), fetch, func(d time.Duration) { waits = append(waits, d) })
+
+	if err == nil || err.Error() != "failed checking deploy status 5 times in a row: 503 - unavailable" {
+		t.Errorf("unexpected error after failed status checks: %v", err)
+	}
+	if status == nil || status.Status != "deploying" {
+		t.Errorf("expected last known status; got %+v", status)
+	}
+	if *calls != 6 {
+		t.Errorf("expected 6 status checks; got %d", *calls)
+	}
+
+	expected := []time.Duration{2 * time.Second, 2 * time.Second, 4 * time.Second, 8 * time.Second, 10 * time.Second}
+	if !reflect.DeepEqual(waits, expected) {
+		t.Errorf("expected waits %v; got %v", expected, waits)
+	}
+}
+
+func TestPollDeployStatusStopsOnceWaitingEnds(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	fetch, calls := fakeDeployStatuses("building", "deploying", "deploying", "success")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// waiting ends (timeout or interrupt) during the second wait
+	var waits int
+	status, err := fake.pollDeployStatus(ctx, fetch, func(time.Duration) {
+		if waits++; waits == 2 {
+			cancel()
+		}
+	})
+
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected polling to stop with the context error; got %v", err)
+	}
+	if status == nil || status.Status != "deploying" {
+		t.Errorf("expected last known status; got %+v", status)
+	}
+	if *calls != 2 {
+		t.Errorf("expected no status check once waiting ended; got %d checks", *calls)
+	}
+
+	lines := fake.shell.(*shell.FakeShell).OutLines
+	if expected := []string{"> deploy: building", "> deploy: deploying"}; !reflect.DeepEqual(lines, expected) {
+		t.Errorf("expected nothing printed once waiting ended; got %v", lines)
+	}
+}
+
+func TestPollDeployStatusStopsDuringCheck(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// waiting ends while a status check is in flight, which then fails
+	status, err := fake.pollDeployStatus(ctx, func() (*api.DeployStatusResponse, error) {
+		cancel()
+		return nil, context.Canceled
+	}, func(time.Duration) {
+		t.Error("expected no wait once waiting ended")
+	})
+
+	if !errors.Is(err, context.Canceled) || status != nil {
+		t.Errorf("expected polling to stop with the context error; got %+v, %v", status, err)
+	}
+
+	fakeShell := fake.shell.(*shell.FakeShell)
+	if fakeShell.CalledWarning || len(fakeShell.OutLines) > 0 {
+		t.Errorf("expected nothing printed once waiting ended; got %v %v", fakeShell.WarningOutput, fakeShell.OutLines)
+	}
+}
+
+func TestSleepContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	start := time.Now()
+	sleepContext(ctx, time.Minute)
+	if elapsed := time.Since(start); elapsed > 5*time.Second {
+		t.Errorf("expected the sleep to end once the context is done; took %s", elapsed)
+	}
+
+	start = time.Now()
+	sleepContext(context.Background(), 10*time.Millisecond)
+	if elapsed := time.Since(start); elapsed < 10*time.Millisecond {
+		t.Errorf("expected to sleep for the given duration; took %s", elapsed)
+	}
+}
+
+func TestDeployFailedError(t *testing.T) {
+	tests := []struct {
+		status   api.DeployStatusResponse
+		logsURL  string
+		expected string
+	}{
+		{api.DeployStatusResponse{Status: "failed"}, "", "deploy failed"},
+		{api.DeployStatusResponse{Status: "failed"}, "https://kool.dev/deploys/1", "deploy failed\nLogs available at: https://kool.dev/deploys/1"},
+		{api.DeployStatusResponse{Status: "failed", Error: " pods not ready \n"}, "https://kool.dev/deploys/1", "deploy failed: pods not ready\nLogs available at: https://kool.dev/deploys/1"},
+		{api.DeployStatusResponse{Status: "timedout", Error: "build took too long"}, "", "deploy timed out: build took too long"},
+		{
+			api.DeployStatusResponse{Status: "failed", Error: "migrate hook failed", Hint: "check your migrations", Detail: "SQLSTATE[42S01]"},
+			"https://kool.dev/deploys/1",
+			"deploy failed: migrate hook failed\nHint: check your migrations\nDetail: SQLSTATE[42S01]\nLogs available at: https://kool.dev/deploys/1",
+		},
+		{
+			// credentials quoted by the diagnostics never reach the output
+			api.DeployStatusResponse{Status: "failed", Error: "connect mysql://app:hunter2@db/app failed", Hint: "check DB_PASSWORD='hunter2'", Detail: "DB_PASSWORD=hunter2 DB_HOST=db"},
+			"https://kool.dev/deploys/1",
+			"deploy failed: connect mysql://app:[REDACTED]@db/app failed\nHint: check DB_PASSWORD='[REDACTED]'\nDetail: DB_PASSWORD=[REDACTED] DB_HOST=db\nLogs available at: https://kool.dev/deploys/1",
+		},
+	}
+
+	for _, tt := range tests {
+		if err := deployFailedError(&tt.status, tt.logsURL); err.Error() != tt.expected {
+			t.Errorf("expected error %q; got %q", tt.expected, err.Error())
+		}
+	}
+}
+
+func TestWithDeployLogs(t *testing.T) {
+	timeoutErr := errors.New("timeout waiting deploy to finish")
+
+	if err := withDeployLogs(timeoutErr, ""); err != timeoutErr {
+		t.Errorf("expected the same error without logs URL; got %v", err)
+	}
+
+	err := withDeployLogs(timeoutErr, "https://kool.dev/deploys/1")
+	if err.Error() != "timeout waiting deploy to finish\nLogs available at: https://kool.dev/deploys/1" {
+		t.Errorf("unexpected error with logs URL: %v", err)
+	}
+	if !errors.Is(err, timeoutErr) {
+		t.Error("expected the error with logs URL to wrap the original error")
+	}
+}
+
+func fakeStartedDeploy() *api.DeployCreateResponse {
+	deploy := &api.DeployCreateResponse{LogsUrl: "https://kool.dev/deploys/44417"}
+	deploy.Deploy.ID = 44417
+	deploy.Deploy.Url = "https://app.example.com"
+	deploy.Deploy.Environment.Name = "app"
+	return deploy
+}
+
+func TestWaitDeployInterrupted(t *testing.T) {
+	for sig, code := range map[os.Signal]int{os.Interrupt: 130, syscall.SIGTERM: 143} {
+		fake := fakeKoolDeploy("")
+		interrupted := make(chan os.Signal, 1)
+		interrupted <- sig
+
+		var stopped, succeeded bool
+		err := fake.waitDeploy(fakeStartedDeploy(), make(chan deployWaitResult), make(chan time.Time), interrupted, func(ok bool) {
+			stopped, succeeded = true, ok
+		})
+
+		if !stopped || succeeded {
+			t.Errorf("expected the loading indicator stopped as not succeeded; got stopped=%v succeeded=%v", stopped, succeeded)
+		}
+
+		var exitable shell.ErrExitable
+		if !errors.As(err, &exitable) || exitable.Code != code {
+			t.Errorf("expected exit code %d on %s; got %v", code, sig, err)
+			continue
+		}
+
+		for _, expected := range []string{
+			"while waiting for deploy 44417 to finish",
+			"keeps rolling out on Kool.dev Cloud and was neither cancelled nor reported as failed",
+			"https://kool.dev/deploys/44417",
+		} {
+			if !strings.Contains(err.Error(), expected) {
+				t.Errorf("expected interrupt message to contain %q; got %q", expected, err.Error())
+			}
+		}
+
+		if strings.Contains(err.Error(), "deploy failed") {
+			t.Errorf("an interrupt must not read as a failed deploy; got %q", err.Error())
+		}
+	}
+}
+
+func TestWaitDeployOutcomes(t *testing.T) {
+	fake := fakeKoolDeploy("")
+	finishes := make(chan deployWaitResult, 1)
+	finishes <- deployWaitResult{status: &api.DeployStatusResponse{Status: "success"}}
+
+	var succeeded bool
+	if err := fake.waitDeploy(fakeStartedDeploy(), finishes, make(chan time.Time), make(chan os.Signal), func(ok bool) { succeeded = ok }); err != nil {
+		t.Errorf("unexpected error for a successful deploy: %v", err)
+	}
+	if !succeeded || !fake.shell.(*shell.FakeShell).CalledSuccess {
+		t.Error("expected the successful deploy to be reported as finished")
+	}
+
+	// a deploy that ended unsuccessfully must not stop the loading
+	// indicator with its "Deploy finished." message
+	for status, expected := range map[string]string{"failed": "deploy failed: pods not ready", "timedout": "deploy timed out: pods not ready"} {
+		fake = fakeKoolDeploy("")
+		finishes <- deployWaitResult{status: &api.DeployStatusResponse{Status: status, Error: "pods not ready"}}
+		succeeded = true
+		if err := fake.waitDeploy(fakeStartedDeploy(), finishes, make(chan time.Time), make(chan os.Signal), func(ok bool) { succeeded = ok }); err == nil || !strings.HasPrefix(err.Error(), expected) {
+			t.Errorf("expected %q error; got %v", expected, err)
+		}
+		if succeeded {
+			t.Errorf("expected the loading indicator stopped as not succeeded for a %s deploy", status)
+		}
+		if fake.shell.(*shell.FakeShell).CalledSuccess {
+			t.Errorf("a %s deploy must not be reported as a success", status)
+		}
+	}
+
+	timeout := make(chan time.Time, 1)
+	timeout <- time.Now()
+	succeeded = true
+	if err := fake.waitDeploy(fakeStartedDeploy(), make(chan deployWaitResult), timeout, make(chan os.Signal), func(ok bool) { succeeded = ok }); err == nil || !strings.HasPrefix(err.Error(), "timeout waiting deploy to finish") {
+		t.Errorf("expected timeout error; got %v", err)
+	}
+	if succeeded {
+		t.Error("expected the loading indicator stopped as not succeeded on timeout")
 	}
 }

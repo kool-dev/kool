@@ -516,3 +516,37 @@ func TestVerboseRecursive(t *testing.T) {
 		t.Errorf("unexpected StdErr verbose output: %v", verboseOutput)
 	}
 }
+
+func TestVerboseRedactsCredentials(t *testing.T) {
+	s := NewShell()
+
+	s.(*DefaultShell).env = environment.NewFakeEnvStorage()
+	s.(*DefaultShell).env.Set("KOOL_VERBOSE", "true")
+
+	buff := bytes.NewBuffer([]byte(""))
+	s.SetErrStream(buff)
+
+	if _, err := s.Exec(builder.NewCommand("echo", "login", "-u", "AWS", "--password-stdin", "registry.example.com")); err != nil {
+		t.Fatalf("unexpected error from Exec: %v", err)
+	}
+
+	kubectl := &builder.FakeCommand{MockCmd: "kool-fake-kubectl", ArgsAppend: []string{"--server", "https://k8s.example.com", "--token", "k8s-secret-token", "exec", "pod/app"}}
+	_ = s.Interactive(kubectl, "--build-arg", "NPM_TOKEN=npm-secret")
+
+	verboseOutput := buff.String()
+
+	for _, secret := range []string{"AWS", "k8s-secret-token", "npm-secret"} {
+		if strings.Contains(verboseOutput, secret) {
+			t.Errorf("verbose output printed a credential (%q): %s", secret, verboseOutput)
+		}
+	}
+
+	for _, expected := range []string{
+		"$ (exec) echo login -u [REDACTED] --password-stdin registry.example.com",
+		"kool-fake-kubectl --server https://k8s.example.com --token [REDACTED] exec pod/app --build-arg NPM_TOKEN=[REDACTED]",
+	} {
+		if !strings.Contains(verboseOutput, expected) {
+			t.Errorf("expected verbose output to contain %q; got %s", expected, verboseOutput)
+		}
+	}
+}

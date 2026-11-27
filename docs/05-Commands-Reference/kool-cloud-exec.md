@@ -9,7 +9,7 @@ execute a COMMAND inside the specified SERVICE container (similar to an SSH sess
 Must use a KOOL_API_TOKEN environment variable for authentication.
 
 ```
-kool cloud exec SERVICE [COMMAND] [--] [ARG...]
+kool cloud exec SERVICE [--] [COMMAND] [ARG...]
 ```
 
 ### Options
@@ -24,7 +24,7 @@ kool cloud exec SERVICE [COMMAND] [--] [ARG...]
 ```
       --domain string        Environment domain name to deploy to
       --output string        Output format: json (machine-readable). For 'kool run', place before the script name.
-      --token string         Token to authenticate with Kool.dev Cloud API
+      --token string         Token to authenticate with Kool.dev Cloud API. Prefer the KOOL_API_TOKEN environment variable, read when --token is not given: a --token value shows up in the process list
       --verbose              Increases output verbosity
   -w, --working_dir string   Changes the working directory for the command
 ```
