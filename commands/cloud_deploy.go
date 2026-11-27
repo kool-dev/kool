@@ -183,9 +183,9 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 	s = utils.MakeSlowLoading("Waiting deploy to finish...", "Deploy finished.", d.Shell().OutStream())
 
-	err = d.waitDeploy(deployCreated, finishes, time.After(timeout), interrupted, func(finished bool) {
-		if !finished {
-			// the deploy did not finish as far as we know
+	err = d.waitDeploy(deployCreated, finishes, time.After(timeout), interrupted, func(succeeded bool) {
+		if !succeeded {
+			// only a successful deploy ends with "Deploy finished."
 			s.FinalMSG = ""
 		}
 		s.Stop()
@@ -196,11 +196,11 @@ func (d *KoolDeploy) Execute(args []string) (err error) {
 
 // waitDeploy waits for whichever comes first: the deploy to finish, the
 // timeout or the CLI being interrupted, stopping the loading indicator
-// before printing the outcome
-func (d *KoolDeploy) waitDeploy(deployCreated *api.DeployCreateResponse, finishes <-chan deployWaitResult, timeout <-chan time.Time, interrupted <-chan os.Signal, stopLoading func(finished bool)) (err error) {
+// before printing the outcome; succeeded tells whether the deploy is live
+func (d *KoolDeploy) waitDeploy(deployCreated *api.DeployCreateResponse, finishes <-chan deployWaitResult, timeout <-chan time.Time, interrupted <-chan os.Signal, stopLoading func(succeeded bool)) (err error) {
 	select {
 	case result := <-finishes:
-		stopLoading(result.err == nil)
+		stopLoading(result.err == nil && result.status.Status == "success")
 
 		if result.err != nil {
 			err = withDeployLogs(result.err, deployCreated.LogsUrl)

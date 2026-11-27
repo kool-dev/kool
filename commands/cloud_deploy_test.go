@@ -360,13 +360,13 @@ func TestWaitDeployInterrupted(t *testing.T) {
 		interrupted := make(chan os.Signal, 1)
 		interrupted <- sig
 
-		var stopped, finished bool
-		err := fake.waitDeploy(fakeStartedDeploy(), make(chan deployWaitResult), make(chan time.Time), interrupted, func(f bool) {
-			stopped, finished = true, f
+		var stopped, succeeded bool
+		err := fake.waitDeploy(fakeStartedDeploy(), make(chan deployWaitResult), make(chan time.Time), interrupted, func(ok bool) {
+			stopped, succeeded = true, ok
 		})
 
-		if !stopped || finished {
-			t.Errorf("expected the loading indicator stopped as not finished; got stopped=%v finished=%v", stopped, finished)
+		if !stopped || succeeded {
+			t.Errorf("expected the loading indicator stopped as not succeeded; got stopped=%v succeeded=%v", stopped, succeeded)
 		}
 
 		var exitable shell.ErrExitable
@@ -396,27 +396,38 @@ func TestWaitDeployOutcomes(t *testing.T) {
 	finishes := make(chan deployWaitResult, 1)
 	finishes <- deployWaitResult{status: &api.DeployStatusResponse{Status: "success"}}
 
-	var finished bool
-	if err := fake.waitDeploy(fakeStartedDeploy(), finishes, make(chan time.Time), make(chan os.Signal), func(f bool) { finished = f }); err != nil {
+	var succeeded bool
+	if err := fake.waitDeploy(fakeStartedDeploy(), finishes, make(chan time.Time), make(chan os.Signal), func(ok bool) { succeeded = ok }); err != nil {
 		t.Errorf("unexpected error for a successful deploy: %v", err)
 	}
-	if !finished || !fake.shell.(*shell.FakeShell).CalledSuccess {
+	if !succeeded || !fake.shell.(*shell.FakeShell).CalledSuccess {
 		t.Error("expected the successful deploy to be reported as finished")
 	}
 
-	fake = fakeKoolDeploy("")
-	finishes <- deployWaitResult{status: &api.DeployStatusResponse{Status: "failed", Error: "pods not ready"}}
-	if err := fake.waitDeploy(fakeStartedDeploy(), finishes, make(chan time.Time), make(chan os.Signal), func(bool) {}); err == nil || !strings.HasPrefix(err.Error(), "deploy failed: pods not ready") {
-		t.Errorf("expected failed deploy error; got %v", err)
+	// a deploy that ended unsuccessfully must not stop the loading
+	// indicator with its "Deploy finished." message
+	for status, expected := range map[string]string{"failed": "deploy failed: pods not ready", "timedout": "deploy timed out: pods not ready"} {
+		fake = fakeKoolDeploy("")
+		finishes <- deployWaitResult{status: &api.DeployStatusResponse{Status: status, Error: "pods not ready"}}
+		succeeded = true
+		if err := fake.waitDeploy(fakeStartedDeploy(), finishes, make(chan time.Time), make(chan os.Signal), func(ok bool) { succeeded = ok }); err == nil || !strings.HasPrefix(err.Error(), expected) {
+			t.Errorf("expected %q error; got %v", expected, err)
+		}
+		if succeeded {
+			t.Errorf("expected the loading indicator stopped as not succeeded for a %s deploy", status)
+		}
+		if fake.shell.(*shell.FakeShell).CalledSuccess {
+			t.Errorf("a %s deploy must not be reported as a success", status)
+		}
 	}
 
 	timeout := make(chan time.Time, 1)
 	timeout <- time.Now()
-	finished = true
-	if err := fake.waitDeploy(fakeStartedDeploy(), make(chan deployWaitResult), timeout, make(chan os.Signal), func(f bool) { finished = f }); err == nil || !strings.HasPrefix(err.Error(), "timeout waiting deploy to finish") {
+	succeeded = true
+	if err := fake.waitDeploy(fakeStartedDeploy(), make(chan deployWaitResult), timeout, make(chan os.Signal), func(ok bool) { succeeded = ok }); err == nil || !strings.HasPrefix(err.Error(), "timeout waiting deploy to finish") {
 		t.Errorf("expected timeout error; got %v", err)
 	}
-	if finished {
-		t.Error("expected the loading indicator stopped as not finished on timeout")
+	if succeeded {
+		t.Error("expected the loading indicator stopped as not succeeded on timeout")
 	}
 }
